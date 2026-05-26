@@ -1,0 +1,8 @@
+Goals:
+- Input form
+  - Add promo code and calculate the discounts
+- Color Coded Calendar
+- Group starting in teh next 90 days
+- Room Availability
+
+- Tasks and notifications
