@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FaHome,
   FaBuilding,
@@ -12,6 +12,7 @@ import {
   FaTable,
   FaSyncAlt,
 } from "react-icons/fa";
+import ExcelJS from "exceljs";
 
 
 const monthNames = [
@@ -177,17 +178,222 @@ function normalizeInquiry(inquiry, index) {
     phone: inquiry.phone || "No phone provided",
     startDate: inquiry.startDate || "",
     endDate: inquiry.endDate || "",
-    status: inquiry.status || "Inquiry",
+    desiredDatesText: inquiry.desiredDatesText || inquiry.desiredDates || "",
     attendeeCount: inquiry.attendeeCount || inquiry.groupSize || "",
     retreatType: inquiry.retreatType || "",
     promoCode: inquiry.promoCode || "",
     notes: inquiry.notes || inquiry.message || "",
+    waitlist: inquiry.waitlist || "No",
+    status: inquiry.status || "Inquiry",
     submittedAt: inquiry.submittedAt || "",
+  };
+}
+
+function readSpreadsheetCell(row, possibleNames) {
+  for (const name of possibleNames) {
+    if (row[name] !== undefined && row[name] !== null && row[name] !== "") {
+      return row[name];
+    }
+  }
+
+  return "";
+}
+
+function cleanExcelCellValue(value) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (typeof value === "object") {
+    if (value.text) {
+      return value.text;
+    }
+
+    if (value.result) {
+      return value.result;
+    }
+
+    if (Array.isArray(value.richText)) {
+      return value.richText.map((item) => item.text).join("");
+    }
+  }
+
+  return value;
+}
+
+function formatExcelDateValue(value) {
+  if (!value) {
+    return "";
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  if (typeof value === "number") {
+    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+    const date = new Date(excelEpoch.getTime() + value * 86400000);
+
+    return date.toISOString().slice(0, 10);
+  }
+
+  const text = String(value).trim();
+
+  const isoMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+
+  const slashMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+
+  if (slashMatch) {
+    let [, month, day, year] = slashMatch;
+
+    if (year.length === 2) {
+      year = `20${year}`;
+    }
+
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+
+  const date = new Date(text);
+
+  if (!Number.isNaN(date.getTime())) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  return "";
+}
+
+function formatExcelSubmittedAt(value) {
+  const dateOnly = formatExcelDateValue(value);
+
+  if (!dateOnly) {
+    return new Date().toISOString();
+  }
+
+  return `${dateOnly}T00:00:00`;
+}
+
+function parseDesiredDateRange(value) {
+  if (value instanceof Date || typeof value === "number") {
+    const singleDate = formatExcelDateValue(value);
+
+    return {
+      startDate: singleDate,
+      endDate: singleDate,
+      desiredDatesText: singleDate,
+    };
+  }
+
+  const desiredDateText = String(value || "").trim();
+
+  if (!desiredDateText) {
+    return {
+      startDate: "",
+      endDate: "",
+      desiredDatesText: "",
+    };
+  }
+
+  const dateMatches =
+    desiredDateText.match(
+      /\b(?:\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{1,2}-\d{1,2})\b/g
+    ) || [];
+
+  const startDate = formatExcelDateValue(dateMatches[0]);
+  const endDate = formatExcelDateValue(dateMatches[1]);
+
+  return {
+    startDate,
+    endDate: endDate || startDate,
+    desiredDatesText: desiredDateText,
+  };
+}
+
+function normalizeWaitlistValue(value) {
+  const text = String(value || "").trim().toLowerCase();
+
+  if (["yes", "y", "true", "waitlist", "waitlisted"].includes(text)) {
+    return "Yes";
+  }
+
+  return "No";
+}
+
+function normalizeImportedSpreadsheetRow(row, index) {
+  const submittedDate = readSpreadsheetCell(row, ["Date"]);
+  const contactName = readSpreadsheetCell(row, ["Contact Name"]);
+  const email = readSpreadsheetCell(row, ["Email Address", "Email"]);
+  const phone = readSpreadsheetCell(row, ["Phone Number", "Phone"]);
+  const guestGroupName = readSpreadsheetCell(row, [
+    "Guest Group Name",
+    "Group Name",
+    "Organization",
+  ]);
+  const size = readSpreadsheetCell(row, ["Size", "Group Size"]);
+  const desiredDates = readSpreadsheetCell(row, ["Desired Dates"]);
+  const additionalNotes = readSpreadsheetCell(row, [
+    "Additional Notes",
+    "Notes",
+    "Message",
+  ]);
+  const waitlist = readSpreadsheetCell(row, ["Waitlist or No", "Waitlist"]);
+
+  const rowHasData =
+    contactName ||
+    email ||
+    phone ||
+    guestGroupName ||
+    size ||
+    desiredDates ||
+    additionalNotes ||
+    waitlist;
+
+  if (!rowHasData) {
+    return null;
+  }
+
+  const parsedDates = parseDesiredDateRange(desiredDates);
+
+  return {
+    id: `excel-import-${Date.now()}-${index}`,
+    submittedAt: formatExcelSubmittedAt(submittedDate),
+    name: String(contactName || "").trim(),
+    contactName: String(contactName || "").trim(),
+    organizationName: String(guestGroupName || "").trim(),
+    email: String(email || "").trim(),
+    phone: String(phone || "").trim(),
+    attendeeCount: String(size || "").trim(),
+    groupSize: String(size || "").trim(),
+    startDate: parsedDates.startDate,
+    endDate: parsedDates.endDate,
+    desiredDatesText: parsedDates.desiredDatesText,
+    notes: String(additionalNotes || "").trim(),
+    waitlist: normalizeWaitlistValue(waitlist),
+    status: "Inquiry",
+    retreatType: "",
+    promoCode: "",
   };
 }
 
 export default function Dashboard() {
   const today = new Date();
+  const importFileInputRef = useRef(null);
 
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
@@ -234,6 +440,153 @@ export default function Dashboard() {
   const inquiriesWithPromoCodes = inquiryBookings.filter(
     (inquiry) => inquiry.promoCode.trim() !== ""
   );
+
+  const handleImportSpreadsheet = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const fileData = await file.arrayBuffer();
+
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(fileData);
+
+      const worksheet = workbook.worksheets[0];
+
+      if (!worksheet) {
+        alert("No worksheet was found in that Excel file.");
+        return;
+      }
+
+      const headerRow = worksheet.getRow(1);
+      const headers = {};
+
+      headerRow.eachCell((cell, columnNumber) => {
+        const headerName = String(cleanExcelCellValue(cell.value)).trim();
+
+        if (headerName) {
+          headers[headerName] = columnNumber;
+        }
+      });
+
+      const spreadsheetRows = [];
+
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) {
+          return;
+        }
+
+        const rowObject = {};
+
+        Object.entries(headers).forEach(([headerName, columnNumber]) => {
+          rowObject[headerName] = cleanExcelCellValue(
+            row.getCell(columnNumber).value
+          );
+        });
+
+        spreadsheetRows.push(rowObject);
+      });
+
+      const importedInquiries = spreadsheetRows
+        .map((row, index) => normalizeImportedSpreadsheetRow(row, index))
+        .filter(Boolean);
+
+      if (importedInquiries.length === 0) {
+        alert("No valid booking rows were found in that spreadsheet.");
+        return;
+      }
+
+      const nextInquiries = [...publicInquiries, ...importedInquiries];
+
+      localStorage.setItem(
+        "toahNipiPublicInquiries",
+        JSON.stringify(nextInquiries)
+      );
+
+      setPublicInquiries(nextInquiries);
+
+      alert(`Imported ${importedInquiries.length} booking inquiries.`);
+    } catch (error) {
+      console.error("Could not import spreadsheet:", error);
+      alert("Sorry, that spreadsheet could not be imported.");
+    } finally {
+      event.target.value = "";
+    }
+  };
+
+  const exportInquiriesToSpreadsheet = async () => {
+    if (inquiryBookings.length === 0) {
+      alert("There are no inquiries to export yet.");
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Booking Inquiries");
+
+    worksheet.columns = [
+      { header: "Date", key: "date", width: 14 },
+      { header: "Contact Name", key: "contactName", width: 24 },
+      { header: "Email Address", key: "email", width: 30 },
+      { header: "Phone Number", key: "phone", width: 18 },
+      { header: "Guest Group Name", key: "guestGroupName", width: 30 },
+      { header: "Size", key: "size", width: 10 },
+      { header: "Desired Dates", key: "desiredDates", width: 28 },
+      { header: "Additional Notes", key: "additionalNotes", width: 44 },
+      { header: "Waitlist or No", key: "waitlist", width: 16 },
+    ];
+
+    inquiryBookings.forEach((inquiry) => {
+      worksheet.addRow({
+        date: formatSubmittedDate(inquiry.submittedAt),
+        contactName: inquiry.contactName,
+        email: inquiry.email === "No email provided" ? "" : inquiry.email,
+        phone: inquiry.phone === "No phone provided" ? "" : inquiry.phone,
+        guestGroupName: inquiry.organizationName,
+        size: inquiry.attendeeCount || "",
+        desiredDates:
+          inquiry.desiredDatesText ||
+          (inquiry.startDate || inquiry.endDate
+            ? formatDateRange(inquiry.startDate, inquiry.endDate)
+            : ""),
+        additionalNotes: inquiry.notes || "",
+        waitlist: inquiry.waitlist || "No",
+      });
+    });
+
+    worksheet.getRow(1).font = {
+      bold: true,
+    };
+
+    worksheet.getRow(1).height = 22;
+
+    worksheet.eachRow((row) => {
+      row.alignment = {
+        vertical: "top",
+        wrapText: true,
+      };
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "toah-nipi-booking-inquiries.xlsx";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+  };
 
   const goToPreviousMonth = () => {
     if (selectedMonth === 0) {
@@ -316,14 +669,42 @@ export default function Dashboard() {
             <h1>Dashboard</h1>
           </div>
 
-          <button
-            className="primary-dashboard-button"
-            type="button"
-            onClick={refreshInquiries}
-          >
-            <FaSyncAlt />
-            Refresh Inquiries
-          </button>
+          <div className="dashboard-actions">
+            <input
+              className="dashboard-file-input"
+              ref={importFileInputRef}
+              type="file"
+              accept=".xlsx"
+              onChange={handleImportSpreadsheet}
+            />
+
+            <button
+              className="secondary-dashboard-button"
+              type="button"
+              onClick={() => importFileInputRef.current?.click()}
+            >
+              <FaPlus />
+              Import Excel
+            </button>
+
+            <button
+              className="secondary-dashboard-button"
+              type="button"
+              onClick={exportInquiriesToSpreadsheet}
+            >
+              <FaTable />
+              Export Excel
+            </button>
+
+            <button
+              className="primary-dashboard-button"
+              type="button"
+              onClick={refreshInquiries}
+            >
+              <FaSyncAlt />
+              Refresh Inquiries
+            </button>
+          </div>
         </header>
 
         <section className="dashboard-stats-grid">
@@ -357,7 +738,7 @@ export default function Dashboard() {
             <div>
               <h2>Submitted Booking Inquiries</h2>
               <p>
-                These are only the inquiries submitted through the public form.
+                {/* These are only the inquiries submitted through the public form. */}
               </p>
             </div>
           </div>
@@ -375,6 +756,7 @@ export default function Dashboard() {
                     <th>Group Size</th>
                     <th>Retreat Type</th>
                     <th>Promo Code</th>
+                    <th>Waitlist</th>
                     <th>Submitted</th>
                   </tr>
                 </thead>
@@ -396,6 +778,7 @@ export default function Dashboard() {
                       <td>{inquiry.attendeeCount || "—"}</td>
                       <td>{inquiry.retreatType || "—"}</td>
                       <td>{inquiry.promoCode || "—"}</td>
+                      <td>{inquiry.waitlist || "No"}</td>
                       <td>{formatSubmittedDate(inquiry.submittedAt)}</td>
                     </tr>
                   ))}

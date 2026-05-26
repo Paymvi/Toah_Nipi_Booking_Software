@@ -838,3 +838,17 @@ textarea {
 .legend-inquiry {
   background: #d5aa3f;
 }
+
+/*  */
+
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dashboard-file-input {
+  display: none;
+}
