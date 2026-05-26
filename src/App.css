@@ -1331,3 +1331,210 @@ textarea {
     font-size: 0.64rem;
   }
 }
+
+
+/*  */
+
+/* Calendar event hover popup */
+
+.calendar-span-event {
+  overflow: visible;
+  cursor: default;
+}
+
+.calendar-span-event > span {
+  pointer-events: none;
+}
+
+.calendar-event-tooltip {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 10px);
+  z-index: 50;
+
+  width: min(280px, 72vw);
+  padding: 14px;
+
+  background: #ffffff;
+  border: 1px solid #e1e5ec;
+  border-radius: 14px;
+  box-shadow: 0 18px 38px rgba(28, 35, 52, 0.18);
+
+  color: #2f3240;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  pointer-events: none;
+
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease,
+    visibility 140ms ease;
+}
+
+.calendar-tooltip-align-right {
+  left: auto;
+  right: 0;
+}
+
+.calendar-span-event:hover .calendar-event-tooltip,
+.calendar-span-event:focus .calendar-event-tooltip,
+.calendar-span-event:focus-within .calendar-event-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.calendar-event-tooltip::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 18px;
+
+  width: 12px;
+  height: 12px;
+
+  background: #ffffff;
+  border-left: 1px solid #e1e5ec;
+  border-top: 1px solid #e1e5ec;
+  transform: rotate(45deg);
+}
+
+.calendar-tooltip-align-right::before {
+  left: auto;
+  right: 18px;
+}
+
+.calendar-tooltip-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.calendar-tooltip-header strong {
+  min-width: 0;
+  color: #242735;
+  font-size: 0.92rem;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.calendar-tooltip-status {
+  flex: 0 0 auto;
+  border-left: 0;
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.calendar-event-tooltip p {
+  margin: 0 0 12px;
+  color: #4f5564;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.calendar-event-tooltip dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.calendar-event-tooltip dl div {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 10px;
+}
+
+.calendar-event-tooltip dt {
+  color: #8a90a0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.calendar-event-tooltip dd {
+  margin: 0;
+  color: #3f4351;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* Tooltip status colors */
+
+.calendar-tooltip-status.calendar-event-green {
+  background: #edf4ef;
+  color: #2f6f4f;
+}
+
+.calendar-tooltip-status.calendar-event-blue {
+  background: #eef3fb;
+  color: #4c65a9;
+}
+
+.calendar-tooltip-status.calendar-event-gold {
+  background: #fbf5e4;
+  color: #956410;
+}
+
+.calendar-tooltip-status.calendar-event-purple {
+  background: #f0edfa;
+  color: #443a9c;
+}
+
+.calendar-tooltip-status.calendar-event-teal {
+  background: #edf6f5;
+  color: #377d7a;
+}
+
+.calendar-tooltip-status.calendar-event-pink {
+  background: #fbf0f3;
+  color: #a65368;
+}
+
+
+/* Make calendar hover popups appear above the calendar/card */
+
+.dashboard-main {
+  overflow: visible;
+}
+
+.calendar-card,
+.calendar-view-card {
+  overflow: visible;
+}
+
+.calendar-grid-span-mode,
+.calendar-grid-preview-span,
+.calendar-week-row,
+.calendar-week-row-preview {
+  overflow: visible;
+}
+
+.calendar-week-row:hover,
+.calendar-week-row-preview:hover {
+  z-index: 500;
+}
+
+.calendar-span-event,
+.calendar-span-event-large,
+.calendar-span-event-preview {
+  overflow: visible !important;
+}
+
+.calendar-span-event:hover,
+.calendar-span-event:focus,
+.calendar-span-event:focus-within {
+  z-index: 1000;
+}
+
+.calendar-event-tooltip {
+  z-index: 9999;
+}

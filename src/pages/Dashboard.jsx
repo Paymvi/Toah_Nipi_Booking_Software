@@ -741,10 +741,10 @@ function BookingCalendar({
                         : "calendar-span-continues-after"
                     }`}
                     key={`${segment.inquiry.id}-week-${weekIndex}`}
-                    title={`${segment.inquiry.organizationName} — ${formatDateRange(
-                      segment.inquiry.startDate,
-                      segment.inquiry.endDate
-                    )}`}
+                    tabIndex={0}
+                    aria-label={`${segment.inquiry.organizationName}, ${
+                      segment.inquiry.status
+                    }, ${formatDateRange(segment.inquiry.startDate, segment.inquiry.endDate)}`}
                     style={{
                       "--event-start-column": segment.startColumn,
                       "--event-span-days": segment.spanDays,
@@ -753,6 +753,43 @@ function BookingCalendar({
                   >
                     <span>{segment.inquiry.organizationName}</span>
                     <i />
+
+                    <div
+                      className={`calendar-event-tooltip ${
+                        segment.startColumn >= 5 ? "calendar-tooltip-align-right" : ""
+                      }`}
+                    >
+                      <div className="calendar-tooltip-header">
+                        <strong>{segment.inquiry.organizationName}</strong>
+                        <span className={`calendar-tooltip-status ${colorClass}`}>
+                          {segment.inquiry.status}
+                        </span>
+                      </div>
+
+                      <p>{formatDateRange(segment.inquiry.startDate, segment.inquiry.endDate)}</p>
+
+                      <dl>
+                        <div>
+                          <dt>Type</dt>
+                          <dd>{segment.inquiry.retreatType || "No retreat type"}</dd>
+                        </div>
+
+                        <div>
+                          <dt>Guests</dt>
+                          <dd>{segment.inquiry.attendeeCount || "No group size"}</dd>
+                        </div>
+
+                        <div>
+                          <dt>Contact</dt>
+                          <dd>{segment.inquiry.contactName || "No contact name"}</dd>
+                        </div>
+
+                        <div>
+                          <dt>Room</dt>
+                          <dd>{segment.inquiry.roomName || "Unassigned"}</dd>
+                        </div>
+                      </dl>
+                    </div>
                   </div>
                 );
               })}
