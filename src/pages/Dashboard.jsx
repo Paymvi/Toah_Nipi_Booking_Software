@@ -664,20 +664,21 @@ function getWeekEventSegments({
 
 
 function BookingCalendar({
-  calendarCells,
-  datedInquiries,
-  selectedYear,
-  selectedMonth,
-  getCalendarEventColor,
-  isLarge = false,
-}) {
-  const maxVisibleEvents = 2;
-
-  if (isLarge) {
+    calendarCells,
+    datedInquiries,
+    selectedYear,
+    selectedMonth,
+    getCalendarEventColor,
+    isLarge = false,
+  }) {
     const calendarWeeks = getCalendarWeeks(calendarCells);
 
     return (
-      <div className="calendar-grid-large calendar-grid-span-mode">
+      <div
+        className={`calendar-grid-span-mode ${
+          isLarge ? "calendar-grid-large" : "calendar-grid-preview-span"
+        }`}
+      >
         {["Su", "M", "Tu", "W", "Th", "F", "Sa"].map((day) => (
           <div className="calendar-weekday" key={day}>
             {day}
@@ -699,7 +700,9 @@ function BookingCalendar({
 
           return (
             <div
-              className="calendar-week-row"
+              className={`calendar-week-row ${
+                isLarge ? "calendar-week-row-large" : "calendar-week-row-preview"
+              }`}
               key={`week-${weekIndex}`}
               style={{
                 "--calendar-event-row-count": eventRowCount,
@@ -707,9 +710,9 @@ function BookingCalendar({
             >
               {week.map((day, dayIndex) => (
                 <div
-                  className={`calendar-cell calendar-cell-large ${
-                    !day ? "calendar-cell-empty" : ""
-                  }`}
+                  className={`calendar-cell ${
+                    isLarge ? "calendar-cell-large" : ""
+                  } ${!day ? "calendar-cell-empty" : ""}`}
                   key={`week-${weekIndex}-day-${dayIndex}`}
                   style={{
                     gridColumn: dayIndex + 1,
@@ -720,16 +723,22 @@ function BookingCalendar({
               ))}
 
               {weekSegments.map((segment) => {
-                const colorClass = getCalendarEventColor(
-                  segment.inquiry.status
-                );
+                const colorClass = getCalendarEventColor(segment.inquiry.status);
 
                 return (
                   <div
-                    className={`calendar-span-event ${colorClass} ${
-                      segment.startsHere ? "calendar-span-start" : "calendar-span-continues-before"
+                    className={`calendar-span-event ${
+                      isLarge
+                        ? "calendar-span-event-large"
+                        : "calendar-span-event-preview"
+                    } ${colorClass} ${
+                      segment.startsHere
+                        ? "calendar-span-start"
+                        : "calendar-span-continues-before"
                     } ${
-                      segment.endsHere ? "calendar-span-end" : "calendar-span-continues-after"
+                      segment.endsHere
+                        ? "calendar-span-end"
+                        : "calendar-span-continues-after"
                     }`}
                     key={`${segment.inquiry.id}-week-${weekIndex}`}
                     title={`${segment.inquiry.organizationName} — ${formatDateRange(
@@ -753,49 +762,6 @@ function BookingCalendar({
       </div>
     );
   }
-
-  return (
-    <div className="calendar-grid">
-      {["Su", "M", "Tu", "W", "Th", "F", "Sa"].map((day) => (
-        <div className="calendar-weekday" key={day}>
-          {day}
-        </div>
-      ))}
-
-      {calendarCells.map((day, index) => {
-        const inquiriesForDay = day
-          ? datedInquiries.filter((inquiry) =>
-              inquiryTouchesDay(inquiry, selectedYear, selectedMonth, day)
-            )
-          : [];
-
-        return (
-          <div
-            className={`calendar-cell ${!day ? "calendar-cell-empty" : ""}`}
-            key={`${day}-${index}`}
-          >
-            {day && <span className="calendar-day-number">{day}</span>}
-
-            <div className="calendar-events">
-              {inquiriesForDay.slice(0, maxVisibleEvents).map((inquiry) => (
-                <div
-                  className={`calendar-event ${getCalendarEventColor(
-                    inquiry.status
-                  )}`}
-                  key={inquiry.id}
-                  title={`${inquiry.organizationName} — ${inquiry.status}`}
-                >
-                  <span>{inquiry.organizationName}</span>
-                  <i />
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default function Dashboard() {
   const today = new Date();
