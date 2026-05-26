@@ -852,3 +852,24 @@ textarea {
 .dashboard-file-input {
   display: none;
 }
+
+/*  */
+
+.danger-dashboard-button {
+  border: none;
+  border-radius: 999px;
+  padding: 11px 18px;
+  background: #9f2f2f;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.danger-dashboard-button:hover {
+  background: #7f2323;
+  transform: translateY(-1px);
+}

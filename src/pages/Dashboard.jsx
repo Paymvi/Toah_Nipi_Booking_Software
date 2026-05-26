@@ -554,6 +554,19 @@ export default function Dashboard() {
     setPublicInquiries(getSavedInquiries());
   };
 
+  const deleteAllInquiries = () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete all inquiries and imported bookings? This cannot be undone."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    localStorage.removeItem("toahNipiPublicInquiries");
+    setPublicInquiries([]);
+  };
+
   const importSpreadsheet = async ({
     event,
     importTypeLabel,
@@ -948,6 +961,15 @@ const handleImportMasterSpreadsheet = (event) => {
               <FaSyncAlt />
               Refresh Inquiries
             </button>
+
+            <button
+              className="danger-dashboard-button"
+              type="button"
+              onClick={deleteAllInquiries}
+            >
+              Delete All
+            </button>
+            
           </div>
 
           
