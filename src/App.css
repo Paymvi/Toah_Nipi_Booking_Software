@@ -1538,3 +1538,284 @@ textarea {
 .calendar-event-tooltip {
   z-index: 9999;
 }
+
+
+
+
+
+
+
+
+
+/* Activity Location Availability */
+
+.activity-availability-card {
+  margin-top: 26px;
+  overflow: visible;
+}
+
+.activity-availability-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 24px 24px 12px;
+}
+
+.activity-availability-header h2 {
+  margin: 0;
+  color: #2d303c;
+  font-size: 1.28rem;
+  letter-spacing: -0.02em;
+}
+
+.activity-availability-header p {
+  margin: 6px 0 0;
+  color: #8a90a0;
+  font-size: 0.92rem;
+}
+
+.activity-availability-toolbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 24px 14px;
+}
+
+.activity-availability-toolbar button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #dde1ea;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #443a9c;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.activity-availability-toolbar button:hover {
+  background: #f6f5ff;
+}
+
+.activity-availability-toolbar strong {
+  color: #2f3240;
+  font-size: 0.95rem;
+}
+
+.activity-availability-scroll {
+  padding: 0 24px 24px;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.activity-availability-grid {
+  display: grid;
+  min-width: 1180px;
+  border: 1px solid #e1e5ec;
+  background: #ffffff;
+}
+
+.activity-location-heading,
+.activity-location-spacer,
+.activity-weekday-cell,
+.activity-day-number-cell,
+.activity-location-name,
+.activity-day-cell {
+  border-right: 1px solid #e1e5ec;
+  border-bottom: 1px solid #e1e5ec;
+}
+
+.activity-location-heading {
+  grid-row: span 2;
+  position: sticky;
+  left: 0;
+  z-index: 6;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 14px;
+  background: #ffffff;
+  color: #4f5564;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.activity-location-spacer {
+  display: none;
+}
+
+.activity-weekday-cell,
+.activity-day-number-cell {
+  min-height: 30px;
+  display: grid;
+  place-items: center;
+
+  background: #fbfcfd;
+  color: #7a8090;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.activity-day-number-cell {
+  background: #ffffff;
+  color: #4f5564;
+}
+
+.activity-location-name {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+
+  padding: 0 14px;
+  background: #ffffff;
+  color: #4f5564;
+  font-size: 0.84rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.activity-day-cell {
+  position: relative;
+  min-height: 32px;
+  background: #ffffff;
+}
+
+.activity-day-booked {
+  cursor: default;
+}
+
+.activity-day-booked.calendar-event-green {
+  background: #2f6f5f;
+}
+
+.activity-day-booked.calendar-event-purple {
+  background: #4f46a5;
+}
+
+.activity-day-booked.calendar-event-blue {
+  background: #4c65a9;
+}
+
+.activity-day-booked.calendar-event-teal {
+  background: #377d7a;
+}
+
+.activity-day-booked.calendar-event-pink {
+  background: #c87b8e;
+}
+
+.activity-day-booked.calendar-event-gold {
+  background: #d5aa3f;
+}
+
+.activity-day-continues-before {
+  border-left-color: transparent;
+}
+
+.activity-day-continues-after {
+  border-right-color: transparent;
+}
+
+.activity-availability-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 9999;
+
+  width: 250px;
+  padding: 12px;
+
+  background: #ffffff;
+  border: 1px solid #e1e5ec;
+  border-radius: 13px;
+  box-shadow: 0 16px 34px rgba(28, 35, 52, 0.18);
+
+  color: #2f3240;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(4px);
+  pointer-events: none;
+
+  transition:
+    opacity 140ms ease,
+    visibility 140ms ease,
+    transform 140ms ease;
+}
+
+.activity-day-booked:hover .activity-availability-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.activity-availability-tooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+
+  width: 12px;
+  height: 12px;
+
+  background: #ffffff;
+  border-right: 1px solid #e1e5ec;
+  border-bottom: 1px solid #e1e5ec;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.activity-availability-tooltip strong {
+  display: block;
+  color: #242735;
+  font-size: 0.88rem;
+  line-height: 1.25;
+}
+
+.activity-availability-tooltip span {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 7px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #f0edfa;
+  color: #443a9c;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.activity-availability-tooltip p {
+  margin: 9px 0 4px;
+  color: #4f5564;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.activity-availability-tooltip small {
+  display: block;
+  color: #8c93a3;
+  font-size: 0.76rem;
+}
+
+.activity-availability-tooltip em {
+  display: block;
+  margin-top: 8px;
+  color: #8c93a3;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
+@media (max-width: 720px) {
+  .activity-availability-header {
+    flex-direction: column;
+  }
+
+  .activity-availability-grid {
+    min-width: 980px;
+  }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   FaHome,
   FaBuilding,
@@ -57,6 +57,49 @@ const sidebarSections = [
       { label: "User Administration", icon: FaUserShield },
       { label: "Custom Fields", icon: FaTable },
     ],
+  },
+];
+
+const activityLocations = [
+  {
+    name: "Auditorium",
+    aliases: ["Auditorium", "Spencer Auditorium"],
+  },
+  {
+    name: "Dining Hall",
+    aliases: ["Dining Hall", "Dining"],
+  },
+  {
+    name: "Great Room",
+    aliases: ["Great Room"],
+  },
+  {
+    name: "Main Lodge",
+    aliases: ["Main Lodge", "Lodge"],
+  },
+  {
+    name: "Nature Center",
+    aliases: ["Nature Center"],
+  },
+  {
+    name: "Play Fields",
+    aliases: ["Play Fields", "Field", "Fields"],
+  },
+  {
+    name: "Pool",
+    aliases: ["Pool"],
+  },
+  {
+    name: "Sledding Hill",
+    aliases: ["Sledding Hill"],
+  },
+  {
+    name: "Soccer Fields",
+    aliases: ["Soccer Fields", "Soccer Field"],
+  },
+  {
+    name: "Waterfront",
+    aliases: ["Waterfront", "Pond", "Lake"],
   },
 ];
 
@@ -662,6 +705,64 @@ function getWeekEventSegments({
   });
 }
 
+function getAvailabilityDays(selectedYear, selectedMonth) {
+  const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
+
+  return Array.from({ length: daysInMonth }, (_, index) => index + 1);
+}
+
+function getShortWeekday(selectedYear, selectedMonth, day) {
+  return new Date(selectedYear, selectedMonth, day).toLocaleDateString("en-US", {
+    weekday: "short",
+  });
+}
+
+function bookingUsesActivityLocation(inquiry, location) {
+  const searchableText = [
+    inquiry.roomName,
+    inquiry.buildingsRooms,
+    inquiry.activities,
+    inquiry.notes,
+    inquiry.needToKnow,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return location.aliases.some((alias) =>
+    searchableText.includes(alias.toLowerCase())
+  );
+}
+
+function getActivityBookingsForDay({
+  location,
+  day,
+  datedInquiries,
+  selectedYear,
+  selectedMonth,
+}) {
+  return datedInquiries.filter(
+    (inquiry) =>
+      inquiryTouchesDay(inquiry, selectedYear, selectedMonth, day) &&
+      bookingUsesActivityLocation(inquiry, location)
+  );
+}
+
+function bookingContinuesBeforeDay(inquiry, selectedYear, selectedMonth, day) {
+  const currentDate = new Date(selectedYear, selectedMonth, day);
+  const startDate = getLocalDate(inquiry.startDate);
+
+  return startDate && startDate < currentDate;
+}
+
+function bookingContinuesAfterDay(inquiry, selectedYear, selectedMonth, day) {
+  const currentDate = new Date(selectedYear, selectedMonth, day);
+  const endDate = inquiry.endDate
+    ? getLocalDate(inquiry.endDate)
+    : getLocalDate(inquiry.startDate);
+
+  return endDate && endDate > currentDate;
+}
 
 function BookingCalendar({
     calendarCells,
@@ -799,6 +900,148 @@ function BookingCalendar({
       </div>
     );
   }
+
+function ActivityLocationAvailability({
+  datedInquiries,
+  selectedYear,
+  selectedMonth,
+  goToPreviousMonth,
+  goToNextMonth,
+  getCalendarEventColor,
+}) {
+  const availabilityDays = getAvailabilityDays(selectedYear, selectedMonth);
+
+  return (
+    <section className="dashboard-card activity-availability-card">
+      <div className="activity-availability-header">
+        <div>
+          <p className="dashboard-eyebrow">Availability</p>
+          <h2>Activity Location Availability</h2>
+          <p>
+            Monthly view of activity spaces based on imported bookings and
+            assigned rooms or activities.
+          </p>
+        </div>
+
+        <button className="secondary-dashboard-button" type="button">
+          Site Filter
+        </button>
+      </div>
+
+      <div className="activity-availability-toolbar">
+        <button type="button" onClick={goToPreviousMonth}>
+          «
+        </button>
+
+        <strong>
+          {monthNames[selectedMonth]} {selectedYear}
+        </strong>
+
+        <button type="button" onClick={goToNextMonth}>
+          »
+        </button>
+      </div>
+
+      <div className="activity-availability-scroll">
+        <div
+          className="activity-availability-grid"
+          style={{
+            gridTemplateColumns: `210px repeat(${availabilityDays.length}, minmax(36px, 1fr))`,
+          }}
+        >
+          <div className="activity-location-heading">Activity Location</div>
+
+          {availabilityDays.map((day) => (
+            <div className="activity-weekday-cell" key={`weekday-${day}`}>
+              {getShortWeekday(selectedYear, selectedMonth, day).slice(0, 1)}
+            </div>
+          ))}
+
+          <div className="activity-location-spacer" />
+
+          {availabilityDays.map((day) => (
+            <div className="activity-day-number-cell" key={`day-${day}`}>
+              {day}
+            </div>
+          ))}
+
+          {activityLocations.map((location) => (
+            <React.Fragment key={location.name}>
+              <div className="activity-location-name">{location.name}</div>
+
+              {availabilityDays.map((day) => {
+                const bookingsForDay = getActivityBookingsForDay({
+                  location,
+                  day,
+                  datedInquiries,
+                  selectedYear,
+                  selectedMonth,
+                });
+
+                const firstBooking = bookingsForDay[0];
+                const colorClass = firstBooking
+                  ? getCalendarEventColor(firstBooking.status)
+                  : "";
+
+                const continuesBefore =
+                  firstBooking &&
+                  bookingContinuesBeforeDay(
+                    firstBooking,
+                    selectedYear,
+                    selectedMonth,
+                    day
+                  );
+
+                const continuesAfter =
+                  firstBooking &&
+                  bookingContinuesAfterDay(
+                    firstBooking,
+                    selectedYear,
+                    selectedMonth,
+                    day
+                  );
+
+                return (
+                  <div
+                    className={`activity-day-cell ${
+                      firstBooking ? `activity-day-booked ${colorClass}` : ""
+                    } ${
+                      continuesBefore ? "activity-day-continues-before" : ""
+                    } ${continuesAfter ? "activity-day-continues-after" : ""}`}
+                    key={`${location.name}-${day}`}
+                  >
+                    {firstBooking && (
+                      <div className="activity-availability-tooltip">
+                        <strong>{firstBooking.organizationName}</strong>
+                        <span>{firstBooking.status}</span>
+
+                        <p>
+                          {formatDateRange(
+                            firstBooking.startDate,
+                            firstBooking.endDate
+                          )}
+                        </p>
+
+                        <small>
+                          {firstBooking.retreatType || "No retreat type"} ·{" "}
+                          {firstBooking.attendeeCount || "No group size"} guests
+                        </small>
+
+                        {bookingsForDay.length > 1 && (
+                          <em>+{bookingsForDay.length - 1} more booking</em>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function Dashboard() {
   const today = new Date();
@@ -1683,6 +1926,16 @@ const handleImportMasterSpreadsheet = (event) => {
         </section>
           </>
         )}
+
+
+        <ActivityLocationAvailability
+          datedInquiries={datedInquiries}
+          selectedYear={selectedYear}
+          selectedMonth={selectedMonth}
+          goToPreviousMonth={goToPreviousMonth}
+          goToNextMonth={goToNextMonth}
+          getCalendarEventColor={getCalendarEventColor}
+        />
       </section>
     </main>
   );
