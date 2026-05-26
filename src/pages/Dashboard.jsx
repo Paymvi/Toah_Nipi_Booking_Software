@@ -538,6 +538,130 @@ function normalizeMasterSpreadsheetRow(row, index) {
 }
 
 
+function getCalendarWeeks(calendarCells) {
+  const weeks = [];
+
+  for (let i = 0; i < calendarCells.length; i += 7) {
+    weeks.push(calendarCells.slice(i, i + 7));
+  }
+
+  return weeks;
+}
+
+function getLocalDate(dateString) {
+  if (!dateString) {
+    return null;
+  }
+
+  return new Date(`${dateString}T00:00:00`);
+}
+
+function addDays(date, amount) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + amount);
+  return nextDate;
+}
+
+function daysBetween(startDate, endDate) {
+  const oneDay = 24 * 60 * 60 * 1000;
+  return Math.round((endDate - startDate) / oneDay);
+}
+
+function maxDate(...dates) {
+  return new Date(Math.max(...dates.map((date) => date.getTime())));
+}
+
+function minDate(...dates) {
+  return new Date(Math.min(...dates.map((date) => date.getTime())));
+}
+
+function datesOverlap(startA, endA, startB, endB) {
+  return startA <= endB && endA >= startB;
+}
+
+function getWeekEventSegments({
+  weekIndex,
+  datedInquiries,
+  selectedYear,
+  selectedMonth,
+}) {
+  const firstDayOffset = new Date(selectedYear, selectedMonth, 1).getDay();
+
+  const weekStart = new Date(
+    selectedYear,
+    selectedMonth,
+    1 - firstDayOffset + weekIndex * 7
+  );
+
+  const weekEnd = addDays(weekStart, 6);
+
+  const monthStart = new Date(selectedYear, selectedMonth, 1);
+  const monthEnd = new Date(selectedYear, selectedMonth + 1, 0);
+
+  const rawSegments = datedInquiries
+    .map((inquiry) => {
+      const eventStart = getLocalDate(inquiry.startDate);
+      const eventEnd = inquiry.endDate
+        ? getLocalDate(inquiry.endDate)
+        : eventStart;
+
+      if (!eventStart || !eventEnd) {
+        return null;
+      }
+
+      if (!datesOverlap(eventStart, eventEnd, weekStart, weekEnd)) {
+        return null;
+      }
+
+      if (!datesOverlap(eventStart, eventEnd, monthStart, monthEnd)) {
+        return null;
+      }
+
+      const segmentStart = maxDate(eventStart, weekStart, monthStart);
+      const segmentEnd = minDate(eventEnd, weekEnd, monthEnd);
+
+      const startColumn = segmentStart.getDay() + 1;
+      const spanDays = daysBetween(segmentStart, segmentEnd) + 1;
+
+      return {
+        inquiry,
+        segmentStart,
+        segmentEnd,
+        startColumn,
+        spanDays,
+        endColumn: startColumn + spanDays - 1,
+        startsHere: segmentStart.getTime() === eventStart.getTime(),
+        endsHere: segmentEnd.getTime() === eventEnd.getTime(),
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      if (a.segmentStart.getTime() !== b.segmentStart.getTime()) {
+        return a.segmentStart - b.segmentStart;
+      }
+
+      return b.spanDays - a.spanDays;
+    });
+
+  const laneEndColumns = [];
+
+  return rawSegments.map((segment) => {
+    const existingLaneIndex = laneEndColumns.findIndex(
+      (endColumn) => segment.startColumn > endColumn
+    );
+
+    const lane =
+      existingLaneIndex === -1 ? laneEndColumns.length : existingLaneIndex;
+
+    laneEndColumns[lane] = segment.endColumn;
+
+    return {
+      ...segment,
+      lane,
+    };
+  });
+}
+
 
 function BookingCalendar({
   calendarCells,
@@ -547,10 +671,91 @@ function BookingCalendar({
   getCalendarEventColor,
   isLarge = false,
 }) {
-  const maxVisibleEvents = isLarge ? 4 : 2;
+  const maxVisibleEvents = 2;
+
+  if (isLarge) {
+    const calendarWeeks = getCalendarWeeks(calendarCells);
+
+    return (
+      <div className="calendar-grid-large calendar-grid-span-mode">
+        {["Su", "M", "Tu", "W", "Th", "F", "Sa"].map((day) => (
+          <div className="calendar-weekday" key={day}>
+            {day}
+          </div>
+        ))}
+
+        {calendarWeeks.map((week, weekIndex) => {
+          const weekSegments = getWeekEventSegments({
+            weekIndex,
+            datedInquiries,
+            selectedYear,
+            selectedMonth,
+          });
+
+          const eventRowCount =
+            weekSegments.length > 0
+              ? Math.max(...weekSegments.map((segment) => segment.lane)) + 1
+              : 1;
+
+          return (
+            <div
+              className="calendar-week-row"
+              key={`week-${weekIndex}`}
+              style={{
+                "--calendar-event-row-count": eventRowCount,
+              }}
+            >
+              {week.map((day, dayIndex) => (
+                <div
+                  className={`calendar-cell calendar-cell-large ${
+                    !day ? "calendar-cell-empty" : ""
+                  }`}
+                  key={`week-${weekIndex}-day-${dayIndex}`}
+                  style={{
+                    gridColumn: dayIndex + 1,
+                  }}
+                >
+                  {day && <span className="calendar-day-number">{day}</span>}
+                </div>
+              ))}
+
+              {weekSegments.map((segment) => {
+                const colorClass = getCalendarEventColor(
+                  segment.inquiry.status
+                );
+
+                return (
+                  <div
+                    className={`calendar-span-event ${colorClass} ${
+                      segment.startsHere ? "calendar-span-start" : "calendar-span-continues-before"
+                    } ${
+                      segment.endsHere ? "calendar-span-end" : "calendar-span-continues-after"
+                    }`}
+                    key={`${segment.inquiry.id}-week-${weekIndex}`}
+                    title={`${segment.inquiry.organizationName} — ${formatDateRange(
+                      segment.inquiry.startDate,
+                      segment.inquiry.endDate
+                    )}`}
+                    style={{
+                      "--event-start-column": segment.startColumn,
+                      "--event-span-days": segment.spanDays,
+                      "--event-lane": segment.lane,
+                    }}
+                  >
+                    <span>{segment.inquiry.organizationName}</span>
+                    <i />
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
-    <div className={`calendar-grid ${isLarge ? "calendar-grid-large" : ""}`}>
+    <div className="calendar-grid">
       {["Su", "M", "Tu", "W", "Th", "F", "Sa"].map((day) => (
         <div className="calendar-weekday" key={day}>
           {day}
@@ -566,9 +771,7 @@ function BookingCalendar({
 
         return (
           <div
-            className={`calendar-cell ${!day ? "calendar-cell-empty" : ""} ${
-              isLarge ? "calendar-cell-large" : ""
-            }`}
+            className={`calendar-cell ${!day ? "calendar-cell-empty" : ""}`}
             key={`${day}-${index}`}
           >
             {day && <span className="calendar-day-number">{day}</span>}
@@ -576,23 +779,16 @@ function BookingCalendar({
             <div className="calendar-events">
               {inquiriesForDay.slice(0, maxVisibleEvents).map((inquiry) => (
                 <div
-                  className={`calendar-event ${
-                    isLarge ? "calendar-event-large" : ""
-                  } ${getCalendarEventColor(inquiry.status)}`}
+                  className={`calendar-event ${getCalendarEventColor(
+                    inquiry.status
+                  )}`}
                   key={inquiry.id}
                   title={`${inquiry.organizationName} — ${inquiry.status}`}
                 >
                   <span>{inquiry.organizationName}</span>
-                  {isLarge && <small>{formatDateRange(inquiry.startDate, inquiry.endDate)}</small>}
                   <i />
                 </div>
               ))}
-
-              {isLarge && inquiriesForDay.length > maxVisibleEvents && (
-                <button className="calendar-more-count" type="button">
-                  +{inquiriesForDay.length - maxVisibleEvents} more
-                </button>
-              )}
             </div>
           </div>
         );
