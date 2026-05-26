@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   FaHome,
   FaBuilding,
@@ -100,6 +100,45 @@ const activityLocations = [
   {
     name: "Waterfront",
     aliases: ["Waterfront", "Pond", "Lake"],
+  },
+];
+
+const defaultRoomRows = [
+  {
+    name: "Hebron",
+    aliases: ["Hebron"],
+  },
+  {
+    name: "Bethel",
+    aliases: ["Bethel"],
+  },
+  {
+    name: "Dothan",
+    aliases: ["Dothan"],
+  },
+  {
+    name: "Guest House",
+    aliases: ["Guest House"],
+  },
+  {
+    name: "Rustic Cottage 1",
+    aliases: ["Rustic Cottage 1", "Cottage 1"],
+  },
+  {
+    name: "Rustic Cottage 2",
+    aliases: ["Rustic Cottage 2", "Cottage 2"],
+  },
+  {
+    name: "Rustic Cottage 3",
+    aliases: ["Rustic Cottage 3", "Cottage 3"],
+  },
+  {
+    name: "Rustic Cottage 4",
+    aliases: ["Rustic Cottage 4", "Cottage 4"],
+  },
+  {
+    name: "Unassigned",
+    aliases: ["Unassigned"],
   },
 ];
 
@@ -705,6 +744,67 @@ function getWeekEventSegments({
   });
 }
 
+
+function splitRoomNames(value) {
+  return String(value || "")
+    .split(/[,;\n]+/g)
+    .map((roomName) => roomName.trim())
+    .filter(Boolean);
+}
+
+function getRoomRowsFromBookings(datedInquiries) {
+  const importedRoomNames = datedInquiries
+    .flatMap((inquiry) => [
+      ...splitRoomNames(inquiry.roomName),
+      ...splitRoomNames(inquiry.buildingsRooms),
+    ])
+    .filter(
+      (roomName) =>
+        roomName &&
+        roomName.toLowerCase() !== "unassigned" &&
+        roomName.toLowerCase() !== "no room"
+    );
+
+  const defaultRoomNames = new Set(
+    defaultRoomRows.map((room) => room.name.toLowerCase())
+  );
+
+  const dynamicRoomRows = [...new Set(importedRoomNames)]
+    .filter((roomName) => !defaultRoomNames.has(roomName.toLowerCase()))
+    .map((roomName) => ({
+      name: roomName,
+      aliases: [roomName],
+    }));
+
+  return [...defaultRoomRows, ...dynamicRoomRows];
+}
+
+function bookingUsesRoom(inquiry, room) {
+  const searchableText = [inquiry.roomName, inquiry.buildingsRooms]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return room.aliases.some((alias) =>
+    searchableText.includes(alias.toLowerCase())
+  );
+}
+
+function getAvailabilityBookingsForDay({
+  row,
+  day,
+  datedInquiries,
+  selectedYear,
+  selectedMonth,
+  matcher,
+}) {
+  return datedInquiries.filter(
+    (inquiry) =>
+      inquiryTouchesDay(inquiry, selectedYear, selectedMonth, day) &&
+      matcher(inquiry, row)
+  );
+}
+
 function getAvailabilityDays(selectedYear, selectedMonth) {
   const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
 
@@ -901,7 +1001,7 @@ function BookingCalendar({
     );
   }
 
-function ActivityLocationAvailability({
+function AvailabilityBoard({
   datedInquiries,
   selectedYear,
   selectedMonth,
@@ -909,26 +1009,65 @@ function ActivityLocationAvailability({
   goToNextMonth,
   getCalendarEventColor,
 }) {
+  const [availabilityView, setAvailabilityView] = useState("activities");
+
   const availabilityDays = getAvailabilityDays(selectedYear, selectedMonth);
+  const roomRows = getRoomRowsFromBookings(datedInquiries);
+
+  const isRoomView = availabilityView === "rooms";
+
+  const rows = isRoomView ? roomRows : activityLocations;
+  const matcher = isRoomView ? bookingUsesRoom : bookingUsesActivityLocation;
 
   return (
-    <section className="dashboard-card activity-availability-card">
-      <div className="activity-availability-header">
+    <section className="dashboard-card availability-card">
+      <div className="availability-header">
         <div>
           <p className="dashboard-eyebrow">Availability</p>
-          <h2>Activity Location Availability</h2>
+          <h2>
+            {isRoomView
+              ? "Room Availability"
+              : "Activity Location Availability"}
+          </h2>
           <p>
-            Monthly view of activity spaces based on imported bookings and
-            assigned rooms or activities.
+            {isRoomView
+              ? "Monthly room usage based on assigned rooms and building fields."
+              : "Monthly activity space usage based on booking rooms, activities, and notes."}
           </p>
         </div>
 
-        <button className="secondary-dashboard-button" type="button">
-          Site Filter
-        </button>
+        <div className="availability-header-actions">
+          <div className="availability-toggle">
+            <button
+              className={availabilityView === "activities" ? "active" : ""}
+              type="button"
+              onClick={() => setAvailabilityView("activities")}
+            >
+              Activity Locations
+            </button>
+
+            <button
+              className={availabilityView === "rooms" ? "active" : ""}
+              type="button"
+              onClick={() => setAvailabilityView("rooms")}
+            >
+              Rooms
+            </button>
+          </div>
+
+          <button className="secondary-dashboard-button" type="button">
+            Site Filter
+          </button>
+
+          {isRoomView && (
+            <button className="secondary-dashboard-button" type="button">
+              Housing Area Filter
+            </button>
+          )}
+        </div>
       </div>
 
-      <div className="activity-availability-toolbar">
+      <div className="availability-toolbar">
         <button type="button" onClick={goToPreviousMonth}>
           «
         </button>
@@ -942,40 +1081,41 @@ function ActivityLocationAvailability({
         </button>
       </div>
 
-      <div className="activity-availability-scroll">
+      <div className="availability-scroll">
         <div
-          className="activity-availability-grid"
+          className="availability-grid"
           style={{
             gridTemplateColumns: `210px repeat(${availabilityDays.length}, minmax(36px, 1fr))`,
           }}
         >
-          <div className="activity-location-heading">Activity Location</div>
+          <div className="availability-row-heading">
+            {isRoomView ? "Room" : "Activity Location"}
+          </div>
 
           {availabilityDays.map((day) => (
-            <div className="activity-weekday-cell" key={`weekday-${day}`}>
+            <div className="availability-weekday-cell" key={`weekday-${day}`}>
               {getShortWeekday(selectedYear, selectedMonth, day).slice(0, 1)}
             </div>
           ))}
 
-          <div className="activity-location-spacer" />
-
           {availabilityDays.map((day) => (
-            <div className="activity-day-number-cell" key={`day-${day}`}>
+            <div className="availability-day-number-cell" key={`day-${day}`}>
               {day}
             </div>
           ))}
 
-          {activityLocations.map((location) => (
-            <React.Fragment key={location.name}>
-              <div className="activity-location-name">{location.name}</div>
+          {rows.map((row) => (
+            <Fragment key={row.name}>
+              <div className="availability-row-name">{row.name}</div>
 
               {availabilityDays.map((day) => {
-                const bookingsForDay = getActivityBookingsForDay({
-                  location,
+                const bookingsForDay = getAvailabilityBookingsForDay({
+                  row,
                   day,
                   datedInquiries,
                   selectedYear,
                   selectedMonth,
+                  matcher,
                 });
 
                 const firstBooking = bookingsForDay[0];
@@ -1003,15 +1143,17 @@ function ActivityLocationAvailability({
 
                 return (
                   <div
-                    className={`activity-day-cell ${
-                      firstBooking ? `activity-day-booked ${colorClass}` : ""
+                    className={`availability-day-cell ${
+                      firstBooking ? `availability-day-booked ${colorClass}` : ""
                     } ${
-                      continuesBefore ? "activity-day-continues-before" : ""
-                    } ${continuesAfter ? "activity-day-continues-after" : ""}`}
-                    key={`${location.name}-${day}`}
+                      continuesBefore ? "availability-day-continues-before" : ""
+                    } ${
+                      continuesAfter ? "availability-day-continues-after" : ""
+                    }`}
+                    key={`${row.name}-${day}`}
                   >
                     {firstBooking && (
-                      <div className="activity-availability-tooltip">
+                      <div className="availability-tooltip">
                         <strong>{firstBooking.organizationName}</strong>
                         <span>{firstBooking.status}</span>
 
@@ -1027,6 +1169,15 @@ function ActivityLocationAvailability({
                           {firstBooking.attendeeCount || "No group size"} guests
                         </small>
 
+                        {isRoomView && (
+                          <small>
+                            Room:{" "}
+                            {firstBooking.roomName ||
+                              firstBooking.buildingsRooms ||
+                              "Unassigned"}
+                          </small>
+                        )}
+
                         {bookingsForDay.length > 1 && (
                           <em>+{bookingsForDay.length - 1} more booking</em>
                         )}
@@ -1035,7 +1186,7 @@ function ActivityLocationAvailability({
                   </div>
                 );
               })}
-            </React.Fragment>
+            </Fragment>
           ))}
         </div>
       </div>
@@ -1928,7 +2079,7 @@ const handleImportMasterSpreadsheet = (event) => {
         )}
 
 
-        <ActivityLocationAvailability
+        <AvailabilityBoard
           datedInquiries={datedInquiries}
           selectedYear={selectedYear}
           selectedMonth={selectedMonth}
