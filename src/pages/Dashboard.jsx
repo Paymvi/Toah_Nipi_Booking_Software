@@ -538,6 +538,69 @@ function normalizeMasterSpreadsheetRow(row, index) {
 }
 
 
+
+function BookingCalendar({
+  calendarCells,
+  datedInquiries,
+  selectedYear,
+  selectedMonth,
+  getCalendarEventColor,
+  isLarge = false,
+}) {
+  const maxVisibleEvents = isLarge ? 4 : 2;
+
+  return (
+    <div className={`calendar-grid ${isLarge ? "calendar-grid-large" : ""}`}>
+      {["Su", "M", "Tu", "W", "Th", "F", "Sa"].map((day) => (
+        <div className="calendar-weekday" key={day}>
+          {day}
+        </div>
+      ))}
+
+      {calendarCells.map((day, index) => {
+        const inquiriesForDay = day
+          ? datedInquiries.filter((inquiry) =>
+              inquiryTouchesDay(inquiry, selectedYear, selectedMonth, day)
+            )
+          : [];
+
+        return (
+          <div
+            className={`calendar-cell ${!day ? "calendar-cell-empty" : ""} ${
+              isLarge ? "calendar-cell-large" : ""
+            }`}
+            key={`${day}-${index}`}
+          >
+            {day && <span className="calendar-day-number">{day}</span>}
+
+            <div className="calendar-events">
+              {inquiriesForDay.slice(0, maxVisibleEvents).map((inquiry) => (
+                <div
+                  className={`calendar-event ${
+                    isLarge ? "calendar-event-large" : ""
+                  } ${getCalendarEventColor(inquiry.status)}`}
+                  key={inquiry.id}
+                  title={`${inquiry.organizationName} — ${inquiry.status}`}
+                >
+                  <span>{inquiry.organizationName}</span>
+                  {isLarge && <small>{formatDateRange(inquiry.startDate, inquiry.endDate)}</small>}
+                  <i />
+                </div>
+              ))}
+
+              {isLarge && inquiriesForDay.length > maxVisibleEvents && (
+                <button className="calendar-more-count" type="button">
+                  +{inquiriesForDay.length - maxVisibleEvents} more
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const today = new Date();
 
@@ -546,6 +609,7 @@ export default function Dashboard() {
 
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+  const [activeView, setActiveView] = useState("Dashboard");
 
   const [isSubmittedInquiriesOpen, setIsSubmittedInquiriesOpen] = useState(true);
 
@@ -748,6 +812,20 @@ const handleImportMasterSpreadsheet = (event) => {
       .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
   }, [inquiryBookings]);
 
+  const selectedMonthInquiries = useMemo(() => {
+    const monthStart = new Date(selectedYear, selectedMonth, 1);
+    const monthEnd = new Date(selectedYear, selectedMonth + 1, 0);
+
+    return datedInquiries.filter((inquiry) => {
+      const startDate = new Date(`${inquiry.startDate}T00:00:00`);
+      const endDate = inquiry.endDate
+        ? new Date(`${inquiry.endDate}T00:00:00`)
+        : startDate;
+
+      return startDate <= monthEnd && endDate >= monthStart;
+    });
+  }, [datedInquiries, selectedMonth, selectedYear]);
+
   const recentInquiries = inquiryBookings.slice(0, 5);
 
   const inquiriesMissingDates = inquiryBookings.filter(
@@ -876,7 +954,13 @@ const handleImportMasterSpreadsheet = (event) => {
           </div>
         </div>
 
-        <button className="sidebar-active-button">
+        <button
+          className={
+            activeView === "Dashboard" ? "sidebar-active-button" : "sidebar-link"
+          }
+          type="button"
+          onClick={() => setActiveView("Dashboard")}
+        >
           <FaHome />
           Dashboard
         </button>
@@ -887,9 +971,21 @@ const handleImportMasterSpreadsheet = (event) => {
 
             {section.items.map((item) => {
               const Icon = item.icon;
+              const isCalendarView = item.label === "Calendar View";
 
               return (
-                <button className="sidebar-link" key={item.label}>
+                <button
+                  className={`sidebar-link ${
+                    activeView === item.label ? "sidebar-link-active" : ""
+                  }`}
+                  key={item.label}
+                  type="button"
+                  onClick={() => {
+                    if (isCalendarView) {
+                      setActiveView("Calendar View");
+                    }
+                  }}
+                >
                   <Icon />
                   <span>{item.label}</span>
 
@@ -909,7 +1005,7 @@ const handleImportMasterSpreadsheet = (event) => {
         <header className="dashboard-topbar">
           <div>
             <p className="dashboard-eyebrow">Internal Booking Software</p>
-            <h1>Dashboard</h1>
+            <h1>{activeView}</h1>
           </div>
 
           <div className="dashboard-actions">
@@ -978,6 +1074,137 @@ const handleImportMasterSpreadsheet = (event) => {
           
         </header>
 
+        {activeView === "Calendar View" ? (
+          <section className="calendar-view-page">
+            <article className="dashboard-card calendar-view-card">
+              <div className="calendar-view-header">
+                <div>
+                  <p className="dashboard-eyebrow">Rentals & Events</p>
+                  <h2>
+                    {monthNames[selectedMonth]} {selectedYear}
+                  </h2>
+                  <p>
+                    Full calendar view for confirmed bookings, contract sent
+                    bookings, and inquiries with selected dates.
+                  </p>
+                </div>
+
+                <button
+                  className="secondary-dashboard-button"
+                  type="button"
+                  onClick={goToCurrentMonth}
+                >
+                  This Month
+                </button>
+              </div>
+
+              <div className="calendar-controls calendar-controls-large">
+                <button type="button" onClick={goToPreviousMonth}>
+                  «
+                </button>
+
+                <select
+                  value={selectedMonth}
+                  onChange={(event) =>
+                    setSelectedMonth(Number(event.target.value))
+                  }
+                >
+                  {monthNames.map((month, index) => (
+                    <option value={index} key={month}>
+                      {month}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  value={selectedYear}
+                  onChange={(event) =>
+                    setSelectedYear(Number(event.target.value))
+                  }
+                >
+                  {[2025, 2026, 2027, 2028, 2029, 2030].map((year) => (
+                    <option value={year} key={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+
+                <button type="button" onClick={goToNextMonth}>
+                  »
+                </button>
+              </div>
+
+              <BookingCalendar
+                calendarCells={calendarCells}
+                datedInquiries={datedInquiries}
+                selectedYear={selectedYear}
+                selectedMonth={selectedMonth}
+                getCalendarEventColor={getCalendarEventColor}
+                isLarge
+              />
+
+              <div className="calendar-legend">
+                <span>
+                  <i className="legend-dot legend-confirmed"></i>
+                  Confirmed
+                </span>
+
+                <span>
+                  <i className="legend-dot legend-contract"></i>
+                  Contract Sent
+                </span>
+
+                <span>
+                  <i className="legend-dot legend-inquiry"></i>
+                  Inquiry
+                </span>
+              </div>
+            </article>
+
+            <aside className="dashboard-card calendar-view-agenda">
+              <div className="dashboard-card-header">
+                <div>
+                  <h2>This Month</h2>
+                  <p>
+                    {selectedMonthInquiries.length} dated booking
+                    {selectedMonthInquiries.length === 1 ? "" : "s"} shown.
+                  </p>
+                </div>
+              </div>
+
+              {selectedMonthInquiries.length > 0 ? (
+                <div className="calendar-agenda-list">
+                  {selectedMonthInquiries.map((inquiry) => (
+                    <div className="calendar-agenda-card" key={inquiry.id}>
+                      <div>
+                        <strong>{inquiry.organizationName}</strong>
+                        <span className={`calendar-agenda-status ${getCalendarEventColor(inquiry.status)}`}>
+                          {inquiry.status}
+                        </span>
+                      </div>
+
+                      <p>{formatDateRange(inquiry.startDate, inquiry.endDate)}</p>
+
+                      <small>
+                        {inquiry.retreatType || "No retreat type"} ·{" "}
+                        {inquiry.attendeeCount || "No group size"} guests
+                      </small>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <strong>No dated bookings this month</strong>
+                  <p>
+                    Import a master spreadsheet or submit the public form with
+                    dates to see items on this calendar.
+                  </p>
+                </div>
+              )}
+            </aside>
+          </section>
+        ) : (
+          <>
         <section className="dashboard-stats-grid">
           <article className="dashboard-stat-card">
             <span>Total Inquiries</span>
@@ -1136,50 +1363,13 @@ const handleImportMasterSpreadsheet = (event) => {
               </button>
             </div>
 
-            <div className="calendar-grid">
-              {["Su", "M", "Tu", "W", "Th", "F", "Sa"].map((day) => (
-                <div className="calendar-weekday" key={day}>
-                  {day}
-                </div>
-              ))}
-
-              {calendarCells.map((day, index) => {
-                const inquiriesForDay = day
-                  ? datedInquiries.filter((inquiry) =>
-                      inquiryTouchesDay(
-                        inquiry,
-                        selectedYear,
-                        selectedMonth,
-                        day
-                      )
-                    )
-                  : [];
-
-                return (
-                  <div
-                    className={`calendar-cell ${
-                      !day ? "calendar-cell-empty" : ""
-                    }`}
-                    key={`${day}-${index}`}
-                  >
-                    {day && <span className="calendar-day-number">{day}</span>}
-
-                    <div className="calendar-events">
-                      {inquiriesForDay.slice(0, 2).map((inquiry) => (
-                        <div
-                          className={`calendar-event ${getCalendarEventColor(inquiry.status)}`}
-                          key={inquiry.id}
-                          title={`${inquiry.organizationName} — ${inquiry.status}`}
-                        >
-                          <span>{inquiry.organizationName}</span>
-                          <i />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <BookingCalendar
+              calendarCells={calendarCells}
+              datedInquiries={datedInquiries}
+              selectedYear={selectedYear}
+              selectedMonth={selectedMonth}
+              getCalendarEventColor={getCalendarEventColor}
+            />
 
             <div className="calendar-legend">
               <span>
@@ -1292,6 +1482,8 @@ const handleImportMasterSpreadsheet = (event) => {
             </article>
           </div>
         </section>
+          </>
+        )}
       </section>
     </main>
   );
