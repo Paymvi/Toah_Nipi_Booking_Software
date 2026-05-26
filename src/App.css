@@ -801,3 +801,40 @@ textarea {
     min-height: 82px;
   }
 }
+
+
+/*  */
+
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 24px 24px;
+  color: #4b5060;
+  font-size: 0.86rem;
+}
+
+.calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legend-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.legend-confirmed {
+  background: #2f6f5f;
+}
+
+.legend-contract {
+  background: #4c65a9;
+}
+
+.legend-inquiry {
+  background: #d5aa3f;
+}

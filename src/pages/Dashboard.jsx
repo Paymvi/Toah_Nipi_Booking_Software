@@ -177,6 +177,7 @@ function normalizeInquiry(inquiry, index) {
     phone: inquiry.phone || "No phone provided",
     startDate: inquiry.startDate || "",
     endDate: inquiry.endDate || "",
+    status: inquiry.status || "Inquiry",
     attendeeCount: inquiry.attendeeCount || inquiry.groupSize || "",
     retreatType: inquiry.retreatType || "",
     promoCode: inquiry.promoCode || "",
@@ -257,6 +258,14 @@ export default function Dashboard() {
   const goToCurrentMonth = () => {
     setSelectedMonth(today.getMonth());
     setSelectedYear(today.getFullYear());
+  };
+
+  const getCalendarEventColor = (status) => {
+    if (status === "Confirmed") return "calendar-event-green";
+    if (status === "Contract Sent") return "calendar-event-blue";
+    if (status === "Inquiry") return "calendar-event-gold";
+
+    return "calendar-event-purple";
   };
 
   return (
@@ -490,9 +499,9 @@ export default function Dashboard() {
                     <div className="calendar-events">
                       {inquiriesForDay.slice(0, 2).map((inquiry) => (
                         <div
-                          className="calendar-event calendar-event-purple"
+                          className={`calendar-event ${getCalendarEventColor(inquiry.status)}`}
                           key={inquiry.id}
-                          title={inquiry.organizationName}
+                          title={`${inquiry.organizationName} — ${inquiry.status}`}
                         >
                           <span>{inquiry.organizationName}</span>
                           <i />
@@ -503,6 +512,25 @@ export default function Dashboard() {
                 );
               })}
             </div>
+
+            <div className="calendar-legend">
+              <span>
+                <i className="legend-dot legend-confirmed"></i>
+                Confirmed
+              </span>
+
+              <span>
+                <i className="legend-dot legend-contract"></i>
+                Contract Sent
+              </span>
+
+              <span>
+                <i className="legend-dot legend-inquiry"></i>
+                Inquiry
+              </span>
+            </div>
+
+
           </article>
 
           <div className="dashboard-side-stack">
