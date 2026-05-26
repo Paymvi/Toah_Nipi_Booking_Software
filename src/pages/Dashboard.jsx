@@ -546,6 +546,9 @@ export default function Dashboard() {
 
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
+
+  const [isSubmittedInquiriesOpen, setIsSubmittedInquiriesOpen] = useState(true);
+
   const [publicInquiries, setPublicInquiries] = useState(() =>
     getSavedInquiries()
   );
@@ -940,7 +943,7 @@ const handleImportMasterSpreadsheet = (event) => {
               type="button"
               onClick={() => masterFileInputRef.current?.click()}
             >
-              <FaTable />
+              <FaPlus />
               Import Master
             </button>
 
@@ -969,7 +972,7 @@ const handleImportMasterSpreadsheet = (event) => {
             >
               Delete All
             </button>
-            
+
           </div>
 
           
@@ -1002,63 +1005,77 @@ const handleImportMasterSpreadsheet = (event) => {
         </section>
 
         <section className="dashboard-card tasks-card">
-          <div className="dashboard-card-header">
+          <div className="dashboard-card-header collapsible-card-header">
             <div>
               <h2>Submitted Booking Inquiries</h2>
               <p>
-                {/* These are only the inquiries submitted through the public form. */}
+                {inquiryBookings.length} total inquiry
+                {inquiryBookings.length === 1 ? "" : "ies"} from forms and Excel imports.
               </p>
             </div>
+
+            <button
+              className="collapse-toggle-button"
+              type="button"
+              onClick={() =>
+                setIsSubmittedInquiriesOpen((currentValue) => !currentValue)
+              }
+              aria-expanded={isSubmittedInquiriesOpen}
+              aria-controls="submitted-inquiries-content"
+            >
+              <span>{isSubmittedInquiriesOpen ? "Hide" : "Show"}</span>
+              <strong>{isSubmittedInquiriesOpen ? "−" : "+"}</strong>
+            </button>
           </div>
 
-          {inquiryBookings.length > 0 ? (
-            <div className="dashboard-table-wrap">
-              <table className="dashboard-table">
-                <thead>
-                  <tr>
-                    <th>Organization</th>
-                    <th>Contact</th>
-                    <th>Email</th>
-                    <th>Phone</th>
-                    <th>Dates</th>
-                    <th>Group Size</th>
-                    <th>Retreat Type</th>
-                    <th>Promo Code</th>
-                    <th>Waitlist</th>
-                    <th>Submitted</th>
-                  </tr>
-                </thead>
+          {isSubmittedInquiriesOpen && (
+            <div id="submitted-inquiries-content" className="collapsible-card-content">
+              {inquiryBookings.length > 0 ? (
+                <div className="dashboard-table-wrap">
+                  <table className="dashboard-table">
+                    <thead>
+                      <tr>
+                        <th>Organization</th>
+                        <th>Contact</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Dates</th>
+                        <th>Group Size</th>
+                        <th>Retreat Type</th>
+                        <th>Promo Code</th>
+                        <th>Waitlist</th>
+                        <th>Submitted</th>
+                      </tr>
+                    </thead>
 
-                <tbody>
-                  {inquiryBookings.map((inquiry) => (
-                    <tr key={inquiry.id}>
-                      <td>
-                        <button className="table-link">
-                          {inquiry.organizationName}
-                        </button>
-                      </td>
-                      <td>{inquiry.contactName}</td>
-                      <td>{inquiry.email}</td>
-                      <td>{inquiry.phone}</td>
-                      <td>
-                        {formatDateRange(inquiry.startDate, inquiry.endDate)}
-                      </td>
-                      <td>{inquiry.attendeeCount || "—"}</td>
-                      <td>{inquiry.retreatType || "—"}</td>
-                      <td>{inquiry.promoCode || "—"}</td>
-                      <td>{inquiry.waitlist || "No"}</td>
-                      <td>{formatSubmittedDate(inquiry.submittedAt)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="empty-state">
-              <strong>No inquiries yet</strong>
-              <p>
-                Submit the public form first, then return to this dashboard.
-              </p>
+                    <tbody>
+                      {inquiryBookings.map((inquiry) => (
+                        <tr key={inquiry.id}>
+                          <td>
+                            <button className="table-link">
+                              {inquiry.organizationName}
+                            </button>
+                          </td>
+                          <td>{inquiry.contactName}</td>
+                          <td>{inquiry.email}</td>
+                          <td>{inquiry.phone}</td>
+                          <td>{formatDateRange(inquiry.startDate, inquiry.endDate)}</td>
+                          <td>{inquiry.attendeeCount || "—"}</td>
+                          <td>{inquiry.retreatType || "—"}</td>
+                          <td>{inquiry.promoCode || "—"}</td>
+                          <td>{inquiry.waitlist || "No"}</td>
+                          <td>{formatSubmittedDate(inquiry.submittedAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <strong>No inquiries yet</strong>
+                  <p>Submit the public form first, then return to this dashboard.</p>
+                </div>
+              )}
             </div>
           )}
         </section>
