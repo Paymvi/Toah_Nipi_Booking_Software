@@ -167,18 +167,24 @@ function normalizeInquiry(inquiry, index) {
 
   const contactName =
     `${inquiry.firstName || ""} ${inquiry.lastName || ""}`.trim() ||
+    inquiry.contactName ||
     inquiry.name ||
     "No contact name";
 
   return {
     id: inquiry.id || `${inquiry.submittedAt || "inquiry"}-${index}`,
+    sourceType: inquiry.sourceType || "Form",
+    sourceSheet: inquiry.sourceSheet || "",
+
     organizationName,
     contactName,
     email: inquiry.email || "No email provided",
     phone: inquiry.phone || "No phone provided",
+
     startDate: inquiry.startDate || "",
     endDate: inquiry.endDate || "",
     desiredDatesText: inquiry.desiredDatesText || inquiry.desiredDates || "",
+
     attendeeCount: inquiry.attendeeCount || inquiry.groupSize || "",
     retreatType: inquiry.retreatType || "",
     promoCode: inquiry.promoCode || "",
@@ -186,6 +192,30 @@ function normalizeInquiry(inquiry, index) {
     waitlist: inquiry.waitlist || "No",
     status: inquiry.status || "Inquiry",
     submittedAt: inquiry.submittedAt || "",
+
+    roomName:
+      inquiry.roomName ||
+      inquiry.room ||
+      inquiry.assignedRoom ||
+      inquiry.housingArea ||
+      inquiry.buildingsRooms ||
+      "Unassigned",
+
+    returningStatus: inquiry.returningStatus || "",
+    buildingsRooms: inquiry.buildingsRooms || "",
+    meals: inquiry.meals || "",
+    foodAllergies: inquiry.foodAllergies || "",
+    needToKnow: inquiry.needToKnow || "",
+    linenSets: inquiry.linenSets || "",
+    activities: inquiry.activities || "",
+    persons: inquiry.persons || "",
+    nights: inquiry.nights || "",
+    mealCount: inquiry.mealCount || "",
+    camperDays: inquiry.camperDays || "",
+    usageFee: inquiry.usageFee || "",
+    lodgingCost: inquiry.lodgingCost || "",
+    foodCost: inquiry.foodCost || "",
+    miscCost: inquiry.miscCost || "",
   };
 }
 
@@ -335,7 +365,7 @@ function normalizeWaitlistValue(value) {
   return "No";
 }
 
-function normalizeImportedSpreadsheetRow(row, index) {
+function normalizeWaitlistSpreadsheetRow(row, index) {
   const submittedDate = readSpreadsheetCell(row, ["Date"]);
   const contactName = readSpreadsheetCell(row, ["Contact Name"]);
   const email = readSpreadsheetCell(row, ["Email Address", "Email"]);
@@ -355,6 +385,7 @@ function normalizeImportedSpreadsheetRow(row, index) {
   const waitlist = readSpreadsheetCell(row, ["Waitlist or No", "Waitlist"]);
 
   const rowHasData =
+    submittedDate ||
     contactName ||
     email ||
     phone ||
@@ -371,11 +402,13 @@ function normalizeImportedSpreadsheetRow(row, index) {
   const parsedDates = parseDesiredDateRange(desiredDates);
 
   return {
-    id: `excel-import-${Date.now()}-${index}`,
+    id: `waitlist-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
+    sourceType: "Waitlist",
+    sourceSheet: row.sourceSheet || "",
     submittedAt: formatExcelSubmittedAt(submittedDate),
     name: String(contactName || "").trim(),
     contactName: String(contactName || "").trim(),
-    organizationName: String(guestGroupName || "").trim(),
+    organizationName: String(guestGroupName || "").trim() || "Unnamed Group",
     email: String(email || "").trim(),
     phone: String(phone || "").trim(),
     attendeeCount: String(size || "").trim(),
@@ -391,9 +424,125 @@ function normalizeImportedSpreadsheetRow(row, index) {
   };
 }
 
+function normalizeMasterSpreadsheetRow(row, index) {
+  const arrivalDate = readSpreadsheetCell(row, ["Arrival Date"]);
+  const departureDate = readSpreadsheetCell(row, ["Departure Date"]);
+  const guestGroupName = readSpreadsheetCell(row, ["Guest Group Name"]);
+  const guestGroupType = readSpreadsheetCell(row, ["Guest Group Type"]);
+  const returningStatus = readSpreadsheetCell(row, [
+    "Returning (R) or New (N)",
+    "Returning or New",
+  ]);
+  const contactPerson = readSpreadsheetCell(row, ["Contact Person"]);
+  const contactPhone = readSpreadsheetCell(row, [
+    "Contact Person Cell #",
+    "Contact Person Cell",
+    "Phone Number",
+  ]);
+  const actualNumberOfGuests = readSpreadsheetCell(row, [
+    "Actual Number of Guests",
+    "Size",
+  ]);
+  const buildingsRooms = readSpreadsheetCell(row, [
+    "Buildings/Rooms",
+    "Buildings",
+    "Rooms",
+  ]);
+  const meals = readSpreadsheetCell(row, ["Meals"]);
+  const foodAllergies = readSpreadsheetCell(row, ["Food Allergies"]);
+  const needToKnow = readSpreadsheetCell(row, ["Need to know", "Need To Know"]);
+  const linenSets = readSpreadsheetCell(row, ["Linen Sets"]);
+  const activities = readSpreadsheetCell(row, ["Activities"]);
+  const persons = readSpreadsheetCell(row, ["#Persons", "Persons"]);
+  const nights = readSpreadsheetCell(row, ["#Nights", "Nights"]);
+  const mealCount = readSpreadsheetCell(row, ["#Meals", "Meals Count"]);
+  const camperDays = readSpreadsheetCell(row, [
+    "Camper Days (nightsX0.4 + mealsX0.2)",
+    "Camper Days",
+  ]);
+  const usageFee = readSpreadsheetCell(row, ["Usage Fee"]);
+  const lodgingCost = readSpreadsheetCell(row, ["$ Lodging", "Lodging"]);
+  const foodCost = readSpreadsheetCell(row, ["$ Food", "Food"]);
+  const miscCost = readSpreadsheetCell(row, ["$ Misc.", "$ Misc", "Misc"]);
+
+  const rowHasData =
+    arrivalDate ||
+    departureDate ||
+    guestGroupName ||
+    guestGroupType ||
+    contactPerson ||
+    contactPhone ||
+    actualNumberOfGuests ||
+    buildingsRooms;
+
+  if (!rowHasData) {
+    return null;
+  }
+
+  const startDate = formatExcelDateValue(arrivalDate);
+  const endDate = formatExcelDateValue(departureDate);
+
+  const notes = [
+    needToKnow ? `Need to know: ${needToKnow}` : "",
+    foodAllergies ? `Food allergies: ${foodAllergies}` : "",
+    activities ? `Activities: ${activities}` : "",
+    meals ? `Meals: ${meals}` : "",
+    linenSets ? `Linen sets: ${linenSets}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return {
+    id: `master-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
+    sourceType: "Master",
+    sourceSheet: row.sourceSheet || "",
+    submittedAt: new Date().toISOString(),
+
+    organizationName: String(guestGroupName || "").trim() || "Unnamed Group",
+    name: String(contactPerson || "").trim(),
+    contactName: String(contactPerson || "").trim() || "No contact name",
+    email: "",
+    phone: String(contactPhone || "").trim(),
+
+    startDate,
+    endDate,
+    desiredDatesText:
+      startDate && endDate ? `${startDate} - ${endDate}` : startDate || "",
+
+    attendeeCount: String(actualNumberOfGuests || "").trim(),
+    groupSize: String(actualNumberOfGuests || "").trim(),
+    retreatType: String(guestGroupType || "").trim(),
+    roomName: String(buildingsRooms || "Unassigned").trim(),
+
+    notes,
+    waitlist: "No",
+    status: "Confirmed",
+    promoCode: "",
+
+    returningStatus: String(returningStatus || "").trim(),
+    buildingsRooms: String(buildingsRooms || "").trim(),
+    meals: String(meals || "").trim(),
+    foodAllergies: String(foodAllergies || "").trim(),
+    needToKnow: String(needToKnow || "").trim(),
+    linenSets: String(linenSets || "").trim(),
+    activities: String(activities || "").trim(),
+    persons: String(persons || "").trim(),
+    nights: String(nights || "").trim(),
+    mealCount: String(mealCount || "").trim(),
+    camperDays: String(camperDays || "").trim(),
+    usageFee: String(usageFee || "").trim(),
+    lodgingCost: String(lodgingCost || "").trim(),
+    foodCost: String(foodCost || "").trim(),
+    miscCost: String(miscCost || "").trim(),
+  };
+}
+
+
 export default function Dashboard() {
   const today = new Date();
-  const importFileInputRef = useRef(null);
+
+  const waitlistFileInputRef = useRef(null);
+  const masterFileInputRef = useRef(null);
 
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
@@ -404,6 +553,158 @@ export default function Dashboard() {
   const refreshInquiries = () => {
     setPublicInquiries(getSavedInquiries());
   };
+
+  const importSpreadsheet = async ({
+    event,
+    importTypeLabel,
+    normalizeRow,
+    expectedColumns,
+  }) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const fileData = await file.arrayBuffer();
+
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(fileData);
+
+      const allImportedRows = [];
+      const skippedSheets = [];
+
+      workbook.worksheets.forEach((worksheet) => {
+        const headerRow = worksheet.getRow(1);
+        const headers = {};
+
+        headerRow.eachCell((cell, columnNumber) => {
+          const headerName = String(cleanExcelCellValue(cell.value)).trim();
+
+          if (headerName) {
+            headers[headerName] = columnNumber;
+          }
+        });
+
+        const hasExpectedColumns = expectedColumns.some((columnName) =>
+          Boolean(headers[columnName])
+        );
+
+        if (!hasExpectedColumns) {
+          skippedSheets.push(worksheet.name);
+          return;
+        }
+
+        const spreadsheetRows = [];
+
+        worksheet.eachRow((row, rowNumber) => {
+          if (rowNumber === 1) {
+            return;
+          }
+
+          const rowObject = {};
+
+          Object.entries(headers).forEach(([headerName, columnNumber]) => {
+            rowObject[headerName] = cleanExcelCellValue(
+              row.getCell(columnNumber).value
+            );
+          });
+
+          rowObject.sourceSheet = worksheet.name;
+
+          spreadsheetRows.push(rowObject);
+        });
+
+        const importedRowsForSheet = spreadsheetRows
+          .map((row, index) => normalizeRow(row, index))
+          .filter(Boolean);
+
+        allImportedRows.push(...importedRowsForSheet);
+      });
+
+      if (allImportedRows.length === 0) {
+        alert(
+          `No valid ${importTypeLabel} rows were found. Make sure the spreadsheet has the correct columns.`
+        );
+        return;
+      }
+
+      const nextInquiries = [...publicInquiries, ...allImportedRows];
+
+      localStorage.setItem(
+        "toahNipiPublicInquiries",
+        JSON.stringify(nextInquiries)
+      );
+
+      setPublicInquiries(nextInquiries);
+
+      const skippedMessage =
+        skippedSheets.length > 0
+          ? `\n\nSkipped sheets: ${skippedSheets.join(", ")}`
+          : "";
+
+      alert(
+        `Imported ${allImportedRows.length} ${importTypeLabel} row(s).${skippedMessage}`
+      );
+    } catch (error) {
+      console.error(`Could not import ${importTypeLabel} spreadsheet:`, error);
+      alert(`Sorry, that ${importTypeLabel} spreadsheet could not be imported.`);
+    } finally {
+      event.target.value = "";
+    }
+  };
+
+  const handleImportWaitlistSpreadsheet = (event) => {
+  importSpreadsheet({
+    event,
+    importTypeLabel: "waitlist",
+    normalizeRow: normalizeWaitlistSpreadsheetRow,
+    expectedColumns: [
+      "Date",
+      "Contact Name",
+      "Email Address",
+      "Phone Number",
+      "Guest Group Name",
+      "Size",
+      "Desired Dates",
+      "Additional Notes",
+      "Waitlist or No",
+    ],
+  });
+};
+
+const handleImportMasterSpreadsheet = (event) => {
+  importSpreadsheet({
+    event,
+    importTypeLabel: "master booking",
+    normalizeRow: normalizeMasterSpreadsheetRow,
+    expectedColumns: [
+      "Arrival Date",
+      "Departure Date",
+      "Guest Group Name",
+      "Guest Group Type",
+      "Returning (R) or New (N)",
+      "Contact Person",
+      "Contact Person Cell #",
+      "Actual Number of Guests",
+      "Buildings/Rooms",
+      "Meals",
+      "Food Allergies",
+      "Need to know",
+      "Linen Sets",
+      "Activities",
+      "#Persons",
+      "#Nights",
+      "#Meals",
+      "Camper Days (nightsX0.4 + mealsX0.2)",
+      "Usage Fee",
+      "$ Lodging",
+      "$ Food",
+      "$ Misc.",
+    ],
+  });
+};
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -441,81 +742,7 @@ export default function Dashboard() {
     (inquiry) => inquiry.promoCode.trim() !== ""
   );
 
-  const handleImportSpreadsheet = async (event) => {
-    const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    try {
-      const fileData = await file.arrayBuffer();
-
-      const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(fileData);
-
-      const worksheet = workbook.worksheets[0];
-
-      if (!worksheet) {
-        alert("No worksheet was found in that Excel file.");
-        return;
-      }
-
-      const headerRow = worksheet.getRow(1);
-      const headers = {};
-
-      headerRow.eachCell((cell, columnNumber) => {
-        const headerName = String(cleanExcelCellValue(cell.value)).trim();
-
-        if (headerName) {
-          headers[headerName] = columnNumber;
-        }
-      });
-
-      const spreadsheetRows = [];
-
-      worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber === 1) {
-          return;
-        }
-
-        const rowObject = {};
-
-        Object.entries(headers).forEach(([headerName, columnNumber]) => {
-          rowObject[headerName] = cleanExcelCellValue(
-            row.getCell(columnNumber).value
-          );
-        });
-
-        spreadsheetRows.push(rowObject);
-      });
-
-      const importedInquiries = spreadsheetRows
-        .map((row, index) => normalizeImportedSpreadsheetRow(row, index))
-        .filter(Boolean);
-
-      if (importedInquiries.length === 0) {
-        alert("No valid booking rows were found in that spreadsheet.");
-        return;
-      }
-
-      const nextInquiries = [...publicInquiries, ...importedInquiries];
-
-      localStorage.setItem(
-        "toahNipiPublicInquiries",
-        JSON.stringify(nextInquiries)
-      );
-
-      setPublicInquiries(nextInquiries);
-
-      alert(`Imported ${importedInquiries.length} booking inquiries.`);
-    } catch (error) {
-      console.error("Could not import spreadsheet:", error);
-      alert("Sorry, that spreadsheet could not be imported.");
-    } finally {
-      event.target.value = "";
-    }
-  };
+  
 
   const exportInquiriesToSpreadsheet = async () => {
     if (inquiryBookings.length === 0) {
@@ -672,19 +899,36 @@ export default function Dashboard() {
           <div className="dashboard-actions">
             <input
               className="dashboard-file-input"
-              ref={importFileInputRef}
+              ref={waitlistFileInputRef}
               type="file"
               accept=".xlsx"
-              onChange={handleImportSpreadsheet}
+              onChange={handleImportWaitlistSpreadsheet}
+            />
+
+            <input
+              className="dashboard-file-input"
+              ref={masterFileInputRef}
+              type="file"
+              accept=".xlsx"
+              onChange={handleImportMasterSpreadsheet}
             />
 
             <button
               className="secondary-dashboard-button"
               type="button"
-              onClick={() => importFileInputRef.current?.click()}
+              onClick={() => waitlistFileInputRef.current?.click()}
             >
               <FaPlus />
-              Import Excel
+              Import Waitlist
+            </button>
+
+            <button
+              className="secondary-dashboard-button"
+              type="button"
+              onClick={() => masterFileInputRef.current?.click()}
+            >
+              <FaTable />
+              Import Master
             </button>
 
             <button
@@ -705,6 +949,8 @@ export default function Dashboard() {
               Refresh Inquiries
             </button>
           </div>
+
+          
         </header>
 
         <section className="dashboard-stats-grid">
