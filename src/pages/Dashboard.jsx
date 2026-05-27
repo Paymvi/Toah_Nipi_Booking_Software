@@ -25,6 +25,9 @@ import {
   FaEnvelopeOpenText,
   FaInfoCircle,
   FaFilter,
+  FaPaperPlane,
+  FaKey,
+  FaTimes,
 } from "react-icons/fa";
 import ExcelJS from "exceljs";
 
@@ -1816,6 +1819,7 @@ function AvailabilityBoard({
 
 const bookingDetailTabs = [
   "Overview",
+  "Contacts",
   "Details",
   "Rates",
   "Housing",
@@ -1826,6 +1830,121 @@ const bookingDetailTabs = [
   "Attendee Rental Page",
   "Attendee Details",
 ];
+
+function getBookingContacts(booking) {
+  if (!booking) {
+    return [];
+  }
+
+  const primaryContact = {
+    id: `${booking.id}-primary-contact`,
+    contactName: booking.contactName || booking.name || "No contact name",
+    companyName: booking.organizationName || "No organization",
+    email:
+      booking.email && booking.email !== "No email provided"
+        ? booking.email
+        : "",
+    phone:
+      booking.phone && booking.phone !== "No phone provided"
+        ? booking.phone
+        : "",
+    contactTypes: ["Primary"],
+  };
+
+  return [primaryContact];
+}
+
+function BookingContactsSection({ booking }) {
+  const contacts = getBookingContacts(booking);
+
+  return (
+    <section className="dashboard-card booking-contacts-card">
+      <div className="booking-contacts-header">
+        <div>
+          <h3>Contacts</h3>
+          <p>*must add a primary contact of an organization</p>
+        </div>
+
+        <button className="primary-dashboard-button" type="button">
+          <FaPlus />
+          Add Contact
+        </button>
+      </div>
+
+      <div className="booking-contacts-table-wrap">
+        <table className="booking-contacts-table">
+          <thead>
+            <tr>
+              <th>Contact Name</th>
+              <th>Company Name</th>
+              <th>Email</th>
+              <th>Primary Phone</th>
+              <th>Contact Type</th>
+              <th aria-label="Actions"></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {contacts.map((contact) => (
+              <tr key={contact.id}>
+                <td>
+                  <button className="booking-contact-name-button" type="button">
+                    {contact.contactName}
+                  </button>
+                </td>
+
+                <td>{contact.companyName}</td>
+
+                <td>
+                  {contact.email ? (
+                    <div className="booking-contact-email-row">
+                      <span>{contact.email}</span>
+
+                      <button className="contact-small-action" type="button">
+                        <FaKey />
+                        Reset Password
+                      </button>
+                    </div>
+                  ) : (
+                    <button className="contact-invite-button" type="button">
+                      <FaPaperPlane />
+                      Invite
+                    </button>
+                  )}
+                </td>
+
+                <td>{contact.phone || "—"}</td>
+
+                <td>
+                  <div className="contact-type-list">
+                    {contact.contactTypes.map((type) => (
+                      <span className="contact-type-pill" key={type}>
+                        {type}
+                        <button type="button" aria-label={`Remove ${type}`}>
+                          <FaTimes />
+                        </button>
+                      </span>
+                    ))}
+
+                    <button className="contact-type-add-button" type="button">
+                      <FaPlus />
+                    </button>
+                  </div>
+                </td>
+
+                <td>
+                  <button className="contact-delete-button" type="button">
+                    <FaTrashAlt />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
 
 function BookingDetailView({
   booking,
@@ -2042,7 +2161,11 @@ function BookingDetailView({
         </div>
       )}
 
-      {activeTab !== "Overview" && (
+      {activeTab === "Contacts" && (
+        <BookingContactsSection booking={booking} />
+      )}
+
+      {activeTab !== "Overview" && activeTab !== "Contacts" && (
         <section className="dashboard-card booking-tab-placeholder">
           <h3>{activeTab}</h3>
           <p>
