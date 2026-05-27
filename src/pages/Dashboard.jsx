@@ -1819,7 +1819,6 @@ function AvailabilityBoard({
 
 const bookingDetailTabs = [
   "Overview",
-  "Contacts",
   "Details",
   "Rates",
   "Housing",
@@ -2078,81 +2077,85 @@ function BookingDetailView({
             </div>
           </article>
 
-          <article className="booking-detail-card">
-            <div className="booking-card-heading">
-              <h3>Contracts</h3>
-              <span>{booking.status === "Confirmed" ? "Viewed" : "Pending"}</span>
-            </div>
-
-            <div className="booking-info-stack">
-              <div>
-                <small>Source</small>
-                <strong>{booking.sourceType || "Form"}</strong>
+          <div className="booking-detail-three-card-row">
+            <article className="booking-detail-card">
+              <div className="booking-card-heading">
+                <h3>Contracts</h3>
+                <span>{booking.status === "Confirmed" ? "Viewed" : "Pending"}</span>
               </div>
 
-              <div>
-                <small>Submitted</small>
-                <strong>{formatSubmittedDate(booking.submittedAt)}</strong>
+              <div className="booking-info-stack">
+                <div>
+                  <small>Source</small>
+                  <strong>{booking.sourceType || "Form"}</strong>
+                </div>
+
+                <div>
+                  <small>Submitted</small>
+                  <strong>{formatSubmittedDate(booking.submittedAt)}</strong>
+                </div>
+
+                <div>
+                  <small>Waitlist</small>
+                  <strong>{booking.waitlist || "No"}</strong>
+                </div>
+              </div>
+            </article>
+
+            <article className="booking-detail-card">
+              <h3>Housing</h3>
+
+              <div className="booking-info-stack">
+                <div>
+                  <small>Assigned Room / Area</small>
+                  <strong>{booking.roomName || "Unassigned"}</strong>
+                </div>
+
+                <div>
+                  <small>Buildings / Rooms</small>
+                  <strong>{booking.buildingsRooms || "—"}</strong>
+                </div>
+
+                <div>
+                  <small>Linen Sets</small>
+                  <strong>{booking.linenSets || "—"}</strong>
+                </div>
+              </div>
+            </article>
+
+            <article className="booking-detail-card">
+              <div className="booking-card-heading">
+                <h3>Activities</h3>
+                <button className="table-link" type="button">
+                  Schedule
+                </button>
               </div>
 
-              <div>
-                <small>Waitlist</small>
-                <strong>{booking.waitlist || "No"}</strong>
+              <div className="booking-info-stack">
+                <div>
+                  <small>Meals</small>
+                  <strong>{booking.meals || "—"}</strong>
+                </div>
+
+                <div>
+                  <small># Meals</small>
+                  <strong>{booking.mealCount || "—"}</strong>
+                </div>
+
+                <div>
+                  <small>Activities</small>
+                  <strong>{booking.activities || "—"}</strong>
+                </div>
+
+                <div>
+                  <small>Food Allergies</small>
+                  <strong>{booking.foodAllergies || "—"}</strong>
+                </div>
               </div>
-            </div>
-          </article>
+            </article>
+          </div>
 
-          <article className="booking-detail-card">
-            <h3>Housing</h3>
-
-            <div className="booking-info-stack">
-              <div>
-                <small>Assigned Room / Area</small>
-                <strong>{booking.roomName || "Unassigned"}</strong>
-              </div>
-
-              <div>
-                <small>Buildings / Rooms</small>
-                <strong>{booking.buildingsRooms || "—"}</strong>
-              </div>
-
-              <div>
-                <small>Linen Sets</small>
-                <strong>{booking.linenSets || "—"}</strong>
-              </div>
-            </div>
-          </article>
-
-          <article className="booking-detail-card">
-            <div className="booking-card-heading">
-              <h3>Activities</h3>
-              <button className="table-link" type="button">
-                Schedule
-              </button>
-            </div>
-
-            <div className="booking-info-grid">
-              <div>
-                <small>Meals</small>
-                <strong>{booking.meals || "—"}</strong>
-              </div>
-
-              <div>
-                <small># Meals</small>
-                <strong>{booking.mealCount || "—"}</strong>
-              </div>
-
-              <div>
-                <small>Activities</small>
-                <strong>{booking.activities || "—"}</strong>
-              </div>
-
-              <div>
-                <small>Food Allergies</small>
-                <strong>{booking.foodAllergies || "—"}</strong>
-              </div>
-            </div>
-          </article>
+          <BookingContactsSection booking={booking} />
 
           <article className="booking-detail-card booking-notes-card">
             <h3>Need to Know</h3>
@@ -2161,11 +2164,7 @@ function BookingDetailView({
         </div>
       )}
 
-      {activeTab === "Contacts" && (
-        <BookingContactsSection booking={booking} />
-      )}
-
-      {activeTab !== "Overview" && activeTab !== "Contacts" && (
+      {activeTab !== "Overview" && (
         <section className="dashboard-card booking-tab-placeholder">
           <h3>{activeTab}</h3>
           <p>

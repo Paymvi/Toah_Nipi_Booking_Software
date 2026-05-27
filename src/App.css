@@ -2976,3 +2976,58 @@ body,
     min-width: 900px;
   }
 }
+
+/* =========================================================
+   Booking Detail Overview Layout Adjustments
+========================================================= */
+
+.booking-detail-three-card-row {
+  grid-column: 1 / -1;
+
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+
+  min-width: 0;
+}
+
+.booking-detail-three-card-row .booking-detail-card {
+  min-width: 0;
+}
+
+.booking-contacts-card {
+  grid-column: 1 / -1;
+}
+
+.booking-notes-card {
+  grid-column: 1 / -1;
+}
+
+/* Make long text inside the 3-card row behave */
+.booking-detail-three-card-row strong,
+.booking-detail-three-card-row small,
+.booking-detail-three-card-row p {
+  overflow-wrap: anywhere;
+}
+
+/* Tablet: 2 cards then 1 card */
+@media (max-width: 1100px) {
+  .booking-detail-three-card-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .booking-detail-three-card-row .booking-detail-card:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Phone: stacked */
+@media (max-width: 720px) {
+  .booking-detail-three-card-row {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-detail-three-card-row .booking-detail-card:last-child {
+    grid-column: auto;
+  }
+}
