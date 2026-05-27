@@ -1221,6 +1221,70 @@ function DetailField({ icon: Icon, label, value, tone = "default" }) {
   );
 }
 
+function getBookingInitials(name) {
+  return String(name || "TN")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+}
+
+function BookingMetric({ icon: Icon, label, value, helper }) {
+  return (
+    <div className="booking-profile-metric">
+      <span>
+        <Icon />
+      </span>
+
+      <div>
+        <small>{label}</small>
+        <strong>{value || "—"}</strong>
+        {helper && <em>{helper}</em>}
+      </div>
+    </div>
+  );
+}
+
+function BookingSection({ icon: Icon, title, eyebrow, action, children }) {
+  return (
+    <article className="booking-work-section">
+      <div className="booking-work-section-header">
+        <div>
+          <span className="booking-work-section-icon">
+            <Icon />
+          </span>
+
+          <div>
+            {eyebrow && <p>{eyebrow}</p>}
+            <h3>{title}</h3>
+          </div>
+        </div>
+
+        {action}
+      </div>
+
+      {children}
+    </article>
+  );
+}
+
+function BookingDetailRow({ label, value, icon: Icon, tone = "default" }) {
+  return (
+    <div className={`booking-detail-row booking-detail-row-${tone}`}>
+      <span>
+        <Icon />
+      </span>
+
+      <div>
+        <small>{label}</small>
+        <strong>{value || "—"}</strong>
+      </div>
+    </div>
+  );
+}
+
 function BookingDetailView({
   booking,
   activeTab,
@@ -1250,18 +1314,26 @@ function BookingDetailView({
   const usageFee = booking.usageFee || "—";
 
   const dateSummary = formatDateRange(booking.startDate, booking.endDate);
-  const attendeeSummary = booking.attendeeCount
-    ? `${booking.attendeeCount} attendee${String(booking.attendeeCount) === "1" ? "" : "s"}`
-    : "No attendee count";
+  const submittedDate = formatSubmittedDate(booking.submittedAt);
+  const arrivalDate = formatDate(booking.startDate);
+  const departureDate = formatDate(booking.endDate);
+
+  const contactEmail =
+    booking.email && booking.email !== "No email provided" ? booking.email : "";
+
+  const contactPhone =
+    booking.phone && booking.phone !== "No phone provided" ? booking.phone : "";
 
   const statusClass =
     booking.status === "Confirmed" ? "status-confirmed" : "status-inquiry";
 
+  const groupInitials = getBookingInitials(booking.organizationName);
+
   return (
-    <section className="booking-detail-page booking-detail-redesign">
-      <div className="booking-detail-hero-clean">
+    <section className="booking-detail-page booking-profile-page">
+      <header className="booking-profile-header">
         <button
-          className="secondary-dashboard-button booking-detail-back-button"
+          className="secondary-dashboard-button booking-profile-back-button"
           type="button"
           onClick={onBack}
         >
@@ -1269,43 +1341,17 @@ function BookingDetailView({
           Back
         </button>
 
-        <div className="booking-detail-hero-main">
-          <span className="booking-detail-hero-icon">
-            <FaClipboardList />
-          </span>
-
-          <div>
-            <p className="booking-detail-kicker">
-              {booking.sourceType || "Booking"}
-            </p>
-
-            <h2>{booking.organizationName}</h2>
-
-            <div className="booking-detail-meta-row">
-              <span>
-                <FaCalendarAlt />
-                {dateSummary}
-              </span>
-
-              <span>
-                <FaUsers />
-                {attendeeSummary}
-              </span>
-
-              <span>
-                <FaUser />
-                {booking.contactName || "No contact name"}
-              </span>
-            </div>
-          </div>
+        <div className="booking-profile-header-title">
+          <p>Booking Profile</p>
+          <h2>{booking.organizationName}</h2>
         </div>
 
-        <span className={`booking-detail-status ${statusClass}`}>
+        <span className={`booking-profile-status ${statusClass}`}>
           {booking.status}
         </span>
-      </div>
+      </header>
 
-      <nav className="booking-detail-tabs booking-detail-tabs-clean" aria-label="Booking detail tabs">
+      <nav className="booking-detail-tabs booking-profile-tabs" aria-label="Booking detail tabs">
         {bookingDetailTabs.map((tab) => (
           <button
             className={activeTab === tab ? "active" : ""}
@@ -1319,199 +1365,281 @@ function BookingDetailView({
       </nav>
 
       {activeTab === "Overview" && (
-        <div className="booking-detail-clean-grid">
-          <article className="booking-panel-clean booking-panel-main">
-            <DetailCardHeader
-              icon={FaInfoCircle}
-              title="Booking Summary"
-              subtitle="Core details for this group."
-              action={
-                <span className={`booking-mini-status ${statusClass}`}>
-                  {booking.status}
+        <div className="booking-profile-layout">
+          <aside className="booking-profile-sidebar">
+            <div className="booking-profile-avatar">{groupInitials}</div>
+
+            <div className="booking-profile-identity">
+              <p>{booking.sourceType || "Booking"}</p>
+              <h3>{booking.organizationName}</h3>
+              <span>{booking.retreatType || "No program type selected"}</span>
+            </div>
+
+            <div className="booking-profile-date-card">
+              <FaCalendarAlt />
+              <div>
+                <small>Stay Dates</small>
+                <strong>{dateSummary}</strong>
+              </div>
+            </div>
+
+            <div className="booking-profile-contact-card">
+              <div className="booking-profile-card-heading">
+                <span>
+                  <FaUser />
                 </span>
-              }
-            />
 
-            <div className="detail-field-grid-clean">
-              <DetailField
-                icon={FaUser}
-                label="Contact"
-                value={booking.contactName || "No contact name"}
-              />
+                <div>
+                  <small>Primary Contact</small>
+                  <strong>{booking.contactName || "No contact name"}</strong>
+                </div>
+              </div>
 
-              <DetailField
-                icon={FaBuilding}
-                label="Organization"
-                value={booking.organizationName}
-              />
+              <div className="booking-profile-contact-list">
+                <p>{contactEmail || "No email provided"}</p>
+                <p>{contactPhone || "No phone provided"}</p>
+              </div>
+            </div>
 
-              <DetailField
+            <div className="booking-profile-side-facts">
+              <div>
+                <small>Guests</small>
+                <strong>{booking.attendeeCount || "—"}</strong>
+              </div>
+
+              <div>
+                <small>Room</small>
+                <strong>{booking.roomName || "Unassigned"}</strong>
+              </div>
+
+              <div>
+                <small>Waitlist</small>
+                <strong>{booking.waitlist || "No"}</strong>
+              </div>
+            </div>
+
+            <div className="booking-profile-actions">
+              <button className="primary-dashboard-button" type="button">
+                <FaPaperPlane />
+                Send Email
+              </button>
+
+              <button className="secondary-dashboard-button" type="button">
+                <FaFileContract />
+                Contract
+              </button>
+            </div>
+          </aside>
+
+          <section className="booking-profile-workspace">
+            <div className="booking-profile-metrics">
+              <BookingMetric
                 icon={FaSignInAlt}
                 label="Arrival"
-                value={formatDate(booking.startDate)}
+                value={arrivalDate}
               />
 
-              <DetailField
+              <BookingMetric
                 icon={FaSignOutAlt}
                 label="Departure"
-                value={formatDate(booking.endDate)}
+                value={departureDate}
               />
 
-              <DetailField
-                icon={FaClipboardList}
-                label="Program Type"
-                value={booking.retreatType || "—"}
-              />
-
-              <DetailField
+              <BookingMetric
                 icon={FaUsers}
-                label="Attendees"
+                label="Guests"
                 value={booking.attendeeCount || "—"}
-              />
-            </div>
-          </article>
-
-          <article className="booking-panel-clean booking-panel-financials">
-            <DetailCardHeader
-              icon={FaDollarSign}
-              title="Financials"
-              subtitle="Costs and billing-related fields."
-            />
-
-            <div className="financial-clean-grid">
-              <div>
-                <small>Usage Fee</small>
-                <strong>{usageFee}</strong>
-              </div>
-
-              <div>
-                <small>Lodging</small>
-                <strong>{totalLodging}</strong>
-              </div>
-
-              <div>
-                <small>Food</small>
-                <strong>{totalFood}</strong>
-              </div>
-
-              <div>
-                <small>Misc.</small>
-                <strong>{totalMisc}</strong>
-              </div>
-            </div>
-          </article>
-
-          <div className="booking-detail-clean-row">
-            <article className="booking-panel-clean">
-              <DetailCardHeader
-                icon={FaFileContract}
-                title="Contracts"
-                action={
-                  <span className="booking-soft-pill">
-                    {booking.status === "Confirmed" ? "Viewed" : "Pending"}
-                  </span>
-                }
+                helper={booking.retreatType || "Program not selected"}
               />
 
-              <div className="detail-stack-clean">
-                <DetailField
-                  icon={FaClipboardList}
-                  label="Source"
-                  value={booking.sourceType || "Form"}
-                />
+              <BookingMetric
+                icon={FaRegCalendarCheck}
+                label="Submitted"
+                value={submittedDate}
+              />
+            </div>
 
-                <DetailField
-                  icon={FaRegCalendarCheck}
-                  label="Submitted"
-                  value={formatSubmittedDate(booking.submittedAt)}
-                />
-
-                <DetailField
-                  icon={FaTicketAlt}
-                  label="Waitlist"
-                  value={booking.waitlist || "No"}
-                />
-              </div>
-            </article>
-
-            <article className="booking-panel-clean">
-              <DetailCardHeader
+            <div className="booking-profile-main-grid">
+              <BookingSection
                 icon={FaBed}
-                title="Housing"
-              />
+                title="Stay & Housing"
+                eyebrow="Lodging"
+              >
+                <div className="booking-stay-timeline">
+                  <div>
+                    <span></span>
+                    <div>
+                      <small>Arrival</small>
+                      <strong>{arrivalDate}</strong>
+                    </div>
+                  </div>
 
-              <div className="detail-stack-clean">
-                <DetailField
-                  icon={FaBed}
-                  label="Assigned Room / Area"
-                  value={booking.roomName || "Unassigned"}
-                />
+                  <div>
+                    <span></span>
+                    <div>
+                      <small>Assigned Room / Area</small>
+                      <strong>{booking.roomName || "Unassigned"}</strong>
+                    </div>
+                  </div>
 
-                <DetailField
-                  icon={FaBuilding}
-                  label="Buildings / Rooms"
-                  value={booking.buildingsRooms || "—"}
-                />
+                  <div>
+                    <span></span>
+                    <div>
+                      <small>Departure</small>
+                      <strong>{departureDate}</strong>
+                    </div>
+                  </div>
+                </div>
 
-                <DetailField
-                  icon={FaClipboardList}
-                  label="Linen Sets"
-                  value={booking.linenSets || "—"}
-                />
-              </div>
-            </article>
+                <div className="booking-compact-detail-grid">
+                  <BookingDetailRow
+                    icon={FaBuilding}
+                    label="Buildings / Rooms"
+                    value={booking.buildingsRooms || "—"}
+                  />
 
-            <article className="booking-panel-clean">
-              <DetailCardHeader
-                icon={FaHiking}
-                title="Activities"
+                  <BookingDetailRow
+                    icon={FaClipboardList}
+                    label="Linen Sets"
+                    value={booking.linenSets || "—"}
+                  />
+                </div>
+              </BookingSection>
+
+              <BookingSection
+                icon={FaUtensils}
+                title="Meals & Activities"
+                eyebrow="Program logistics"
                 action={
-                  <button className="booking-header-link" type="button">
+                  <button className="booking-profile-link-button" type="button">
                     Schedule
                   </button>
                 }
-              />
+              >
+                <div className="booking-compact-detail-grid">
+                  <BookingDetailRow
+                    icon={FaUtensils}
+                    label="Meals"
+                    value={booking.meals || "—"}
+                  />
 
-              <div className="detail-stack-clean">
-                <DetailField
-                  icon={FaUtensils}
-                  label="Meals"
-                  value={booking.meals || "—"}
-                />
+                  <BookingDetailRow
+                    icon={FaRegCalendarCheck}
+                    label="# Meals"
+                    value={booking.mealCount || "—"}
+                  />
 
-                <DetailField
-                  icon={FaRegCalendarCheck}
-                  label="# Meals"
-                  value={booking.mealCount || "—"}
-                />
+                  <BookingDetailRow
+                    icon={FaHiking}
+                    label="Activities"
+                    value={booking.activities || "—"}
+                  />
 
-                <DetailField
-                  icon={FaHiking}
-                  label="Activities"
-                  value={booking.activities || "—"}
-                />
+                  <BookingDetailRow
+                    icon={FaExclamationTriangle}
+                    label="Food Allergies"
+                    value={booking.foodAllergies || "—"}
+                    tone="warning"
+                  />
+                </div>
+              </BookingSection>
 
-                <DetailField
-                  icon={FaExclamationTriangle}
-                  label="Food Allergies"
-                  value={booking.foodAllergies || "—"}
-                  tone="warning"
-                />
-              </div>
-            </article>
-          </div>
+              <BookingSection
+                icon={FaDollarSign}
+                title="Financial Snapshot"
+                eyebrow="Billing"
+              >
+                <div className="booking-money-strip">
+                  <div>
+                    <small>Usage Fee</small>
+                    <strong>{usageFee}</strong>
+                  </div>
 
-          <BookingContactsSection booking={booking} />
+                  <div>
+                    <small>Lodging</small>
+                    <strong>{totalLodging}</strong>
+                  </div>
 
-          <article className="booking-panel-clean booking-notes-panel">
-            <DetailCardHeader
-              icon={FaInfoCircle}
-              title="Need to Know"
-              subtitle="Notes, allergies, logistics, or important staff context."
-            />
+                  <div>
+                    <small>Food</small>
+                    <strong>{totalFood}</strong>
+                  </div>
 
-            <p>{booking.needToKnow || booking.notes || "No notes added yet."}</p>
-          </article>
+                  <div>
+                    <small>Misc.</small>
+                    <strong>{totalMisc}</strong>
+                  </div>
+                </div>
+              </BookingSection>
+
+              <BookingSection
+                icon={FaFileContract}
+                title="Booking Workflow"
+                eyebrow="Admin"
+              >
+                <div className="booking-workflow-list">
+                  <div>
+                    <span className="workflow-dot workflow-dot-complete"></span>
+                    <div>
+                      <small>Imported From</small>
+                      <strong>{booking.sourceType || "Form"}</strong>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="workflow-dot"></span>
+                    <div>
+                      <small>Submitted</small>
+                      <strong>{submittedDate}</strong>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="workflow-dot"></span>
+                    <div>
+                      <small>Contract Status</small>
+                      <strong>
+                        {booking.status === "Confirmed" ? "Viewed" : "Pending"}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              </BookingSection>
+
+              <BookingSection
+                icon={FaInfoCircle}
+                title="Staff Notes"
+                eyebrow="Need to know"
+              >
+                <div className="booking-notes-clean">
+                  <p>{booking.needToKnow || booking.notes || "No notes added yet."}</p>
+                </div>
+              </BookingSection>
+
+              <BookingSection
+                icon={FaUser}
+                title="Contact Snapshot"
+                eyebrow="People"
+              >
+                <div className="booking-contact-snapshot">
+                  <div>
+                    <small>Name</small>
+                    <strong>{booking.contactName || "No contact name"}</strong>
+                  </div>
+
+                  <div>
+                    <small>Email</small>
+                    <strong>{contactEmail || "—"}</strong>
+                  </div>
+
+                  <div>
+                    <small>Phone</small>
+                    <strong>{contactPhone || "—"}</strong>
+                  </div>
+                </div>
+              </BookingSection>
+            </div>
+          </section>
         </div>
       )}
 
