@@ -1408,13 +1408,13 @@ function BookingDetailView({
               </div>
 
               <div>
-                <small>Room</small>
-                <strong>{booking.roomName || "Unassigned"}</strong>
+                <small>Waitlist</small>
+                <strong>{booking.waitlist || "No"}</strong>
               </div>
 
               <div>
-                <small>Waitlist</small>
-                <strong>{booking.waitlist || "No"}</strong>
+                <small>Submitted</small>
+                <strong>{submittedDate}</strong>
               </div>
             </div>
 
@@ -1432,7 +1432,7 @@ function BookingDetailView({
           </aside>
 
           <section className="booking-profile-workspace">
-            <div className="booking-profile-metrics">
+            {/* <div className="booking-profile-metrics">
               <BookingMetric
                 icon={FaSignInAlt}
                 label="Arrival"
@@ -1457,7 +1457,7 @@ function BookingDetailView({
                 label="Submitted"
                 value={submittedDate}
               />
-            </div>
+            </div> */}
 
             <div className="booking-profile-main-grid">
               <BookingSection

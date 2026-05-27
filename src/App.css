@@ -4511,3 +4511,1035 @@ body,
     flex-direction: column;
   }
 }
+
+
+
+
+
+
+/* =========================================================
+   Booking Detail: Professional Polish
+   Smaller radiuses, calmer shadows, cleaner staff-software look
+========================================================= */
+
+.booking-profile-page {
+  gap: 14px;
+}
+
+/* Top header: less bubbly, more professional */
+.booking-profile-header {
+  padding: 16px 18px;
+  border-radius: 10px;
+  border: 1px solid #dfe4ec;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.045);
+}
+
+.booking-profile-header-title p {
+  margin-bottom: 3px;
+  color: #7b8290;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+}
+
+.booking-profile-header-title h2 {
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.booking-profile-back-button {
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.booking-profile-status {
+  min-height: 28px;
+  border-radius: 8px;
+  padding: 0 11px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* Tabs: tighter and cleaner */
+.booking-profile-tabs {
+  border-bottom: 1px solid #dfe4ec;
+}
+
+.booking-profile-tabs button {
+  padding: 11px 14px;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.booking-profile-tabs button.active::after {
+  height: 2px;
+  border-radius: 0;
+}
+
+/* Layout spacing */
+.booking-profile-layout {
+  gap: 16px;
+  grid-template-columns: minmax(250px, 300px) minmax(0, 1fr);
+}
+
+/* Left profile panel */
+.booking-profile-sidebar {
+  top: 18px;
+  gap: 14px;
+  padding: 16px;
+
+  border-radius: 10px;
+  border: 1px solid #dfe4ec;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+}
+
+.booking-profile-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
+
+  background: #f0f3ec;
+  color: #5c6f46;
+  font-size: 1.08rem;
+  font-weight: 650;
+}
+
+.booking-profile-identity p {
+  margin-bottom: 4px;
+  color: #7b8290;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+}
+
+.booking-profile-identity h3 {
+  font-size: 1.12rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.booking-profile-identity span {
+  margin-top: 6px;
+  color: #687083;
+  font-size: 0.84rem;
+  font-weight: 450;
+}
+
+/* Sidebar mini cards */
+.booking-profile-date-card,
+.booking-profile-contact-card {
+  padding: 12px;
+  border-radius: 8px;
+  border-color: #e4e8ef;
+  background: #fbfcfd;
+}
+
+.booking-profile-card-heading {
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 9px;
+}
+
+.booking-profile-card-heading > span {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  font-size: 0.72rem;
+}
+
+.booking-profile-contact-list {
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.booking-profile-contact-list p {
+  font-size: 0.82rem;
+}
+
+/* Guests / Waitlist / Submitted facts */
+.booking-profile-side-facts {
+  border-radius: 8px;
+  border-color: #e4e8ef;
+}
+
+.booking-profile-side-facts div {
+  padding: 10px;
+}
+
+.booking-profile-side-facts small {
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.booking-profile-side-facts strong {
+  margin-top: 3px;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+/* Sidebar buttons */
+.booking-profile-actions {
+  gap: 8px;
+}
+
+.booking-profile-actions .primary-dashboard-button,
+.booking-profile-actions .secondary-dashboard-button {
+  min-height: 38px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+/* Right workspace */
+.booking-profile-workspace {
+  gap: 16px;
+}
+
+.booking-profile-main-grid {
+  gap: 16px;
+}
+
+/* Main section cards */
+.booking-work-section {
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid #dfe4ec;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.035);
+}
+
+.booking-work-section-header {
+  margin-bottom: 14px;
+}
+
+.booking-work-section-header > div {
+  gap: 10px;
+}
+
+.booking-work-section-icon {
+  width: 30px;
+  height: 30px;
+  flex-basis: 30px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+}
+
+.booking-work-section-header p {
+  margin-bottom: 2px;
+  color: #858c9b;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.055em;
+}
+
+.booking-work-section-header h3 {
+  font-size: 0.98rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.booking-profile-link-button {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* Stay timeline */
+.booking-stay-timeline {
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.booking-stay-timeline::before {
+  left: 5px;
+  background: #d9dfd5;
+}
+
+.booking-stay-timeline > div {
+  grid-template-columns: 22px minmax(0, 1fr);
+}
+
+.booking-stay-timeline > div > span {
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  border-width: 2px;
+}
+
+.booking-stay-timeline small {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.booking-stay-timeline strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+/* Detail rows */
+.booking-compact-detail-grid {
+  gap: 8px;
+}
+
+.booking-detail-row {
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 9px;
+
+  padding: 10px;
+  border-radius: 8px;
+  border-color: #e4e8ef;
+  background: #fbfcfd;
+}
+
+.booking-detail-row > span {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  font-size: 0.7rem;
+}
+
+.booking-compact-detail-grid small,
+.booking-money-strip small,
+.booking-workflow-list small,
+.booking-contact-snapshot small {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.booking-compact-detail-grid strong,
+.booking-money-strip strong,
+.booking-workflow-list strong,
+.booking-contact-snapshot strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+/* Money strip: more table-like, less bubbly */
+.booking-money-strip {
+  border-radius: 8px;
+  border-color: #e4e8ef;
+}
+
+.booking-money-strip div {
+  padding: 12px;
+  background: #fbfcfd;
+}
+
+.booking-money-strip strong {
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+/* Workflow */
+.booking-workflow-list {
+  gap: 12px;
+}
+
+.workflow-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 7px;
+}
+
+/* Notes and contact snapshot */
+.booking-notes-clean,
+.booking-contact-snapshot > div {
+  padding: 12px;
+  border-radius: 8px;
+  border-color: #e4e8ef;
+  background: #fbfcfd;
+}
+
+.booking-notes-clean p {
+  font-size: 0.88rem;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+/* Contacts table/card if it appears on the detail page */
+.booking-profile-page .booking-contacts-card {
+  border-radius: 10px;
+  border-color: #dfe4ec;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.035);
+}
+
+.booking-profile-page .booking-contacts-header {
+  padding: 16px;
+}
+
+.booking-profile-page .booking-contacts-header h3 {
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.booking-profile-page .booking-contacts-header p {
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+
+.booking-profile-page .booking-contacts-table th {
+  font-weight: 600;
+}
+
+.booking-profile-page .booking-contacts-table td,
+.booking-profile-page .booking-contacts-table th {
+  padding: 12px 14px;
+}
+
+/* General dashboard buttons inside this page */
+.booking-profile-page .primary-dashboard-button,
+.booking-profile-page .secondary-dashboard-button {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* Mobile */
+@media (max-width: 980px) {
+  .booking-profile-sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  .booking-profile-header,
+  .booking-profile-sidebar,
+  .booking-work-section {
+    border-radius: 8px;
+  }
+
+  .booking-work-section {
+    padding: 14px;
+  }
+
+  .booking-profile-side-facts {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Dashboard: Professional Polish
+   Smaller radiuses, calmer shadows, tighter admin UI
+========================================================= */
+
+/* Overall page feel */
+.dashboard-shell {
+  background: #f5f6f8;
+  color: #2f3240;
+}
+
+.dashboard-main {
+  padding: 28px;
+}
+
+/* Sidebar */
+.dashboard-sidebar {
+  border-right: 1px solid #dfe4ec;
+  background: #ffffff;
+}
+
+.dashboard-logo {
+  padding: 0 22px 22px;
+  border-bottom-color: #edf0f4;
+}
+
+.dashboard-logo > span {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  background: #443a9c;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.dashboard-logo strong {
+  font-size: 0.94rem;
+  font-weight: 650;
+}
+
+.dashboard-logo small {
+  color: #858c9b;
+  font-size: 0.74rem;
+}
+
+.sidebar-active-button,
+.sidebar-link {
+  min-height: 42px;
+  padding: 0 22px;
+  gap: 11px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.sidebar-active-button {
+  background: #443a9c;
+}
+
+.sidebar-link:hover {
+  background: #f5f4fb;
+}
+
+.sidebar-section {
+  padding-top: 18px;
+}
+
+.sidebar-section p {
+  padding: 0 22px;
+  margin-bottom: 7px;
+  color: #8e95a3;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.075em;
+}
+
+.sidebar-badge {
+  min-width: 24px;
+  height: 24px;
+  font-size: 0.74rem;
+  font-weight: 650;
+}
+
+/* Topbar */
+.dashboard-topbar {
+  margin-bottom: 22px;
+  gap: 18px;
+}
+
+.dashboard-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.095em;
+  color: #7b8290;
+}
+
+.dashboard-topbar h1 {
+  font-size: clamp(1.75rem, 2.6vw, 2.55rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+/* Buttons */
+.primary-dashboard-button,
+.secondary-dashboard-button,
+.danger-dashboard-button,
+.import-dropdown-button {
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 0 14px;
+  gap: 7px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.primary-dashboard-button {
+  background: #443a9c;
+}
+
+.primary-dashboard-button:hover {
+  background: #382f86;
+}
+
+.secondary-dashboard-button {
+  color: #443a9c;
+  border-color: #c9c4e8;
+}
+
+.secondary-dashboard-button:hover {
+  background: #f7f5ff;
+}
+
+.danger-dashboard-button {
+  border-radius: 8px;
+  background: #9f2f2f;
+  font-weight: 600;
+}
+
+.danger-dashboard-button:hover {
+  background: #822727;
+  transform: none;
+}
+
+/* Import dropdown */
+.import-dropdown-menu {
+  width: 270px;
+  padding: 6px;
+  border-radius: 10px;
+  border-color: #dfe4ec;
+  box-shadow: 0 12px 28px rgba(28, 35, 52, 0.13);
+}
+
+.import-dropdown-menu button {
+  border-radius: 7px;
+  padding: 10px;
+}
+
+.import-dropdown-menu strong {
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.import-dropdown-menu small {
+  font-size: 0.72rem;
+}
+
+/* General cards */
+.dashboard-card,
+.dashboard-stat-card {
+  border-radius: 10px;
+  border-color: #dfe4ec;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+}
+
+.dashboard-card-header {
+  padding: 18px 18px 14px;
+}
+
+.dashboard-card-header h2 {
+  font-size: 1.08rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.dashboard-card-header p {
+  margin-top: 5px;
+  color: #858c9b;
+  font-size: 0.84rem;
+}
+
+/* Section icons */
+.dashboard-stat-icon,
+.section-icon,
+.inquiry-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.dashboard-heading-with-icon {
+  gap: 11px;
+}
+
+.section-icon {
+  margin-top: 0;
+}
+
+/* Stat cards */
+.dashboard-stats-grid {
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.dashboard-stat-card {
+  padding: 16px;
+  gap: 13px;
+}
+
+.dashboard-stat-card span {
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.065em;
+}
+
+.dashboard-stat-card strong {
+  margin-top: 7px;
+  font-size: 1.55rem;
+  font-weight: 700;
+}
+
+.dashboard-stat-card p {
+  margin-top: 6px;
+  font-size: 0.82rem;
+}
+
+/* Submitted inquiries card */
+.tasks-card {
+  margin-bottom: 22px;
+}
+
+.collapsible-card-header {
+  padding: 18px;
+}
+
+.collapse-toggle-button {
+  min-height: 34px;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #443a9c;
+  border-color: #c9c4e8;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.collapse-toggle-button:hover {
+  background: #f7f5ff;
+  transform: none;
+}
+
+.collapse-toggle-button strong {
+  width: 20px;
+  height: 20px;
+  background: #443a9c;
+  font-size: 0.9rem;
+}
+
+.collapsible-card-content {
+  margin-top: 10px;
+}
+
+/* Tables */
+.dashboard-table th {
+  background: #f6f7f9;
+  color: #565d6b;
+  padding: 11px 14px;
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.045em;
+}
+
+.dashboard-table td {
+  padding: 12px 14px;
+  color: #3f4351;
+  font-size: 0.86rem;
+  border-top-color: #edf0f4;
+}
+
+.table-link {
+  color: #443a9c;
+  font-weight: 600;
+}
+
+.status-pill {
+  min-height: 24px;
+  border-radius: 7px;
+  padding: 0 9px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* Lower dashboard grid */
+.dashboard-lower-grid {
+  gap: 20px;
+}
+
+.dashboard-side-stack {
+  gap: 20px;
+}
+
+/* Calendar card */
+.calendar-controls {
+  padding: 0 18px 18px;
+  gap: 7px;
+}
+
+.calendar-controls button,
+.calendar-controls select {
+  height: 34px;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.calendar-controls button {
+  width: 34px;
+}
+
+.calendar-grid,
+.calendar-grid-preview-span {
+  padding: 0 18px 18px;
+}
+
+.calendar-grid-preview-span > .calendar-weekday,
+.calendar-weekday {
+  color: #7a8090;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.calendar-cell,
+.calendar-week-row-preview .calendar-cell {
+  border-color: #e3e7ee;
+}
+
+.calendar-day-number,
+.calendar-week-row-preview .calendar-day-number {
+  color: #6f7687;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.calendar-span-event-preview,
+.calendar-event {
+  border-left-width: 4px;
+  border-radius: 5px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.calendar-legend {
+  padding: 0 18px 18px;
+  gap: 14px;
+  font-size: 0.8rem;
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+}
+
+/* Recent booking cards */
+.recent-inquiries-list {
+  gap: 8px;
+  padding: 0 16px 16px;
+}
+
+.recent-booking-card {
+  min-height: 66px;
+  padding: 11px 13px;
+  grid-template-columns: 38px minmax(0, 1fr) auto 12px;
+  gap: 12px;
+
+  border-radius: 8px;
+  border-color: #e3e7ee;
+  box-shadow: none;
+}
+
+.recent-booking-card:hover {
+  transform: none;
+  border-color: #cfd6e1;
+  background: #fbfcfd;
+  box-shadow: none;
+}
+
+.recent-booking-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+.recent-booking-main {
+  gap: 2px;
+}
+
+.recent-booking-main strong {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.recent-booking-main small {
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.recent-booking-date {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.recent-booking-arrow {
+  font-size: 1rem;
+}
+
+/* Empty states */
+.empty-state {
+  margin: 0 18px 18px;
+  padding: 18px;
+  border-radius: 8px;
+  background: #fbfcfd;
+  border-color: #cfd6e1;
+}
+
+.empty-state strong {
+  font-size: 0.94rem;
+  font-weight: 650;
+}
+
+.empty-state p {
+  font-size: 0.84rem;
+}
+
+/* Availability board */
+.availability-card {
+  margin-top: 22px;
+}
+
+.availability-header {
+  padding: 18px 18px 12px;
+}
+
+.availability-header h2 {
+  font-size: 1.08rem;
+  font-weight: 650;
+}
+
+.availability-header p {
+  font-size: 0.84rem;
+}
+
+.availability-toggle {
+  padding: 3px;
+  border-radius: 8px;
+}
+
+.availability-toggle button {
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.availability-toggle button.active {
+  box-shadow: none;
+}
+
+.availability-toolbar {
+  padding: 2px 18px 12px;
+}
+
+.availability-toolbar button {
+  width: 31px;
+  height: 31px;
+  border-radius: 7px;
+  font-weight: 650;
+}
+
+.availability-toolbar strong {
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.availability-scroll {
+  padding: 0 18px 18px;
+}
+
+.availability-grid {
+  border-color: #dfe4ec;
+}
+
+.availability-row-heading,
+.availability-weekday-cell,
+.availability-day-number-cell,
+.availability-row-name,
+.availability-day-cell {
+  border-color: #dfe4ec;
+}
+
+.availability-row-heading,
+.availability-row-name {
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.availability-weekday-cell,
+.availability-day-number-cell {
+  min-height: 28px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.availability-row-name,
+.availability-day-cell {
+  min-height: 30px;
+}
+
+.availability-tooltip {
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(28, 35, 52, 0.16);
+}
+
+/* Calendar agenda, if used on full calendar view */
+.calendar-agenda-list {
+  gap: 10px;
+  padding: 0 18px 18px;
+}
+
+.calendar-agenda-card {
+  padding: 13px;
+  border-radius: 8px;
+  border-color: #e3e7ee;
+  background: #fbfcfd;
+}
+
+.calendar-agenda-card strong {
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.calendar-agenda-status {
+  border-radius: 7px;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.calendar-agenda-card p {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.calendar-agenda-card small {
+  font-size: 0.76rem;
+}
+
+/* Mobile cleanup */
+@media (max-width: 1180px) {
+  .dashboard-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid #dfe4ec;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard-main {
+    padding: 18px 12px;
+  }
+
+  .dashboard-topbar {
+    gap: 14px;
+  }
+
+  .dashboard-card-header,
+  .collapsible-card-header,
+  .availability-header {
+    padding: 16px;
+  }
+
+  .dashboard-stats-grid,
+  .dashboard-lower-grid,
+  .dashboard-side-stack {
+    gap: 14px;
+  }
+
+  .recent-booking-card {
+    grid-template-columns: 36px minmax(0, 1fr) 12px;
+  }
+
+  .recent-booking-date {
+    grid-column: 2;
+    text-align: left;
+  }
+}
