@@ -257,6 +257,8 @@ function normalizeInquiry(inquiry, index) {
     id: inquiry.id || `${inquiry.submittedAt || "inquiry"}-${index}`,
     sourceType: inquiry.sourceType || "Form",
     sourceSheet: inquiry.sourceSheet || "",
+    sourceRowNumber: inquiry.sourceRowNumber || "",
+    rawSpreadsheetData: inquiry.rawSpreadsheetData || null,
 
     organizationName,
     contactName,
@@ -860,6 +862,359 @@ function normalizeMaster2026SpreadsheetRow(row, index) {
     vacancyFilled: String(vacancyFilled || "").trim(),
     monthlyProjectedIncome: String(monthlyProjectedIncome || "").trim(),
   };
+}
+
+function rowHasAnyData(row) {
+  return Object.entries(row).some(([key, value]) => {
+    if (key === "sourceSheet" || key === "sourceRowNumber") {
+      return false;
+    }
+
+    return value !== undefined && value !== null && String(value).trim() !== "";
+  });
+}
+
+function normalizeHeaderName(value) {
+  return String(cleanExcelCellValue(value) || "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getWorksheetHeaderInfo(worksheet) {
+  const knownHeaderNames = [
+    "Date",
+    "Contact Name",
+    "Email Address",
+    "Phone Number",
+    "Guest Group Name",
+    "Size",
+    "Desired Dates",
+    "Additional Notes",
+    "Waitlist or No",
+
+    "Arrival Date",
+    "Departure Date",
+    "Guest Group Type",
+    "Returning (R) or New (N)",
+    "Contact Person",
+    "Contact Person Cell #",
+    "Actual Number of Guests",
+    "Buildings/Rooms",
+    "Food Allergies",
+
+    "name",
+    "Group Leader/Contact Person",
+    "Phone",
+    "Estimated Number of Guests",
+    "Allergies",
+    "Contact Person Email",
+    "Stage of Group",
+    "Min. Number of Paying Guests",
+    "Max. Number of Paying Guests",
+    "Guest Rate",
+    "Exp. Minimum Revenue for Lodging/Meals",
+    "Invoice for Lodging/Meals (does not include linens's fees or other service fees)",
+    "Deposit",
+    "Deposit Received",
+    "Date of Cancellation",
+    "Reason for Cancellation",
+    "Vacancy filled by another group?",
+  ];
+
+  const knownHeaderSet = new Set(
+    knownHeaderNames.map((header) => header.toLowerCase())
+  );
+
+  let bestHeaderRowNumber = 1;
+  let bestHeaders = {};
+  let bestScore = 0;
+
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber > 12) {
+      return;
+    }
+
+    const headers = {};
+    let score = 0;
+    let nonEmptyHeaderCount = 0;
+
+    row.eachCell((cell, columnNumber) => {
+      const headerName = normalizeHeaderName(cell.value);
+
+      if (!headerName) {
+        return;
+      }
+
+      nonEmptyHeaderCount += 1;
+      headers[headerName] = columnNumber;
+
+      if (knownHeaderSet.has(headerName.toLowerCase())) {
+        score += 3;
+      } else {
+        score += 1;
+      }
+    });
+
+    if (nonEmptyHeaderCount >= 2 && score > bestScore) {
+      bestScore = score;
+      bestHeaderRowNumber = rowNumber;
+      bestHeaders = headers;
+    }
+  });
+
+  if (Object.keys(bestHeaders).length === 0) {
+    return null;
+  }
+
+  return {
+    headerRowNumber: bestHeaderRowNumber,
+    headers: bestHeaders,
+  };
+}
+
+function getRowsFromWorksheetFlexible(worksheet) {
+  const headerInfo = getWorksheetHeaderInfo(worksheet);
+
+  if (!headerInfo) {
+    return [];
+  }
+
+  const rows = [];
+
+  worksheet.eachRow((row, rowNumber) => {
+    if (rowNumber <= headerInfo.headerRowNumber) {
+      return;
+    }
+
+    const rowObject = {};
+
+    Object.entries(headerInfo.headers).forEach(([headerName, columnNumber]) => {
+      rowObject[headerName] = cleanExcelCellValue(
+        row.getCell(columnNumber).value
+      );
+    });
+
+    rowObject.sourceSheet = worksheet.name;
+    rowObject.sourceRowNumber = rowNumber;
+
+    if (rowHasAnyData(rowObject)) {
+      rows.push(rowObject);
+    }
+  });
+
+  return rows;
+}
+
+function rowHasAnyColumn(row, possibleNames) {
+  return possibleNames.some((name) => {
+    const value = row[name];
+
+    return value !== undefined && value !== null && String(value).trim() !== "";
+  });
+}
+
+function detectSpreadsheetRowType(row) {
+  if (
+    rowHasAnyColumn(row, ["Waitlist or No", "Desired Dates"]) &&
+    rowHasAnyColumn(row, ["Contact Name", "Guest Group Name", "Email Address"])
+  ) {
+    return "Waitlist";
+  }
+
+  if (
+    rowHasAnyColumn(row, [
+      "Stage of Group",
+      "Group Leader/Contact Person",
+      "Estimated Number of Guests",
+      "Contact Person Email",
+      "Exp. Minimum Revenue for Lodging/Meals",
+      "Deposit Received",
+      "Vacancy filled by another group?",
+    ])
+  ) {
+    return "Master 2026";
+  }
+
+  if (
+    rowHasAnyColumn(row, [
+      "Arrival Date",
+      "Departure Date",
+      "Contact Person Cell #",
+      "Actual Number of Guests",
+      "Food Allergies",
+    ])
+  ) {
+    return "Master";
+  }
+
+  return "Generic";
+}
+
+function getRawRowNotes(row) {
+  return Object.entries(row)
+    .filter(([key, value]) => {
+      if (key === "sourceSheet" || key === "sourceRowNumber") {
+        return false;
+      }
+
+      return value !== undefined && value !== null && String(value).trim() !== "";
+    })
+    .map(([key, value]) => `${key}: ${String(value).trim()}`)
+    .join("\n");
+}
+
+function normalizeGenericSpreadsheetRow(row, index) {
+  if (!rowHasAnyData(row)) {
+    return null;
+  }
+
+  const groupName = readSpreadsheetCell(row, [
+    "Guest Group Name",
+    "Group Name",
+    "Organization",
+    "Church or Ministry",
+    "Church/Ministry",
+    "name",
+    "Name",
+  ]);
+
+  const contactName = readSpreadsheetCell(row, [
+    "Contact Name",
+    "Contact Person",
+    "Group Leader/Contact Person",
+    "Group Leader",
+    "Name",
+  ]);
+
+  const email = readSpreadsheetCell(row, [
+    "Email Address",
+    "Email",
+    "Contact Person Email",
+  ]);
+
+  const phone = readSpreadsheetCell(row, [
+    "Phone Number",
+    "Phone",
+    "Contact Person Cell #",
+  ]);
+
+  const desiredDates = readSpreadsheetCell(row, [
+    "Desired Dates",
+    "Dates",
+    "Date Range",
+  ]);
+
+  const parsedDesiredDates = parseDesiredDateRange(desiredDates);
+
+  const arrivalDate = readSpreadsheetCell(row, [
+    "Arrival Date",
+    "Start Date",
+    "Check In",
+    "Check-in",
+  ]);
+
+  const departureDate = readSpreadsheetCell(row, [
+    "Departure Date",
+    "End Date",
+    "Check Out",
+    "Check-out",
+  ]);
+
+  const startDate =
+    formatExcelDateValue(arrivalDate) || parsedDesiredDates.startDate;
+
+  const endDate =
+    formatExcelDateValue(departureDate) || parsedDesiredDates.endDate;
+
+  const groupSize = readSpreadsheetCell(row, [
+    "Estimated Number of Guests",
+    "Actual Number of Guests",
+    "Size",
+    "Group Size",
+    "#Persons",
+    "Persons",
+  ]);
+
+  const retreatType = readSpreadsheetCell(row, [
+    "Guest Group Type",
+    "Retreat Type",
+    "Type",
+  ]);
+
+  const buildingsRooms = readSpreadsheetCell(row, [
+    "Buildings/Rooms",
+    "Buildings",
+    "Rooms",
+    "Room",
+  ]);
+
+  const notes =
+    readSpreadsheetCell(row, [
+      "Notes",
+      "Additional Notes",
+      "Message",
+      "Need to know",
+      "Need To Know",
+    ]) || getRawRowNotes(row);
+
+  const status = readSpreadsheetCell(row, [
+    "Status",
+    "Stage",
+    "Stage of Group",
+  ]);
+
+  return {
+    id: `generic-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
+    sourceType: "Generic Spreadsheet",
+    sourceSheet: row.sourceSheet || "",
+    sourceRowNumber: row.sourceRowNumber || "",
+
+    submittedAt: new Date().toISOString(),
+
+    organizationName: String(groupName || "").trim() || "Unnamed Imported Row",
+    name: String(contactName || "").trim(),
+    contactName: String(contactName || "").trim() || "No contact name",
+    email: String(email || "").trim(),
+    phone: String(phone || "").trim(),
+
+    startDate,
+    endDate,
+    desiredDatesText:
+      desiredDates ||
+      (startDate && endDate ? `${startDate} - ${endDate}` : startDate || ""),
+
+    attendeeCount: String(groupSize || "").trim(),
+    groupSize: String(groupSize || "").trim(),
+    retreatType: String(retreatType || "").trim(),
+
+    roomName: String(buildingsRooms || "Unassigned").trim(),
+    buildingsRooms: String(buildingsRooms || "").trim(),
+
+    notes: String(notes || "").trim(),
+    waitlist: "No",
+    status: status ? String(status).trim() : "Imported",
+    promoCode: "",
+
+    rawSpreadsheetData: row,
+  };
+}
+
+function normalizeEverythingSpreadsheetRow(row, index) {
+  const detectedType = detectSpreadsheetRowType(row);
+
+  if (detectedType === "Waitlist") {
+    return normalizeWaitlistSpreadsheetRow(row, index);
+  }
+
+  if (detectedType === "Master 2026") {
+    return normalizeMaster2026SpreadsheetRow(row, index);
+  }
+
+  if (detectedType === "Master") {
+    return normalizeMasterSpreadsheetRow(row, index);
+  }
+
+  return normalizeGenericSpreadsheetRow(row, index);
 }
 
 
@@ -1684,6 +2039,7 @@ export default function Dashboard() {
   const waitlistFileInputRef = useRef(null);
   const masterFileInputRef = useRef(null);
   const master2026FileInputRef = useRef(null);
+  const importEverythingFileInputRef = useRef(null);
   const importDropdownRef = useRef(null);
 
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
@@ -1914,6 +2270,89 @@ export default function Dashboard() {
     });
   };
 
+  const handleImportEverythingSpreadsheet = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const fileData = await file.arrayBuffer();
+
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(fileData);
+
+      const allImportedRows = [];
+      const sheetSummaries = [];
+
+      workbook.worksheets.forEach((worksheet) => {
+        const spreadsheetRows = getRowsFromWorksheetFlexible(worksheet);
+
+        const sheetCounts = {
+          Waitlist: 0,
+          Master: 0,
+          "Master 2026": 0,
+          Generic: 0,
+          skipped: 0,
+        };
+
+        spreadsheetRows.forEach((row, index) => {
+          const detectedType = detectSpreadsheetRowType(row);
+          const normalizedRow = normalizeEverythingSpreadsheetRow(row, index);
+
+          if (!normalizedRow) {
+            sheetCounts.skipped += 1;
+            return;
+          }
+
+          allImportedRows.push({
+            ...normalizedRow,
+            sourceSheet: normalizedRow.sourceSheet || worksheet.name,
+            detectedImportType: detectedType,
+          });
+
+          if (sheetCounts[detectedType] !== undefined) {
+            sheetCounts[detectedType] += 1;
+          } else {
+            sheetCounts.Generic += 1;
+          }
+        });
+
+        sheetSummaries.push(
+          `${worksheet.name}: ${spreadsheetRows.length} row(s) found, ${sheetCounts.Waitlist} waitlist, ${sheetCounts.Master} master, ${sheetCounts["Master 2026"]} master 2026, ${sheetCounts.Generic} generic`
+        );
+      });
+
+      if (allImportedRows.length === 0) {
+        alert(
+          "No importable rows were found. Make sure the workbook has header rows and at least one row of data."
+        );
+        return;
+      }
+
+      const nextInquiries = [...publicInquiries, ...allImportedRows];
+
+      localStorage.setItem(
+        "toahNipiPublicInquiries",
+        JSON.stringify(nextInquiries)
+      );
+
+      setPublicInquiries(nextInquiries);
+
+      alert(
+        `Imported ${allImportedRows.length} row(s) from ${workbook.worksheets.length} sheet(s).\n\n${sheetSummaries.join(
+          "\n"
+        )}`
+      );
+    } catch (error) {
+      console.error("Could not import full workbook:", error);
+      alert("Sorry, that workbook could not be imported.");
+    } finally {
+      event.target.value = "";
+    }
+  };
+
   const openWaitlistImportPicker = () => {
     setIsImportMenuOpen(false);
     waitlistFileInputRef.current?.click();
@@ -1927,6 +2366,11 @@ export default function Dashboard() {
   const openMaster2026ImportPicker = () => {
     setIsImportMenuOpen(false);
     master2026FileInputRef.current?.click();
+  };
+
+  const openEverythingImportPicker = () => {
+    setIsImportMenuOpen(false);
+    importEverythingFileInputRef.current?.click();
   };
 
   useEffect(() => {
@@ -2213,6 +2657,14 @@ const getCalendarEventColor = (status) => {
 
             <input
               className="dashboard-file-input"
+              ref={importEverythingFileInputRef}
+              type="file"
+              accept=".xlsx"
+              onChange={handleImportEverythingSpreadsheet}
+            />
+
+            <input
+              className="dashboard-file-input"
               ref={masterFileInputRef}
               type="file"
               accept=".xlsx"
@@ -2256,6 +2708,11 @@ const getCalendarEventColor = (status) => {
                   <button type="button" role="menuitem" onClick={openMaster2026ImportPicker}>
                     <strong>Import Master 2026</strong>
                     <small>Upload 2026 master booking spreadsheet</small>
+                  </button>
+
+                  <button type="button" role="menuitem" onClick={openEverythingImportPicker}>
+                    <strong>Import Everything</strong>
+                    <small>Auto-detect every sheet in workbook</small>
                   </button>
 
                 </div>
