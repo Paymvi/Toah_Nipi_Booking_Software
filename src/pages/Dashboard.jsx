@@ -30,6 +30,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import ExcelJS from "exceljs";
+import BookingHousingTab from "../components/BookingHousingTab";
 
 
 const monthNames = [
@@ -1945,6 +1946,8 @@ function BookingContactsSection({ booking }) {
   );
 }
 
+
+
 function BookingDetailView({
   booking,
   activeTab,
@@ -2164,15 +2167,16 @@ function BookingDetailView({
         </div>
       )}
 
-      {activeTab !== "Overview" && (
-        <section className="dashboard-card booking-tab-placeholder">
-          <h3>{activeTab}</h3>
-          <p>
-            This tab is ready to build next. The selected booking is{" "}
-            <strong>{booking.organizationName}</strong>.
-          </p>
-        </section>
-      )}
+      {activeTab === "Housing" && <BookingHousingTab booking={booking} />}
+        {activeTab !== "Overview" && activeTab !== "Housing" && (
+          <section className="dashboard-card booking-tab-placeholder">
+            <h3>{activeTab}</h3>
+            <p>
+              This tab is ready to build next. The selected booking is{" "}
+              <strong>{booking.organizationName}</strong>.
+            </p>
+          </section>
+        )}
     </section>
   );
 }
