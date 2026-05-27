@@ -298,6 +298,19 @@ function normalizeInquiry(inquiry, index) {
     lodgingCost: inquiry.lodgingCost || "",
     foodCost: inquiry.foodCost || "",
     miscCost: inquiry.miscCost || "",
+
+    stageOfGroup: inquiry.stageOfGroup || "",
+    minPayingGuests: inquiry.minPayingGuests || "",
+    maxPayingGuests: inquiry.maxPayingGuests || "",
+    guestRate: inquiry.guestRate || "",
+    expectedMinimumRevenue: inquiry.expectedMinimumRevenue || "",
+    invoiceLodgingMeals: inquiry.invoiceLodgingMeals || "",
+    deposit: inquiry.deposit || "",
+    depositReceived: inquiry.depositReceived || "",
+    dateOfCancellation: inquiry.dateOfCancellation || "",
+    reasonForCancellation: inquiry.reasonForCancellation || "",
+    vacancyFilled: inquiry.vacancyFilled || "",
+    monthlyProjectedIncome: inquiry.monthlyProjectedIncome || "",
   };
 }
 
@@ -616,6 +629,236 @@ function normalizeMasterSpreadsheetRow(row, index) {
     lodgingCost: String(lodgingCost || "").trim(),
     foodCost: String(foodCost || "").trim(),
     miscCost: String(miscCost || "").trim(),
+  };
+}
+
+function getStatusFromStage(stageOfGroup) {
+  const text = String(stageOfGroup || "").trim().toLowerCase();
+
+  if (!text) {
+    return "Confirmed";
+  }
+
+  if (text.includes("cancel")) {
+    return "Cancelled";
+  }
+
+  if (text.includes("contract")) {
+    return "Contract Sent";
+  }
+
+  if (text.includes("confirm") || text.includes("booked")) {
+    return "Confirmed";
+  }
+
+  if (text.includes("inquiry") || text.includes("lead")) {
+    return "Inquiry";
+  }
+
+  return String(stageOfGroup).trim();
+}
+
+function normalizeMaster2026SpreadsheetRow(row, index) {
+  const guestGroupName = readSpreadsheetCell(row, [
+    "name",
+    "Name",
+    "Guest Group Name",
+    "Group Name",
+  ]);
+
+  const guestGroupType = readSpreadsheetCell(row, ["Guest Group Type"]);
+
+  const returningStatus = readSpreadsheetCell(row, [
+    "Returning (R) or New (N)",
+    "Returning or New",
+  ]);
+
+  const contactPerson = readSpreadsheetCell(row, [
+    "Group Leader/Contact Person",
+    "Contact Person",
+    "Group Leader",
+  ]);
+
+  const phone = readSpreadsheetCell(row, [
+    "Phone",
+    "Phone Number",
+    "Contact Person Cell #",
+  ]);
+
+  const estimatedGuests = readSpreadsheetCell(row, [
+    "Estimated Number of Guests",
+    "Actual Number of Guests",
+    "Size",
+  ]);
+
+  const buildingsRooms = readSpreadsheetCell(row, [
+    "Buildings/Rooms",
+    "Buildings",
+    "Rooms",
+  ]);
+
+  const meals = readSpreadsheetCell(row, ["Meals"]);
+  const allergies = readSpreadsheetCell(row, ["Allergies", "Food Allergies"]);
+  const needToKnow = readSpreadsheetCell(row, ["Need to know", "Need To Know"]);
+  const linenSets = readSpreadsheetCell(row, ["Linen Sets"]);
+  const activities = readSpreadsheetCell(row, ["Activities"]);
+
+  const contactPersonEmail = readSpreadsheetCell(row, [
+    "Contact Person Email",
+    "Email",
+    "Email Address",
+  ]);
+
+  const stageOfGroup = readSpreadsheetCell(row, ["Stage of Group"]);
+
+  const minPayingGuests = readSpreadsheetCell(row, [
+    "Min. Number of Paying Guests",
+    "Minimum Number of Paying Guests",
+  ]);
+
+  const maxPayingGuests = readSpreadsheetCell(row, [
+    "Max. Number of Paying Guests",
+    "Maximum Number of Paying Guests",
+  ]);
+
+  const guestRate = readSpreadsheetCell(row, ["Guest Rate"]);
+
+  const expectedMinimumRevenue = readSpreadsheetCell(row, [
+    "Exp. Minimum Revenue for Lodging/Meals",
+    "Expected Minimum Revenue for Lodging/Meals",
+  ]);
+
+  const invoiceLodgingMeals = readSpreadsheetCell(row, [
+    "Invoice for Lodging/Meals (does not include linens's fees or other service fees)",
+    "Invoice for Lodging/Meals",
+  ]);
+
+  const notes = readSpreadsheetCell(row, ["Notes"]);
+
+  const deposit = readSpreadsheetCell(row, ["Deposit"]);
+  const depositReceived = readSpreadsheetCell(row, ["Deposit Received"]);
+
+  const dateOfCancellation = readSpreadsheetCell(row, [
+    "Date of Cancellation",
+  ]);
+
+  const reasonForCancellation = readSpreadsheetCell(row, [
+    "Reason for Cancellation",
+  ]);
+
+  const vacancyFilled = readSpreadsheetCell(row, [
+    "Vacancy filled by another group?",
+    "Vacancy Filled By Another Group?",
+  ]);
+
+  const persons = readSpreadsheetCell(row, ["#Persons", "Persons"]);
+  const nights = readSpreadsheetCell(row, ["#Nights", "Nights"]);
+  const mealCount = readSpreadsheetCell(row, ["#Meals", "Meals Count"]);
+
+  const camperDays = readSpreadsheetCell(row, [
+    "Camper Days (nightsX0.4 + mealsX0.2)",
+    "Camper Days",
+  ]);
+
+  const usageFee = readSpreadsheetCell(row, ["Usage Fee"]);
+  const lodgingCost = readSpreadsheetCell(row, ["$ Lodging", "Lodging"]);
+  const foodCost = readSpreadsheetCell(row, ["$ Food", "Food"]);
+  const miscCost = readSpreadsheetCell(row, ["$ Misc", "$ Misc.", "Misc"]);
+
+  const monthlyProjectedIncome = readSpreadsheetCell(row, [
+    "Monthly Sum of Projected Income",
+  ]);
+
+  const arrivalDate = readSpreadsheetCell(row, [
+    "Arrival Date",
+    "Start Date",
+    "Check In",
+    "Check-in",
+  ]);
+
+  const departureDate = readSpreadsheetCell(row, [
+    "Departure Date",
+    "End Date",
+    "Check Out",
+    "Check-out",
+  ]);
+
+  const rowHasData =
+    guestGroupName ||
+    guestGroupType ||
+    contactPerson ||
+    phone ||
+    estimatedGuests ||
+    buildingsRooms ||
+    contactPersonEmail ||
+    stageOfGroup ||
+    notes;
+
+  if (!rowHasData) {
+    return null;
+  }
+
+  const startDate = formatExcelDateValue(arrivalDate);
+  const endDate = formatExcelDateValue(departureDate);
+
+  return {
+    id: `master-2026-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
+    sourceType: "Master 2026",
+    sourceSheet: row.sourceSheet || "",
+    submittedAt: new Date().toISOString(),
+
+    organizationName: String(guestGroupName || "").trim() || "Unnamed Group",
+    name: String(contactPerson || "").trim(),
+    contactName: String(contactPerson || "").trim() || "No contact name",
+    email: String(contactPersonEmail || "").trim(),
+    phone: String(phone || "").trim(),
+
+    startDate,
+    endDate,
+    desiredDatesText:
+      startDate && endDate ? `${startDate} - ${endDate}` : startDate || "",
+
+    attendeeCount: String(estimatedGuests || "").trim(),
+    groupSize: String(estimatedGuests || "").trim(),
+    retreatType: String(guestGroupType || "").trim(),
+
+    roomName: String(buildingsRooms || "Unassigned").trim(),
+    buildingsRooms: String(buildingsRooms || "").trim(),
+
+    notes: String(notes || "").trim(),
+    waitlist: "No",
+    status: getStatusFromStage(stageOfGroup),
+    promoCode: "",
+
+    returningStatus: String(returningStatus || "").trim(),
+    meals: String(meals || "").trim(),
+    foodAllergies: String(allergies || "").trim(),
+    needToKnow: String(needToKnow || "").trim(),
+    linenSets: String(linenSets || "").trim(),
+    activities: String(activities || "").trim(),
+
+    persons: String(persons || "").trim(),
+    nights: String(nights || "").trim(),
+    mealCount: String(mealCount || "").trim(),
+    camperDays: String(camperDays || "").trim(),
+
+    usageFee: String(usageFee || "").trim(),
+    lodgingCost: String(lodgingCost || "").trim(),
+    foodCost: String(foodCost || "").trim(),
+    miscCost: String(miscCost || "").trim(),
+
+    stageOfGroup: String(stageOfGroup || "").trim(),
+    minPayingGuests: String(minPayingGuests || "").trim(),
+    maxPayingGuests: String(maxPayingGuests || "").trim(),
+    guestRate: String(guestRate || "").trim(),
+    expectedMinimumRevenue: String(expectedMinimumRevenue || "").trim(),
+    invoiceLodgingMeals: String(invoiceLodgingMeals || "").trim(),
+    deposit: String(deposit || "").trim(),
+    depositReceived: String(depositReceived || "").trim(),
+    dateOfCancellation: formatExcelDateValue(dateOfCancellation),
+    reasonForCancellation: String(reasonForCancellation || "").trim(),
+    vacancyFilled: String(vacancyFilled || "").trim(),
+    monthlyProjectedIncome: String(monthlyProjectedIncome || "").trim(),
   };
 }
 
@@ -1440,6 +1683,7 @@ export default function Dashboard() {
 
   const waitlistFileInputRef = useRef(null);
   const masterFileInputRef = useRef(null);
+  const master2026FileInputRef = useRef(null);
   const importDropdownRef = useRef(null);
 
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
@@ -1625,6 +1869,51 @@ export default function Dashboard() {
     });
   };
 
+  const handleImportMaster2026Spreadsheet = (event) => {
+    importSpreadsheet({
+      event,
+      importTypeLabel: "master 2026 booking",
+      normalizeRow: normalizeMaster2026SpreadsheetRow,
+      expectedColumns: [
+        "name",
+        "Name",
+        "Guest Group Type",
+        "Returning (R) or New (N)",
+        "Group Leader/Contact Person",
+        "Phone",
+        "Estimated Number of Guests",
+        "Buildings/Rooms",
+        "Meals",
+        "Allergies",
+        "Need to know",
+        "Linen Sets",
+        "Activities",
+        "Contact Person Email",
+        "Stage of Group",
+        "Min. Number of Paying Guests",
+        "Max. Number of Paying Guests",
+        "Guest Rate",
+        "Exp. Minimum Revenue for Lodging/Meals",
+        "Invoice for Lodging/Meals (does not include linens's fees or other service fees)",
+        "Notes",
+        "Deposit",
+        "Deposit Received",
+        "Date of Cancellation",
+        "Reason for Cancellation",
+        "Vacancy filled by another group?",
+        "#Persons",
+        "#Nights",
+        "#Meals",
+        "Camper Days (nightsX0.4 + mealsX0.2)",
+        "Usage Fee",
+        "$ Lodging",
+        "$ Food",
+        "$ Misc",
+        "Monthly Sum of Projected Income",
+      ],
+    });
+  };
+
   const openWaitlistImportPicker = () => {
     setIsImportMenuOpen(false);
     waitlistFileInputRef.current?.click();
@@ -1633,6 +1922,11 @@ export default function Dashboard() {
   const openMasterImportPicker = () => {
     setIsImportMenuOpen(false);
     masterFileInputRef.current?.click();
+  };
+
+  const openMaster2026ImportPicker = () => {
+    setIsImportMenuOpen(false);
+    master2026FileInputRef.current?.click();
   };
 
   useEffect(() => {
@@ -1804,10 +2098,34 @@ export default function Dashboard() {
     setSelectedYear(today.getFullYear());
   };
 
-  const getCalendarEventColor = (status) => {
-    if (status === "Confirmed") return "calendar-event-green";
-    if (status === "Contract Sent") return "calendar-event-blue";
-    if (status === "Inquiry") return "calendar-event-gold";
+const getCalendarEventColor = (status) => {
+  const normalizedStatus = String(status || "").toLowerCase();
+
+    if (
+      normalizedStatus.includes("confirmed") ||
+      normalizedStatus.includes("booked")
+    ) {
+      return "calendar-event-green";
+    }
+
+    if (normalizedStatus.includes("contract")) {
+      return "calendar-event-blue";
+    }
+
+    if (
+      normalizedStatus.includes("inquiry") ||
+      normalizedStatus.includes("lead")
+    ) {
+      return "calendar-event-gold";
+    }
+
+    if (normalizedStatus.includes("cancel")) {
+      return "calendar-event-pink";
+    }
+
+    if (normalizedStatus.includes("wait")) {
+      return "calendar-event-teal";
+    }
 
     return "calendar-event-purple";
   };
@@ -1900,6 +2218,13 @@ export default function Dashboard() {
               accept=".xlsx"
               onChange={handleImportMasterSpreadsheet}
             />
+            <input
+              className="dashboard-file-input"
+              ref={master2026FileInputRef}
+              type="file"
+              accept=".xlsx"
+              onChange={handleImportMaster2026Spreadsheet}
+            />
 
             <div className="import-dropdown" ref={importDropdownRef}>
               <button
@@ -1924,9 +2249,15 @@ export default function Dashboard() {
                   </button>
 
                   <button type="button" role="menuitem" onClick={openMasterImportPicker}>
-                    <strong>Import Master</strong>
+                    <strong>Import Master 2025</strong>
                     <small>Upload master booking spreadsheet</small>
                   </button>
+
+                  <button type="button" role="menuitem" onClick={openMaster2026ImportPicker}>
+                    <strong>Import Master 2026</strong>
+                    <small>Upload 2026 master booking spreadsheet</small>
+                  </button>
+
                 </div>
               )}
             </div>
