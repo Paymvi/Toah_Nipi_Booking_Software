@@ -2483,43 +2483,61 @@ const getCalendarEventColor = (status) => {
               </div>
 
               {recentInquiries.length > 0 ? (
-                <div className="inquiry-list">
-                  {recentInquiries.map((inquiry) => (
-                    <div className="inquiry-card inquiry-card-with-icon" key={inquiry.id}>
-                      <span className="inquiry-card-icon">
-                        <FaEnvelopeOpenText />
-                      </span>
+                <div className="recent-inquiries-list">
+                  {recentInquiries.map((inquiry) => {
+                    const organizationName =
+                      inquiry.organizationName || "Unnamed Organization";
 
-                      <div className="inquiry-card-content">
-                        <div>
-                          <button
-                            className="booking-card-title-button"
-                            type="button"
-                            onClick={() => openBookingDetail(inquiry)}
-                          >
-                            {inquiry.organizationName}
-                          </button>
-                          <span>{inquiry.contactName}</span>
-                        </div>
+                    const contactName =
+                      inquiry.contactName && inquiry.contactName !== "No contact name"
+                        ? inquiry.contactName
+                        : "";
 
-                        <p>
-                          {inquiry.retreatType || "Retreat type not selected"} ·{" "}
-                          {inquiry.attendeeCount || "No group size yet"}
-                        </p>
+                    const displayName = contactName || organizationName;
 
-                        <small>
+                    const guestCount = String(inquiry.attendeeCount || "").trim();
+
+                    const guestLabel = guestCount
+                      ? `${guestCount} guest${guestCount === "1" ? "" : "s"}`
+                      : "No group size";
+
+                    return (
+                      <button
+                        className="recent-booking-card"
+                        key={inquiry.id}
+                        type="button"
+                        onClick={() => openBookingDetail(inquiry)}
+                      >
+                        <span className="recent-booking-icon">
+                          <FaEnvelopeOpenText />
+                        </span>
+
+                        <span className="recent-booking-main">
+                          <strong>{displayName}</strong>
+
+                          <small>
+                            {inquiry.retreatType || "No retreat type"}
+                            <span aria-hidden="true">·</span>
+                            {guestLabel}
+                          </small>
+                        </span>
+
+                        <span className="recent-booking-date">
                           {formatDateRange(inquiry.startDate, inquiry.endDate)}
-                        </small>
-                      </div>
-                    </div>
-                  ))}
+                        </span>
+
+                        <span className="recent-booking-arrow" aria-hidden="true">
+                          ›
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="empty-state">
                   <strong>No public inquiries yet</strong>
                   <p>
-                    Once someone submits the public form, their inquiry will
-                    appear here.
+                    Once someone submits the public form, their inquiry will appear here.
                   </p>
                 </div>
               )}
