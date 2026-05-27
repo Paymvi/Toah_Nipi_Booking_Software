@@ -27,7 +27,7 @@ import {
   getLocalDate,
   maxDate,
   minDate,
-} from "../../../utils/dateUtils";
+} from "../utils/dateUtils";
 
 // Splits the flat calendar cell array into week rows.
 function getCalendarWeeks(calendarCells) {

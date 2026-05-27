@@ -20,7 +20,7 @@ import {
 import ExcelJS from "exceljs";
 import BookingHousingTab from "../components/BookingHousingTab";
 import DashboardTopbar from "../components/DashboardTopbar";
-import BookingCalendar from "../features/dashboard/components/BookingCalendar";
+import BookingCalendar from "../components/BookingCalendar";
 
 import {
   monthNames,
