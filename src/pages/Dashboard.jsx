@@ -4,28 +4,22 @@ import {
   FaCalendarAlt,
   FaClipboardList,
   FaPlus,
-  FaTable,
-  FaSyncAlt,
   FaRegCalendarCheck,
   FaExclamationTriangle,
   FaTicketAlt,
-  FaFileImport,
-  FaFileExport,
-  FaTrashAlt,
-  FaChevronDown,
   FaClock,
   FaMapMarkedAlt,
   FaBed,
-  FaHiking,
   FaEnvelopeOpenText,
-  FaInfoCircle,
   FaFilter,
   FaPaperPlane,
   FaKey,
   FaTimes,
+  FaTrashAlt,
 } from "react-icons/fa";
 import ExcelJS from "exceljs";
 import BookingHousingTab from "../components/BookingHousingTab";
+import DashboardTopbar from "../components/DashboardTopbar";
 
 import {
   monthNames,
@@ -2257,127 +2251,29 @@ const getCalendarEventColor = (status) => {
       </aside>
 
       <section className="dashboard-main">
-        <header className="dashboard-topbar">
-          <div>
-            <p className="dashboard-eyebrow">Internal Booking Software</p>
-            <h1>{activeView}</h1>
-          </div>
 
-          <div className="dashboard-actions">
-            <input
-              className="dashboard-file-input"
-              ref={waitlistFileInputRef}
-              type="file"
-              accept=".xlsx"
-              onChange={handleImportWaitlistSpreadsheet}
-            />
-
-            <input
-              className="dashboard-file-input"
-              ref={importEverythingFileInputRef}
-              type="file"
-              accept=".xlsx"
-              onChange={handleImportEverythingSpreadsheet}
-            />
-
-            <input
-              className="dashboard-file-input"
-              ref={masterFileInputRef}
-              type="file"
-              accept=".xlsx"
-              onChange={handleImportMasterSpreadsheet}
-            />
-            <input
-              className="dashboard-file-input"
-              ref={master2026FileInputRef}
-              type="file"
-              accept=".xlsx"
-              onChange={handleImportMaster2026Spreadsheet}
-            />
-
-            <div className="import-dropdown" ref={importDropdownRef}>
-              <button
-                className={`secondary-dashboard-button import-dropdown-button ${
-                  isImportMenuOpen ? "is-open" : ""
-                }`}
-                type="button"
-                onClick={() => setIsImportMenuOpen((currentValue) => !currentValue)}
-                aria-haspopup="menu"
-                aria-expanded={isImportMenuOpen}
-              >
-                <FaFileImport />
-                Import
-                <FaChevronDown className="import-dropdown-caret" />
-              </button>
-
-              {isImportMenuOpen && (
-                <div className="import-dropdown-menu" role="menu">
-                  <button type="button" role="menuitem" onClick={openWaitlistImportPicker}>
-                    <FaClipboardList />
-                    <span>
-                      <strong>Import Waitlist</strong>
-                      <small>Upload waitlist spreadsheet</small>
-                    </span>
-                  </button>
-
-                  <button type="button" role="menuitem" onClick={openMasterImportPicker}>
-                    <FaTable />
-                    <span>
-                      <strong>Import Master 2025</strong>
-                      <small>Upload master booking spreadsheet</small>
-                    </span>
-                  </button>
-
-                  <button type="button" role="menuitem" onClick={openMaster2026ImportPicker}>
-                    <FaRegCalendarCheck />
-                    <span>
-                      <strong>Import Master 2026</strong>
-                      <small>Upload 2026 master booking spreadsheet</small>
-                    </span>
-                  </button>
-
-                  <button type="button" role="menuitem" onClick={openEverythingImportPicker}>
-                    <FaFileImport />
-                    <span>
-                      <strong>Import Everything</strong>
-                      <small>Auto-detect every sheet in workbook</small>
-                    </span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <button
-              className="secondary-dashboard-button"
-              type="button"
-              onClick={exportInquiriesToSpreadsheet}
-            >
-              <FaFileExport />
-              Export Excel
-            </button>
-
-            <button
-              className="primary-dashboard-button"
-              type="button"
-              onClick={refreshInquiries}
-            >
-              <FaSyncAlt />
-              Refresh Inquiries
-            </button>
-
-            <button
-              className="danger-dashboard-button"
-              type="button"
-              onClick={deleteAllInquiries}
-            >
-              <FaTrashAlt />
-                Delete All
-            </button>
-
-          </div>
-
-          
-        </header>
+        <DashboardTopbar
+          activeView={activeView}
+          waitlistFileInputRef={waitlistFileInputRef}
+          masterFileInputRef={masterFileInputRef}
+          master2026FileInputRef={master2026FileInputRef}
+          importEverythingFileInputRef={importEverythingFileInputRef}
+          importDropdownRef={importDropdownRef}
+          isImportMenuOpen={isImportMenuOpen}
+          setIsImportMenuOpen={setIsImportMenuOpen}
+          handleImportWaitlistSpreadsheet={handleImportWaitlistSpreadsheet}
+          handleImportMasterSpreadsheet={handleImportMasterSpreadsheet}
+          handleImportMaster2026Spreadsheet={handleImportMaster2026Spreadsheet}
+          handleImportEverythingSpreadsheet={handleImportEverythingSpreadsheet}
+          openWaitlistImportPicker={openWaitlistImportPicker}
+          openMasterImportPicker={openMasterImportPicker}
+          openMaster2026ImportPicker={openMaster2026ImportPicker}
+          openEverythingImportPicker={openEverythingImportPicker}
+          exportInquiriesToSpreadsheet={exportInquiriesToSpreadsheet}
+          refreshInquiries={refreshInquiries}
+          deleteAllInquiries={deleteAllInquiries}
+        />
+        
 
         {activeView === "Booking Detail" ? (
           <BookingDetailView
