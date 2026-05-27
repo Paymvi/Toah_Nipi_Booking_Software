@@ -11,6 +11,20 @@ import {
   FaUserShield,
   FaTable,
   FaSyncAlt,
+  FaRegCalendarCheck,
+  FaExclamationTriangle,
+  FaTicketAlt,
+  FaFileImport,
+  FaFileExport,
+  FaTrashAlt,
+  FaChevronDown,
+  FaClock,
+  FaMapMarkedAlt,
+  FaBed,
+  FaHiking,
+  FaEnvelopeOpenText,
+  FaInfoCircle,
+  FaFilter,
 } from "react-icons/fa";
 import ExcelJS from "exceljs";
 
@@ -1620,18 +1634,24 @@ function AvailabilityBoard({
   return (
     <section className="dashboard-card availability-card">
       <div className="availability-header">
-        <div>
-          <p className="dashboard-eyebrow">Availability</p>
-          <h2>
-            {isRoomView
-              ? "Room Availability"
-              : "Activity Location Availability"}
-          </h2>
-          <p>
-            {isRoomView
-              ? "Monthly room usage based on assigned rooms and building fields."
-              : "Monthly activity space usage based on booking rooms, activities, and notes."}
-          </p>
+        <div className="dashboard-heading-with-icon">
+          <span className="section-icon">
+            {isRoomView ? <FaBed /> : <FaMapMarkedAlt />}
+          </span>
+
+          <div>
+            <p className="dashboard-eyebrow">Availability</p>
+            <h2>
+              {isRoomView
+                ? "Room Availability"
+                : "Activity Location Availability"}
+            </h2>
+            <p>
+              {isRoomView
+                ? "Monthly room usage based on assigned rooms and building fields."
+                : "Monthly activity space usage based on booking rooms, activities, and notes."}
+            </p>
+          </div>
         </div>
 
         <div className="availability-header-actions">
@@ -1654,11 +1674,13 @@ function AvailabilityBoard({
           </div>
 
           <button className="secondary-dashboard-button" type="button">
+            <FaFilter />
             Site Filter
           </button>
 
           {isRoomView && (
             <button className="secondary-dashboard-button" type="button">
+              <FaFilter />
               Housing Area Filter
             </button>
           )}
@@ -2688,33 +2710,44 @@ const getCalendarEventColor = (status) => {
                 aria-haspopup="menu"
                 aria-expanded={isImportMenuOpen}
               >
-                <FaPlus />
+                <FaFileImport />
                 Import
-                <span className="import-dropdown-caret">▾</span>
+                <FaChevronDown className="import-dropdown-caret" />
               </button>
 
               {isImportMenuOpen && (
                 <div className="import-dropdown-menu" role="menu">
                   <button type="button" role="menuitem" onClick={openWaitlistImportPicker}>
-                    <strong>Import Waitlist</strong>
-                    <small>Upload waitlist spreadsheet</small>
+                    <FaClipboardList />
+                    <span>
+                      <strong>Import Waitlist</strong>
+                      <small>Upload waitlist spreadsheet</small>
+                    </span>
                   </button>
 
                   <button type="button" role="menuitem" onClick={openMasterImportPicker}>
-                    <strong>Import Master 2025</strong>
-                    <small>Upload master booking spreadsheet</small>
+                    <FaTable />
+                    <span>
+                      <strong>Import Master 2025</strong>
+                      <small>Upload master booking spreadsheet</small>
+                    </span>
                   </button>
 
                   <button type="button" role="menuitem" onClick={openMaster2026ImportPicker}>
-                    <strong>Import Master 2026</strong>
-                    <small>Upload 2026 master booking spreadsheet</small>
+                    <FaRegCalendarCheck />
+                    <span>
+                      <strong>Import Master 2026</strong>
+                      <small>Upload 2026 master booking spreadsheet</small>
+                    </span>
                   </button>
 
                   <button type="button" role="menuitem" onClick={openEverythingImportPicker}>
-                    <strong>Import Everything</strong>
-                    <small>Auto-detect every sheet in workbook</small>
+                    <FaFileImport />
+                    <span>
+                      <strong>Import Everything</strong>
+                      <small>Auto-detect every sheet in workbook</small>
+                    </span>
                   </button>
-
                 </div>
               )}
             </div>
@@ -2724,7 +2757,7 @@ const getCalendarEventColor = (status) => {
               type="button"
               onClick={exportInquiriesToSpreadsheet}
             >
-              <FaTable />
+              <FaFileExport />
               Export Excel
             </button>
 
@@ -2742,7 +2775,8 @@ const getCalendarEventColor = (status) => {
               type="button"
               onClick={deleteAllInquiries}
             >
-              Delete All
+              <FaTrashAlt />
+                Delete All
             </button>
 
           </div>
@@ -2892,39 +2926,69 @@ const getCalendarEventColor = (status) => {
         ) : (
           <>
         <section className="dashboard-stats-grid">
-          <article className="dashboard-stat-card">
-            <span>Total Inquiries</span>
-            <strong>{inquiryBookings.length}</strong>
-            <p>Submitted through the form</p>
+          <article className="dashboard-stat-card stat-card-green">
+            <div className="dashboard-stat-icon">
+              <FaClipboardList />
+            </div>
+
+            <div>
+              <span>Total Inquiries</span>
+              <strong>{inquiryBookings.length}</strong>
+              <p>Submitted through the form</p>
+            </div>
           </article>
 
-          <article className="dashboard-stat-card">
-            <span>Calendar Entries</span>
-            <strong>{datedInquiries.length}</strong>
-            <p>Inquiries with a start date</p>
+          <article className="dashboard-stat-card stat-card-blue">
+            <div className="dashboard-stat-icon">
+              <FaRegCalendarCheck />
+            </div>
+
+            <div>
+              <span>Calendar Entries</span>
+              <strong>{datedInquiries.length}</strong>
+              <p>Inquiries with a start date</p>
+            </div>
           </article>
 
-          <article className="dashboard-stat-card">
-            <span>Missing Dates</span>
-            <strong>{inquiriesMissingDates.length}</strong>
-            <p>Need staff follow-up</p>
+          <article className="dashboard-stat-card stat-card-gold">
+            <div className="dashboard-stat-icon">
+              <FaExclamationTriangle />
+            </div>
+
+            <div>
+              <span>Missing Dates</span>
+              <strong>{inquiriesMissingDates.length}</strong>
+              <p>Need staff follow-up</p>
+            </div>
           </article>
 
-          <article className="dashboard-stat-card">
-            <span>Promo Codes</span>
-            <strong>{inquiriesWithPromoCodes.length}</strong>
-            <p>Submissions with a promo code</p>
+          <article className="dashboard-stat-card stat-card-purple">
+            <div className="dashboard-stat-icon">
+              <FaTicketAlt />
+            </div>
+
+            <div>
+              <span>Promo Codes</span>
+              <strong>{inquiriesWithPromoCodes.length}</strong>
+              <p>Submissions with a promo code</p>
+            </div>
           </article>
         </section>
 
         <section className="dashboard-card tasks-card">
           <div className="dashboard-card-header collapsible-card-header">
-            <div>
-              <h2>Submitted Booking Inquiries</h2>
-              <p>
-                {inquiryBookings.length} total inquiry
-                {inquiryBookings.length === 1 ? "" : "ies"} from forms and Excel imports.
-              </p>
+            <div className="dashboard-heading-with-icon">
+              <span className="section-icon">
+                <FaClipboardList />
+              </span>
+
+              <div>
+                <h2>Submitted Booking Inquiries</h2>
+                <p>
+                  {inquiryBookings.length} total inquiry
+                  {inquiryBookings.length === 1 ? "" : "ies"} from forms and Excel imports.
+                </p>
+              </div>
             </div>
 
             <button
@@ -3000,12 +3064,17 @@ const getCalendarEventColor = (status) => {
         <section className="dashboard-lower-grid">
           <article className="dashboard-card calendar-card">
             <div className="dashboard-card-header">
-              <div>
-                <h2>Groups At a Glance</h2>
-                <p>
-                  Calendar view based only on inquiries that have selected
-                  dates.
-                </p>
+              <div className="dashboard-heading-with-icon">
+                <span className="section-icon">
+                  <FaCalendarAlt />
+                </span>
+
+                <div>
+                  <h2>Groups At a Glance</h2>
+                  <p>
+                    Calendar view based only on inquiries that have selected dates.
+                  </p>
+                </div>
               </div>
 
               <button
@@ -3084,9 +3153,15 @@ const getCalendarEventColor = (status) => {
           <div className="dashboard-side-stack">
             <article className="dashboard-card">
               <div className="dashboard-card-header">
-                <div>
-                  <h2>Dated Inquiries</h2>
-                  <p>Submissions with start dates, sorted by date.</p>
+                <div className="dashboard-heading-with-icon">
+                  <span className="section-icon">
+                    <FaClock />
+                  </span>
+
+                  <div>
+                    <h2>Dated Inquiries</h2>
+                    <p>Submissions with start dates, sorted by date.</p>
+                  </div>
                 </div>
               </div>
 
@@ -3138,35 +3213,47 @@ const getCalendarEventColor = (status) => {
 
             <article className="dashboard-card">
               <div className="dashboard-card-header">
-                <div>
-                  <h2>Recent Booking Inquiries</h2>
-                  <p>Newest submissions from the public form.</p>
+                <div className="dashboard-heading-with-icon">
+                  <span className="section-icon">
+                    <FaEnvelopeOpenText />
+                  </span>
+
+                  <div>
+                    <h2>Recent Booking Inquiries</h2>
+                    <p>Newest submissions from the public form.</p>
+                  </div>
                 </div>
               </div>
 
               {recentInquiries.length > 0 ? (
                 <div className="inquiry-list">
                   {recentInquiries.map((inquiry) => (
-                    <div className="inquiry-card" key={inquiry.id}>
-                      <div>
-                        <button
-                          className="booking-card-title-button"
-                          type="button"
-                          onClick={() => openBookingDetail(inquiry)}
-                        >
-                          {inquiry.organizationName}
-                        </button>
-                        <span>{inquiry.contactName}</span>
+                    <div className="inquiry-card inquiry-card-with-icon" key={inquiry.id}>
+                      <span className="inquiry-card-icon">
+                        <FaEnvelopeOpenText />
+                      </span>
+
+                      <div className="inquiry-card-content">
+                        <div>
+                          <button
+                            className="booking-card-title-button"
+                            type="button"
+                            onClick={() => openBookingDetail(inquiry)}
+                          >
+                            {inquiry.organizationName}
+                          </button>
+                          <span>{inquiry.contactName}</span>
+                        </div>
+
+                        <p>
+                          {inquiry.retreatType || "Retreat type not selected"} ·{" "}
+                          {inquiry.attendeeCount || "No group size yet"}
+                        </p>
+
+                        <small>
+                          {formatDateRange(inquiry.startDate, inquiry.endDate)}
+                        </small>
                       </div>
-
-                      <p>
-                        {inquiry.retreatType || "Retreat type not selected"} ·{" "}
-                        {inquiry.attendeeCount || "No group size yet"}
-                      </p>
-
-                      <small>
-                        {formatDateRange(inquiry.startDate, inquiry.endDate)}
-                      </small>
                     </div>
                   ))}
                 </div>
