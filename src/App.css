@@ -3319,3 +3319,147 @@ body,
   color: #2f3344;
   white-space: nowrap;
 }
+
+
+
+
+/* =========================================================
+   Booking Detail Icons
+========================================================= */
+
+.booking-detail-back-button svg {
+  font-size: 0.9rem;
+}
+
+.booking-detail-title-block {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.booking-detail-main-icon {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border-radius: 16px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(92, 111, 70, 0.12);
+  color: #5c6f46;
+  font-size: 1.25rem;
+}
+
+.booking-card-heading-with-icon {
+  align-items: center;
+}
+
+.booking-card-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.booking-card-title-spaced {
+  margin-bottom: 16px;
+}
+
+.booking-card-title h3 {
+  margin: 0;
+}
+
+.booking-detail-card-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 12px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(92, 111, 70, 0.11);
+  color: #5c6f46;
+  font-size: 0.95rem;
+}
+
+.booking-info-item {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.booking-info-item > div {
+  min-width: 0;
+}
+
+.booking-info-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  margin-top: 1px;
+  border-radius: 11px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #f2f4ef;
+  color: #657455;
+  font-size: 0.85rem;
+}
+
+.booking-info-icon.warning-icon {
+  background: #fff4dc;
+  color: #956410;
+}
+
+.booking-info-item small {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.booking-info-item strong {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.booking-notes-card .booking-card-title {
+  margin-bottom: 14px;
+}
+
+@media (max-width: 720px) {
+  .booking-detail-title-block {
+    align-items: flex-start;
+  }
+
+  .booking-detail-main-icon {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+    border-radius: 14px;
+    font-size: 1.1rem;
+  }
+
+  .booking-detail-card-icon {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+  }
+
+  .booking-info-icon {
+    width: 30px;
+    height: 30px;
+    flex-basis: 30px;
+    border-radius: 10px;
+    font-size: 0.78rem;
+  }
+}

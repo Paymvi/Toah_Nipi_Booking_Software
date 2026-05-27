@@ -16,6 +16,17 @@ import {
   FaKey,
   FaTimes,
   FaTrashAlt,
+  FaArrowLeft,
+  FaUser,
+  FaBuilding,
+  FaSignInAlt,
+  FaSignOutAlt,
+  FaUsers,
+  FaDollarSign,
+  FaFileContract,
+  FaInfoCircle,
+  FaUtensils,
+  FaHiking,
 } from "react-icons/fa";
 import ExcelJS from "exceljs";
 import BookingHousingTab from "../components/BookingHousingTab";
@@ -1209,22 +1220,33 @@ function BookingDetailView({
     <section className="booking-detail-page">
       <div className="booking-detail-top">
         <button
-          className="secondary-dashboard-button"
+          className="secondary-dashboard-button booking-detail-back-button"
           type="button"
           onClick={onBack}
         >
-          ← Back
+          <FaArrowLeft />
+          Back
         </button>
 
-        <div>
-          <h2>{booking.organizationName}</h2>
-          <p>
-            {formatDateRange(booking.startDate, booking.endDate)}
-            {booking.attendeeCount ? ` (${booking.attendeeCount} attendees)` : ""}
-          </p>
+        <div className="booking-detail-title-block">
+          <span className="booking-detail-main-icon">
+            <FaClipboardList />
+          </span>
+
+          <div>
+            <h2>{booking.organizationName}</h2>
+            <p>
+              {formatDateRange(booking.startDate, booking.endDate)}
+              {booking.attendeeCount ? ` (${booking.attendeeCount} attendees)` : ""}
+            </p>
+          </div>
         </div>
 
-        <span className={`booking-detail-status ${booking.status === "Confirmed" ? "status-confirmed" : "status-inquiry"}`}>
+        <span
+          className={`booking-detail-status ${
+            booking.status === "Confirmed" ? "status-confirmed" : "status-inquiry"
+          }`}
+        >
           {booking.status}
         </span>
       </div>
@@ -1245,66 +1267,139 @@ function BookingDetailView({
       {activeTab === "Overview" && (
         <div className="booking-detail-grid">
           <article className="booking-detail-card booking-overview-card">
-            <div className="booking-card-heading">
-              <h3>{booking.organizationName}</h3>
+            <div className="booking-card-heading booking-card-heading-with-icon">
+              <div className="booking-card-title">
+                <span className="booking-detail-card-icon">
+                  <FaInfoCircle />
+                </span>
+
+                <h3>{booking.organizationName}</h3>
+              </div>
+
               <span>{booking.status}</span>
             </div>
 
             <div className="booking-info-grid">
-              <div>
-                <small>Contact</small>
-                <strong>{booking.contactName || "No contact name"}</strong>
+              <div className="booking-info-item">
+                <span className="booking-info-icon">
+                  <FaUser />
+                </span>
+
+                <div>
+                  <small>Contact</small>
+                  <strong>{booking.contactName || "No contact name"}</strong>
+                </div>
               </div>
 
-              <div>
-                <small>Organization</small>
-                <strong>{booking.organizationName}</strong>
+              <div className="booking-info-item">
+                <span className="booking-info-icon">
+                  <FaBuilding />
+                </span>
+
+                <div>
+                  <small>Organization</small>
+                  <strong>{booking.organizationName}</strong>
+                </div>
               </div>
 
-              <div>
-                <small>Arrival</small>
-                <strong>{formatDate(booking.startDate)}</strong>
+              <div className="booking-info-item">
+                <span className="booking-info-icon">
+                  <FaSignInAlt />
+                </span>
+
+                <div>
+                  <small>Arrival</small>
+                  <strong>{formatDate(booking.startDate)}</strong>
+                </div>
               </div>
 
-              <div>
-                <small>Departure</small>
-                <strong>{formatDate(booking.endDate)}</strong>
+              <div className="booking-info-item">
+                <span className="booking-info-icon">
+                  <FaSignOutAlt />
+                </span>
+
+                <div>
+                  <small>Departure</small>
+                  <strong>{formatDate(booking.endDate)}</strong>
+                </div>
               </div>
 
-              <div>
-                <small>Program Type</small>
-                <strong>{booking.retreatType || "—"}</strong>
+              <div className="booking-info-item">
+                <span className="booking-info-icon">
+                  <FaClipboardList />
+                </span>
+
+                <div>
+                  <small>Program Type</small>
+                  <strong>{booking.retreatType || "—"}</strong>
+                </div>
               </div>
 
-              <div>
-                <small>Attendees</small>
-                <strong>{booking.attendeeCount || "—"}</strong>
+              <div className="booking-info-item">
+                <span className="booking-info-icon">
+                  <FaUsers />
+                </span>
+
+                <div>
+                  <small>Attendees</small>
+                  <strong>{booking.attendeeCount || "—"}</strong>
+                </div>
               </div>
             </div>
           </article>
 
           <article className="booking-detail-card">
-            <h3>Financials</h3>
+            <div className="booking-card-title booking-card-title-spaced">
+              <span className="booking-detail-card-icon">
+                <FaDollarSign />
+              </span>
+
+              <h3>Financials</h3>
+            </div>
 
             <div className="booking-financial-grid">
-              <div>
-                <small>Usage Fee</small>
-                <strong>{usageFee}</strong>
+              <div className="booking-info-item">
+                <span className="booking-info-icon">
+                  <FaDollarSign />
+                </span>
+
+                <div>
+                  <small>Usage Fee</small>
+                  <strong>{usageFee}</strong>
+                </div>
               </div>
 
-              <div>
-                <small>Lodging</small>
-                <strong>{totalLodging}</strong>
+              <div className="booking-info-item">
+                <span className="booking-info-icon">
+                  <FaBed />
+                </span>
+
+                <div>
+                  <small>Lodging</small>
+                  <strong>{totalLodging}</strong>
+                </div>
               </div>
 
-              <div>
-                <small>Food</small>
-                <strong>{totalFood}</strong>
+              <div className="booking-info-item">
+                <span className="booking-info-icon">
+                  <FaUtensils />
+                </span>
+
+                <div>
+                  <small>Food</small>
+                  <strong>{totalFood}</strong>
+                </div>
               </div>
 
-              <div>
-                <small>Misc.</small>
-                <strong>{totalMisc}</strong>
+              <div className="booking-info-item">
+                <span className="booking-info-icon">
+                  <FaTicketAlt />
+                </span>
+
+                <div>
+                  <small>Misc.</small>
+                  <strong>{totalMisc}</strong>
+                </div>
               </div>
             </div>
           </article>
@@ -1312,76 +1407,156 @@ function BookingDetailView({
           <div className="booking-detail-three-card-row">
             <article className="booking-detail-card">
               <div className="booking-card-heading">
-                <h3>Contracts</h3>
+                <div className="booking-card-title">
+                  <span className="booking-detail-card-icon">
+                    <FaFileContract />
+                  </span>
+
+                  <h3>Contracts</h3>
+                </div>
+
                 <span>{booking.status === "Confirmed" ? "Viewed" : "Pending"}</span>
               </div>
 
               <div className="booking-info-stack">
-                <div>
-                  <small>Source</small>
-                  <strong>{booking.sourceType || "Form"}</strong>
+                <div className="booking-info-item">
+                  <span className="booking-info-icon">
+                    <FaClipboardList />
+                  </span>
+
+                  <div>
+                    <small>Source</small>
+                    <strong>{booking.sourceType || "Form"}</strong>
+                  </div>
                 </div>
 
-                <div>
-                  <small>Submitted</small>
-                  <strong>{formatSubmittedDate(booking.submittedAt)}</strong>
+                <div className="booking-info-item">
+                  <span className="booking-info-icon">
+                    <FaRegCalendarCheck />
+                  </span>
+
+                  <div>
+                    <small>Submitted</small>
+                    <strong>{formatSubmittedDate(booking.submittedAt)}</strong>
+                  </div>
                 </div>
 
-                <div>
-                  <small>Waitlist</small>
-                  <strong>{booking.waitlist || "No"}</strong>
+                <div className="booking-info-item">
+                  <span className="booking-info-icon">
+                    <FaTicketAlt />
+                  </span>
+
+                  <div>
+                    <small>Waitlist</small>
+                    <strong>{booking.waitlist || "No"}</strong>
+                  </div>
                 </div>
               </div>
             </article>
 
             <article className="booking-detail-card">
-              <h3>Housing</h3>
+              <div className="booking-card-title booking-card-title-spaced">
+                <span className="booking-detail-card-icon">
+                  <FaBed />
+                </span>
+
+                <h3>Housing</h3>
+              </div>
 
               <div className="booking-info-stack">
-                <div>
-                  <small>Assigned Room / Area</small>
-                  <strong>{booking.roomName || "Unassigned"}</strong>
+                <div className="booking-info-item">
+                  <span className="booking-info-icon">
+                    <FaBed />
+                  </span>
+
+                  <div>
+                    <small>Assigned Room / Area</small>
+                    <strong>{booking.roomName || "Unassigned"}</strong>
+                  </div>
                 </div>
 
-                <div>
-                  <small>Buildings / Rooms</small>
-                  <strong>{booking.buildingsRooms || "—"}</strong>
+                <div className="booking-info-item">
+                  <span className="booking-info-icon">
+                    <FaBuilding />
+                  </span>
+
+                  <div>
+                    <small>Buildings / Rooms</small>
+                    <strong>{booking.buildingsRooms || "—"}</strong>
+                  </div>
                 </div>
 
-                <div>
-                  <small>Linen Sets</small>
-                  <strong>{booking.linenSets || "—"}</strong>
+                <div className="booking-info-item">
+                  <span className="booking-info-icon">
+                    <FaClipboardList />
+                  </span>
+
+                  <div>
+                    <small>Linen Sets</small>
+                    <strong>{booking.linenSets || "—"}</strong>
+                  </div>
                 </div>
               </div>
             </article>
 
             <article className="booking-detail-card">
               <div className="booking-card-heading">
-                <h3>Activities</h3>
+                <div className="booking-card-title">
+                  <span className="booking-detail-card-icon">
+                    <FaHiking />
+                  </span>
+
+                  <h3>Activities</h3>
+                </div>
+
                 <button className="table-link" type="button">
                   Schedule
                 </button>
               </div>
 
               <div className="booking-info-stack">
-                <div>
-                  <small>Meals</small>
-                  <strong>{booking.meals || "—"}</strong>
+                <div className="booking-info-item">
+                  <span className="booking-info-icon">
+                    <FaUtensils />
+                  </span>
+
+                  <div>
+                    <small>Meals</small>
+                    <strong>{booking.meals || "—"}</strong>
+                  </div>
                 </div>
 
-                <div>
-                  <small># Meals</small>
-                  <strong>{booking.mealCount || "—"}</strong>
+                <div className="booking-info-item">
+                  <span className="booking-info-icon">
+                    <FaRegCalendarCheck />
+                  </span>
+
+                  <div>
+                    <small># Meals</small>
+                    <strong>{booking.mealCount || "—"}</strong>
+                  </div>
                 </div>
 
-                <div>
-                  <small>Activities</small>
-                  <strong>{booking.activities || "—"}</strong>
+                <div className="booking-info-item">
+                  <span className="booking-info-icon">
+                    <FaHiking />
+                  </span>
+
+                  <div>
+                    <small>Activities</small>
+                    <strong>{booking.activities || "—"}</strong>
+                  </div>
                 </div>
 
-                <div>
-                  <small>Food Allergies</small>
-                  <strong>{booking.foodAllergies || "—"}</strong>
+                <div className="booking-info-item">
+                  <span className="booking-info-icon warning-icon">
+                    <FaExclamationTriangle />
+                  </span>
+
+                  <div>
+                    <small>Food Allergies</small>
+                    <strong>{booking.foodAllergies || "—"}</strong>
+                  </div>
                 </div>
               </div>
             </article>
@@ -1390,7 +1565,14 @@ function BookingDetailView({
           <BookingContactsSection booking={booking} />
 
           <article className="booking-detail-card booking-notes-card">
-            <h3>Need to Know</h3>
+            <div className="booking-card-title booking-card-title-spaced">
+              <span className="booking-detail-card-icon">
+                <FaInfoCircle />
+              </span>
+
+              <h3>Need to Know</h3>
+            </div>
+
             <p>{booking.needToKnow || booking.notes || "No notes added yet."}</p>
           </article>
         </div>
