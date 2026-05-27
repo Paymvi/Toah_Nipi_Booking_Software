@@ -1194,6 +1194,247 @@ function AvailabilityBoard({
   );
 }
 
+const bookingDetailTabs = [
+  "Overview",
+  "Details",
+  "Rates",
+  "Housing",
+  "Activities",
+  "Notes & Tasks",
+  "Emails & Documents",
+  "Invoices",
+  "Attendee Rental Page",
+  "Attendee Details",
+];
+
+function BookingDetailView({
+  booking,
+  activeTab,
+  setActiveTab,
+  onBack,
+}) {
+  if (!booking) {
+    return (
+      <section className="dashboard-card booking-detail-empty">
+        <strong>No booking selected</strong>
+        <p>Select a booking from the dashboard or calendar to view details.</p>
+
+        <button
+          className="secondary-dashboard-button"
+          type="button"
+          onClick={onBack}
+        >
+          Back to Dashboard
+        </button>
+      </section>
+    );
+  }
+
+  const totalLodging = booking.lodgingCost || "—";
+  const totalFood = booking.foodCost || "—";
+  const totalMisc = booking.miscCost || "—";
+  const usageFee = booking.usageFee || "—";
+
+  return (
+    <section className="booking-detail-page">
+      <div className="booking-detail-top">
+        <button
+          className="secondary-dashboard-button"
+          type="button"
+          onClick={onBack}
+        >
+          ← Back
+        </button>
+
+        <div>
+          <h2>{booking.organizationName}</h2>
+          <p>
+            {formatDateRange(booking.startDate, booking.endDate)}
+            {booking.attendeeCount ? ` (${booking.attendeeCount} attendees)` : ""}
+          </p>
+        </div>
+
+        <span className={`booking-detail-status ${booking.status === "Confirmed" ? "status-confirmed" : "status-inquiry"}`}>
+          {booking.status}
+        </span>
+      </div>
+
+      <nav className="booking-detail-tabs" aria-label="Booking detail tabs">
+        {bookingDetailTabs.map((tab) => (
+          <button
+            className={activeTab === tab ? "active" : ""}
+            type="button"
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+          </button>
+        ))}
+      </nav>
+
+      {activeTab === "Overview" && (
+        <div className="booking-detail-grid">
+          <article className="booking-detail-card booking-overview-card">
+            <div className="booking-card-heading">
+              <h3>{booking.organizationName}</h3>
+              <span>{booking.status}</span>
+            </div>
+
+            <div className="booking-info-grid">
+              <div>
+                <small>Contact</small>
+                <strong>{booking.contactName || "No contact name"}</strong>
+              </div>
+
+              <div>
+                <small>Organization</small>
+                <strong>{booking.organizationName}</strong>
+              </div>
+
+              <div>
+                <small>Arrival</small>
+                <strong>{formatDate(booking.startDate)}</strong>
+              </div>
+
+              <div>
+                <small>Departure</small>
+                <strong>{formatDate(booking.endDate)}</strong>
+              </div>
+
+              <div>
+                <small>Program Type</small>
+                <strong>{booking.retreatType || "—"}</strong>
+              </div>
+
+              <div>
+                <small>Attendees</small>
+                <strong>{booking.attendeeCount || "—"}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article className="booking-detail-card">
+            <h3>Financials</h3>
+
+            <div className="booking-financial-grid">
+              <div>
+                <small>Usage Fee</small>
+                <strong>{usageFee}</strong>
+              </div>
+
+              <div>
+                <small>Lodging</small>
+                <strong>{totalLodging}</strong>
+              </div>
+
+              <div>
+                <small>Food</small>
+                <strong>{totalFood}</strong>
+              </div>
+
+              <div>
+                <small>Misc.</small>
+                <strong>{totalMisc}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article className="booking-detail-card">
+            <div className="booking-card-heading">
+              <h3>Contracts</h3>
+              <span>{booking.status === "Confirmed" ? "Viewed" : "Pending"}</span>
+            </div>
+
+            <div className="booking-info-stack">
+              <div>
+                <small>Source</small>
+                <strong>{booking.sourceType || "Form"}</strong>
+              </div>
+
+              <div>
+                <small>Submitted</small>
+                <strong>{formatSubmittedDate(booking.submittedAt)}</strong>
+              </div>
+
+              <div>
+                <small>Waitlist</small>
+                <strong>{booking.waitlist || "No"}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article className="booking-detail-card">
+            <h3>Housing</h3>
+
+            <div className="booking-info-stack">
+              <div>
+                <small>Assigned Room / Area</small>
+                <strong>{booking.roomName || "Unassigned"}</strong>
+              </div>
+
+              <div>
+                <small>Buildings / Rooms</small>
+                <strong>{booking.buildingsRooms || "—"}</strong>
+              </div>
+
+              <div>
+                <small>Linen Sets</small>
+                <strong>{booking.linenSets || "—"}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article className="booking-detail-card">
+            <div className="booking-card-heading">
+              <h3>Activities</h3>
+              <button className="table-link" type="button">
+                Schedule
+              </button>
+            </div>
+
+            <div className="booking-info-grid">
+              <div>
+                <small>Meals</small>
+                <strong>{booking.meals || "—"}</strong>
+              </div>
+
+              <div>
+                <small># Meals</small>
+                <strong>{booking.mealCount || "—"}</strong>
+              </div>
+
+              <div>
+                <small>Activities</small>
+                <strong>{booking.activities || "—"}</strong>
+              </div>
+
+              <div>
+                <small>Food Allergies</small>
+                <strong>{booking.foodAllergies || "—"}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article className="booking-detail-card booking-notes-card">
+            <h3>Need to Know</h3>
+            <p>{booking.needToKnow || booking.notes || "No notes added yet."}</p>
+          </article>
+        </div>
+      )}
+
+      {activeTab !== "Overview" && (
+        <section className="dashboard-card booking-tab-placeholder">
+          <h3>{activeTab}</h3>
+          <p>
+            This tab is ready to build next. The selected booking is{" "}
+            <strong>{booking.organizationName}</strong>.
+          </p>
+        </section>
+      )}
+    </section>
+  );
+}
+
 export default function Dashboard() {
   const today = new Date();
 
@@ -1203,6 +1444,9 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [activeView, setActiveView] = useState("Dashboard");
+
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [bookingDetailTab, setBookingDetailTab] = useState("Overview");
 
   const [isSubmittedInquiriesOpen, setIsSubmittedInquiriesOpen] = useState(true);
 
@@ -1535,6 +1779,12 @@ const handleImportMasterSpreadsheet = (event) => {
     return "calendar-event-purple";
   };
 
+  const openBookingDetail = (booking) => {
+    setSelectedBooking(booking);
+    setBookingDetailTab("Overview");
+    setActiveView("Booking Detail");
+  };
+
   return (
     <main className="dashboard-shell">
       <aside className="dashboard-sidebar">
@@ -1667,7 +1917,17 @@ const handleImportMasterSpreadsheet = (event) => {
           
         </header>
 
-        {activeView === "Calendar View" ? (
+        {activeView === "Booking Detail" ? (
+          <BookingDetailView
+            booking={selectedBooking}
+            activeTab={bookingDetailTab}
+            setActiveTab={setBookingDetailTab}
+            onBack={() => {
+              setSelectedBooking(null);
+              setActiveView("Dashboard");
+            }}
+          />
+        ) : activeView === "Calendar View" ? (
           <section className="calendar-view-page">
             <article className="dashboard-card calendar-view-card">
               <div className="calendar-view-header">
@@ -1872,7 +2132,11 @@ const handleImportMasterSpreadsheet = (event) => {
                       {inquiryBookings.map((inquiry) => (
                         <tr key={inquiry.id}>
                           <td>
-                            <button className="table-link">
+                            <button
+                              className="table-link"
+                              type="button"
+                              onClick={() => openBookingDetail(inquiry)}
+                            >
                               {inquiry.organizationName}
                             </button>
                           </td>
@@ -2008,7 +2272,11 @@ const handleImportMasterSpreadsheet = (event) => {
                       {datedInquiries.map((inquiry) => (
                         <tr key={inquiry.id}>
                           <td>
-                            <button className="table-link">
+                            <button
+                              className="table-link"
+                              type="button"
+                              onClick={() => openBookingDetail(inquiry)}
+                            >
                               {inquiry.organizationName}
                             </button>
                           </td>
@@ -2048,7 +2316,13 @@ const handleImportMasterSpreadsheet = (event) => {
                   {recentInquiries.map((inquiry) => (
                     <div className="inquiry-card" key={inquiry.id}>
                       <div>
-                        <strong>{inquiry.organizationName}</strong>
+                        <button
+                          className="booking-card-title-button"
+                          type="button"
+                          onClick={() => openBookingDetail(inquiry)}
+                        >
+                          {inquiry.organizationName}
+                        </button>
                         <span>{inquiry.contactName}</span>
                       </div>
 
@@ -2075,9 +2349,6 @@ const handleImportMasterSpreadsheet = (event) => {
             </article>
           </div>
         </section>
-          </>
-        )}
-
 
         <AvailabilityBoard
           datedInquiries={datedInquiries}
@@ -2087,6 +2358,12 @@ const handleImportMasterSpreadsheet = (event) => {
           goToNextMonth={goToNextMonth}
           getCalendarEventColor={getCalendarEventColor}
         />
+        
+          </>
+        )}
+
+
+
       </section>
     </main>
   );
