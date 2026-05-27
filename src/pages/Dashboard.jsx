@@ -34,6 +34,23 @@ import {
   defaultRoomRows,
   bookingDetailTabs,
 } from "../constants/dashboardConstants";
+
+import {
+  formatDate,
+  formatSubmittedDate,
+  formatDateRange,
+  getDaysInMonth,
+  getLocalDate,
+  addDays,
+  daysBetween,
+  maxDate,
+  minDate,
+  datesOverlap,
+  formatExcelDateValue,
+  formatExcelSubmittedAt,
+  parseDesiredDateRange,
+} from "../utils/dateUtils";
+
 function getSavedInquiries() {
   try {
     const savedInquiries = localStorage.getItem("toahNipiPublicInquiries");
@@ -51,53 +68,6 @@ function getSavedInquiries() {
   }
 }
 
-function formatDate(dateString) {
-  if (!dateString) {
-    return "—";
-  }
-
-  const date = new Date(`${dateString}T00:00:00`);
-
-  return date.toLocaleDateString("en-US", {
-    month: "numeric",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatSubmittedDate(dateString) {
-  if (!dateString) {
-    return "—";
-  }
-
-  const date = new Date(dateString);
-
-  return date.toLocaleDateString("en-US", {
-    month: "numeric",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatDateRange(startDate, endDate) {
-  if (startDate && endDate) {
-    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
-  }
-
-  if (startDate) {
-    return formatDate(startDate);
-  }
-
-  if (endDate) {
-    return `Ends ${formatDate(endDate)}`;
-  }
-
-  return "No dates selected";
-}
-
-function getDaysInMonth(year, monthIndex) {
-  return new Date(year, monthIndex + 1, 0).getDate();
-}
 
 function getCalendarCells(year, monthIndex) {
   const firstDay = new Date(year, monthIndex, 1).getDay();
@@ -244,105 +214,7 @@ function cleanExcelCellValue(value) {
   return value;
 }
 
-function formatExcelDateValue(value) {
-  if (!value) {
-    return "";
-  }
 
-  if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    const year = value.getFullYear();
-    const month = String(value.getMonth() + 1).padStart(2, "0");
-    const day = String(value.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-  }
-
-  if (typeof value === "number") {
-    const excelEpoch = new Date(Date.UTC(1899, 11, 30));
-    const date = new Date(excelEpoch.getTime() + value * 86400000);
-
-    return date.toISOString().slice(0, 10);
-  }
-
-  const text = String(value).trim();
-
-  const isoMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-
-  if (isoMatch) {
-    const [, year, month, day] = isoMatch;
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  }
-
-  const slashMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-
-  if (slashMatch) {
-    let [, month, day, year] = slashMatch;
-
-    if (year.length === 2) {
-      year = `20${year}`;
-    }
-
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  }
-
-  const date = new Date(text);
-
-  if (!Number.isNaN(date.getTime())) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
-  }
-
-  return "";
-}
-
-function formatExcelSubmittedAt(value) {
-  const dateOnly = formatExcelDateValue(value);
-
-  if (!dateOnly) {
-    return new Date().toISOString();
-  }
-
-  return `${dateOnly}T00:00:00`;
-}
-
-function parseDesiredDateRange(value) {
-  if (value instanceof Date || typeof value === "number") {
-    const singleDate = formatExcelDateValue(value);
-
-    return {
-      startDate: singleDate,
-      endDate: singleDate,
-      desiredDatesText: singleDate,
-    };
-  }
-
-  const desiredDateText = String(value || "").trim();
-
-  if (!desiredDateText) {
-    return {
-      startDate: "",
-      endDate: "",
-      desiredDatesText: "",
-    };
-  }
-
-  const dateMatches =
-    desiredDateText.match(
-      /\b(?:\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{1,2}-\d{1,2})\b/g
-    ) || [];
-
-  const startDate = formatExcelDateValue(dateMatches[0]);
-  const endDate = formatExcelDateValue(dateMatches[1]);
-
-  return {
-    startDate,
-    endDate: endDate || startDate,
-    desiredDatesText: desiredDateText,
-  };
-}
 
 function normalizeWaitlistValue(value) {
   const text = String(value || "").trim().toLowerCase();
@@ -1120,36 +992,6 @@ function getCalendarWeeks(calendarCells) {
   return weeks;
 }
 
-function getLocalDate(dateString) {
-  if (!dateString) {
-    return null;
-  }
-
-  return new Date(`${dateString}T00:00:00`);
-}
-
-function addDays(date, amount) {
-  const nextDate = new Date(date);
-  nextDate.setDate(nextDate.getDate() + amount);
-  return nextDate;
-}
-
-function daysBetween(startDate, endDate) {
-  const oneDay = 24 * 60 * 60 * 1000;
-  return Math.round((endDate - startDate) / oneDay);
-}
-
-function maxDate(...dates) {
-  return new Date(Math.max(...dates.map((date) => date.getTime())));
-}
-
-function minDate(...dates) {
-  return new Date(Math.min(...dates.map((date) => date.getTime())));
-}
-
-function datesOverlap(startA, endA, startB, endB) {
-  return startA <= endB && endA >= startB;
-}
 
 function getWeekEventSegments({
   weekIndex,
