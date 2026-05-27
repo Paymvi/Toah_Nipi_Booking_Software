@@ -1187,6 +1187,39 @@ function BookingContactsSection({ booking }) {
 }
 
 
+function DetailCardHeader({ icon: Icon, title, subtitle, action }) {
+  return (
+    <div className="detail-card-header-clean">
+      <div className="detail-card-title-clean">
+        <span className="detail-card-icon-clean">
+          <Icon />
+        </span>
+
+        <div>
+          <h3>{title}</h3>
+          {subtitle && <p>{subtitle}</p>}
+        </div>
+      </div>
+
+      {action && <div className="detail-card-action-clean">{action}</div>}
+    </div>
+  );
+}
+
+function DetailField({ icon: Icon, label, value, tone = "default" }) {
+  return (
+    <div className={`detail-field-clean detail-field-clean-${tone}`}>
+      <span className="detail-field-icon-clean">
+        <Icon />
+      </span>
+
+      <div>
+        <small>{label}</small>
+        <strong>{value || "—"}</strong>
+      </div>
+    </div>
+  );
+}
 
 function BookingDetailView({
   booking,
@@ -1216,9 +1249,17 @@ function BookingDetailView({
   const totalMisc = booking.miscCost || "—";
   const usageFee = booking.usageFee || "—";
 
+  const dateSummary = formatDateRange(booking.startDate, booking.endDate);
+  const attendeeSummary = booking.attendeeCount
+    ? `${booking.attendeeCount} attendee${String(booking.attendeeCount) === "1" ? "" : "s"}`
+    : "No attendee count";
+
+  const statusClass =
+    booking.status === "Confirmed" ? "status-confirmed" : "status-inquiry";
+
   return (
-    <section className="booking-detail-page">
-      <div className="booking-detail-top">
+    <section className="booking-detail-page booking-detail-redesign">
+      <div className="booking-detail-hero-clean">
         <button
           className="secondary-dashboard-button booking-detail-back-button"
           type="button"
@@ -1228,30 +1269,43 @@ function BookingDetailView({
           Back
         </button>
 
-        <div className="booking-detail-title-block">
-          <span className="booking-detail-main-icon">
+        <div className="booking-detail-hero-main">
+          <span className="booking-detail-hero-icon">
             <FaClipboardList />
           </span>
 
           <div>
-            <h2>{booking.organizationName}</h2>
-            <p>
-              {formatDateRange(booking.startDate, booking.endDate)}
-              {booking.attendeeCount ? ` (${booking.attendeeCount} attendees)` : ""}
+            <p className="booking-detail-kicker">
+              {booking.sourceType || "Booking"}
             </p>
+
+            <h2>{booking.organizationName}</h2>
+
+            <div className="booking-detail-meta-row">
+              <span>
+                <FaCalendarAlt />
+                {dateSummary}
+              </span>
+
+              <span>
+                <FaUsers />
+                {attendeeSummary}
+              </span>
+
+              <span>
+                <FaUser />
+                {booking.contactName || "No contact name"}
+              </span>
+            </div>
           </div>
         </div>
 
-        <span
-          className={`booking-detail-status ${
-            booking.status === "Confirmed" ? "status-confirmed" : "status-inquiry"
-          }`}
-        >
+        <span className={`booking-detail-status ${statusClass}`}>
           {booking.status}
         </span>
       </div>
 
-      <nav className="booking-detail-tabs" aria-label="Booking detail tabs">
+      <nav className="booking-detail-tabs booking-detail-tabs-clean" aria-label="Booking detail tabs">
         {bookingDetailTabs.map((tab) => (
           <button
             className={activeTab === tab ? "active" : ""}
@@ -1265,313 +1319,196 @@ function BookingDetailView({
       </nav>
 
       {activeTab === "Overview" && (
-        <div className="booking-detail-grid">
-          <article className="booking-detail-card booking-overview-card">
-            <div className="booking-card-heading booking-card-heading-with-icon">
-              <div className="booking-card-title">
-                <span className="booking-detail-card-icon">
-                  <FaInfoCircle />
+        <div className="booking-detail-clean-grid">
+          <article className="booking-panel-clean booking-panel-main">
+            <DetailCardHeader
+              icon={FaInfoCircle}
+              title="Booking Summary"
+              subtitle="Core details for this group."
+              action={
+                <span className={`booking-mini-status ${statusClass}`}>
+                  {booking.status}
                 </span>
+              }
+            />
 
-                <h3>{booking.organizationName}</h3>
-              </div>
+            <div className="detail-field-grid-clean">
+              <DetailField
+                icon={FaUser}
+                label="Contact"
+                value={booking.contactName || "No contact name"}
+              />
 
-              <span>{booking.status}</span>
+              <DetailField
+                icon={FaBuilding}
+                label="Organization"
+                value={booking.organizationName}
+              />
+
+              <DetailField
+                icon={FaSignInAlt}
+                label="Arrival"
+                value={formatDate(booking.startDate)}
+              />
+
+              <DetailField
+                icon={FaSignOutAlt}
+                label="Departure"
+                value={formatDate(booking.endDate)}
+              />
+
+              <DetailField
+                icon={FaClipboardList}
+                label="Program Type"
+                value={booking.retreatType || "—"}
+              />
+
+              <DetailField
+                icon={FaUsers}
+                label="Attendees"
+                value={booking.attendeeCount || "—"}
+              />
             </div>
+          </article>
 
-            <div className="booking-info-grid">
-              <div className="booking-info-item">
-                <span className="booking-info-icon">
-                  <FaUser />
-                </span>
+          <article className="booking-panel-clean booking-panel-financials">
+            <DetailCardHeader
+              icon={FaDollarSign}
+              title="Financials"
+              subtitle="Costs and billing-related fields."
+            />
 
-                <div>
-                  <small>Contact</small>
-                  <strong>{booking.contactName || "No contact name"}</strong>
-                </div>
+            <div className="financial-clean-grid">
+              <div>
+                <small>Usage Fee</small>
+                <strong>{usageFee}</strong>
               </div>
 
-              <div className="booking-info-item">
-                <span className="booking-info-icon">
-                  <FaBuilding />
-                </span>
-
-                <div>
-                  <small>Organization</small>
-                  <strong>{booking.organizationName}</strong>
-                </div>
+              <div>
+                <small>Lodging</small>
+                <strong>{totalLodging}</strong>
               </div>
 
-              <div className="booking-info-item">
-                <span className="booking-info-icon">
-                  <FaSignInAlt />
-                </span>
-
-                <div>
-                  <small>Arrival</small>
-                  <strong>{formatDate(booking.startDate)}</strong>
-                </div>
+              <div>
+                <small>Food</small>
+                <strong>{totalFood}</strong>
               </div>
 
-              <div className="booking-info-item">
-                <span className="booking-info-icon">
-                  <FaSignOutAlt />
-                </span>
-
-                <div>
-                  <small>Departure</small>
-                  <strong>{formatDate(booking.endDate)}</strong>
-                </div>
-              </div>
-
-              <div className="booking-info-item">
-                <span className="booking-info-icon">
-                  <FaClipboardList />
-                </span>
-
-                <div>
-                  <small>Program Type</small>
-                  <strong>{booking.retreatType || "—"}</strong>
-                </div>
-              </div>
-
-              <div className="booking-info-item">
-                <span className="booking-info-icon">
-                  <FaUsers />
-                </span>
-
-                <div>
-                  <small>Attendees</small>
-                  <strong>{booking.attendeeCount || "—"}</strong>
-                </div>
+              <div>
+                <small>Misc.</small>
+                <strong>{totalMisc}</strong>
               </div>
             </div>
           </article>
 
-          <article className="booking-detail-card">
-            <div className="booking-card-title booking-card-title-spaced">
-              <span className="booking-detail-card-icon">
-                <FaDollarSign />
-              </span>
-
-              <h3>Financials</h3>
-            </div>
-
-            <div className="booking-financial-grid">
-              <div className="booking-info-item">
-                <span className="booking-info-icon">
-                  <FaDollarSign />
-                </span>
-
-                <div>
-                  <small>Usage Fee</small>
-                  <strong>{usageFee}</strong>
-                </div>
-              </div>
-
-              <div className="booking-info-item">
-                <span className="booking-info-icon">
-                  <FaBed />
-                </span>
-
-                <div>
-                  <small>Lodging</small>
-                  <strong>{totalLodging}</strong>
-                </div>
-              </div>
-
-              <div className="booking-info-item">
-                <span className="booking-info-icon">
-                  <FaUtensils />
-                </span>
-
-                <div>
-                  <small>Food</small>
-                  <strong>{totalFood}</strong>
-                </div>
-              </div>
-
-              <div className="booking-info-item">
-                <span className="booking-info-icon">
-                  <FaTicketAlt />
-                </span>
-
-                <div>
-                  <small>Misc.</small>
-                  <strong>{totalMisc}</strong>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <div className="booking-detail-three-card-row">
-            <article className="booking-detail-card">
-              <div className="booking-card-heading">
-                <div className="booking-card-title">
-                  <span className="booking-detail-card-icon">
-                    <FaFileContract />
+          <div className="booking-detail-clean-row">
+            <article className="booking-panel-clean">
+              <DetailCardHeader
+                icon={FaFileContract}
+                title="Contracts"
+                action={
+                  <span className="booking-soft-pill">
+                    {booking.status === "Confirmed" ? "Viewed" : "Pending"}
                   </span>
+                }
+              />
 
-                  <h3>Contracts</h3>
-                </div>
+              <div className="detail-stack-clean">
+                <DetailField
+                  icon={FaClipboardList}
+                  label="Source"
+                  value={booking.sourceType || "Form"}
+                />
 
-                <span>{booking.status === "Confirmed" ? "Viewed" : "Pending"}</span>
-              </div>
+                <DetailField
+                  icon={FaRegCalendarCheck}
+                  label="Submitted"
+                  value={formatSubmittedDate(booking.submittedAt)}
+                />
 
-              <div className="booking-info-stack">
-                <div className="booking-info-item">
-                  <span className="booking-info-icon">
-                    <FaClipboardList />
-                  </span>
-
-                  <div>
-                    <small>Source</small>
-                    <strong>{booking.sourceType || "Form"}</strong>
-                  </div>
-                </div>
-
-                <div className="booking-info-item">
-                  <span className="booking-info-icon">
-                    <FaRegCalendarCheck />
-                  </span>
-
-                  <div>
-                    <small>Submitted</small>
-                    <strong>{formatSubmittedDate(booking.submittedAt)}</strong>
-                  </div>
-                </div>
-
-                <div className="booking-info-item">
-                  <span className="booking-info-icon">
-                    <FaTicketAlt />
-                  </span>
-
-                  <div>
-                    <small>Waitlist</small>
-                    <strong>{booking.waitlist || "No"}</strong>
-                  </div>
-                </div>
+                <DetailField
+                  icon={FaTicketAlt}
+                  label="Waitlist"
+                  value={booking.waitlist || "No"}
+                />
               </div>
             </article>
 
-            <article className="booking-detail-card">
-              <div className="booking-card-title booking-card-title-spaced">
-                <span className="booking-detail-card-icon">
-                  <FaBed />
-                </span>
+            <article className="booking-panel-clean">
+              <DetailCardHeader
+                icon={FaBed}
+                title="Housing"
+              />
 
-                <h3>Housing</h3>
-              </div>
+              <div className="detail-stack-clean">
+                <DetailField
+                  icon={FaBed}
+                  label="Assigned Room / Area"
+                  value={booking.roomName || "Unassigned"}
+                />
 
-              <div className="booking-info-stack">
-                <div className="booking-info-item">
-                  <span className="booking-info-icon">
-                    <FaBed />
-                  </span>
+                <DetailField
+                  icon={FaBuilding}
+                  label="Buildings / Rooms"
+                  value={booking.buildingsRooms || "—"}
+                />
 
-                  <div>
-                    <small>Assigned Room / Area</small>
-                    <strong>{booking.roomName || "Unassigned"}</strong>
-                  </div>
-                </div>
-
-                <div className="booking-info-item">
-                  <span className="booking-info-icon">
-                    <FaBuilding />
-                  </span>
-
-                  <div>
-                    <small>Buildings / Rooms</small>
-                    <strong>{booking.buildingsRooms || "—"}</strong>
-                  </div>
-                </div>
-
-                <div className="booking-info-item">
-                  <span className="booking-info-icon">
-                    <FaClipboardList />
-                  </span>
-
-                  <div>
-                    <small>Linen Sets</small>
-                    <strong>{booking.linenSets || "—"}</strong>
-                  </div>
-                </div>
+                <DetailField
+                  icon={FaClipboardList}
+                  label="Linen Sets"
+                  value={booking.linenSets || "—"}
+                />
               </div>
             </article>
 
-            <article className="booking-detail-card">
-              <div className="booking-card-heading">
-                <div className="booking-card-title">
-                  <span className="booking-detail-card-icon">
-                    <FaHiking />
-                  </span>
+            <article className="booking-panel-clean">
+              <DetailCardHeader
+                icon={FaHiking}
+                title="Activities"
+                action={
+                  <button className="booking-header-link" type="button">
+                    Schedule
+                  </button>
+                }
+              />
 
-                  <h3>Activities</h3>
-                </div>
+              <div className="detail-stack-clean">
+                <DetailField
+                  icon={FaUtensils}
+                  label="Meals"
+                  value={booking.meals || "—"}
+                />
 
-                <button className="table-link" type="button">
-                  Schedule
-                </button>
-              </div>
+                <DetailField
+                  icon={FaRegCalendarCheck}
+                  label="# Meals"
+                  value={booking.mealCount || "—"}
+                />
 
-              <div className="booking-info-stack">
-                <div className="booking-info-item">
-                  <span className="booking-info-icon">
-                    <FaUtensils />
-                  </span>
+                <DetailField
+                  icon={FaHiking}
+                  label="Activities"
+                  value={booking.activities || "—"}
+                />
 
-                  <div>
-                    <small>Meals</small>
-                    <strong>{booking.meals || "—"}</strong>
-                  </div>
-                </div>
-
-                <div className="booking-info-item">
-                  <span className="booking-info-icon">
-                    <FaRegCalendarCheck />
-                  </span>
-
-                  <div>
-                    <small># Meals</small>
-                    <strong>{booking.mealCount || "—"}</strong>
-                  </div>
-                </div>
-
-                <div className="booking-info-item">
-                  <span className="booking-info-icon">
-                    <FaHiking />
-                  </span>
-
-                  <div>
-                    <small>Activities</small>
-                    <strong>{booking.activities || "—"}</strong>
-                  </div>
-                </div>
-
-                <div className="booking-info-item">
-                  <span className="booking-info-icon warning-icon">
-                    <FaExclamationTriangle />
-                  </span>
-
-                  <div>
-                    <small>Food Allergies</small>
-                    <strong>{booking.foodAllergies || "—"}</strong>
-                  </div>
-                </div>
+                <DetailField
+                  icon={FaExclamationTriangle}
+                  label="Food Allergies"
+                  value={booking.foodAllergies || "—"}
+                  tone="warning"
+                />
               </div>
             </article>
           </div>
 
           <BookingContactsSection booking={booking} />
 
-          <article className="booking-detail-card booking-notes-card">
-            <div className="booking-card-title booking-card-title-spaced">
-              <span className="booking-detail-card-icon">
-                <FaInfoCircle />
-              </span>
-
-              <h3>Need to Know</h3>
-            </div>
+          <article className="booking-panel-clean booking-notes-panel">
+            <DetailCardHeader
+              icon={FaInfoCircle}
+              title="Need to Know"
+              subtitle="Notes, allergies, logistics, or important staff context."
+            />
 
             <p>{booking.needToKnow || booking.notes || "No notes added yet."}</p>
           </article>
@@ -1579,15 +1516,16 @@ function BookingDetailView({
       )}
 
       {activeTab === "Housing" && <BookingHousingTab booking={booking} />}
-        {activeTab !== "Overview" && activeTab !== "Housing" && (
-          <section className="dashboard-card booking-tab-placeholder">
-            <h3>{activeTab}</h3>
-            <p>
-              This tab is ready to build next. The selected booking is{" "}
-              <strong>{booking.organizationName}</strong>.
-            </p>
-          </section>
-        )}
+
+      {activeTab !== "Overview" && activeTab !== "Housing" && (
+        <section className="dashboard-card booking-tab-placeholder">
+          <h3>{activeTab}</h3>
+          <p>
+            This tab is ready to build next. The selected booking is{" "}
+            <strong>{booking.organizationName}</strong>.
+          </p>
+        </section>
+      )}
     </section>
   );
 }
