@@ -51,6 +51,17 @@ import {
   parseDesiredDateRange,
 } from "../utils/dateUtils";
 
+
+import {
+  readSpreadsheetCell,
+  cleanExcelCellValue,
+  normalizeWaitlistValue,
+  rowHasAnyData,
+  getRowsFromWorksheetFlexible,
+  detectSpreadsheetRowType,
+  getRawRowNotes,
+} from "../utils/spreadsheetUtils";
+
 function getSavedInquiries() {
   try {
     const savedInquiries = localStorage.getItem("toahNipiPublicInquiries");
@@ -176,54 +187,6 @@ function normalizeInquiry(inquiry, index) {
     vacancyFilled: inquiry.vacancyFilled || "",
     monthlyProjectedIncome: inquiry.monthlyProjectedIncome || "",
   };
-}
-
-function readSpreadsheetCell(row, possibleNames) {
-  for (const name of possibleNames) {
-    if (row[name] !== undefined && row[name] !== null && row[name] !== "") {
-      return row[name];
-    }
-  }
-
-  return "";
-}
-
-function cleanExcelCellValue(value) {
-  if (value === null || value === undefined) {
-    return "";
-  }
-
-  if (value instanceof Date) {
-    return value;
-  }
-
-  if (typeof value === "object") {
-    if (value.text) {
-      return value.text;
-    }
-
-    if (value.result) {
-      return value.result;
-    }
-
-    if (Array.isArray(value.richText)) {
-      return value.richText.map((item) => item.text).join("");
-    }
-  }
-
-  return value;
-}
-
-
-
-function normalizeWaitlistValue(value) {
-  const text = String(value || "").trim().toLowerCase();
-
-  if (["yes", "y", "true", "waitlist", "waitlisted"].includes(text)) {
-    return "Yes";
-  }
-
-  return "No";
 }
 
 function normalizeWaitlistSpreadsheetRow(row, index) {
@@ -628,204 +591,6 @@ function normalizeMaster2026SpreadsheetRow(row, index) {
   };
 }
 
-function rowHasAnyData(row) {
-  return Object.entries(row).some(([key, value]) => {
-    if (key === "sourceSheet" || key === "sourceRowNumber") {
-      return false;
-    }
-
-    return value !== undefined && value !== null && String(value).trim() !== "";
-  });
-}
-
-function normalizeHeaderName(value) {
-  return String(cleanExcelCellValue(value) || "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function getWorksheetHeaderInfo(worksheet) {
-  const knownHeaderNames = [
-    "Date",
-    "Contact Name",
-    "Email Address",
-    "Phone Number",
-    "Guest Group Name",
-    "Size",
-    "Desired Dates",
-    "Additional Notes",
-    "Waitlist or No",
-
-    "Arrival Date",
-    "Departure Date",
-    "Guest Group Type",
-    "Returning (R) or New (N)",
-    "Contact Person",
-    "Contact Person Cell #",
-    "Actual Number of Guests",
-    "Buildings/Rooms",
-    "Food Allergies",
-
-    "name",
-    "Group Leader/Contact Person",
-    "Phone",
-    "Estimated Number of Guests",
-    "Allergies",
-    "Contact Person Email",
-    "Stage of Group",
-    "Min. Number of Paying Guests",
-    "Max. Number of Paying Guests",
-    "Guest Rate",
-    "Exp. Minimum Revenue for Lodging/Meals",
-    "Invoice for Lodging/Meals (does not include linens's fees or other service fees)",
-    "Deposit",
-    "Deposit Received",
-    "Date of Cancellation",
-    "Reason for Cancellation",
-    "Vacancy filled by another group?",
-  ];
-
-  const knownHeaderSet = new Set(
-    knownHeaderNames.map((header) => header.toLowerCase())
-  );
-
-  let bestHeaderRowNumber = 1;
-  let bestHeaders = {};
-  let bestScore = 0;
-
-  worksheet.eachRow((row, rowNumber) => {
-    if (rowNumber > 12) {
-      return;
-    }
-
-    const headers = {};
-    let score = 0;
-    let nonEmptyHeaderCount = 0;
-
-    row.eachCell((cell, columnNumber) => {
-      const headerName = normalizeHeaderName(cell.value);
-
-      if (!headerName) {
-        return;
-      }
-
-      nonEmptyHeaderCount += 1;
-      headers[headerName] = columnNumber;
-
-      if (knownHeaderSet.has(headerName.toLowerCase())) {
-        score += 3;
-      } else {
-        score += 1;
-      }
-    });
-
-    if (nonEmptyHeaderCount >= 2 && score > bestScore) {
-      bestScore = score;
-      bestHeaderRowNumber = rowNumber;
-      bestHeaders = headers;
-    }
-  });
-
-  if (Object.keys(bestHeaders).length === 0) {
-    return null;
-  }
-
-  return {
-    headerRowNumber: bestHeaderRowNumber,
-    headers: bestHeaders,
-  };
-}
-
-function getRowsFromWorksheetFlexible(worksheet) {
-  const headerInfo = getWorksheetHeaderInfo(worksheet);
-
-  if (!headerInfo) {
-    return [];
-  }
-
-  const rows = [];
-
-  worksheet.eachRow((row, rowNumber) => {
-    if (rowNumber <= headerInfo.headerRowNumber) {
-      return;
-    }
-
-    const rowObject = {};
-
-    Object.entries(headerInfo.headers).forEach(([headerName, columnNumber]) => {
-      rowObject[headerName] = cleanExcelCellValue(
-        row.getCell(columnNumber).value
-      );
-    });
-
-    rowObject.sourceSheet = worksheet.name;
-    rowObject.sourceRowNumber = rowNumber;
-
-    if (rowHasAnyData(rowObject)) {
-      rows.push(rowObject);
-    }
-  });
-
-  return rows;
-}
-
-function rowHasAnyColumn(row, possibleNames) {
-  return possibleNames.some((name) => {
-    const value = row[name];
-
-    return value !== undefined && value !== null && String(value).trim() !== "";
-  });
-}
-
-function detectSpreadsheetRowType(row) {
-  if (
-    rowHasAnyColumn(row, ["Waitlist or No", "Desired Dates"]) &&
-    rowHasAnyColumn(row, ["Contact Name", "Guest Group Name", "Email Address"])
-  ) {
-    return "Waitlist";
-  }
-
-  if (
-    rowHasAnyColumn(row, [
-      "Stage of Group",
-      "Group Leader/Contact Person",
-      "Estimated Number of Guests",
-      "Contact Person Email",
-      "Exp. Minimum Revenue for Lodging/Meals",
-      "Deposit Received",
-      "Vacancy filled by another group?",
-    ])
-  ) {
-    return "Master 2026";
-  }
-
-  if (
-    rowHasAnyColumn(row, [
-      "Arrival Date",
-      "Departure Date",
-      "Contact Person Cell #",
-      "Actual Number of Guests",
-      "Food Allergies",
-    ])
-  ) {
-    return "Master";
-  }
-
-  return "Generic";
-}
-
-function getRawRowNotes(row) {
-  return Object.entries(row)
-    .filter(([key, value]) => {
-      if (key === "sourceSheet" || key === "sourceRowNumber") {
-        return false;
-      }
-
-      return value !== undefined && value !== null && String(value).trim() !== "";
-    })
-    .map(([key, value]) => `${key}: ${String(value).trim()}`)
-    .join("\n");
-}
 
 function normalizeGenericSpreadsheetRow(row, index) {
   if (!rowHasAnyData(row)) {
