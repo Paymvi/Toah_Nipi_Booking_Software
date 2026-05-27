@@ -2361,3 +2361,83 @@ textarea {
   }
 }
 
+
+
+
+
+
+
+/* Import dropdown */
+
+.dashboard-main,
+.dashboard-topbar,
+.dashboard-actions {
+  overflow: visible;
+}
+
+.import-dropdown {
+  position: relative;
+  display: inline-flex;
+}
+
+.import-dropdown-button {
+  position: relative;
+}
+
+.import-dropdown-button.is-open {
+  background: #f7f5ff;
+  border-color: #9f98d4;
+}
+
+.import-dropdown-caret {
+  margin-left: 2px;
+  color: #6f67b8;
+  font-size: 0.78rem;
+  line-height: 1;
+}
+
+.import-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 3000;
+
+  width: 250px;
+  padding: 8px;
+
+  background: #ffffff;
+  border: 1px solid #e1e5ec;
+  border-radius: 14px;
+  box-shadow: 0 18px 38px rgba(28, 35, 52, 0.16);
+}
+
+.import-dropdown-menu button {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  padding: 11px 12px;
+
+  display: grid;
+  gap: 3px;
+
+  color: #303442;
+  text-align: left;
+  cursor: pointer;
+}
+
+.import-dropdown-menu button:hover {
+  background: #f6f5ff;
+}
+
+.import-dropdown-menu strong {
+  color: #303442;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.import-dropdown-menu small {
+  color: #858c9b;
+  font-size: 0.76rem;
+  font-weight: 400;
+}

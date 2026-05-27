@@ -1440,6 +1440,7 @@ export default function Dashboard() {
 
   const waitlistFileInputRef = useRef(null);
   const masterFileInputRef = useRef(null);
+  const importDropdownRef = useRef(null);
 
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
@@ -1449,6 +1450,7 @@ export default function Dashboard() {
   const [bookingDetailTab, setBookingDetailTab] = useState("Overview");
 
   const [isSubmittedInquiriesOpen, setIsSubmittedInquiriesOpen] = useState(true);
+  const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
 
   const [publicInquiries, setPublicInquiries] = useState(() =>
     getSavedInquiries()
@@ -1573,55 +1575,65 @@ export default function Dashboard() {
   };
 
   const handleImportWaitlistSpreadsheet = (event) => {
-  importSpreadsheet({
-    event,
-    importTypeLabel: "waitlist",
-    normalizeRow: normalizeWaitlistSpreadsheetRow,
-    expectedColumns: [
-      "Date",
-      "Contact Name",
-      "Email Address",
-      "Phone Number",
-      "Guest Group Name",
-      "Size",
-      "Desired Dates",
-      "Additional Notes",
-      "Waitlist or No",
-    ],
-  });
-};
+    importSpreadsheet({
+      event,
+      importTypeLabel: "waitlist",
+      normalizeRow: normalizeWaitlistSpreadsheetRow,
+      expectedColumns: [
+        "Date",
+        "Contact Name",
+        "Email Address",
+        "Phone Number",
+        "Guest Group Name",
+        "Size",
+        "Desired Dates",
+        "Additional Notes",
+        "Waitlist or No",
+      ],
+    });
+  };
 
-const handleImportMasterSpreadsheet = (event) => {
-  importSpreadsheet({
-    event,
-    importTypeLabel: "master booking",
-    normalizeRow: normalizeMasterSpreadsheetRow,
-    expectedColumns: [
-      "Arrival Date",
-      "Departure Date",
-      "Guest Group Name",
-      "Guest Group Type",
-      "Returning (R) or New (N)",
-      "Contact Person",
-      "Contact Person Cell #",
-      "Actual Number of Guests",
-      "Buildings/Rooms",
-      "Meals",
-      "Food Allergies",
-      "Need to know",
-      "Linen Sets",
-      "Activities",
-      "#Persons",
-      "#Nights",
-      "#Meals",
-      "Camper Days (nightsX0.4 + mealsX0.2)",
-      "Usage Fee",
-      "$ Lodging",
-      "$ Food",
-      "$ Misc.",
-    ],
-  });
-};
+  const handleImportMasterSpreadsheet = (event) => {
+    importSpreadsheet({
+      event,
+      importTypeLabel: "master booking",
+      normalizeRow: normalizeMasterSpreadsheetRow,
+      expectedColumns: [
+        "Arrival Date",
+        "Departure Date",
+        "Guest Group Name",
+        "Guest Group Type",
+        "Returning (R) or New (N)",
+        "Contact Person",
+        "Contact Person Cell #",
+        "Actual Number of Guests",
+        "Buildings/Rooms",
+        "Meals",
+        "Food Allergies",
+        "Need to know",
+        "Linen Sets",
+        "Activities",
+        "#Persons",
+        "#Nights",
+        "#Meals",
+        "Camper Days (nightsX0.4 + mealsX0.2)",
+        "Usage Fee",
+        "$ Lodging",
+        "$ Food",
+        "$ Misc.",
+      ],
+    });
+  };
+
+  const openWaitlistImportPicker = () => {
+    setIsImportMenuOpen(false);
+    waitlistFileInputRef.current?.click();
+  };
+
+  const openMasterImportPicker = () => {
+    setIsImportMenuOpen(false);
+    masterFileInputRef.current?.click();
+  };
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -1634,6 +1646,27 @@ const handleImportMasterSpreadsheet = (event) => {
       window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
+
+  useEffect(() => {
+    const handleClickOutsideImportMenu = (event) => {
+      if (!isImportMenuOpen) {
+        return;
+      }
+
+      if (
+        importDropdownRef.current &&
+        !importDropdownRef.current.contains(event.target)
+      ) {
+        setIsImportMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutsideImportMenu);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutsideImportMenu);
+    };
+  }, [isImportMenuOpen]);
 
   const inquiryBookings = useMemo(() => {
     return publicInquiries.map((inquiry, index) =>
@@ -1868,23 +1901,35 @@ const handleImportMasterSpreadsheet = (event) => {
               onChange={handleImportMasterSpreadsheet}
             />
 
-            <button
-              className="secondary-dashboard-button"
-              type="button"
-              onClick={() => waitlistFileInputRef.current?.click()}
-            >
-              <FaPlus />
-              Import Waitlist
-            </button>
+            <div className="import-dropdown" ref={importDropdownRef}>
+              <button
+                className={`secondary-dashboard-button import-dropdown-button ${
+                  isImportMenuOpen ? "is-open" : ""
+                }`}
+                type="button"
+                onClick={() => setIsImportMenuOpen((currentValue) => !currentValue)}
+                aria-haspopup="menu"
+                aria-expanded={isImportMenuOpen}
+              >
+                <FaPlus />
+                Import
+                <span className="import-dropdown-caret">▾</span>
+              </button>
 
-            <button
-              className="secondary-dashboard-button"
-              type="button"
-              onClick={() => masterFileInputRef.current?.click()}
-            >
-              <FaPlus />
-              Import Master
-            </button>
+              {isImportMenuOpen && (
+                <div className="import-dropdown-menu" role="menu">
+                  <button type="button" role="menuitem" onClick={openWaitlistImportPicker}>
+                    <strong>Import Waitlist</strong>
+                    <small>Upload waitlist spreadsheet</small>
+                  </button>
+
+                  <button type="button" role="menuitem" onClick={openMasterImportPicker}>
+                    <strong>Import Master</strong>
+                    <small>Upload master booking spreadsheet</small>
+                  </button>
+                </div>
+              )}
+            </div>
 
             <button
               className="secondary-dashboard-button"
@@ -2358,7 +2403,7 @@ const handleImportMasterSpreadsheet = (event) => {
           goToNextMonth={goToNextMonth}
           getCalendarEventColor={getCalendarEventColor}
         />
-        
+
           </>
         )}
 
