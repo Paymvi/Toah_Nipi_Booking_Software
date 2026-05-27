@@ -1,3 +1,22 @@
+/*
+dashboardConstants.js
+-------------------------------------------------------------------------------
+Shared constant data for the booking dashboard.
+
+This file keeps repeated dashboard configuration out of Dashboard.jsx.
+
+This file handles:
+- Month names used by calendar controls
+- Sidebar navigation section labels and icons
+- Activity location names and aliases used for availability matching
+- Default room rows used for room availability
+- Booking detail tab labels
+
+Important:
+These values are not state. They are shared static configuration values.
+-------------------------------------------------------------------------------
+*/
+
 import {
   FaBuilding,
   FaUsers,
@@ -10,6 +29,7 @@ import {
   FaTable,
 } from "react-icons/fa";
 
+// Month labels used by calendar dropdowns, headings, and availability views.
 export const monthNames = [
   "January",
   "February",
@@ -25,6 +45,8 @@ export const monthNames = [
   "December",
 ];
 
+// Sidebar navigation sections for the staff dashboard.
+// Each item can include an icon and optional badge behavior.
 export const sidebarSections = [
   {
     label: "Contacts",
@@ -55,6 +77,8 @@ export const sidebarSections = [
   },
 ];
 
+// Activity locations used by the availability board.
+// Aliases help match imported booking text even when spreadsheets use slightly different names.
 export const activityLocations = [
   {
     name: "Auditorium",
@@ -98,6 +122,8 @@ export const activityLocations = [
   },
 ];
 
+// Default room rows used by the room availability view.
+// Dynamic imported room names can be added later without hardcoding them here.
 export const defaultRoomRows = [
   {
     name: "Hebron",
@@ -137,6 +163,8 @@ export const defaultRoomRows = [
   },
 ];
 
+// Tabs shown on the booking detail page.
+// Most of these are placeholders for future sections.
 export const bookingDetailTabs = [
   "Overview",
   "Details",
