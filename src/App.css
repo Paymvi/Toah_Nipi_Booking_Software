@@ -2578,3 +2578,183 @@ textarea {
 .availability-header-actions .secondary-dashboard-button svg {
   font-size: 0.8rem;
 }
+
+
+
+/* =========================================================
+   FIX: stop dashboard sections from hanging off the screen
+   Paste this at the VERY BOTTOM of the CSS file
+========================================================= */
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Let grid/flex children actually shrink instead of forcing the page wider */
+.dashboard-shell,
+.dashboard-main,
+.dashboard-topbar,
+.dashboard-actions,
+.dashboard-card,
+.tasks-card,
+.calendar-card,
+.calendar-view-card,
+.dashboard-lower-grid,
+.dashboard-side-stack,
+.dashboard-stats-grid,
+.booking-detail-page,
+.booking-detail-top,
+.booking-detail-grid,
+.booking-detail-card,
+.availability-card,
+.activity-availability-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Keep tooltips able to pop vertically, but prevent sideways page overflow */
+.dashboard-main {
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+/* Important for CSS grid children */
+.dashboard-lower-grid > *,
+.dashboard-stats-grid > *,
+.booking-detail-grid > *,
+.dashboard-card > * {
+  min-width: 0;
+}
+
+/* Tables and availability boards should scroll INSIDE their card,
+   not push the entire page off-screen */
+.dashboard-table-wrap,
+.availability-scroll,
+.activity-availability-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+/* Prevent the top buttons from pushing off-screen */
+.dashboard-topbar {
+  flex-wrap: wrap;
+}
+
+.dashboard-actions {
+  min-width: 0;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+.primary-dashboard-button,
+.secondary-dashboard-button,
+.danger-dashboard-button,
+.import-dropdown-button {
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+/* Fix dashboard calendar preview on smaller screens */
+@media (max-width: 720px) {
+  .dashboard-main {
+    padding: 18px 12px;
+  }
+
+  .dashboard-card-header,
+  .calendar-controls,
+  .calendar-legend,
+  .inquiry-list,
+  .calendar-agenda-list,
+  .availability-scroll,
+  .activity-availability-scroll {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .calendar-grid,
+  .calendar-grid-preview-span,
+  .calendar-week-row-preview {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .calendar-grid {
+    padding: 0 10px 16px;
+  }
+
+  .calendar-cell,
+  .calendar-week-row-preview .calendar-cell {
+    min-width: 0;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .calendar-weekday {
+    padding-left: 2px;
+    padding-right: 2px;
+    font-size: 0.72rem;
+  }
+
+  .calendar-event,
+  .calendar-span-event-preview {
+    font-size: 0.62rem;
+  }
+
+  .calendar-event {
+    gap: 4px;
+    border-left-width: 4px;
+    padding: 0 4px;
+  }
+
+  .dashboard-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .dashboard-actions > * {
+    flex: 1 1 180px;
+  }
+
+  .import-dropdown {
+    width: 100%;
+  }
+
+  .import-dropdown-button {
+    width: 100%;
+  }
+
+  .import-dropdown-menu {
+    left: 0;
+    right: auto;
+    width: min(280px, calc(100vw - 24px));
+  }
+}
+
+/* Big calendar can stay wide, but scroll inside its card instead of
+   making the whole page wider */
+@media (max-width: 760px) {
+  .calendar-view-card,
+  .calendar-card {
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+
+  .calendar-grid-span-mode {
+    width: 900px;
+    min-width: 900px;
+    max-width: none;
+  }
+}
+
+/* Availability boards are intentionally wide, so keep them contained */
+@media (max-width: 720px) {
+  .availability-grid,
+  .activity-availability-grid {
+    min-width: 980px;
+  }
+}
