@@ -28,6 +28,8 @@ import {
   FaInfoCircle,
   FaUtensils,
   FaHiking,
+  FaChevronLeft,
+  FaChevronRight,
 } from "react-icons/fa";
 import ExcelJS from "exceljs";
 import BookingHousingTab from "../components/BookingHousingTab";
@@ -2563,6 +2565,7 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [activeView, setActiveView] = useState("Dashboard");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [bookingDetailTab, setBookingDetailTab] = useState("Overview");
@@ -3191,8 +3194,16 @@ const getCalendarEventColor = (status) => {
   };
 
   return (
-    <main className="dashboard-shell">
-      <aside className="dashboard-sidebar">
+    <main
+      className={`dashboard-shell ${
+        isSidebarCollapsed ? "dashboard-shell-sidebar-collapsed" : ""
+      }`}
+    >
+      <aside
+        className={`dashboard-sidebar ${
+          isSidebarCollapsed ? "dashboard-sidebar-collapsed" : ""
+        }`}
+      >
         <div className="dashboard-logo">
           <span>TN</span>
 
@@ -3200,6 +3211,16 @@ const getCalendarEventColor = (status) => {
             <strong>Toah Nipi</strong>
             <small>Staff Dashboard</small>
           </div>
+
+          <button
+            className="sidebar-collapse-button"
+            type="button"
+            onClick={() => setIsSidebarCollapsed((current) => !current)}
+            aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isSidebarCollapsed ? <FaChevronRight /> : <FaChevronLeft />}
+          </button>
         </div>
 
         <button
@@ -3208,9 +3229,10 @@ const getCalendarEventColor = (status) => {
           }
           type="button"
           onClick={() => setActiveView("Dashboard")}
+          title="Dashboard"
         >
           <FaHome />
-          Dashboard
+          <span>Dashboard</span>
         </button>
 
         {sidebarSections.map((section) => (
@@ -3228,6 +3250,7 @@ const getCalendarEventColor = (status) => {
                   }`}
                   key={item.label}
                   type="button"
+                  title={item.label}
                   onClick={() => {
                     if (isCalendarView || isSpreadsheetView) {
                       setActiveView(item.label);
