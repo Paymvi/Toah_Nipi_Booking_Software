@@ -4,6 +4,7 @@ import {
   FaCalendarAlt,
   FaClipboardList,
   FaPlus,
+  FaTable,
   FaRegCalendarCheck,
   FaExclamationTriangle,
   FaTicketAlt,
@@ -130,6 +131,7 @@ function normalizeInquiry(inquiry, index) {
 
   return {
     id: inquiry.id || `${inquiry.submittedAt || "inquiry"}-${index}`,
+    detectedImportType: inquiry.detectedImportType || "",
     sourceType: inquiry.sourceType || "Form",
     sourceSheet: inquiry.sourceSheet || "",
     sourceRowNumber: inquiry.sourceRowNumber || "",
@@ -237,6 +239,8 @@ function normalizeWaitlistSpreadsheetRow(row, index) {
     id: `waitlist-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
     sourceType: "Waitlist",
     sourceSheet: row.sourceSheet || "",
+    sourceRowNumber: row.sourceRowNumber || "",
+    rawSpreadsheetData: row,
     submittedAt: formatExcelSubmittedAt(submittedDate),
     name: String(contactName || "").trim(),
     contactName: String(contactName || "").trim(),
@@ -328,6 +332,8 @@ function normalizeMasterSpreadsheetRow(row, index) {
     id: `master-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
     sourceType: "Master",
     sourceSheet: row.sourceSheet || "",
+    sourceRowNumber: row.sourceRowNumber || "",
+    rawSpreadsheetData: row,
     submittedAt: new Date().toISOString(),
 
     organizationName: String(guestGroupName || "").trim() || "Unnamed Group",
@@ -542,6 +548,8 @@ function normalizeMaster2026SpreadsheetRow(row, index) {
     id: `master-2026-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
     sourceType: "Master 2026",
     sourceSheet: row.sourceSheet || "",
+    sourceRowNumber: row.sourceRowNumber || "",
+    rawSpreadsheetData: row,
     submittedAt: new Date().toISOString(),
 
     organizationName: String(guestGroupName || "").trim() || "Unnamed Group",
@@ -2154,6 +2162,395 @@ function BookingDetailView({
   );
 }
 
+function getBookingInputMethod(booking) {
+  const sourceType = String(booking.sourceType || "Form").trim();
+  const detectedImportType = String(booking.detectedImportType || "").trim();
+
+  if (!sourceType || sourceType === "Form") {
+    return "Public Form";
+  }
+
+  if (sourceType === "Master 2026") {
+    return "Imported — Master 2026";
+  }
+
+  if (sourceType === "Master") {
+    return "Imported — Master";
+  }
+
+  if (sourceType === "Waitlist") {
+    return "Imported — Waitlist";
+  }
+
+  if (detectedImportType) {
+    return `Imported — ${detectedImportType}`;
+  }
+
+  return `Imported — ${sourceType}`;
+}
+
+function getSpreadsheetDisplayValue(value) {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  return String(value);
+}
+
+function getRawSpreadsheetColumns(bookings) {
+  const columns = new Set();
+
+  bookings.forEach((booking) => {
+    if (
+      !booking.rawSpreadsheetData ||
+      typeof booking.rawSpreadsheetData !== "object"
+    ) {
+      return;
+    }
+
+    Object.keys(booking.rawSpreadsheetData).forEach((key) => {
+      if (
+        key !== "sourceSheet" &&
+        key !== "sourceRowNumber" &&
+        key !== "detectedImportType"
+      ) {
+        columns.add(key);
+      }
+    });
+  });
+
+  return Array.from(columns);
+}
+
+const bookingSpreadsheetColumns = [
+  {
+    label: "Organization",
+    className: "spreadsheet-sticky-column",
+    render: (booking, openBookingDetail) => (
+      <button
+        className="table-link spreadsheet-organization-button"
+        type="button"
+        onClick={() => openBookingDetail(booking)}
+      >
+        {booking.organizationName || "Unnamed Organization"}
+      </button>
+    ),
+  },
+  {
+    label: "Input Method",
+    render: (booking) => (
+      <span
+        className={`spreadsheet-source-pill ${
+          booking.sourceType === "Form" ? "source-form" : "source-imported"
+        }`}
+      >
+        {getBookingInputMethod(booking)}
+      </span>
+    ),
+  },
+  {
+    label: "Source Type",
+    value: (booking) => booking.sourceType || "Form",
+  },
+  {
+    label: "Source Sheet",
+    value: (booking) => booking.sourceSheet,
+  },
+  {
+    label: "Source Row",
+    value: (booking) => booking.sourceRowNumber,
+  },
+  {
+    label: "Status",
+    value: (booking) => booking.status,
+  },
+  {
+    label: "Submitted",
+    value: (booking) => formatSubmittedDate(booking.submittedAt),
+  },
+  {
+    label: "Contact Name",
+    value: (booking) => booking.contactName,
+  },
+  {
+    label: "Email",
+    value: (booking) => booking.email,
+  },
+  {
+    label: "Phone",
+    value: (booking) => booking.phone,
+  },
+  {
+    label: "Start Date",
+    value: (booking) => booking.startDate,
+  },
+  {
+    label: "End Date",
+    value: (booking) => booking.endDate,
+  },
+  {
+    label: "Date Range",
+    value: (booking) => formatDateRange(booking.startDate, booking.endDate),
+  },
+  {
+    label: "Desired Dates Text",
+    value: (booking) => booking.desiredDatesText,
+  },
+  {
+    label: "Guest Count",
+    value: (booking) => booking.attendeeCount,
+  },
+  {
+    label: "Retreat Type",
+    value: (booking) => booking.retreatType,
+  },
+  {
+    label: "Promo Code",
+    value: (booking) => booking.promoCode,
+  },
+  {
+    label: "Waitlist",
+    value: (booking) => booking.waitlist,
+  },
+  {
+    label: "Assigned Room / Area",
+    value: (booking) => booking.roomName,
+  },
+  {
+    label: "Buildings / Rooms",
+    value: (booking) => booking.buildingsRooms,
+  },
+  {
+    label: "Meals",
+    value: (booking) => booking.meals,
+  },
+  {
+    label: "# Meals",
+    value: (booking) => booking.mealCount,
+  },
+  {
+    label: "Food Allergies",
+    value: (booking) => booking.foodAllergies,
+  },
+  {
+    label: "Need To Know",
+    value: (booking) => booking.needToKnow,
+  },
+  {
+    label: "Linen Sets",
+    value: (booking) => booking.linenSets,
+  },
+  {
+    label: "Activities",
+    value: (booking) => booking.activities,
+  },
+  {
+    label: "# Persons",
+    value: (booking) => booking.persons,
+  },
+  {
+    label: "# Nights",
+    value: (booking) => booking.nights,
+  },
+  {
+    label: "Camper Days",
+    value: (booking) => booking.camperDays,
+  },
+  {
+    label: "Usage Fee",
+    value: (booking) => booking.usageFee,
+  },
+  {
+    label: "$ Lodging",
+    value: (booking) => booking.lodgingCost,
+  },
+  {
+    label: "$ Food",
+    value: (booking) => booking.foodCost,
+  },
+  {
+    label: "$ Misc.",
+    value: (booking) => booking.miscCost,
+  },
+  {
+    label: "Returning Status",
+    value: (booking) => booking.returningStatus,
+  },
+  {
+    label: "Stage of Group",
+    value: (booking) => booking.stageOfGroup,
+  },
+  {
+    label: "Min Paying Guests",
+    value: (booking) => booking.minPayingGuests,
+  },
+  {
+    label: "Max Paying Guests",
+    value: (booking) => booking.maxPayingGuests,
+  },
+  {
+    label: "Guest Rate",
+    value: (booking) => booking.guestRate,
+  },
+  {
+    label: "Expected Minimum Revenue",
+    value: (booking) => booking.expectedMinimumRevenue,
+  },
+  {
+    label: "Invoice Lodging / Meals",
+    value: (booking) => booking.invoiceLodgingMeals,
+  },
+  {
+    label: "Deposit",
+    value: (booking) => booking.deposit,
+  },
+  {
+    label: "Deposit Received",
+    value: (booking) => booking.depositReceived,
+  },
+  {
+    label: "Date of Cancellation",
+    value: (booking) => booking.dateOfCancellation,
+  },
+  {
+    label: "Reason for Cancellation",
+    value: (booking) => booking.reasonForCancellation,
+  },
+  {
+    label: "Vacancy Filled",
+    value: (booking) => booking.vacancyFilled,
+  },
+  {
+    label: "Monthly Projected Income",
+    value: (booking) => booking.monthlyProjectedIncome,
+  },
+  {
+    label: "Notes",
+    value: (booking) => booking.notes,
+  },
+  {
+    label: "Booking ID",
+    value: (booking) => booking.id,
+  },
+];
+
+function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
+  const rawSpreadsheetColumns = useMemo(
+    () => getRawSpreadsheetColumns(inquiryBookings),
+    [inquiryBookings]
+  );
+
+  const formCount = inquiryBookings.filter(
+    (booking) => booking.sourceType === "Form"
+  ).length;
+
+  const importedCount = inquiryBookings.length - formCount;
+
+  return (
+    <section className="spreadsheet-view-page">
+      <article className="dashboard-card spreadsheet-view-card">
+        <div className="spreadsheet-view-header">
+          <div className="dashboard-heading-with-icon">
+            <span className="section-icon">
+              <FaTable />
+            </span>
+
+            <div>
+              <p className="dashboard-eyebrow">Spreadsheet View</p>
+              <h2>All Booking Data</h2>
+              <p>
+                A full spreadsheet-style view of every form submission and
+                imported booking row.
+              </p>
+            </div>
+          </div>
+
+          <div className="spreadsheet-view-summary">
+            <span>
+              <strong>{inquiryBookings.length}</strong>
+              Total Rows
+            </span>
+
+            <span>
+              <strong>{formCount}</strong>
+              Forms
+            </span>
+
+            <span>
+              <strong>{importedCount}</strong>
+              Imports
+            </span>
+
+            <span>
+              <strong>{rawSpreadsheetColumns.length}</strong>
+              Original Columns
+            </span>
+          </div>
+        </div>
+
+        {inquiryBookings.length > 0 ? (
+          <div className="spreadsheet-table-wrap">
+            <table className="spreadsheet-table">
+              <thead>
+                <tr>
+                  {bookingSpreadsheetColumns.map((column) => (
+                    <th className={column.className || ""} key={column.label}>
+                      {column.label}
+                    </th>
+                  ))}
+
+                  {rawSpreadsheetColumns.map((columnName) => (
+                    <th key={`raw-header-${columnName}`}>
+                      Original: {columnName}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {inquiryBookings.map((booking) => (
+                  <tr key={booking.id}>
+                    {bookingSpreadsheetColumns.map((column) => (
+                      <td className={column.className || ""} key={column.label}>
+                        {column.render
+                          ? column.render(booking, openBookingDetail)
+                          : getSpreadsheetDisplayValue(column.value(booking))}
+                      </td>
+                    ))}
+
+                    {rawSpreadsheetColumns.map((columnName) => (
+                      <td key={`${booking.id}-raw-${columnName}`}>
+                        {getSpreadsheetDisplayValue(
+                          booking.rawSpreadsheetData?.[columnName]
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <strong>No spreadsheet data yet</strong>
+            <p>
+              Submit the public form or import a spreadsheet to see rows here.
+            </p>
+          </div>
+        )}
+      </article>
+    </section>
+  );
+}
+
 export default function Dashboard() {
   const today = new Date();
 
@@ -2343,6 +2740,7 @@ export default function Dashboard() {
           });
 
           rowObject.sourceSheet = worksheet.name;
+          rowObject.sourceRowNumber = rowNumber;
 
           spreadsheetRows.push(rowObject);
         });
@@ -2822,7 +3220,7 @@ const getCalendarEventColor = (status) => {
             {section.items.map((item) => {
               const Icon = item.icon;
               const isCalendarView = item.label === "Calendar View";
-
+              const isSpreadsheetView = item.label === "Spreadsheet View";
               return (
                 <button
                   className={`sidebar-link ${
@@ -2831,8 +3229,8 @@ const getCalendarEventColor = (status) => {
                   key={item.label}
                   type="button"
                   onClick={() => {
-                    if (isCalendarView) {
-                      setActiveView("Calendar View");
+                    if (isCalendarView || isSpreadsheetView) {
+                      setActiveView(item.label);
                     }
                   }}
                 >
@@ -3015,7 +3413,12 @@ const getCalendarEventColor = (status) => {
                 </div>
               )}
             </aside>
-          </section>
+        </section>
+        ) : activeView === "Spreadsheet View" ? (
+          <BookingSpreadsheetView
+            inquiryBookings={inquiryBookings}
+            openBookingDetail={openBookingDetail}
+          />
         ) : (
           <>
         <section className="dashboard-stats-grid">

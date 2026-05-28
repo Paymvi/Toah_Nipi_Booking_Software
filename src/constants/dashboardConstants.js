@@ -59,6 +59,7 @@ export const sidebarSections = [
     label: "Rentals & Events",
     items: [
       { label: "Calendar View", icon: FaCalendarAlt },
+      { label: "Spreadsheet View", icon: FaTable },
       { label: "Booking Inquiries", icon: FaClipboardList, hasBadge: true },
       { label: "Add New Booking", icon: FaPlus },
     ],
