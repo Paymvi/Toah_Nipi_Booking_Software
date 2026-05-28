@@ -2207,6 +2207,63 @@ function getSpreadsheetDisplayValue(value) {
   return String(value);
 }
 
+function getSpreadsheetSourceClass(booking) {
+  const sourceType = String(booking.sourceType || "Form").toLowerCase();
+
+  if (sourceType.includes("form")) {
+    return "source-form";
+  }
+
+  if (sourceType.includes("2026")) {
+    return "source-master-2026";
+  }
+
+  if (sourceType.includes("master")) {
+    return "source-master";
+  }
+
+  if (sourceType.includes("waitlist")) {
+    return "source-waitlist";
+  }
+
+  return "source-imported";
+}
+
+function getSpreadsheetStatusClass(status) {
+  const normalizedStatus = String(status || "").toLowerCase();
+
+  if (
+    normalizedStatus.includes("confirmed") ||
+    normalizedStatus.includes("booked")
+  ) {
+    return "status-confirmed";
+  }
+
+  if (normalizedStatus.includes("contract")) {
+    return "status-contract";
+  }
+
+  if (normalizedStatus.includes("cancel")) {
+    return "status-cancelled";
+  }
+
+  if (normalizedStatus.includes("wait")) {
+    return "status-waitlist";
+  }
+
+  if (normalizedStatus.includes("import")) {
+    return "status-imported";
+  }
+
+  return "status-inquiry";
+}
+
+function getSpreadsheetWaitlistClass(waitlist) {
+  return String(waitlist || "").toLowerCase() === "yes"
+    ? "waitlist-yes"
+    : "waitlist-no";
+}
+
 function getRawSpreadsheetColumns(bookings) {
   const columns = new Set();
 
@@ -2250,9 +2307,7 @@ const bookingSpreadsheetColumns = [
     label: "Input Method",
     render: (booking) => (
       <span
-        className={`spreadsheet-source-pill ${
-          booking.sourceType === "Form" ? "source-form" : "source-imported"
-        }`}
+        className={`spreadsheet-source-pill ${getSpreadsheetSourceClass(booking)}`}
       >
         {getBookingInputMethod(booking)}
       </span>
@@ -2267,8 +2322,16 @@ const bookingSpreadsheetColumns = [
     value: (booking) => booking.sourceRowNumber,
   },
   {
-    label: "Status",
-    value: (booking) => booking.status,
+  label: "Status",
+    render: (booking) => (
+      <span
+        className={`spreadsheet-status-pill ${getSpreadsheetStatusClass(
+          booking.status
+        )}`}
+      >
+        {getSpreadsheetDisplayValue(booking.status)}
+      </span>
+    ),
   },
   {
     label: "Submitted",
@@ -2316,7 +2379,15 @@ const bookingSpreadsheetColumns = [
   },
   {
     label: "Waitlist",
-    value: (booking) => booking.waitlist,
+    render: (booking) => (
+      <span
+        className={`spreadsheet-waitlist-pill ${getSpreadsheetWaitlistClass(
+          booking.waitlist
+        )}`}
+      >
+        {getSpreadsheetDisplayValue(booking.waitlist)}
+      </span>
+    ),
   },
   {
     label: "Assigned Room / Area",
