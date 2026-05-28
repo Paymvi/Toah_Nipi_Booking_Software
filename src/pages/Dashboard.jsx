@@ -122,9 +122,9 @@ function normalizeInquiry(inquiry, index) {
     "Unnamed Organization";
 
   const contactName =
-    `${inquiry.firstName || ""} ${inquiry.lastName || ""}`.trim() ||
     inquiry.contactName ||
     inquiry.name ||
+    `${inquiry.firstName || ""} ${inquiry.lastName || ""}`.trim() ||
     "No contact name";
 
   return {
@@ -1285,11 +1285,473 @@ function BookingDetailRow({ label, value, icon: Icon, tone = "default" }) {
   );
 }
 
+function createBookingEditFormState(booking) {
+  return {
+    organizationName: booking.organizationName || "",
+    contactName: booking.contactName === "No contact name" ? "" : booking.contactName || "",
+    email: booking.email === "No email provided" ? "" : booking.email || "",
+    phone: booking.phone === "No phone provided" ? "" : booking.phone || "",
+
+    startDate: booking.startDate || "",
+    endDate: booking.endDate || "",
+    desiredDatesText: booking.desiredDatesText || "",
+
+    attendeeCount: booking.attendeeCount || "",
+    retreatType: booking.retreatType || "",
+    status: booking.status || "Inquiry",
+    waitlist: booking.waitlist || "No",
+
+    roomName: booking.roomName === "Unassigned" ? "" : booking.roomName || "",
+    buildingsRooms: booking.buildingsRooms || "",
+
+    meals: booking.meals || "",
+    foodAllergies: booking.foodAllergies || "",
+    needToKnow: booking.needToKnow || "",
+    linenSets: booking.linenSets || "",
+    activities: booking.activities || "",
+
+    persons: booking.persons || "",
+    nights: booking.nights || "",
+    mealCount: booking.mealCount || "",
+    camperDays: booking.camperDays || "",
+
+    usageFee: booking.usageFee || "",
+    lodgingCost: booking.lodgingCost || "",
+    foodCost: booking.foodCost || "",
+    miscCost: booking.miscCost || "",
+
+    notes: booking.notes || "",
+  };
+}
+
+function BookingEditField({
+  label,
+  value,
+  onChange,
+  isEditing,
+  type = "text",
+  multiline = false,
+  options,
+}) {
+  return (
+    <label className="booking-edit-field">
+      <span>{label}</span>
+
+      {options ? (
+        <select
+          value={value || ""}
+          disabled={!isEditing}
+          onChange={(event) => onChange(event.target.value)}
+        >
+          {options.map((option) => (
+            <option value={option} key={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      ) : multiline ? (
+        <textarea
+          value={value || ""}
+          readOnly={!isEditing}
+          rows={4}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      ) : (
+        <input
+          type={type}
+          value={value || ""}
+          readOnly={!isEditing}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      )}
+    </label>
+  );
+}
+
+function BookingDetailsEditForm({ booking, onSaveBooking }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState(() =>
+    createBookingEditFormState(booking)
+  );
+
+  useEffect(() => {
+    setFormData(createBookingEditFormState(booking));
+    setIsEditing(false);
+  }, [booking.id]);
+
+  const updateField = (fieldName, value) => {
+    setFormData((currentData) => ({
+      ...currentData,
+      [fieldName]: value,
+    }));
+  };
+
+  const handleCancel = () => {
+    setFormData(createBookingEditFormState(booking));
+    setIsEditing(false);
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const desiredDatesText =
+      formData.desiredDatesText.trim() ||
+      [formData.startDate, formData.endDate].filter(Boolean).join(" - ");
+
+    const updatedBooking = {
+      ...booking,
+
+      organizationName:
+        formData.organizationName.trim() || "Unnamed Organization",
+
+      contactName: formData.contactName.trim() || "No contact name",
+      name: formData.contactName.trim(),
+
+      email: formData.email.trim(),
+      phone: formData.phone.trim(),
+
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      desiredDatesText,
+
+      attendeeCount: formData.attendeeCount.trim(),
+      groupSize: formData.attendeeCount.trim(),
+
+      retreatType: formData.retreatType.trim(),
+      status: formData.status,
+      waitlist: formData.waitlist,
+
+      roomName: formData.roomName.trim() || "Unassigned",
+      buildingsRooms: formData.buildingsRooms.trim(),
+
+      meals: formData.meals.trim(),
+      foodAllergies: formData.foodAllergies.trim(),
+      needToKnow: formData.needToKnow.trim(),
+      linenSets: formData.linenSets.trim(),
+      activities: formData.activities.trim(),
+
+      persons: formData.persons.trim(),
+      nights: formData.nights.trim(),
+      mealCount: formData.mealCount.trim(),
+      camperDays: formData.camperDays.trim(),
+
+      usageFee: formData.usageFee.trim(),
+      lodgingCost: formData.lodgingCost.trim(),
+      foodCost: formData.foodCost.trim(),
+      miscCost: formData.miscCost.trim(),
+
+      notes: formData.notes.trim(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    onSaveBooking(updatedBooking);
+    setIsEditing(false);
+  };
+
+  return (
+    <form className="booking-details-edit-card" onSubmit={handleSubmit}>
+      <div className="booking-details-edit-header">
+        <div>
+          <p className="dashboard-eyebrow">Details</p>
+          <h3>Booking Information</h3>
+          <span>
+            Edit this booking entry and save changes to the dashboard.
+          </span>
+        </div>
+
+        <div className="booking-details-edit-actions">
+          {isEditing ? (
+            <>
+              <button
+                className="secondary-dashboard-button"
+                type="button"
+                onClick={handleCancel}
+              >
+                Cancel
+              </button>
+
+              <button className="primary-dashboard-button" type="submit">
+                Save Changes
+              </button>
+            </>
+          ) : (
+            <button
+              className="primary-dashboard-button"
+              type="button"
+              onClick={() => setIsEditing(true)}
+            >
+              Edit Entry
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="booking-details-edit-grid">
+        <section className="booking-details-edit-section">
+          <div className="booking-edit-section-header">
+            <FaBuilding />
+            <div>
+              <h4>Group Information</h4>
+              <p>Organization, contact, and basic rental identity.</p>
+            </div>
+          </div>
+
+          <div className="booking-edit-grid">
+            <BookingEditField
+              label="Rental / Group Name"
+              value={formData.organizationName}
+              isEditing={isEditing}
+              onChange={(value) => updateField("organizationName", value)}
+            />
+
+            <BookingEditField
+              label="Primary Contact"
+              value={formData.contactName}
+              isEditing={isEditing}
+              onChange={(value) => updateField("contactName", value)}
+            />
+
+            <BookingEditField
+              label="Email"
+              type="email"
+              value={formData.email}
+              isEditing={isEditing}
+              onChange={(value) => updateField("email", value)}
+            />
+
+            <BookingEditField
+              label="Phone"
+              value={formData.phone}
+              isEditing={isEditing}
+              onChange={(value) => updateField("phone", value)}
+            />
+          </div>
+        </section>
+
+        <section className="booking-details-edit-section">
+          <div className="booking-edit-section-header">
+            <FaCalendarAlt />
+            <div>
+              <h4>Rental Details</h4>
+              <p>Dates, status, guest count, and waitlist status.</p>
+            </div>
+          </div>
+
+          <div className="booking-edit-grid">
+            <BookingEditField
+              label="Start Date"
+              type="date"
+              value={formData.startDate}
+              isEditing={isEditing}
+              onChange={(value) => updateField("startDate", value)}
+            />
+
+            <BookingEditField
+              label="End Date"
+              type="date"
+              value={formData.endDate}
+              isEditing={isEditing}
+              onChange={(value) => updateField("endDate", value)}
+            />
+
+            <BookingEditField
+              label="Guest Count"
+              value={formData.attendeeCount}
+              isEditing={isEditing}
+              onChange={(value) => updateField("attendeeCount", value)}
+            />
+
+            <BookingEditField
+              label="Retreat Type"
+              value={formData.retreatType}
+              isEditing={isEditing}
+              onChange={(value) => updateField("retreatType", value)}
+            />
+
+            <BookingEditField
+              label="Status"
+              value={formData.status}
+              isEditing={isEditing}
+              options={[
+                "Inquiry",
+                "Contract Sent",
+                "Confirmed",
+                "Imported",
+                "Cancelled",
+                "Waitlist",
+              ]}
+              onChange={(value) => updateField("status", value)}
+            />
+
+            <BookingEditField
+              label="Waitlist"
+              value={formData.waitlist}
+              isEditing={isEditing}
+              options={["No", "Yes"]}
+              onChange={(value) => updateField("waitlist", value)}
+            />
+          </div>
+        </section>
+
+        <section className="booking-details-edit-section">
+          <div className="booking-edit-section-header">
+            <FaBed />
+            <div>
+              <h4>Housing & Program</h4>
+              <p>Rooms, meals, linen sets, activities, and staff notes.</p>
+            </div>
+          </div>
+
+          <div className="booking-edit-grid">
+            <BookingEditField
+              label="Assigned Room / Area"
+              value={formData.roomName}
+              isEditing={isEditing}
+              onChange={(value) => updateField("roomName", value)}
+            />
+
+            <BookingEditField
+              label="Buildings / Rooms"
+              value={formData.buildingsRooms}
+              isEditing={isEditing}
+              onChange={(value) => updateField("buildingsRooms", value)}
+            />
+
+            <BookingEditField
+              label="Meals"
+              value={formData.meals}
+              isEditing={isEditing}
+              onChange={(value) => updateField("meals", value)}
+            />
+
+            <BookingEditField
+              label="# Meals"
+              value={formData.mealCount}
+              isEditing={isEditing}
+              onChange={(value) => updateField("mealCount", value)}
+            />
+
+            <BookingEditField
+              label="Linen Sets"
+              value={formData.linenSets}
+              isEditing={isEditing}
+              onChange={(value) => updateField("linenSets", value)}
+            />
+
+            <BookingEditField
+              label="Activities"
+              value={formData.activities}
+              isEditing={isEditing}
+              onChange={(value) => updateField("activities", value)}
+            />
+
+            <BookingEditField
+              label="Food Allergies"
+              value={formData.foodAllergies}
+              isEditing={isEditing}
+              multiline
+              onChange={(value) => updateField("foodAllergies", value)}
+            />
+
+            <BookingEditField
+              label="Need To Know"
+              value={formData.needToKnow}
+              isEditing={isEditing}
+              multiline
+              onChange={(value) => updateField("needToKnow", value)}
+            />
+          </div>
+        </section>
+
+        <section className="booking-details-edit-section">
+          <div className="booking-edit-section-header">
+            <FaDollarSign />
+            <div>
+              <h4>Counts & Billing</h4>
+              <p>Optional spreadsheet-style values for reporting.</p>
+            </div>
+          </div>
+
+          <div className="booking-edit-grid">
+            <BookingEditField
+              label="# Persons"
+              value={formData.persons}
+              isEditing={isEditing}
+              onChange={(value) => updateField("persons", value)}
+            />
+
+            <BookingEditField
+              label="# Nights"
+              value={formData.nights}
+              isEditing={isEditing}
+              onChange={(value) => updateField("nights", value)}
+            />
+
+            <BookingEditField
+              label="Camper Days"
+              value={formData.camperDays}
+              isEditing={isEditing}
+              onChange={(value) => updateField("camperDays", value)}
+            />
+
+            <BookingEditField
+              label="Usage Fee"
+              value={formData.usageFee}
+              isEditing={isEditing}
+              onChange={(value) => updateField("usageFee", value)}
+            />
+
+            <BookingEditField
+              label="$ Lodging"
+              value={formData.lodgingCost}
+              isEditing={isEditing}
+              onChange={(value) => updateField("lodgingCost", value)}
+            />
+
+            <BookingEditField
+              label="$ Food"
+              value={formData.foodCost}
+              isEditing={isEditing}
+              onChange={(value) => updateField("foodCost", value)}
+            />
+
+            <BookingEditField
+              label="$ Misc."
+              value={formData.miscCost}
+              isEditing={isEditing}
+              onChange={(value) => updateField("miscCost", value)}
+            />
+          </div>
+        </section>
+
+        <section className="booking-details-edit-section booking-details-edit-section-wide">
+          <div className="booking-edit-section-header">
+            <FaInfoCircle />
+            <div>
+              <h4>Additional Notes</h4>
+              <p>Internal notes for staff follow-up.</p>
+            </div>
+          </div>
+
+          <BookingEditField
+            label="Notes"
+            value={formData.notes}
+            isEditing={isEditing}
+            multiline
+            onChange={(value) => updateField("notes", value)}
+          />
+        </section>
+      </div>
+    </form>
+  );
+}
+
 function BookingDetailView({
   booking,
   activeTab,
   setActiveTab,
   onBack,
+  onSaveBooking,
 }) {
   if (!booking) {
     return (
@@ -1643,17 +2105,26 @@ function BookingDetailView({
         </div>
       )}
 
-      {activeTab === "Housing" && <BookingHousingTab booking={booking} />}
+{activeTab === "Details" && (
+  <BookingDetailsEditForm
+    booking={booking}
+    onSaveBooking={onSaveBooking}
+  />
+)}
 
-      {activeTab !== "Overview" && activeTab !== "Housing" && (
-        <section className="dashboard-card booking-tab-placeholder">
-          <h3>{activeTab}</h3>
-          <p>
-            This tab is ready to build next. The selected booking is{" "}
-            <strong>{booking.organizationName}</strong>.
-          </p>
-        </section>
-      )}
+{activeTab === "Housing" && <BookingHousingTab booking={booking} />}
+
+{activeTab !== "Overview" &&
+  activeTab !== "Details" &&
+  activeTab !== "Housing" && (
+    <section className="dashboard-card booking-tab-placeholder">
+      <h3>{activeTab}</h3>
+      <p>
+        This tab is ready to build next. The selected booking is{" "}
+        <strong>{booking.organizationName}</strong>.
+      </p>
+    </section>
+  )}
     </section>
   );
 }
@@ -1696,6 +2167,97 @@ export default function Dashboard() {
 
     localStorage.removeItem("toahNipiPublicInquiries");
     setPublicInquiries([]);
+  };
+
+
+  const saveBookingEdits = (updatedBooking) => {
+    const updatedAt = new Date().toISOString();
+    let didUpdateExistingBooking = false;
+
+    const nextInquiries = publicInquiries.map((inquiry, index) => {
+      const normalizedInquiry = normalizeInquiry(inquiry, index);
+
+      if (normalizedInquiry.id !== updatedBooking.id) {
+        return inquiry;
+      }
+
+      didUpdateExistingBooking = true;
+
+      return {
+        ...inquiry,
+        ...updatedBooking,
+
+        id: updatedBooking.id,
+
+        organizationName: updatedBooking.organizationName,
+
+        contactName: updatedBooking.contactName,
+        name: updatedBooking.contactName,
+
+        firstName: "",
+        lastName: "",
+
+        email: updatedBooking.email,
+        phone: updatedBooking.phone,
+
+        startDate: updatedBooking.startDate,
+        endDate: updatedBooking.endDate,
+        desiredDatesText: updatedBooking.desiredDatesText,
+        desiredDates: updatedBooking.desiredDatesText,
+
+        attendeeCount: updatedBooking.attendeeCount,
+        groupSize: updatedBooking.attendeeCount,
+
+        retreatType: updatedBooking.retreatType,
+        status: updatedBooking.status,
+        waitlist: updatedBooking.waitlist,
+
+        roomName: updatedBooking.roomName,
+        buildingsRooms: updatedBooking.buildingsRooms,
+
+        meals: updatedBooking.meals,
+        foodAllergies: updatedBooking.foodAllergies,
+        needToKnow: updatedBooking.needToKnow,
+        linenSets: updatedBooking.linenSets,
+        activities: updatedBooking.activities,
+
+        persons: updatedBooking.persons,
+        nights: updatedBooking.nights,
+        mealCount: updatedBooking.mealCount,
+        camperDays: updatedBooking.camperDays,
+
+        usageFee: updatedBooking.usageFee,
+        lodgingCost: updatedBooking.lodgingCost,
+        foodCost: updatedBooking.foodCost,
+        miscCost: updatedBooking.miscCost,
+
+        notes: updatedBooking.notes,
+        message: updatedBooking.notes,
+
+        updatedAt,
+      };
+    });
+
+    const inquiriesToSave = didUpdateExistingBooking
+      ? nextInquiries
+      : [
+          ...publicInquiries,
+          {
+            ...updatedBooking,
+            updatedAt,
+          },
+        ];
+
+    localStorage.setItem(
+      "toahNipiPublicInquiries",
+      JSON.stringify(inquiriesToSave)
+    );
+
+    setPublicInquiries(inquiriesToSave);
+    setSelectedBooking({
+      ...updatedBooking,
+      updatedAt,
+    });
   };
 
   const importSpreadsheet = async ({
@@ -2294,6 +2856,7 @@ const getCalendarEventColor = (status) => {
             booking={selectedBooking}
             activeTab={bookingDetailTab}
             setActiveTab={setBookingDetailTab}
+            onSaveBooking={saveBookingEdits}
             onBack={() => {
               setSelectedBooking(null);
               setActiveView("Dashboard");
