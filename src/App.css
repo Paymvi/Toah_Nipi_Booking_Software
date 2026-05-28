@@ -3182,40 +3182,70 @@ body,
 
 
 
-
-
-/* Simple Booking Housing Tab */
+/* =========================================================
+   Booking Housing Tab: Professional Polish
+   Matches dashboard + booking profile styling
+========================================================= */
 
 .booking-housing-tab-card {
   padding: 0;
   overflow: hidden;
+
+  background: #ffffff;
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
 }
+
+/* Header */
 
 .booking-housing-tab-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
-  padding: 24px;
+
+  padding: 18px;
+  border-bottom: 1px solid #edf0f4;
+  background: #ffffff;
 }
 
 .booking-housing-tab-header h3 {
   margin: 0;
-  color: #242735;
-  font-size: 1.28rem;
-  letter-spacing: -0.02em;
+  color: #252936;
+  font-size: 1.08rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
 
 .booking-housing-tab-header p {
-  margin: 7px 0 0;
-  color: #8a90a0;
-  font-size: 0.92rem;
+  margin: 5px 0 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+  font-weight: 400;
+  line-height: 1.45;
 }
+
+.booking-housing-tab-header .primary-dashboard-button {
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 0 14px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+/* Table wrapper */
 
 .booking-housing-table-wrap {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  background: #ffffff;
 }
+
+/* Table */
 
 .booking-housing-table {
   width: 100%;
@@ -3224,68 +3254,193 @@ body,
 }
 
 .booking-housing-table th {
-  background: #f4f5f8;
-  color: #3f4351;
-  padding: 14px 16px;
+  background: #f6f7f9;
+  color: #565d6b;
+
+  padding: 11px 14px;
+  border-bottom: 1px solid #dfe4ec;
+
   text-align: left;
-  font-size: 0.76rem;
-  font-weight: 800;
+  font-size: 0.7rem;
+  font-weight: 650;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.045em;
   white-space: nowrap;
 }
 
 .booking-housing-table td {
-  padding: 14px 16px;
-  border-top: 1px solid #edf0f4;
+  padding: 12px 14px;
+  border-bottom: 1px solid #edf0f4;
+
   color: #3f4351;
-  font-size: 0.92rem;
+  font-size: 0.86rem;
+  font-weight: 400;
   vertical-align: middle;
+}
+
+.booking-housing-table tbody tr {
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.booking-housing-table tbody tr:hover {
+  background: #fbfcfd;
+}
+
+.booking-housing-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 .booking-housing-table td strong {
   color: #303442;
-  font-weight: 800;
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.3;
 }
 
-.housing-details-button {
-  min-height: 42px;
-  border: 1px solid #b9b4df;
+/* Room cell */
+
+.housing-room-cell {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.housing-room-thumb {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+
+  object-fit: cover;
   border-radius: 8px;
-  padding: 0 18px;
+  border: 1px solid #dfe4ec;
+  background: #f6f7f9;
+
+  box-shadow: none;
+}
+
+.housing-room-cell strong {
+  display: block;
+  min-width: 0;
+
+  color: #303442;
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.25;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Action buttons */
+
+.housing-details-button {
+  min-height: 34px;
+  border: 1px solid #c9c4e8;
+  border-radius: 7px;
+  padding: 0 12px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
   background: #ffffff;
   color: #443a9c;
+
   font: inherit;
-  font-size: 0.86rem;
-  font-weight: 800;
+  font-size: 0.8rem;
+  font-weight: 600;
+
   cursor: pointer;
   white-space: nowrap;
+
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
 }
 
 .housing-details-button:hover {
   background: #f7f5ff;
+  border-color: #aaa2dc;
+}
+
+.housing-details-button:focus-visible {
+  outline: 3px solid rgba(68, 58, 156, 0.16);
+  outline-offset: 2px;
 }
 
 .housing-delete-button {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
+
   border: 1px solid #efcaca;
-  border-radius: 8px;
+  border-radius: 7px;
+
   display: inline-grid;
   place-items: center;
+
   background: #fffafa;
   color: #b44444;
+
   cursor: pointer;
+
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
 }
 
 .housing-delete-button:hover {
   background: #fff1f1;
+  border-color: #e6abab;
   color: #8d2f2f;
 }
+
+.housing-delete-button:focus-visible {
+  outline: 3px solid rgba(180, 68, 68, 0.16);
+  outline-offset: 2px;
+}
+
+/* Make it match when inside the booking profile page */
+
+.booking-profile-page .booking-housing-tab-card {
+  border-radius: 10px;
+  border-color: #dfe4ec;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.035);
+}
+
+.booking-profile-page .booking-housing-tab-header {
+  padding: 16px;
+}
+
+.booking-profile-page .booking-housing-tab-header h3 {
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.booking-profile-page .booking-housing-tab-header p {
+  font-size: 0.82rem;
+}
+
+.booking-profile-page .booking-housing-table th {
+  padding: 11px 14px;
+  font-weight: 600;
+}
+
+.booking-profile-page .booking-housing-table td {
+  padding: 12px 14px;
+}
+
+/* Mobile */
 
 @media (max-width: 720px) {
   .booking-housing-tab-header {
     flex-direction: column;
+    padding: 16px;
   }
 
   .booking-housing-tab-header .primary-dashboard-button {
@@ -3293,34 +3448,15 @@ body,
   }
 
   .booking-housing-table {
-    min-width: 900px;
+    min-width: 860px;
+  }
+
+  .housing-room-thumb {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
   }
 }
-
-.housing-room-cell {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.housing-room-thumb {
-  width: 46px;
-  height: 46px;
-  flex: 0 0 46px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid rgba(47, 51, 68, 0.12);
-  box-shadow: 0 6px 16px rgba(31, 35, 50, 0.08);
-  background: #f4f5f8;
-}
-
-.housing-room-cell strong {
-  font-weight: 800;
-  color: #2f3344;
-  white-space: nowrap;
-}
-
-
 
 
 /* =========================================================
