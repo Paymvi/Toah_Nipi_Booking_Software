@@ -2259,10 +2259,6 @@ const bookingSpreadsheetColumns = [
     ),
   },
   {
-    label: "Source Type",
-    value: (booking) => booking.sourceType || "Form",
-  },
-  {
     label: "Source Sheet",
     value: (booking) => booking.sourceSheet,
   },
