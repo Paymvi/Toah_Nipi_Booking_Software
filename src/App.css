@@ -5843,3 +5843,457 @@ body,
     flex-direction: column;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+.booking-activities {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  color: #1f2937;
+}
+
+.booking-activities__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.booking-activities__eyebrow {
+  margin: 0 0 0.35rem;
+  color: #4f46e5;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.booking-activities__header h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 750;
+  color: #111827;
+}
+
+.booking-activities__header p {
+  margin: 0.35rem 0 0;
+  max-width: 620px;
+  color: #6b7280;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.activity-tabs {
+  display: flex;
+  gap: 0.65rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.activity-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.7rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.activity-tab:hover {
+  color: #3730a3;
+  background: #f9fafb;
+}
+
+.activity-tab.active {
+  color: #3730a3;
+  border-bottom-color: #3730a3;
+}
+
+.activity-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.activity-summary-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.activity-summary-card span {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  color: #3730a3;
+  background: #eef2ff;
+  border-radius: 9px;
+}
+
+.activity-summary-card p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.activity-summary-card h3 {
+  margin: 0.15rem 0 0;
+  font-size: 1.4rem;
+  font-weight: 750;
+  color: #111827;
+}
+
+.activity-panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.activity-panel__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fafafa;
+}
+
+.activity-panel__top h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 750;
+  color: #111827;
+}
+
+.activity-panel__top p {
+  margin: 0.25rem 0 0;
+  color: #6b7280;
+  font-size: 0.86rem;
+}
+
+.activity-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.activity-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+}
+
+.activity-table th {
+  padding: 0.85rem 1rem;
+  background: #f9fafb;
+  color: #4b5563;
+  font-size: 0.72rem;
+  font-weight: 750;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.activity-table td {
+  padding: 0.9rem 1rem;
+  color: #374151;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.activity-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.activity-table__actions {
+  text-align: right;
+}
+
+.activity-requirement-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 260px;
+  padding: 0.45rem 0.65rem;
+  color: #3730a3;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.activity-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.activity-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  background: #ffffff;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.activity-icon-btn:hover {
+  color: #3730a3;
+  border-color: #3730a3;
+  background: #f5f3ff;
+}
+
+.activity-icon-btn.danger {
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.activity-icon-btn.danger:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+}
+
+.activity-icon-btn.save {
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.activity-icon-btn.save:hover {
+  background: #ecfdf5;
+  border-color: #059669;
+}
+
+.activity-primary-btn,
+.activity-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 38px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.activity-primary-btn {
+  color: #ffffff;
+  background: #3730a3;
+  border: 1px solid #3730a3;
+}
+
+.activity-primary-btn:hover {
+  background: #312e81;
+  border-color: #312e81;
+}
+
+.activity-secondary-btn {
+  color: #374151;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+}
+
+.activity-secondary-btn:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.activity-add-card {
+  margin: 1rem 1.25rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.activity-add-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.activity-add-card__header h4 {
+  margin: 0;
+  color: #111827;
+  font-size: 0.98rem;
+  font-weight: 750;
+}
+
+.activity-add-card__header button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: #6b7280;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.activity-add-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.activity-add-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: #4b5563;
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.activity-add-grid input,
+.activity-table input {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  color: #111827;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  font-size: 0.86rem;
+  outline: none;
+}
+
+.activity-add-grid input:focus,
+.activity-table input:focus {
+  border-color: #3730a3;
+  box-shadow: 0 0 0 3px rgba(55, 48, 163, 0.1);
+}
+
+.activity-add-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.activity-mini-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(80px, 1fr));
+  gap: 0.45rem;
+}
+
+.activity-mini-inputs label {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.activity-mini-inputs svg {
+  position: absolute;
+  left: 0.55rem;
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.activity-mini-inputs input {
+  padding-left: 1.75rem;
+}
+
+.activity-edit-row {
+  background: #f9fafb;
+}
+
+.activity-empty-state {
+  display: grid;
+  place-items: center;
+  gap: 0.35rem;
+  padding: 2.5rem 1rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+.activity-empty-state svg {
+  color: #9ca3af;
+  font-size: 1.5rem;
+}
+
+.activity-empty-state h4 {
+  margin: 0.25rem 0 0;
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.activity-empty-state p {
+  margin: 0;
+  max-width: 360px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .booking-activities__header {
+    flex-direction: column;
+  }
+
+  .activity-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-add-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .activity-tabs {
+    overflow-x: auto;
+  }
+
+  .activity-add-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-add-card__actions {
+    flex-direction: column;
+  }
+
+  .activity-primary-btn,
+  .activity-secondary-btn {
+    width: 100%;
+  }
+}

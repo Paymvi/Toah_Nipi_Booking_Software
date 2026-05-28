@@ -32,6 +32,7 @@ import ExcelJS from "exceljs";
 import BookingHousingTab from "../components/BookingHousingTab";
 import DashboardTopbar from "../components/DashboardTopbar";
 import BookingCalendar from "../components/BookingCalendar";
+import BookingActivities from "../components/BookingActivities";
 
 import {
   monthNames,
@@ -166,6 +167,12 @@ function normalizeInquiry(inquiry, index) {
     needToKnow: inquiry.needToKnow || "",
     linenSets: inquiry.linenSets || "",
     activities: inquiry.activities || "",
+
+    bookingActivitySchedule: inquiry.bookingActivitySchedule || {
+      meals: [],
+      recreation: [],
+    },
+
     persons: inquiry.persons || "",
     nights: inquiry.nights || "",
     mealCount: inquiry.mealCount || "",
@@ -2114,9 +2121,27 @@ function BookingDetailView({
 
 {activeTab === "Housing" && <BookingHousingTab booking={booking} />}
 
+{activeTab === "Activities" && (
+  <BookingActivities
+    initialActivities={
+      booking.bookingActivitySchedule || {
+        meals: [],
+        recreation: [],
+      }
+    }
+    onActivitiesChange={(updatedActivities) => {
+      onSaveBooking({
+        ...booking,
+        bookingActivitySchedule: updatedActivities,
+      });
+    }}
+  />
+)}
+
 {activeTab !== "Overview" &&
   activeTab !== "Details" &&
-  activeTab !== "Housing" && (
+  activeTab !== "Housing" &&
+  activeTab !== "Activities" && (
     <section className="dashboard-card booking-tab-placeholder">
       <h3>{activeTab}</h3>
       <p>
