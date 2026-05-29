@@ -95,6 +95,7 @@ const DATED_INQUIRY_CUSTOM_END_STORAGE_KEY =
 
 const datedInquiryDateFilterOptions = [
   { value: "thisMonth", label: "This Month" },
+  { value: "allTime", label: "All Time" },
   { value: "pastMonth", label: "Past Month" },
   { value: "nextMonth", label: "Next Month" },
   { value: "past90Days", label: "Past 90 Days" },
@@ -146,6 +147,13 @@ function getDatedInquiryDateFilterRange({
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
 
+  if (filterValue === "allTime") {
+    return {
+      startDate: null,
+      endDate: null,
+    };
+  }
+
   if (filterValue === "pastMonth") {
     return {
       startDate: new Date(currentYear, currentMonth - 1, 1),
@@ -196,6 +204,7 @@ function getDatedInquiryDateFilterRange({
     endDate: new Date(currentYear, currentMonth + 1, 0),
   };
 }
+
 
 function inquiryTouchesDateFilter(inquiry, dateRange) {
   const inquiryStartDate = getLocalDate(inquiry.startDate);
