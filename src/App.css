@@ -7679,3 +7679,178 @@ body,
   border-radius: 999px;
   background: rgb(var(--retreat-type-rgb) / 1);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   FINAL OVERRIDE: Dated Inquiries Settings Button Placement
+========================================================= */
+
+.dated-inquiries-dashboard-card {
+  overflow: visible;
+}
+
+.dated-inquiries-dashboard-header {
+  position: relative;
+  align-items: flex-start;
+}
+
+.dated-inquiries-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dated-inquiries-title-row h2 {
+  margin: 0;
+}
+
+.dated-inquiries-settings {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.dated-inquiries-settings-button {
+  width: 28px;
+  height: 28px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #858c9b;
+
+  padding: 0;
+  font-size: 0.86rem;
+  line-height: 1;
+  cursor: pointer;
+
+  box-shadow: none;
+  transform: none;
+
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.dated-inquiries-settings-button:hover,
+.dated-inquiries-settings-button.active {
+  border: 0;
+  background: #f4f5f8;
+  color: #443a9c;
+  box-shadow: none;
+}
+
+.dated-inquiries-settings-button:active {
+  transform: none;
+}
+
+.dated-inquiries-settings-button:focus-visible {
+  outline: 3px solid rgba(68, 58, 156, 0.14);
+  outline-offset: 2px;
+}
+
+.dated-inquiries-settings-button svg {
+  display: block;
+}
+
+.dated-inquiries-settings-menu {
+  top: calc(100% + 8px);
+  left: 0;
+  right: auto;
+
+  width: 300px;
+  padding: 8px;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(28, 35, 52, 0.13);
+
+  z-index: 5000;
+}
+
+.dated-inquiries-settings-menu-header {
+  padding: 10px 10px 9px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.dated-inquiries-settings-menu-header h3 {
+  margin: 0;
+  color: #252936;
+  font-size: 0.92rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.dated-inquiries-settings-menu-header p {
+  margin: 4px 0 0;
+  color: #858c9b;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.dated-inquiries-setting-option {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: 10px;
+  align-items: flex-start;
+
+  padding: 10px;
+  border-radius: 7px;
+
+  cursor: pointer;
+}
+
+.dated-inquiries-setting-option:hover {
+  background: #fbfcfd;
+}
+
+.dated-inquiries-setting-option input {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: #443a9c;
+}
+
+.dated-inquiries-setting-option strong {
+  color: #303442;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.dated-inquiries-setting-option small {
+  color: #858c9b;
+  font-size: 0.74rem;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+@media (max-width: 720px) {
+  .dated-inquiries-dashboard-header {
+    flex-direction: column;
+  }
+
+  .dated-inquiries-settings-menu {
+    left: 0;
+    right: auto;
+    width: min(300px, calc(100vw - 40px));
+  }
+}

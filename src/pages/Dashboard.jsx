@@ -4037,7 +4037,71 @@ const getCalendarEventColor = (status) => {
             <article className="dashboard-card dated-inquiries-dashboard-card">
               <div className="dashboard-card-header dated-inquiries-dashboard-header">
                 <div>
-                  <h2>Dated Inquiries</h2>
+                  <div className="dated-inquiries-title-row">
+                    <h2>Dated Inquiries</h2>
+
+                    <div className="dated-inquiries-settings">
+                      <button
+                        className={`dated-inquiries-settings-button ${
+                          isDatedInquirySettingsOpen ? "active" : ""
+                        }`}
+                        type="button"
+                        onClick={() =>
+                          setIsDatedInquirySettingsOpen((currentValue) => !currentValue)
+                        }
+                        aria-label="Open dated inquiry display settings"
+                        title="Display settings"
+                      >
+                        <FaCog />
+                      </button>
+
+                      {isDatedInquirySettingsOpen && (
+                        <div className="dated-inquiries-settings-menu">
+                          <div className="dated-inquiries-settings-menu-header">
+                            <h3>Display Settings</h3>
+                            <p>Customize how dated inquiry cards appear.</p>
+                          </div>
+
+                          <label className="dated-inquiries-setting-option">
+                            <input
+                              type="checkbox"
+                              checked={datedInquirySettings.tintByRetreatType}
+                              onChange={(event) =>
+                                updateDatedInquirySetting(
+                                  "tintByRetreatType",
+                                  event.target.checked
+                                )
+                              }
+                            />
+
+                            <span>
+                              <strong>Color cards by retreat type</strong>
+                              <small>Lightly tint each card based on its retreat type.</small>
+                            </span>
+                          </label>
+
+                          <label className="dated-inquiries-setting-option">
+                            <input
+                              type="checkbox"
+                              checked={datedInquirySettings.showRetreatTypeLegend}
+                              onChange={(event) =>
+                                updateDatedInquirySetting(
+                                  "showRetreatTypeLegend",
+                                  event.target.checked
+                                )
+                              }
+                            />
+
+                            <span>
+                              <strong>Show color legend</strong>
+                              <small>Display the meaning of each retreat type color.</small>
+                            </span>
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <p>
                     {filteredDatedInquiries.length} of {datedInquiries.length} dated booking
                     {datedInquiries.length === 1 ? "" : "s"} shown.
@@ -4048,112 +4112,49 @@ const getCalendarEventColor = (status) => {
                   </span>
                 </div>
 
-                <div className="dated-inquiries-header-actions">
-                  <div className="dated-inquiries-settings">
-                    <button
-                      className={`dated-inquiries-settings-button ${
-                        isDatedInquirySettingsOpen ? "active" : ""
-                      }`}
-                      type="button"
-                      onClick={() =>
-                        setIsDatedInquirySettingsOpen((currentValue) => !currentValue)
-                      }
-                      aria-label="Open dated inquiry display settings"
-                      title="Display settings"
+                <div className="dated-inquiries-filter-bar">
+                  <label className="dated-inquiries-filter-field">
+                    <span>Date Range</span>
+
+                    <select
+                      value={datedInquiryDateFilter}
+                      onChange={(event) => setDatedInquiryDateFilter(event.target.value)}
                     >
-                      <FaCog />
-                    </button>
+                      {datedInquiryDateFilterOptions.map((option) => (
+                        <option value={option.value} key={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
-                    {isDatedInquirySettingsOpen && (
-                      <div className="dated-inquiries-settings-menu">
-                        <div className="dated-inquiries-settings-menu-header">
-                          <h3>Display Settings</h3>
-                          <p>Customize how dated inquiry cards appear.</p>
-                        </div>
+                  {datedInquiryDateFilter === "custom" && (
+                    <div className="dated-inquiries-custom-range">
+                      <label className="dated-inquiries-filter-field">
+                        <span>From</span>
 
-                        <label className="dated-inquiries-setting-option">
-                          <input
-                            type="checkbox"
-                            checked={datedInquirySettings.tintByRetreatType}
-                            onChange={(event) =>
-                              updateDatedInquirySetting(
-                                "tintByRetreatType",
-                                event.target.checked
-                              )
-                            }
-                          />
+                        <input
+                          type="date"
+                          value={datedInquiryCustomStartDate}
+                          onChange={(event) =>
+                            setDatedInquiryCustomStartDate(event.target.value)
+                          }
+                        />
+                      </label>
 
-                          <span>
-                            <strong>Color cards by retreat type</strong>
-                            <small>Lightly tint each card based on its retreat type.</small>
-                          </span>
-                        </label>
+                      <label className="dated-inquiries-filter-field">
+                        <span>To</span>
 
-                        <label className="dated-inquiries-setting-option">
-                          <input
-                            type="checkbox"
-                            checked={datedInquirySettings.showRetreatTypeLegend}
-                            onChange={(event) =>
-                              updateDatedInquirySetting(
-                                "showRetreatTypeLegend",
-                                event.target.checked
-                              )
-                            }
-                          />
-
-                          <span>
-                            <strong>Show color legend</strong>
-                            <small>Display the meaning of each retreat type color.</small>
-                          </span>
-                        </label>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="dated-inquiries-filter-bar">
-                    <label className="dated-inquiries-filter-field">
-                      <span>Date Range</span>
-
-                      <select
-                        value={datedInquiryDateFilter}
-                        onChange={(event) => setDatedInquiryDateFilter(event.target.value)}
-                      >
-                        {datedInquiryDateFilterOptions.map((option) => (
-                          <option value={option.value} key={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    {datedInquiryDateFilter === "custom" && (
-                      <div className="dated-inquiries-custom-range">
-                        <label className="dated-inquiries-filter-field">
-                          <span>From</span>
-
-                          <input
-                            type="date"
-                            value={datedInquiryCustomStartDate}
-                            onChange={(event) =>
-                              setDatedInquiryCustomStartDate(event.target.value)
-                            }
-                          />
-                        </label>
-
-                        <label className="dated-inquiries-filter-field">
-                          <span>To</span>
-
-                          <input
-                            type="date"
-                            value={datedInquiryCustomEndDate}
-                            onChange={(event) =>
-                              setDatedInquiryCustomEndDate(event.target.value)
-                            }
-                          />
-                        </label>
-                      </div>
-                    )}
-                  </div>
+                        <input
+                          type="date"
+                          value={datedInquiryCustomEndDate}
+                          onChange={(event) =>
+                            setDatedInquiryCustomEndDate(event.target.value)
+                          }
+                        />
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
 
