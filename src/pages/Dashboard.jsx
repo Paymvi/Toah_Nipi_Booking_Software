@@ -2810,7 +2810,6 @@ export default function Dashboard() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [bookingDetailTab, setBookingDetailTab] = useState("Overview");
 
-  const [isSubmittedInquiriesOpen, setIsSubmittedInquiriesOpen] = useState(true);
   const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
 
 
@@ -3799,7 +3798,7 @@ const getCalendarEventColor = (status) => {
           </article>
         </section>
 
-        <section className="dashboard-card tasks-card">
+        {/* <section className="dashboard-card tasks-card">
           <div className="dashboard-card-header collapsible-card-header">
             <div className="dashboard-heading-with-icon">
               <span className="section-icon">
@@ -3883,7 +3882,7 @@ const getCalendarEventColor = (status) => {
               )}
             </div>
           )}
-        </section>
+        </section> */}
 
         <section className="dashboard-lower-grid">
           <article className="dashboard-card calendar-card">
