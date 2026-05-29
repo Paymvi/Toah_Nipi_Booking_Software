@@ -7189,3 +7189,102 @@ body,
     font-size: 0.82rem;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Dashboard Dated Inquiries Date Filter
+========================================================= */
+
+.dated-inquiries-dashboard-header {
+  align-items: flex-start;
+}
+
+.dated-inquiries-filter-summary {
+  display: inline-block;
+  margin-top: 6px;
+  color: #687083;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.dated-inquiries-filter-bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dated-inquiries-custom-range {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dated-inquiries-filter-field {
+  display: grid;
+  gap: 5px;
+  min-width: 150px;
+}
+
+.dated-inquiries-filter-field span {
+  color: #7b8290;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.065em;
+  text-transform: uppercase;
+}
+
+.dated-inquiries-filter-field select,
+.dated-inquiries-filter-field input {
+  width: 100%;
+  height: 38px;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #303442;
+
+  padding: 0 11px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 500;
+
+  outline: none;
+}
+
+.dated-inquiries-filter-field select {
+  cursor: pointer;
+}
+
+.dated-inquiries-filter-field select:focus,
+.dated-inquiries-filter-field input:focus {
+  border-color: #9f98d4;
+  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+}
+
+@media (max-width: 720px) {
+  .dated-inquiries-dashboard-header {
+    flex-direction: column;
+  }
+
+  .dated-inquiries-filter-bar,
+  .dated-inquiries-custom-range {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .dated-inquiries-filter-field {
+    width: 100%;
+  }
+}

@@ -84,6 +84,148 @@ function getSavedInquiries() {
   }
 }
 
+const DATED_INQUIRY_DATE_FILTER_STORAGE_KEY =
+  "toahNipiDatedInquiryDateFilter";
+
+const DATED_INQUIRY_CUSTOM_START_STORAGE_KEY =
+  "toahNipiDatedInquiryCustomStartDate";
+
+const DATED_INQUIRY_CUSTOM_END_STORAGE_KEY =
+  "toahNipiDatedInquiryCustomEndDate";
+
+const datedInquiryDateFilterOptions = [
+  { value: "thisMonth", label: "This Month" },
+  { value: "pastMonth", label: "Past Month" },
+  { value: "nextMonth", label: "Next Month" },
+  { value: "past90Days", label: "Past 90 Days" },
+  { value: "next90Days", label: "Next 90 Days" },
+  { value: "custom", label: "Custom Date Range" },
+];
+
+function getSavedDashboardFilterValue(key, fallbackValue = "") {
+  try {
+    return localStorage.getItem(key) || fallbackValue;
+  } catch (error) {
+    console.error("Could not read dashboard filter:", error);
+    return fallbackValue;
+  }
+}
+
+function saveDashboardFilterValue(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    console.error("Could not save dashboard filter:", error);
+  }
+}
+
+function formatDateForInput(date) {
+  if (!date) {
+    return "";
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date, numberOfDays) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + numberOfDays);
+  return nextDate;
+}
+
+function getDatedInquiryDateFilterRange({
+  filterValue,
+  customStartDate,
+  customEndDate,
+}) {
+  const today = getLocalDate(formatDateForInput(new Date()));
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+
+  if (filterValue === "pastMonth") {
+    return {
+      startDate: new Date(currentYear, currentMonth - 1, 1),
+      endDate: new Date(currentYear, currentMonth, 0),
+    };
+  }
+
+  if (filterValue === "nextMonth") {
+    return {
+      startDate: new Date(currentYear, currentMonth + 1, 1),
+      endDate: new Date(currentYear, currentMonth + 2, 0),
+    };
+  }
+
+  if (filterValue === "past90Days") {
+    return {
+      startDate: addDays(today, -90),
+      endDate: today,
+    };
+  }
+
+  if (filterValue === "next90Days") {
+    return {
+      startDate: today,
+      endDate: addDays(today, 90),
+    };
+  }
+
+  if (filterValue === "custom") {
+    const startDate = customStartDate ? getLocalDate(customStartDate) : null;
+    const endDate = customEndDate ? getLocalDate(customEndDate) : null;
+
+    if (startDate && endDate && startDate > endDate) {
+      return {
+        startDate: endDate,
+        endDate: startDate,
+      };
+    }
+
+    return {
+      startDate,
+      endDate,
+    };
+  }
+
+  return {
+    startDate: new Date(currentYear, currentMonth, 1),
+    endDate: new Date(currentYear, currentMonth + 1, 0),
+  };
+}
+
+function inquiryTouchesDateFilter(inquiry, dateRange) {
+  const inquiryStartDate = getLocalDate(inquiry.startDate);
+
+  if (!inquiryStartDate) {
+    return false;
+  }
+
+  const inquiryEndDate = inquiry.endDate
+    ? getLocalDate(inquiry.endDate)
+    : inquiryStartDate;
+
+  if (dateRange.startDate && dateRange.endDate) {
+    return (
+      inquiryStartDate <= dateRange.endDate &&
+      inquiryEndDate >= dateRange.startDate
+    );
+  }
+
+  if (dateRange.startDate) {
+    return inquiryEndDate >= dateRange.startDate;
+  }
+
+  if (dateRange.endDate) {
+    return inquiryStartDate <= dateRange.endDate;
+  }
+
+  return true;
+}
+
 
 function getCalendarCells(year, monthIndex) {
   const firstDay = new Date(year, monthIndex, 1).getDay();
@@ -2671,6 +2813,26 @@ export default function Dashboard() {
   const [isSubmittedInquiriesOpen, setIsSubmittedInquiriesOpen] = useState(true);
   const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
 
+
+  const [datedInquiryDateFilter, setDatedInquiryDateFilter] = useState(() =>
+    getSavedDashboardFilterValue(
+      DATED_INQUIRY_DATE_FILTER_STORAGE_KEY,
+      "thisMonth"
+    )
+  );
+
+  const [datedInquiryCustomStartDate, setDatedInquiryCustomStartDate] =
+    useState(() =>
+      getSavedDashboardFilterValue(
+        DATED_INQUIRY_CUSTOM_START_STORAGE_KEY,
+        ""
+      )
+    );
+
+  const [datedInquiryCustomEndDate, setDatedInquiryCustomEndDate] = useState(() =>
+    getSavedDashboardFilterValue(DATED_INQUIRY_CUSTOM_END_STORAGE_KEY, "")
+  );
+
   const [publicInquiries, setPublicInquiries] = useState(() =>
     getSavedInquiries()
   );
@@ -3117,6 +3279,28 @@ export default function Dashboard() {
     };
   }, [isImportMenuOpen]);
 
+
+  useEffect(() => {
+    saveDashboardFilterValue(
+      DATED_INQUIRY_DATE_FILTER_STORAGE_KEY,
+      datedInquiryDateFilter
+    );
+  }, [datedInquiryDateFilter]);
+
+  useEffect(() => {
+    saveDashboardFilterValue(
+      DATED_INQUIRY_CUSTOM_START_STORAGE_KEY,
+      datedInquiryCustomStartDate
+    );
+  }, [datedInquiryCustomStartDate]);
+
+  useEffect(() => {
+    saveDashboardFilterValue(
+      DATED_INQUIRY_CUSTOM_END_STORAGE_KEY,
+      datedInquiryCustomEndDate
+    );
+  }, [datedInquiryCustomEndDate]);
+
   const inquiryBookings = useMemo(() => {
     return publicInquiries.map((inquiry, index) =>
       normalizeInquiry(inquiry, index)
@@ -3130,6 +3314,29 @@ export default function Dashboard() {
       .filter((inquiry) => inquiry.startDate)
       .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
   }, [inquiryBookings]);
+
+  const datedInquiryDateRange = useMemo(() => {
+    return getDatedInquiryDateFilterRange({
+      filterValue: datedInquiryDateFilter,
+      customStartDate: datedInquiryCustomStartDate,
+      customEndDate: datedInquiryCustomEndDate,
+    });
+  }, [
+    datedInquiryDateFilter,
+    datedInquiryCustomStartDate,
+    datedInquiryCustomEndDate,
+  ]);
+
+  const filteredDatedInquiries = useMemo(() => {
+    return datedInquiries.filter((inquiry) =>
+      inquiryTouchesDateFilter(inquiry, datedInquiryDateRange)
+    );
+  }, [datedInquiries, datedInquiryDateRange]);
+
+  const activeDatedInquiryFilterLabel =
+    datedInquiryDateFilterOptions.find(
+      (option) => option.value === datedInquiryDateFilter
+    )?.label || "This Month";
 
   const selectedMonthInquiries = useMemo(() => {
     const monthStart = new Date(selectedYear, selectedMonth, 1);
@@ -3774,15 +3981,64 @@ const getCalendarEventColor = (status) => {
                 <div>
                   <h2>Dated Inquiries</h2>
                   <p>
-                    {datedInquiries.length} dated booking
+                    {filteredDatedInquiries.length} of {datedInquiries.length} dated booking
                     {datedInquiries.length === 1 ? "" : "s"} shown.
                   </p>
+
+                  <span className="dated-inquiries-filter-summary">
+                    Filter: {activeDatedInquiryFilterLabel}
+                  </span>
+                </div>
+
+                <div className="dated-inquiries-filter-bar">
+                  <label className="dated-inquiries-filter-field">
+                    <span>Date Range</span>
+
+                    <select
+                      value={datedInquiryDateFilter}
+                      onChange={(event) => setDatedInquiryDateFilter(event.target.value)}
+                    >
+                      {datedInquiryDateFilterOptions.map((option) => (
+                        <option value={option.value} key={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {datedInquiryDateFilter === "custom" && (
+                    <div className="dated-inquiries-custom-range">
+                      <label className="dated-inquiries-filter-field">
+                        <span>From</span>
+
+                        <input
+                          type="date"
+                          value={datedInquiryCustomStartDate}
+                          onChange={(event) =>
+                            setDatedInquiryCustomStartDate(event.target.value)
+                          }
+                        />
+                      </label>
+
+                      <label className="dated-inquiries-filter-field">
+                        <span>To</span>
+
+                        <input
+                          type="date"
+                          value={datedInquiryCustomEndDate}
+                          onChange={(event) =>
+                            setDatedInquiryCustomEndDate(event.target.value)
+                          }
+                        />
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {datedInquiries.length > 0 ? (
+              {filteredDatedInquiries.length > 0 ? (
                 <div className="dated-inquiries-dashboard-list">
-                  {datedInquiries.map((inquiry) => {
+                  {filteredDatedInquiries.map((inquiry) => {
                     const guestCount = String(inquiry.attendeeCount || "").trim();
 
                     const guestLabel = guestCount
@@ -3820,13 +4076,20 @@ const getCalendarEventColor = (status) => {
                   })}
                 </div>
               ) : (
-                <div className="empty-state">
-                  <strong>No dated inquiries yet</strong>
-                  <p>
-                    Inquiries will appear here once the form includes a start date.
-                  </p>
-                </div>
-              )}
+              <div className="empty-state">
+                <strong>
+                  {datedInquiries.length > 0
+                    ? "No dated inquiries match this date range"
+                    : "No dated inquiries yet"}
+                </strong>
+
+                <p>
+                  {datedInquiries.length > 0
+                    ? "Try choosing a different date range to see more bookings."
+                    : "Inquiries will appear here once the form includes a start date."}
+                </p>
+              </div>
+            )}
             </article>
           </div>
         </section>
