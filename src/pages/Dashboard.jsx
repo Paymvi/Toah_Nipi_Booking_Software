@@ -2173,27 +2173,36 @@ function getBookingInputMethod(booking) {
   }
 
   if (sourceType === "Master 2026") {
-    return "Imported — Master 2026";
+    return "Imported - Master 2026";
   }
 
   if (sourceType === "Master") {
-    return "Imported — Master";
+    return "Imported - Master";
   }
 
   if (sourceType === "Waitlist") {
-    return "Imported — Waitlist";
+    return "Imported - Waitlist";
   }
 
   if (detectedImportType) {
-    return `Imported — ${detectedImportType}`;
+    return `Imported - ${detectedImportType}`;
   }
 
-  return `Imported — ${sourceType}`;
+  return `Imported - ${sourceType}`;
 }
 
 function getSpreadsheetDisplayValue(value) {
   if (value === null || value === undefined || value === "") {
     return "—";
+  }
+
+  const displayValue = String(value).trim();
+
+  if (
+    displayValue.toLowerCase() === "no email provided" ||
+    displayValue.toLowerCase() === "no phone provided"
+  ) {
+    return "N/A";
   }
 
   if (typeof value === "object") {
@@ -2204,7 +2213,28 @@ function getSpreadsheetDisplayValue(value) {
     }
   }
 
-  return String(value);
+  return displayValue;
+}
+
+function getSpreadsheetDateRangeDisplay(startDate, endDate) {
+  if (!startDate && !endDate) {
+    return "N/A";
+  }
+
+  const formattedDateRange = formatDateRange(startDate, endDate);
+  const cleanValue = String(formattedDateRange || "").trim();
+
+  if (
+    !cleanValue ||
+    cleanValue === "—" ||
+    cleanValue.toLowerCase() === "no date provided" ||
+    cleanValue.toLowerCase() === "no dates provided" ||
+    cleanValue.toLowerCase() === "invalid date"
+  ) {
+    return "N/A";
+  }
+
+  return cleanValue;
 }
 
 function getSpreadsheetSourceClass(booking) {
@@ -2359,7 +2389,8 @@ const bookingSpreadsheetColumns = [
   },
   {
     label: "Date Range",
-    value: (booking) => formatDateRange(booking.startDate, booking.endDate),
+    value: (booking) =>
+      getSpreadsheetDateRangeDisplay(booking.startDate, booking.endDate),
   },
   {
     label: "Desired Dates Text",
@@ -3624,9 +3655,9 @@ const getCalendarEventColor = (status) => {
                             </button>
                           </td>
                           <td>{inquiry.contactName}</td>
-                          <td>{inquiry.email}</td>
-                          <td>{inquiry.phone}</td>
-                          <td>{formatDateRange(inquiry.startDate, inquiry.endDate)}</td>
+                          <td>{getSpreadsheetDisplayValue(inquiry.email)}</td>
+                          <td>{getSpreadsheetDisplayValue(inquiry.phone)}</td>
+                          <td>{getSpreadsheetDateRangeDisplay(inquiry.startDate, inquiry.endDate)}</td>
                           <td>{inquiry.attendeeCount || "—"}</td>
                           <td>{inquiry.retreatType || "—"}</td>
                           <td>{inquiry.promoCode || "—"}</td>
