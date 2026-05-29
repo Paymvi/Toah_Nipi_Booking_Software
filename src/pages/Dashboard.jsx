@@ -3768,93 +3768,21 @@ const getCalendarEventColor = (status) => {
           </article>
 
           <div className="dashboard-side-stack">
-            <article className="dashboard-card">
-              <div className="dashboard-card-header">
-                <div className="dashboard-heading-with-icon">
-                  <span className="section-icon">
-                    <FaClock />
-                  </span>
 
-                  <div>
-                    <h2>Dated Inquiries</h2>
-                    <p>Submissions with start dates, sorted by date.</p>
-                  </div>
+            <article className="dashboard-card dated-inquiries-dashboard-card">
+              <div className="dashboard-card-header dated-inquiries-dashboard-header">
+                <div>
+                  <h2>Dated Inquiries</h2>
+                  <p>
+                    {datedInquiries.length} dated booking
+                    {datedInquiries.length === 1 ? "" : "s"} shown.
+                  </p>
                 </div>
               </div>
 
               {datedInquiries.length > 0 ? (
-                <div className="dashboard-table-wrap">
-                  <table className="dashboard-table compact-table">
-                    <thead>
-                      <tr>
-                        <th>Organization</th>
-                        <th>Dates</th>
-                        <th>Type</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {datedInquiries.map((inquiry) => (
-                        <tr key={inquiry.id}>
-                          <td>
-                            <button
-                              className="table-link"
-                              type="button"
-                              onClick={() => openBookingDetail(inquiry)}
-                            >
-                              {inquiry.organizationName}
-                            </button>
-                          </td>
-                          <td>
-                            {formatDateRange(
-                              inquiry.startDate,
-                              inquiry.endDate
-                            )}
-                          </td>
-                          <td>{inquiry.retreatType || "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <strong>No dated inquiries yet</strong>
-                  <p>
-                    Inquiries will appear here once the form includes a start
-                    date.
-                  </p>
-                </div>
-              )}
-            </article>
-
-            <article className="dashboard-card">
-              <div className="dashboard-card-header">
-                <div className="dashboard-heading-with-icon">
-                  <span className="section-icon">
-                    <FaEnvelopeOpenText />
-                  </span>
-
-                  <div>
-                    <h2>Recent Booking Inquiries</h2>
-                    <p>Newest submissions from the public form.</p>
-                  </div>
-                </div>
-              </div>
-
-              {recentInquiries.length > 0 ? (
-                <div className="recent-inquiries-list">
-                  {recentInquiries.map((inquiry) => {
-                    const organizationName =
-                      inquiry.organizationName || "Unnamed Organization";
-
-                    const contactName =
-                      inquiry.contactName && inquiry.contactName !== "No contact name"
-                        ? inquiry.contactName
-                        : "";
-
-                    const displayName = contactName || organizationName;
-
+                <div className="dated-inquiries-dashboard-list">
+                  {datedInquiries.map((inquiry) => {
                     const guestCount = String(inquiry.attendeeCount || "").trim();
 
                     const guestLabel = guestCount
@@ -3863,31 +3791,29 @@ const getCalendarEventColor = (status) => {
 
                     return (
                       <button
-                        className="recent-booking-card"
+                        className="dated-inquiry-dashboard-card"
                         key={inquiry.id}
                         type="button"
                         onClick={() => openBookingDetail(inquiry)}
                       >
-                        <span className="recent-booking-icon">
-                          <FaEnvelopeOpenText />
+                        <span className="dated-inquiry-dashboard-main">
+                          <strong>{inquiry.organizationName || "Unnamed Organization"}</strong>
+
+                          <span className="dated-inquiry-dashboard-date">
+                            {formatDateRange(inquiry.startDate, inquiry.endDate)}
+                          </span>
+
+                          <span className="dated-inquiry-dashboard-meta">
+                            {inquiry.retreatType || "No retreat type"} · {guestLabel}
+                          </span>
                         </span>
 
-                        <span className="recent-booking-main">
-                          <strong>{displayName}</strong>
-
-                          <small>
-                            {inquiry.retreatType || "No retreat type"}
-                            <span aria-hidden="true">·</span>
-                            {guestLabel}
-                          </small>
-                        </span>
-
-                        <span className="recent-booking-date">
-                          {formatDateRange(inquiry.startDate, inquiry.endDate)}
-                        </span>
-
-                        <span className="recent-booking-arrow" aria-hidden="true">
-                          ›
+                        <span
+                          className={`dated-inquiry-dashboard-status ${getCalendarEventColor(
+                            inquiry.status
+                          )}`}
+                        >
+                          {inquiry.status || "Inquiry"}
                         </span>
                       </button>
                     );
@@ -3895,9 +3821,9 @@ const getCalendarEventColor = (status) => {
                 </div>
               ) : (
                 <div className="empty-state">
-                  <strong>No public inquiries yet</strong>
+                  <strong>No dated inquiries yet</strong>
                   <p>
-                    Once someone submits the public form, their inquiry will appear here.
+                    Inquiries will appear here once the form includes a start date.
                   </p>
                 </div>
               )}
