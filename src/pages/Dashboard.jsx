@@ -2705,17 +2705,1296 @@ const bookingSpreadsheetColumns = [
   },
 ];
 
+
+const SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY = "toahNipiSpreadsheetViewSettings";
+
+const SPREADSHEET_ESSENTIAL_COLUMN_LABELS = new Set([
+  "Organization",
+  "Input Method",
+  "Status",
+  "Contact Name",
+  "Email",
+  "Phone",
+  "Date Range",
+  "Guest Count",
+  "Retreat Type",
+  "Waitlist",
+  "Assigned Room / Area",
+  "Notes",
+]);
+
+const SPREADSHEET_2026_STANDARD_LABELS = new Set([
+  "Stage of Group",
+  "Min Paying Guests",
+  "Max Paying Guests",
+  "Guest Rate",
+  "Expected Minimum Revenue",
+  "Invoice Lodging / Meals",
+  "Deposit",
+  "Deposit Received",
+  "Date of Cancellation",
+  "Reason for Cancellation",
+  "Vacancy Filled",
+  "Monthly Projected Income",
+]);
+
+const SPREADSHEET_SHARED_STANDARD_LABELS = new Set([
+  "Organization",
+  "Input Method",
+  "Source Sheet",
+  "Source Row",
+  "Status",
+  "Submitted",
+  "Contact Name",
+  "Email",
+  "Phone",
+  "Start Date",
+  "End Date",
+  "Date Range",
+  "Guest Count",
+  "Retreat Type",
+  "Assigned Room / Area",
+  "Buildings / Rooms",
+  "Meals",
+  "# Meals",
+  "Food Allergies",
+  "Need To Know",
+  "Linen Sets",
+  "Activities",
+  "# Persons",
+  "# Nights",
+  "Camper Days",
+  "Usage Fee",
+  "$ Lodging",
+  "$ Food",
+  "$ Misc.",
+  "Returning Status",
+  "Notes",
+  "Booking ID",
+]);
+
+const SPREADSHEET_2025_RAW_COLUMNS = new Set([
+  "Arrival Date",
+  "Departure Date",
+  "Guest Group Name",
+  "Contact Person",
+  "Contact Person Cell #",
+  "Contact Person Cell",
+  "Actual Number of Guests",
+  "Food Allergies",
+]);
+
+const SPREADSHEET_2026_RAW_COLUMNS = new Set([
+  "name",
+  "Name",
+  "Group Leader/Contact Person",
+  "Group Leader",
+  "Phone",
+  "Estimated Number of Guests",
+  "Allergies",
+  "Contact Person Email",
+  "Stage of Group",
+  "Min. Number of Paying Guests",
+  "Minimum Number of Paying Guests",
+  "Max. Number of Paying Guests",
+  "Maximum Number of Paying Guests",
+  "Guest Rate",
+  "Exp. Minimum Revenue for Lodging/Meals",
+  "Expected Minimum Revenue for Lodging/Meals",
+  "Invoice for Lodging/Meals (does not include linens's fees or other service fees)",
+  "Invoice for Lodging/Meals",
+  "Deposit",
+  "Deposit Received",
+  "Date of Cancellation",
+  "Reason for Cancellation",
+  "Vacancy filled by another group?",
+  "Vacancy Filled By Another Group?",
+  "Monthly Sum of Projected Income",
+]);
+
+const SPREADSHEET_SHARED_RAW_COLUMNS = new Set([
+  "Guest Group Type",
+  "Returning (R) or New (N)",
+  "Returning or New",
+  "Buildings/Rooms",
+  "Buildings",
+  "Rooms",
+  "Meals",
+  "Need to know",
+  "Need To Know",
+  "Linen Sets",
+  "Activities",
+  "#Persons",
+  "Persons",
+  "#Nights",
+  "Nights",
+  "#Meals",
+  "Meals Count",
+  "Camper Days (nightsX0.4 + mealsX0.2)",
+  "Camper Days",
+  "Usage Fee",
+  "$ Lodging",
+  "Lodging",
+  "$ Food",
+  "Food",
+  "$ Misc",
+  "$ Misc.",
+  "Misc",
+  "Notes",
+]);
+
+function getDefaultSpreadsheetSettings() {
+  return {
+    searchText: "",
+
+    sourceTypes: [],
+    statuses: [],
+    waitlist: "all",
+
+    startDate: "",
+    endDate: "",
+
+    minGuests: "",
+    maxGuests: "",
+
+    hasEmail: "all",
+    hasPhone: "all",
+
+    sortColumnId: "standard:Start Date",
+    sortDirection: "asc",
+
+    visibleColumnIds: null,
+    columnOrder: null,
+
+    freezeFirstColumn: true,
+    compactRows: false,
+
+    colorMode: "columns",
+
+    highlightMissingContact: true,
+    highlightMissingDates: true,
+    highlightWaitlist: true,
+    highlightCancelled: true,
+    highlightFoodAllergies: true,
+
+    customHighlightText: "",
+    customHighlightColumnId: "all",
+  };
+}
+
+function getSavedSpreadsheetSettings() {
+  try {
+    const savedSettings = localStorage.getItem(
+      SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY
+    );
+
+    if (!savedSettings) {
+      return getDefaultSpreadsheetSettings();
+    }
+
+    return {
+      ...getDefaultSpreadsheetSettings(),
+      ...JSON.parse(savedSettings),
+    };
+  } catch (error) {
+    console.error("Could not read spreadsheet settings:", error);
+    return getDefaultSpreadsheetSettings();
+  }
+}
+
+function saveSpreadsheetSettings(settings) {
+  try {
+    localStorage.setItem(
+      SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY,
+      JSON.stringify(settings)
+    );
+  } catch (error) {
+    console.error("Could not save spreadsheet settings:", error);
+  }
+}
+
+function getSpreadsheetStandardColumnCategory(label) {
+  if (SPREADSHEET_2026_STANDARD_LABELS.has(label)) {
+    return "master-2026";
+  }
+
+  if (SPREADSHEET_SHARED_STANDARD_LABELS.has(label)) {
+    return "both";
+  }
+
+  if (
+    label === "Promo Code" ||
+    label === "Waitlist" ||
+    label === "Desired Dates Text"
+  ) {
+    return "form-waitlist";
+  }
+
+  return "other";
+}
+
+function getSpreadsheetRawColumnCategory(columnName) {
+  if (SPREADSHEET_SHARED_RAW_COLUMNS.has(columnName)) {
+    return "both";
+  }
+
+  if (SPREADSHEET_2025_RAW_COLUMNS.has(columnName)) {
+    return "master-2025";
+  }
+
+  if (SPREADSHEET_2026_RAW_COLUMNS.has(columnName)) {
+    return "master-2026";
+  }
+
+  return "raw-other";
+}
+
+function getSpreadsheetColumnCategoryLabel(category) {
+  if (category === "both") {
+    return "2025 + 2026";
+  }
+
+  if (category === "master-2025") {
+    return "2025 only";
+  }
+
+  if (category === "master-2026") {
+    return "2026 only";
+  }
+
+  if (category === "form-waitlist") {
+    return "Form / Waitlist";
+  }
+
+  if (category === "raw-other") {
+    return "Other original";
+  }
+
+  return "General";
+}
+
+function getSpreadsheetColumnCategoryClass(category) {
+  if (category === "both") {
+    return "spreadsheet-column-both-years";
+  }
+
+  if (category === "master-2025") {
+    return "spreadsheet-column-2025-only";
+  }
+
+  if (category === "master-2026") {
+    return "spreadsheet-column-2026-only";
+  }
+
+  if (category === "form-waitlist") {
+    return "spreadsheet-column-form-waitlist";
+  }
+
+  if (category === "raw-other") {
+    return "spreadsheet-column-raw-other";
+  }
+
+  return "spreadsheet-column-general";
+}
+
+function getSpreadsheetComparableValue(column, booking) {
+  if (!column) {
+    return "";
+  }
+
+  if (column.value) {
+    return column.value(booking);
+  }
+
+  if (column.label === "Organization") {
+    return booking.organizationName;
+  }
+
+  if (column.label === "Input Method") {
+    return getBookingInputMethod(booking);
+  }
+
+  if (column.label === "Status") {
+    return booking.status;
+  }
+
+  if (column.label === "Waitlist") {
+    return booking.waitlist;
+  }
+
+  return "";
+}
+
+function getSpreadsheetSearchText(booking) {
+  const rawValues =
+    booking.rawSpreadsheetData && typeof booking.rawSpreadsheetData === "object"
+      ? Object.values(booking.rawSpreadsheetData)
+      : [];
+
+  return [
+    booking.organizationName,
+    booking.contactName,
+    booking.email,
+    booking.phone,
+    booking.status,
+    booking.sourceType,
+    booking.sourceSheet,
+    booking.startDate,
+    booking.endDate,
+    booking.desiredDatesText,
+    booking.attendeeCount,
+    booking.retreatType,
+    booking.roomName,
+    booking.buildingsRooms,
+    booking.meals,
+    booking.foodAllergies,
+    booking.needToKnow,
+    booking.activities,
+    booking.notes,
+    ...rawValues,
+  ]
+    .map((value) => String(value || "").toLowerCase())
+    .join(" ");
+}
+
+function getSpreadsheetNumber(value) {
+  const match = String(value || "").match(/\d+(\.\d+)?/);
+  return match ? Number(match[0]) : null;
+}
+
+function isSpreadsheetUsableValue(value) {
+  const text = String(value || "").trim().toLowerCase();
+
+  return (
+    text &&
+    text !== "n/a" &&
+    text !== "na" &&
+    text !== "—" &&
+    text !== "no email provided" &&
+    text !== "no phone provided" &&
+    text !== "no contact name" &&
+    text !== "unnamed organization" &&
+    text !== "unassigned"
+  );
+}
+
+function bookingTouchesSpreadsheetDateRange(booking, startDate, endDate) {
+  if (!startDate && !endDate) {
+    return true;
+  }
+
+  const bookingStartDate = getLocalDate(booking.startDate);
+
+  if (!bookingStartDate) {
+    return false;
+  }
+
+  const bookingEndDate = booking.endDate
+    ? getLocalDate(booking.endDate)
+    : bookingStartDate;
+
+  const filterStartDate = startDate ? getLocalDate(startDate) : null;
+  const filterEndDate = endDate ? getLocalDate(endDate) : null;
+
+  if (filterStartDate && filterEndDate) {
+    return bookingStartDate <= filterEndDate && bookingEndDate >= filterStartDate;
+  }
+
+  if (filterStartDate) {
+    return bookingEndDate >= filterStartDate;
+  }
+
+  return bookingStartDate <= filterEndDate;
+}
+
+function compareSpreadsheetValues(a, b) {
+  const aText = String(a || "").trim();
+  const bText = String(b || "").trim();
+
+  const aNumber = Number(aText.replace(/[$,]/g, ""));
+  const bNumber = Number(bText.replace(/[$,]/g, ""));
+
+  if (!Number.isNaN(aNumber) && !Number.isNaN(bNumber) && aText && bText) {
+    return aNumber - bNumber;
+  }
+
+  const aDate = Date.parse(aText);
+  const bDate = Date.parse(bText);
+
+  if (!Number.isNaN(aDate) && !Number.isNaN(bDate)) {
+    return aDate - bDate;
+  }
+
+  return aText.localeCompare(bText, undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
+
+function getSpreadsheetRowClass(booking, settings) {
+  const classes = [];
+
+  if (settings.compactRows) {
+    classes.push("spreadsheet-row-compact");
+  }
+
+  if (settings.colorMode === "sourceRows") {
+    classes.push(`spreadsheet-row-source-${getSpreadsheetSourceClass(booking)}`);
+  }
+
+  if (settings.colorMode === "statusRows") {
+    classes.push(`spreadsheet-row-status-${getSpreadsheetStatusClass(booking.status)}`);
+  }
+
+  if (
+    settings.highlightMissingContact &&
+    !isSpreadsheetUsableValue(booking.email) &&
+    !isSpreadsheetUsableValue(booking.phone)
+  ) {
+    classes.push("spreadsheet-row-missing-contact");
+  }
+
+  if (
+    settings.highlightMissingDates &&
+    !isSpreadsheetUsableValue(booking.startDate) &&
+    !isSpreadsheetUsableValue(booking.desiredDatesText)
+  ) {
+    classes.push("spreadsheet-row-missing-dates");
+  }
+
+  if (
+    settings.highlightWaitlist &&
+    String(booking.waitlist || "").toLowerCase() === "yes"
+  ) {
+    classes.push("spreadsheet-row-highlight-waitlist");
+  }
+
+  if (
+    settings.highlightCancelled &&
+    String(booking.status || "").toLowerCase().includes("cancel")
+  ) {
+    classes.push("spreadsheet-row-highlight-cancelled");
+  }
+
+  return classes.join(" ");
+}
+
+function getSpreadsheetCellClass({ column, columnIndex, booking, settings }) {
+  const classes = [];
+
+  if (settings.freezeFirstColumn && columnIndex === 0) {
+    classes.push("spreadsheet-sticky-column");
+  }
+
+  if (settings.colorMode === "columns") {
+    classes.push(getSpreadsheetColumnCategoryClass(column.sourceCategory));
+  }
+
+  if (
+    settings.highlightFoodAllergies &&
+    column.label.toLowerCase().includes("allerg") &&
+    isSpreadsheetUsableValue(getSpreadsheetComparableValue(column, booking))
+  ) {
+    classes.push("spreadsheet-cell-food-allergy");
+  }
+
+  const customHighlightText = String(settings.customHighlightText || "")
+    .trim()
+    .toLowerCase();
+
+  if (customHighlightText) {
+    const value = String(getSpreadsheetComparableValue(column, booking) || "")
+      .trim()
+      .toLowerCase();
+
+    const shouldCheckColumn =
+      settings.customHighlightColumnId === "all" ||
+      settings.customHighlightColumnId === column.id;
+
+    if (shouldCheckColumn && value.includes(customHighlightText)) {
+      classes.push("spreadsheet-cell-custom-highlight");
+    }
+  }
+
+  return classes.join(" ");
+}
+
+function getOrderedSpreadsheetColumns(columns, columnOrder) {
+  if (!Array.isArray(columnOrder) || columnOrder.length === 0) {
+    return columns;
+  }
+
+  const columnMap = new Map(columns.map((column) => [column.id, column]));
+  const orderedColumns = [];
+
+  columnOrder.forEach((columnId) => {
+    if (columnMap.has(columnId)) {
+      orderedColumns.push(columnMap.get(columnId));
+      columnMap.delete(columnId);
+    }
+  });
+
+  return [...orderedColumns, ...Array.from(columnMap.values())];
+}
+
+function toggleSpreadsheetArrayValue(values, value) {
+  const currentValues = Array.isArray(values) ? values : [];
+
+  if (currentValues.includes(value)) {
+    return currentValues.filter((item) => item !== value);
+  }
+
+  return [...currentValues, value];
+}
+
+function SpreadsheetSettingsModal({
+  settings,
+  updateSettings,
+  allColumns,
+  orderedColumns,
+  sourceTypeOptions,
+  statusOptions,
+  filteredCount,
+  totalCount,
+  onClose,
+  onReset,
+}) {
+  const [activeSettingsTab, setActiveSettingsTab] = useState("Filters");
+
+  const visibleColumnIds =
+    settings.visibleColumnIds || allColumns.map((column) => column.id);
+
+  const toggleColumnVisibility = (columnId) => {
+    const currentVisibleIds =
+      settings.visibleColumnIds || allColumns.map((column) => column.id);
+
+    const nextVisibleIds = currentVisibleIds.includes(columnId)
+      ? currentVisibleIds.filter((id) => id !== columnId)
+      : [...currentVisibleIds, columnId];
+
+    updateSettings({
+      visibleColumnIds:
+        nextVisibleIds.length === allColumns.length ? null : nextVisibleIds,
+    });
+  };
+
+  const moveColumn = (columnId, direction) => {
+    const currentOrder = orderedColumns.map((column) => column.id);
+    const currentIndex = currentOrder.indexOf(columnId);
+    const nextIndex = currentIndex + direction;
+
+    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= currentOrder.length) {
+      return;
+    }
+
+    const nextOrder = [...currentOrder];
+    const [removedColumnId] = nextOrder.splice(currentIndex, 1);
+    nextOrder.splice(nextIndex, 0, removedColumnId);
+
+    updateSettings({ columnOrder: nextOrder });
+  };
+
+  const showOnlyEssentialColumns = () => {
+    const essentialColumnIds = allColumns
+      .filter((column) => SPREADSHEET_ESSENTIAL_COLUMN_LABELS.has(column.label))
+      .map((column) => column.id);
+
+    updateSettings({ visibleColumnIds: essentialColumnIds });
+  };
+
+  const hideOriginalColumns = () => {
+    const nonRawColumnIds = allColumns
+      .filter((column) => column.type !== "raw")
+      .map((column) => column.id);
+
+    updateSettings({ visibleColumnIds: nonRawColumnIds });
+  };
+
+  return (
+    <div className="spreadsheet-settings-backdrop" role="presentation">
+      <section
+        className="spreadsheet-settings-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Spreadsheet settings"
+      >
+        <header className="spreadsheet-settings-modal-header">
+          <div>
+            <p className="dashboard-eyebrow">Spreadsheet Settings</p>
+            <h3>Customize All Booking Data</h3>
+            <span>
+              Showing {filteredCount} of {totalCount} rows.
+            </span>
+          </div>
+
+          <button
+            className="spreadsheet-settings-close-button"
+            type="button"
+            onClick={onClose}
+            aria-label="Close spreadsheet settings"
+          >
+            <FaTimes />
+          </button>
+        </header>
+
+        <div className="spreadsheet-settings-tabs">
+          {["Filters", "Sorting", "Columns", "Highlights", "Display"].map(
+            (tab) => (
+              <button
+                className={activeSettingsTab === tab ? "active" : ""}
+                type="button"
+                key={tab}
+                onClick={() => setActiveSettingsTab(tab)}
+              >
+                {tab}
+              </button>
+            )
+          )}
+        </div>
+
+        <div className="spreadsheet-settings-body">
+          {activeSettingsTab === "Filters" && (
+            <div className="spreadsheet-settings-section">
+              <div className="spreadsheet-settings-grid">
+                <label className="spreadsheet-settings-field spreadsheet-settings-field-wide">
+                  <span>Search Everything</span>
+                  <input
+                    value={settings.searchText}
+                    placeholder="Search organization, contact, rooms, notes, raw spreadsheet values..."
+                    onChange={(event) =>
+                      updateSettings({ searchText: event.target.value })
+                    }
+                  />
+                </label>
+
+                <label className="spreadsheet-settings-field">
+                  <span>Waitlist</span>
+                  <select
+                    value={settings.waitlist}
+                    onChange={(event) =>
+                      updateSettings({ waitlist: event.target.value })
+                    }
+                  >
+                    <option value="all">All</option>
+                    <option value="yes">Waitlist only</option>
+                    <option value="no">Not waitlisted</option>
+                  </select>
+                </label>
+
+                <label className="spreadsheet-settings-field">
+                  <span>Has Email</span>
+                  <select
+                    value={settings.hasEmail}
+                    onChange={(event) =>
+                      updateSettings({ hasEmail: event.target.value })
+                    }
+                  >
+                    <option value="all">All</option>
+                    <option value="yes">Has email</option>
+                    <option value="no">Missing email</option>
+                  </select>
+                </label>
+
+                <label className="spreadsheet-settings-field">
+                  <span>Has Phone</span>
+                  <select
+                    value={settings.hasPhone}
+                    onChange={(event) =>
+                      updateSettings({ hasPhone: event.target.value })
+                    }
+                  >
+                    <option value="all">All</option>
+                    <option value="yes">Has phone</option>
+                    <option value="no">Missing phone</option>
+                  </select>
+                </label>
+
+                <label className="spreadsheet-settings-field">
+                  <span>Start Date</span>
+                  <input
+                    type="date"
+                    value={settings.startDate}
+                    onChange={(event) =>
+                      updateSettings({ startDate: event.target.value })
+                    }
+                  />
+                </label>
+
+                <label className="spreadsheet-settings-field">
+                  <span>End Date</span>
+                  <input
+                    type="date"
+                    value={settings.endDate}
+                    onChange={(event) =>
+                      updateSettings({ endDate: event.target.value })
+                    }
+                  />
+                </label>
+
+                <label className="spreadsheet-settings-field">
+                  <span>Min Guests</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={settings.minGuests}
+                    onChange={(event) =>
+                      updateSettings({ minGuests: event.target.value })
+                    }
+                  />
+                </label>
+
+                <label className="spreadsheet-settings-field">
+                  <span>Max Guests</span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={settings.maxGuests}
+                    onChange={(event) =>
+                      updateSettings({ maxGuests: event.target.value })
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="spreadsheet-settings-check-group">
+                <h4>Source Types</h4>
+
+                {sourceTypeOptions.map((sourceType) => (
+                  <label key={sourceType}>
+                    <input
+                      type="checkbox"
+                      checked={settings.sourceTypes.includes(sourceType)}
+                      onChange={() =>
+                        updateSettings({
+                          sourceTypes: toggleSpreadsheetArrayValue(
+                            settings.sourceTypes,
+                            sourceType
+                          ),
+                        })
+                      }
+                    />
+                    <span>{sourceType}</span>
+                  </label>
+                ))}
+
+                {sourceTypeOptions.length === 0 && <p>No source types yet.</p>}
+              </div>
+
+              <div className="spreadsheet-settings-check-group">
+                <h4>Statuses</h4>
+
+                {statusOptions.map((status) => (
+                  <label key={status}>
+                    <input
+                      type="checkbox"
+                      checked={settings.statuses.includes(status)}
+                      onChange={() =>
+                        updateSettings({
+                          statuses: toggleSpreadsheetArrayValue(
+                            settings.statuses,
+                            status
+                          ),
+                        })
+                      }
+                    />
+                    <span>{status}</span>
+                  </label>
+                ))}
+
+                {statusOptions.length === 0 && <p>No statuses yet.</p>}
+              </div>
+            </div>
+          )}
+
+          {activeSettingsTab === "Sorting" && (
+            <div className="spreadsheet-settings-section">
+              <div className="spreadsheet-settings-grid">
+                <label className="spreadsheet-settings-field">
+                  <span>Sort Column</span>
+                  <select
+                    value={settings.sortColumnId}
+                    onChange={(event) =>
+                      updateSettings({ sortColumnId: event.target.value })
+                    }
+                  >
+                    {allColumns.map((column) => (
+                      <option value={column.id} key={column.id}>
+                        {column.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="spreadsheet-settings-field">
+                  <span>Direction</span>
+                  <select
+                    value={settings.sortDirection}
+                    onChange={(event) =>
+                      updateSettings({ sortDirection: event.target.value })
+                    }
+                  >
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                  </select>
+                </label>
+              </div>
+
+              <p className="spreadsheet-settings-help-text">
+                You can also click any table header to sort by that column.
+              </p>
+            </div>
+          )}
+
+          {activeSettingsTab === "Columns" && (
+            <div className="spreadsheet-settings-section">
+              <div className="spreadsheet-settings-actions-row">
+                <button type="button" onClick={() => updateSettings({ visibleColumnIds: null })}>
+                  Show All
+                </button>
+
+                <button type="button" onClick={showOnlyEssentialColumns}>
+                  Essentials Only
+                </button>
+
+                <button type="button" onClick={hideOriginalColumns}>
+                  Hide Original Columns
+                </button>
+
+                <button type="button" onClick={() => updateSettings({ columnOrder: null })}>
+                  Reset Order
+                </button>
+              </div>
+
+              <div className="spreadsheet-column-settings-list">
+                {orderedColumns.map((column, index) => (
+                  <div className="spreadsheet-column-settings-row" key={column.id}>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={visibleColumnIds.includes(column.id)}
+                        onChange={() => toggleColumnVisibility(column.id)}
+                      />
+
+                      <span>
+                        <strong>{column.label}</strong>
+                        <small>
+                          {column.type === "raw" ? "Original column" : "Standard column"} ·{" "}
+                          {getSpreadsheetColumnCategoryLabel(column.sourceCategory)}
+                        </small>
+                      </span>
+                    </label>
+
+                    <div>
+                      <button
+                        type="button"
+                        disabled={index === 0}
+                        onClick={() => moveColumn(column.id, -1)}
+                      >
+                        ↑
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={index === orderedColumns.length - 1}
+                        onClick={() => moveColumn(column.id, 1)}
+                      >
+                        ↓
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeSettingsTab === "Highlights" && (
+            <div className="spreadsheet-settings-section">
+              <div className="spreadsheet-settings-grid">
+                <label className="spreadsheet-settings-field">
+                  <span>Color Mode</span>
+                  <select
+                    value={settings.colorMode}
+                    onChange={(event) =>
+                      updateSettings({ colorMode: event.target.value })
+                    }
+                  >
+                    <option value="none">No color</option>
+                    <option value="columns">Color columns by year/source</option>
+                    <option value="sourceRows">Color rows by input method</option>
+                    <option value="statusRows">Color rows by status</option>
+                  </select>
+                </label>
+
+                <label className="spreadsheet-settings-field">
+                  <span>Highlight Text / Material</span>
+                  <input
+                    value={settings.customHighlightText}
+                    placeholder="Example: allergy, deposit, Hebron, cancelled"
+                    onChange={(event) =>
+                      updateSettings({ customHighlightText: event.target.value })
+                    }
+                  />
+                </label>
+
+                <label className="spreadsheet-settings-field">
+                  <span>Highlight Scope</span>
+                  <select
+                    value={settings.customHighlightColumnId}
+                    onChange={(event) =>
+                      updateSettings({
+                        customHighlightColumnId: event.target.value,
+                      })
+                    }
+                  >
+                    <option value="all">All columns</option>
+
+                    {allColumns.map((column) => (
+                      <option value={column.id} key={column.id}>
+                        {column.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="spreadsheet-settings-check-group">
+                <h4>Highlight Rules</h4>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={settings.highlightMissingContact}
+                    onChange={(event) =>
+                      updateSettings({
+                        highlightMissingContact: event.target.checked,
+                      })
+                    }
+                  />
+                  <span>Rows missing both email and phone</span>
+                </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={settings.highlightMissingDates}
+                    onChange={(event) =>
+                      updateSettings({
+                        highlightMissingDates: event.target.checked,
+                      })
+                    }
+                  />
+                  <span>Rows missing dates</span>
+                </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={settings.highlightWaitlist}
+                    onChange={(event) =>
+                      updateSettings({
+                        highlightWaitlist: event.target.checked,
+                      })
+                    }
+                  />
+                  <span>Waitlist rows</span>
+                </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={settings.highlightCancelled}
+                    onChange={(event) =>
+                      updateSettings({
+                        highlightCancelled: event.target.checked,
+                      })
+                    }
+                  />
+                  <span>Cancelled rows</span>
+                </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={settings.highlightFoodAllergies}
+                    onChange={(event) =>
+                      updateSettings({
+                        highlightFoodAllergies: event.target.checked,
+                      })
+                    }
+                  />
+                  <span>Food allergy cells</span>
+                </label>
+              </div>
+
+              <div className="spreadsheet-color-legend">
+                <span className="spreadsheet-column-both-years">2025 + 2026</span>
+                <span className="spreadsheet-column-2025-only">2025 only</span>
+                <span className="spreadsheet-column-2026-only">2026 only</span>
+                <span className="spreadsheet-column-form-waitlist">Form / Waitlist</span>
+                <span className="spreadsheet-column-raw-other">Other Original</span>
+              </div>
+            </div>
+          )}
+
+          {activeSettingsTab === "Display" && (
+            <div className="spreadsheet-settings-section">
+              <div className="spreadsheet-settings-check-group">
+                <h4>Table Display</h4>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={settings.freezeFirstColumn}
+                    onChange={(event) =>
+                      updateSettings({ freezeFirstColumn: event.target.checked })
+                    }
+                  />
+                  <span>Freeze first visible column</span>
+                </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={settings.compactRows}
+                    onChange={(event) =>
+                      updateSettings({ compactRows: event.target.checked })
+                    }
+                  />
+                  <span>Compact rows</span>
+                </label>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <footer className="spreadsheet-settings-footer">
+          <button className="secondary-dashboard-button" type="button" onClick={onReset}>
+            Reset Settings
+          </button>
+
+          <button className="primary-dashboard-button" type="button" onClick={onClose}>
+            Done
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
 function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [spreadsheetSettings, setSpreadsheetSettings] = useState(() =>
+    getSavedSpreadsheetSettings()
+  );
+
+  useEffect(() => {
+    saveSpreadsheetSettings(spreadsheetSettings);
+  }, [spreadsheetSettings]);
+
   const rawSpreadsheetColumns = useMemo(
     () => getRawSpreadsheetColumns(inquiryBookings),
     [inquiryBookings]
   );
+
+  const allSpreadsheetColumns = useMemo(() => {
+    const standardColumns = bookingSpreadsheetColumns.map((column) => ({
+      ...column,
+      id: `standard:${column.label}`,
+      type: "standard",
+      sourceCategory: getSpreadsheetStandardColumnCategory(column.label),
+    }));
+
+    const rawColumns = rawSpreadsheetColumns.map((columnName) => ({
+      id: `raw:${columnName}`,
+      type: "raw",
+      label: `Original: ${columnName}`,
+      rawColumnName: columnName,
+      sourceCategory: getSpreadsheetRawColumnCategory(columnName),
+      value: (booking) => booking.rawSpreadsheetData?.[columnName],
+    }));
+
+    return [...standardColumns, ...rawColumns];
+  }, [rawSpreadsheetColumns]);
+
+  const orderedSpreadsheetColumns = useMemo(
+    () =>
+      getOrderedSpreadsheetColumns(
+        allSpreadsheetColumns,
+        spreadsheetSettings.columnOrder
+      ),
+    [allSpreadsheetColumns, spreadsheetSettings.columnOrder]
+  );
+
+  const visibleSpreadsheetColumns = useMemo(() => {
+    if (!spreadsheetSettings.visibleColumnIds) {
+      return orderedSpreadsheetColumns;
+    }
+
+    const visibleColumnIdSet = new Set(spreadsheetSettings.visibleColumnIds);
+
+    return orderedSpreadsheetColumns.filter((column) =>
+      visibleColumnIdSet.has(column.id)
+    );
+  }, [orderedSpreadsheetColumns, spreadsheetSettings.visibleColumnIds]);
+
+  const sourceTypeOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          inquiryBookings
+            .map((booking) => getBookingInputMethod(booking))
+            .filter(Boolean)
+        )
+      ).sort(),
+    [inquiryBookings]
+  );
+
+  const statusOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(inquiryBookings.map((booking) => booking.status).filter(Boolean))
+      ).sort(),
+    [inquiryBookings]
+  );
+
+  const filteredAndSortedBookings = useMemo(() => {
+    const searchText = spreadsheetSettings.searchText.trim().toLowerCase();
+    const minGuests = getSpreadsheetNumber(spreadsheetSettings.minGuests);
+    const maxGuests = getSpreadsheetNumber(spreadsheetSettings.maxGuests);
+
+    const filteredBookings = inquiryBookings.filter((booking) => {
+      if (
+        searchText &&
+        !getSpreadsheetSearchText(booking).includes(searchText)
+      ) {
+        return false;
+      }
+
+      if (
+        spreadsheetSettings.sourceTypes.length > 0 &&
+        !spreadsheetSettings.sourceTypes.includes(getBookingInputMethod(booking))
+      ) {
+        return false;
+      }
+
+      if (
+        spreadsheetSettings.statuses.length > 0 &&
+        !spreadsheetSettings.statuses.includes(booking.status)
+      ) {
+        return false;
+      }
+
+      if (spreadsheetSettings.waitlist !== "all") {
+        const isWaitlisted =
+          String(booking.waitlist || "").toLowerCase() === "yes";
+
+        if (spreadsheetSettings.waitlist === "yes" && !isWaitlisted) {
+          return false;
+        }
+
+        if (spreadsheetSettings.waitlist === "no" && isWaitlisted) {
+          return false;
+        }
+      }
+
+      if (
+        !bookingTouchesSpreadsheetDateRange(
+          booking,
+          spreadsheetSettings.startDate,
+          spreadsheetSettings.endDate
+        )
+      ) {
+        return false;
+      }
+
+      const guestCount = getSpreadsheetNumber(
+        booking.attendeeCount || booking.persons || booking.groupSize
+      );
+
+      if (minGuests !== null && (guestCount === null || guestCount < minGuests)) {
+        return false;
+      }
+
+      if (maxGuests !== null && (guestCount === null || guestCount > maxGuests)) {
+        return false;
+      }
+
+      const hasEmail = isSpreadsheetUsableValue(booking.email);
+      const hasPhone = isSpreadsheetUsableValue(booking.phone);
+
+      if (spreadsheetSettings.hasEmail === "yes" && !hasEmail) {
+        return false;
+      }
+
+      if (spreadsheetSettings.hasEmail === "no" && hasEmail) {
+        return false;
+      }
+
+      if (spreadsheetSettings.hasPhone === "yes" && !hasPhone) {
+        return false;
+      }
+
+      if (spreadsheetSettings.hasPhone === "no" && hasPhone) {
+        return false;
+      }
+
+      return true;
+    });
+
+    const sortColumn = allSpreadsheetColumns.find(
+      (column) => column.id === spreadsheetSettings.sortColumnId
+    );
+
+    if (!sortColumn) {
+      return filteredBookings;
+    }
+
+    return [...filteredBookings].sort((a, b) => {
+      const result = compareSpreadsheetValues(
+        getSpreadsheetComparableValue(sortColumn, a),
+        getSpreadsheetComparableValue(sortColumn, b)
+      );
+
+      return spreadsheetSettings.sortDirection === "desc" ? -result : result;
+    });
+  }, [inquiryBookings, spreadsheetSettings, allSpreadsheetColumns]);
+
+  const updateSpreadsheetSettings = (updates) => {
+    setSpreadsheetSettings((currentSettings) => ({
+      ...currentSettings,
+      ...updates,
+    }));
+  };
+
+  const handleSortColumn = (columnId) => {
+    setSpreadsheetSettings((currentSettings) => {
+      if (currentSettings.sortColumnId === columnId) {
+        return {
+          ...currentSettings,
+          sortDirection:
+            currentSettings.sortDirection === "asc" ? "desc" : "asc",
+        };
+      }
+
+      return {
+        ...currentSettings,
+        sortColumnId: columnId,
+        sortDirection: "asc",
+      };
+    });
+  };
+
+  const resetSpreadsheetSettings = () => {
+    setSpreadsheetSettings(getDefaultSpreadsheetSettings());
+  };
 
   const formCount = inquiryBookings.filter(
     (booking) => booking.sourceType === "Form"
   ).length;
 
   const importedCount = inquiryBookings.length - formCount;
+  const hiddenColumnCount =
+    allSpreadsheetColumns.length - visibleSpreadsheetColumns.length;
 
   return (
     <section className="spreadsheet-view-page">
@@ -2731,77 +4010,168 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
               <h2>All Booking Data</h2>
               <p>
                 A full spreadsheet-style view of every
-                <br/>
+                <br />
                 form submission + imported booking row.
               </p>
             </div>
           </div>
 
-          <div className="spreadsheet-view-summary">
-            <span>
-              <strong>{inquiryBookings.length}</strong>
-              Total Rows
-            </span>
+          <div className="spreadsheet-view-header-actions">
+            <div className="spreadsheet-view-summary">
+              <span>
+                <strong>{filteredAndSortedBookings.length}</strong>
+                Shown
+              </span>
 
-            <span>
-              <strong>{formCount}</strong>
-              Forms
-            </span>
+              <span>
+                <strong>{inquiryBookings.length}</strong>
+                Total Rows
+              </span>
 
-            <span>
-              <strong>{importedCount}</strong>
-              Imports
-            </span>
+              <span>
+                <strong>{formCount}</strong>
+                Forms
+              </span>
 
-            <span>
-              <strong>{rawSpreadsheetColumns.length}</strong>
-              Original Columns
-            </span>
+              <span>
+                <strong>{importedCount}</strong>
+                Imports
+              </span>
+
+              <span>
+                <strong>{hiddenColumnCount}</strong>
+                Hidden Columns
+              </span>
+            </div>
+
+            <button
+              className="primary-dashboard-button spreadsheet-settings-button"
+              type="button"
+              onClick={() => setIsSettingsOpen(true)}
+            >
+              <FaCog />
+              Settings
+            </button>
           </div>
         </div>
 
         {inquiryBookings.length > 0 ? (
-          <div className="spreadsheet-table-wrap">
-            <table className="spreadsheet-table">
-              <thead>
-                <tr>
-                  {bookingSpreadsheetColumns.map((column) => (
-                    <th className={column.className || ""} key={column.label}>
-                      {column.label}
-                    </th>
-                  ))}
+          <>
+            <div className="spreadsheet-active-settings-bar">
+              <span>
+                Search:{" "}
+                <strong>
+                  {spreadsheetSettings.searchText
+                    ? `"${spreadsheetSettings.searchText}"`
+                    : "None"}
+                </strong>
+              </span>
 
-                  {rawSpreadsheetColumns.map((columnName) => (
-                    <th key={`raw-header-${columnName}`}>
-                      Original: {columnName}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+              <span>
+                Sort:{" "}
+                <strong>
+                  {allSpreadsheetColumns.find(
+                    (column) => column.id === spreadsheetSettings.sortColumnId
+                  )?.label || "None"}{" "}
+                  {spreadsheetSettings.sortDirection === "asc" ? "↑" : "↓"}
+                </strong>
+              </span>
 
-              <tbody>
-                {inquiryBookings.map((booking) => (
-                  <tr key={booking.id}>
-                    {bookingSpreadsheetColumns.map((column) => (
-                      <td className={column.className || ""} key={column.label}>
-                        {column.render
-                          ? column.render(booking, openBookingDetail)
-                          : getSpreadsheetDisplayValue(column.value(booking))}
-                      </td>
-                    ))}
+              <span>
+                Columns:{" "}
+                <strong>
+                  {visibleSpreadsheetColumns.length}/{allSpreadsheetColumns.length}
+                </strong>
+              </span>
 
-                    {rawSpreadsheetColumns.map((columnName) => (
-                      <td key={`${booking.id}-raw-${columnName}`}>
-                        {getSpreadsheetDisplayValue(
-                          booking.rawSpreadsheetData?.[columnName]
-                        )}
-                      </td>
-                    ))}
+              <button
+                type="button"
+                onClick={() => setIsSettingsOpen(true)}
+              >
+                Edit View
+              </button>
+            </div>
+
+            <div className="spreadsheet-table-wrap">
+              <table className="spreadsheet-table">
+                <thead>
+                  <tr>
+                    {visibleSpreadsheetColumns.map((column, columnIndex) => {
+                      const isSorted =
+                        spreadsheetSettings.sortColumnId === column.id;
+
+                      return (
+                        <th
+                          className={getSpreadsheetCellClass({
+                            column,
+                            columnIndex,
+                            booking: {},
+                            settings: spreadsheetSettings,
+                          })}
+                          key={column.id}
+                        >
+                          <button
+                            className="spreadsheet-header-sort-button"
+                            type="button"
+                            onClick={() => handleSortColumn(column.id)}
+                          >
+                            <span>{column.label}</span>
+                            {isSorted && (
+                              <em>
+                                {spreadsheetSettings.sortDirection === "asc"
+                                  ? "↑"
+                                  : "↓"}
+                              </em>
+                            )}
+                          </button>
+                        </th>
+                      );
+                    })}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody>
+                  {filteredAndSortedBookings.map((booking) => (
+                    <tr
+                      className={getSpreadsheetRowClass(
+                        booking,
+                        spreadsheetSettings
+                      )}
+                      key={booking.id}
+                    >
+                      {visibleSpreadsheetColumns.map((column, columnIndex) => (
+                        <td
+                          className={getSpreadsheetCellClass({
+                            column,
+                            columnIndex,
+                            booking,
+                            settings: spreadsheetSettings,
+                          })}
+                          key={`${booking.id}-${column.id}`}
+                          title={getSpreadsheetDisplayValue(
+                            getSpreadsheetComparableValue(column, booking)
+                          )}
+                        >
+                          {column.render
+                            ? column.render(booking, openBookingDetail)
+                            : getSpreadsheetDisplayValue(column.value(booking))}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredAndSortedBookings.length === 0 && (
+              <div className="empty-state">
+                <strong>No rows match these settings</strong>
+                <p>
+                  Open Settings and loosen the search, filters, or date range.
+                </p>
+              </div>
+            )}
+          </>
         ) : (
           <div className="empty-state">
             <strong>No spreadsheet data yet</strong>
@@ -2811,6 +4181,21 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
           </div>
         )}
       </article>
+
+      {isSettingsOpen && (
+        <SpreadsheetSettingsModal
+          settings={spreadsheetSettings}
+          updateSettings={updateSpreadsheetSettings}
+          allColumns={allSpreadsheetColumns}
+          orderedColumns={orderedSpreadsheetColumns}
+          sourceTypeOptions={sourceTypeOptions}
+          statusOptions={statusOptions}
+          filteredCount={filteredAndSortedBookings.length}
+          totalCount={inquiryBookings.length}
+          onClose={() => setIsSettingsOpen(false)}
+          onReset={resetSpreadsheetSettings}
+        />
+      )}
     </section>
   );
 }
