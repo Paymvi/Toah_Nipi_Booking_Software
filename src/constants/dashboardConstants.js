@@ -18,7 +18,6 @@ These values are not state. They are shared static configuration values.
 */
 
 import {
-  FaBuilding,
   FaUsers,
   FaCalendarAlt,
   FaClipboardList,
@@ -49,17 +48,11 @@ export const monthNames = [
 // Each item can include an icon and optional badge behavior.
 export const sidebarSections = [
   {
-    label: "Contacts",
-    items: [
-      { label: "Organizations", icon: FaBuilding },
-      { label: "Individuals", icon: FaUsers },
-    ],
-  },
-  {
     label: "Rentals & Events",
     items: [
       { label: "Calendar View", icon: FaCalendarAlt },
       { label: "Spreadsheet View", icon: FaTable },
+      { label: "Contacts View", icon: FaUsers },
       { label: "Booking Inquiries", icon: FaClipboardList, hasBadge: true },
       { label: "Add New Booking", icon: FaPlus },
     ],

@@ -2727,8 +2727,9 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
               <p className="dashboard-eyebrow">Spreadsheet View</p>
               <h2>All Booking Data</h2>
               <p>
-                A full spreadsheet-style view of every form submission and
-                imported booking row.
+                A full spreadsheet-style view of every
+                <br/>
+                form submission + imported booking row.
               </p>
             </div>
           </div>
@@ -2803,6 +2804,155 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
             <strong>No spreadsheet data yet</strong>
             <p>
               Submit the public form or import a spreadsheet to see rows here.
+            </p>
+          </div>
+        )}
+      </article>
+    </section>
+  );
+}
+
+function getContactsFromBookings(bookings) {
+  const contactMap = new Map();
+
+  bookings.forEach((booking) => {
+    const contactName = String(
+      booking.contactName || booking.name || ""
+    ).trim();
+
+    const organizationName = String(
+      booking.organizationName || "No organization"
+    ).trim();
+
+    const emailValue = String(booking.email || "").trim();
+    const phoneValue = String(booking.phone || "").trim();
+
+    const email =
+      emailValue && emailValue !== "No email provided" ? emailValue : "";
+
+    const phone =
+      phoneValue && phoneValue !== "No phone provided" ? phoneValue : "";
+
+    if (!contactName && !email && !phone && !organizationName) {
+      return;
+    }
+
+    const contactKey =
+      email.toLowerCase() ||
+      phone ||
+      `${contactName.toLowerCase()}-${organizationName.toLowerCase()}`;
+
+    if (!contactMap.has(contactKey)) {
+      contactMap.set(contactKey, {
+        id: contactKey,
+        contactName: contactName || "No contact name",
+        organizationName: organizationName || "No organization",
+        email,
+        phone,
+        bookings: [],
+      });
+    }
+
+    contactMap.get(contactKey).bookings.push(booking);
+  });
+
+  return Array.from(contactMap.values()).sort((a, b) =>
+    a.contactName.localeCompare(b.contactName)
+  );
+}
+
+function ContactsView({ inquiryBookings, openBookingDetail }) {
+  const contacts = useMemo(
+    () => getContactsFromBookings(inquiryBookings),
+    [inquiryBookings]
+  );
+
+  return (
+    <section className="contacts-view-page">
+      <article className="dashboard-card contacts-view-card">
+        <div className="contacts-view-header">
+          <div className="dashboard-heading-with-icon">
+            <span className="section-icon">
+              <FaUsers />
+            </span>
+
+            <div>
+              <p className="dashboard-eyebrow">Rentals & Events</p>
+              <h2>Contacts View</h2>
+              <p>
+                A staff-friendly list of contacts pulled from booking inquiries
+                and imported spreadsheet rows.
+              </p>
+            </div>
+          </div>
+
+          <div className="contacts-view-summary">
+            <span>
+              <strong>{contacts.length}</strong>
+              Contacts
+            </span>
+
+            <span>
+              <strong>{inquiryBookings.length}</strong>
+              Booking Rows
+            </span>
+          </div>
+        </div>
+
+        {contacts.length > 0 ? (
+          <div className="contacts-view-table-wrap">
+            <table className="contacts-view-table">
+              <thead>
+                <tr>
+                  <th>Contact Name</th>
+                  <th>Organization</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Bookings</th>
+                  <th aria-label="Actions"></th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {contacts.map((contact) => {
+                  const latestBooking =
+                    contact.bookings[contact.bookings.length - 1];
+
+                  return (
+                    <tr key={contact.id}>
+                      <td>
+                        <strong>{contact.contactName}</strong>
+                      </td>
+
+                      <td>{contact.organizationName}</td>
+
+                      <td>{contact.email || "N/A"}</td>
+
+                      <td>{contact.phone || "N/A"}</td>
+
+                      <td>{contact.bookings.length}</td>
+
+                      <td>
+                        <button
+                          className="table-link"
+                          type="button"
+                          onClick={() => openBookingDetail(latestBooking)}
+                        >
+                          View Booking
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <strong>No contacts yet</strong>
+            <p>
+              Submit the public form or import a spreadsheet to build the
+              contacts list.
             </p>
           </div>
         )}
@@ -3606,6 +3756,8 @@ const getCalendarEventColor = (status) => {
               const Icon = item.icon;
               const isCalendarView = item.label === "Calendar View";
               const isSpreadsheetView = item.label === "Spreadsheet View";
+              const isContactsView = item.label === "Contacts View";
+
               return (
                 <button
                   className={`sidebar-link ${
@@ -3615,7 +3767,7 @@ const getCalendarEventColor = (status) => {
                   type="button"
                   title={item.label}
                   onClick={() => {
-                    if (isCalendarView || isSpreadsheetView) {
+                    if (isCalendarView || isSpreadsheetView || isContactsView) {
                       setActiveView(item.label);
                     }
                   }}
@@ -3802,6 +3954,11 @@ const getCalendarEventColor = (status) => {
         </section>
         ) : activeView === "Spreadsheet View" ? (
           <BookingSpreadsheetView
+            inquiryBookings={inquiryBookings}
+            openBookingDetail={openBookingDetail}
+          />
+        ) : activeView === "Contacts View" ? (
+          <ContactsView
             inquiryBookings={inquiryBookings}
             openBookingDetail={openBookingDetail}
           />
