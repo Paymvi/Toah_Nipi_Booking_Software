@@ -4067,6 +4067,68 @@ function SpreadsheetSettingsModal({
   );
 }
 
+function SpreadsheetViewLoadingScreen({ rowCount }) {
+  return (
+    <section className="spreadsheet-view-page">
+      <article className="dashboard-card spreadsheet-view-card spreadsheet-loading-card">
+        <div className="spreadsheet-loading-hero">
+          <span className="spreadsheet-loading-icon">
+            <FaTable />
+          </span>
+
+          <div className="spreadsheet-loading-copy">
+            <p className="dashboard-eyebrow">Spreadsheet View</p>
+            <h2>Loading All Booking Data</h2>
+            <p>
+              Preparing {rowCount} booking row{rowCount === 1 ? "" : "s"}, columns,
+              filters, and saved view settings.
+            </p>
+          </div>
+
+          <span className="spreadsheet-loading-spinner" aria-hidden="true" />
+        </div>
+
+        <div className="spreadsheet-loading-summary">
+          <span>
+            <strong>{rowCount}</strong>
+            Rows
+          </span>
+
+          <span>
+            <strong>Saved</strong>
+            Settings
+          </span>
+
+          <span>
+            <strong>Ready</strong>
+            Filters
+          </span>
+        </div>
+
+        <div className="spreadsheet-loading-table-preview" aria-hidden="true">
+          <div className="spreadsheet-loading-preview-header">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
+          {Array.from({ length: 7 }).map((_, index) => (
+            <div className="spreadsheet-loading-preview-row" key={index}>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          ))}
+        </div>
+      </article>
+    </section>
+  );
+}
+
 function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [spreadsheetSettings, setSpreadsheetSettings] = useState(() =>
@@ -5225,8 +5287,9 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [activeView, setActiveView] = useState("Dashboard");
+  const [isSpreadsheetViewLoading, setIsSpreadsheetViewLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
+  
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [bookingDetailTab, setBookingDetailTab] = useState("Overview");
 
@@ -5961,6 +6024,30 @@ const getCalendarEventColor = (status) => {
     return "calendar-event-purple";
   };
 
+  const handleActiveViewChange = (nextView) => {
+    if (nextView === "Spreadsheet View" && activeView !== "Spreadsheet View") {
+      setIsSpreadsheetViewLoading(true);
+    }
+
+    if (nextView !== "Spreadsheet View") {
+      setIsSpreadsheetViewLoading(false);
+    }
+
+    setActiveView(nextView);
+  };
+
+  useEffect(() => {
+    if (!isSpreadsheetViewLoading || activeView !== "Spreadsheet View") {
+      return;
+    }
+
+    const loadingTimer = window.setTimeout(() => {
+      setIsSpreadsheetViewLoading(false);
+    }, 650);
+
+    return () => window.clearTimeout(loadingTimer);
+  }, [activeView, isSpreadsheetViewLoading]);
+
   const openBookingDetail = (booking) => {
     setSelectedBooking(booking);
     setBookingDetailTab("Overview");
@@ -6002,7 +6089,7 @@ const getCalendarEventColor = (status) => {
             activeView === "Dashboard" ? "sidebar-active-button" : "sidebar-link"
           }
           type="button"
-          onClick={() => setActiveView("Dashboard")}
+          onClick={() => handleActiveViewChange("Dashboard")}
           title="Dashboard"
         >
           <FaHome />
@@ -6035,7 +6122,7 @@ const getCalendarEventColor = (status) => {
                       isContactsView ||
                       isInquiryPipeline
                     ) {
-                      setActiveView(item.label);
+                      handleActiveViewChange(item.label);
                     }
                   }}
                 >
@@ -6222,10 +6309,14 @@ const getCalendarEventColor = (status) => {
             </aside>
         </section>
         ) : activeView === "Spreadsheet View" ? (
-          <BookingSpreadsheetView
-            inquiryBookings={inquiryBookings}
-            openBookingDetail={openBookingDetail}
-          />
+          isSpreadsheetViewLoading ? (
+            <SpreadsheetViewLoadingScreen rowCount={inquiryBookings.length} />
+          ) : (
+            <BookingSpreadsheetView
+              inquiryBookings={inquiryBookings}
+              openBookingDetail={openBookingDetail}
+            />
+          )
         ) : activeView === "Contacts View" ? (
           <ContactsView
             inquiryBookings={inquiryBookings}
