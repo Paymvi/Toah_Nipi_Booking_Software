@@ -30,6 +30,7 @@ import {
   FaHiking,
   FaChevronLeft,
   FaChevronRight,
+  FaCog,
 } from "react-icons/fa";
 import ExcelJS from "exceljs";
 import BookingHousingTab from "../components/BookingHousingTab";
@@ -43,6 +44,12 @@ import {
   activityLocations,
   defaultRoomRows,
   bookingDetailTabs,
+  DATED_INQUIRY_SETTINGS_STORAGE_KEY,
+  DEFAULT_DATED_INQUIRY_SETTINGS,
+  RETREAT_TYPE_CONFIG,
+  RETREAT_TYPE_LEGEND_KEYS,
+  getInquiryRetreatType,
+  getRetreatTypeConfig,
 } from "../constants/dashboardConstants";
 
 import {
@@ -1536,6 +1543,8 @@ function BookingEditField({
   );
 }
 
+
+
 function BookingDetailsEditForm({ booking, onSaveBooking }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(() =>
@@ -2820,6 +2829,28 @@ export default function Dashboard() {
   const [bookingDetailTab, setBookingDetailTab] = useState("Overview");
 
   const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
+  const [isDatedInquirySettingsOpen, setIsDatedInquirySettingsOpen] =
+    useState(false);
+
+  const [datedInquirySettings, setDatedInquirySettings] = useState(() => {
+    try {
+      const savedSettings = localStorage.getItem(
+        DATED_INQUIRY_SETTINGS_STORAGE_KEY
+      );
+
+      if (!savedSettings) {
+        return DEFAULT_DATED_INQUIRY_SETTINGS;
+      }
+
+      return {
+        ...DEFAULT_DATED_INQUIRY_SETTINGS,
+        ...JSON.parse(savedSettings),
+      };
+    } catch (error) {
+      console.error("Could not read dated inquiry settings:", error);
+      return DEFAULT_DATED_INQUIRY_SETTINGS;
+    }
+  });
 
 
   const [datedInquiryDateFilter, setDatedInquiryDateFilter] = useState(() =>
@@ -2844,6 +2875,13 @@ export default function Dashboard() {
   const [publicInquiries, setPublicInquiries] = useState(() =>
     getSavedInquiries()
   );
+
+  const updateDatedInquirySetting = (settingName, value) => {
+    setDatedInquirySettings((currentSettings) => ({
+      ...currentSettings,
+      [settingName]: value,
+    }));
+  };
 
   const refreshInquiries = () => {
     setPublicInquiries(getSavedInquiries());
@@ -3308,6 +3346,18 @@ export default function Dashboard() {
       datedInquiryCustomEndDate
     );
   }, [datedInquiryCustomEndDate]);
+
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        DATED_INQUIRY_SETTINGS_STORAGE_KEY,
+        JSON.stringify(datedInquirySettings)
+      );
+    } catch (error) {
+      console.error("Could not save dated inquiry settings:", error);
+    }
+  }, [datedInquirySettings]);
 
   const inquiryBookings = useMemo(() => {
     return publicInquiries.map((inquiry, index) =>
@@ -3998,51 +4048,132 @@ const getCalendarEventColor = (status) => {
                   </span>
                 </div>
 
-                <div className="dated-inquiries-filter-bar">
-                  <label className="dated-inquiries-filter-field">
-                    <span>Date Range</span>
-
-                    <select
-                      value={datedInquiryDateFilter}
-                      onChange={(event) => setDatedInquiryDateFilter(event.target.value)}
+                <div className="dated-inquiries-header-actions">
+                  <div className="dated-inquiries-settings">
+                    <button
+                      className={`dated-inquiries-settings-button ${
+                        isDatedInquirySettingsOpen ? "active" : ""
+                      }`}
+                      type="button"
+                      onClick={() =>
+                        setIsDatedInquirySettingsOpen((currentValue) => !currentValue)
+                      }
+                      aria-label="Open dated inquiry display settings"
+                      title="Display settings"
                     >
-                      {datedInquiryDateFilterOptions.map((option) => (
-                        <option value={option.value} key={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                      <FaCog />
+                    </button>
 
-                  {datedInquiryDateFilter === "custom" && (
-                    <div className="dated-inquiries-custom-range">
-                      <label className="dated-inquiries-filter-field">
-                        <span>From</span>
+                    {isDatedInquirySettingsOpen && (
+                      <div className="dated-inquiries-settings-menu">
+                        <div className="dated-inquiries-settings-menu-header">
+                          <h3>Display Settings</h3>
+                          <p>Customize how dated inquiry cards appear.</p>
+                        </div>
 
-                        <input
-                          type="date"
-                          value={datedInquiryCustomStartDate}
-                          onChange={(event) =>
-                            setDatedInquiryCustomStartDate(event.target.value)
-                          }
-                        />
-                      </label>
+                        <label className="dated-inquiries-setting-option">
+                          <input
+                            type="checkbox"
+                            checked={datedInquirySettings.tintByRetreatType}
+                            onChange={(event) =>
+                              updateDatedInquirySetting(
+                                "tintByRetreatType",
+                                event.target.checked
+                              )
+                            }
+                          />
 
-                      <label className="dated-inquiries-filter-field">
-                        <span>To</span>
+                          <span>
+                            <strong>Color cards by retreat type</strong>
+                            <small>Lightly tint each card based on its retreat type.</small>
+                          </span>
+                        </label>
 
-                        <input
-                          type="date"
-                          value={datedInquiryCustomEndDate}
-                          onChange={(event) =>
-                            setDatedInquiryCustomEndDate(event.target.value)
-                          }
-                        />
-                      </label>
-                    </div>
-                  )}
+                        <label className="dated-inquiries-setting-option">
+                          <input
+                            type="checkbox"
+                            checked={datedInquirySettings.showRetreatTypeLegend}
+                            onChange={(event) =>
+                              updateDatedInquirySetting(
+                                "showRetreatTypeLegend",
+                                event.target.checked
+                              )
+                            }
+                          />
+
+                          <span>
+                            <strong>Show color legend</strong>
+                            <small>Display the meaning of each retreat type color.</small>
+                          </span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="dated-inquiries-filter-bar">
+                    <label className="dated-inquiries-filter-field">
+                      <span>Date Range</span>
+
+                      <select
+                        value={datedInquiryDateFilter}
+                        onChange={(event) => setDatedInquiryDateFilter(event.target.value)}
+                      >
+                        {datedInquiryDateFilterOptions.map((option) => (
+                          <option value={option.value} key={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    {datedInquiryDateFilter === "custom" && (
+                      <div className="dated-inquiries-custom-range">
+                        <label className="dated-inquiries-filter-field">
+                          <span>From</span>
+
+                          <input
+                            type="date"
+                            value={datedInquiryCustomStartDate}
+                            onChange={(event) =>
+                              setDatedInquiryCustomStartDate(event.target.value)
+                            }
+                          />
+                        </label>
+
+                        <label className="dated-inquiries-filter-field">
+                          <span>To</span>
+
+                          <input
+                            type="date"
+                            value={datedInquiryCustomEndDate}
+                            onChange={(event) =>
+                              setDatedInquiryCustomEndDate(event.target.value)
+                            }
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {datedInquirySettings.tintByRetreatType &&
+                datedInquirySettings.showRetreatTypeLegend && (
+                  <div className="dated-inquiries-type-legend">
+                    {RETREAT_TYPE_LEGEND_KEYS.map((key) => {
+                      const typeConfig = RETREAT_TYPE_CONFIG[key];
+
+                      return (
+                        <span
+                          className={`dated-inquiries-type-legend-pill ${typeConfig.className}`}
+                          key={key}
+                        >
+                          {typeConfig.label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
 
               {filteredDatedInquiries.length > 0 ? (
                 <div className="dated-inquiries-dashboard-list">
@@ -4053,9 +4184,24 @@ const getCalendarEventColor = (status) => {
                       ? `${guestCount} guest${guestCount === "1" ? "" : "s"}`
                       : "No group size";
 
+                    const retreatType = getInquiryRetreatType(inquiry);
+                    const retreatTypeConfig = getRetreatTypeConfig(retreatType);
+
+                    const inquiryCardClassName = [
+                      "dated-inquiry-dashboard-card",
+                      datedInquirySettings.tintByRetreatType
+                        ? "dated-inquiry-dashboard-card--tinted"
+                        : "",
+                      datedInquirySettings.tintByRetreatType
+                        ? retreatTypeConfig.className
+                        : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ");
+
                     return (
                       <button
-                        className="dated-inquiry-dashboard-card"
+                        className={inquiryCardClassName}
                         key={inquiry.id}
                         type="button"
                         onClick={() => openBookingDetail(inquiry)}
