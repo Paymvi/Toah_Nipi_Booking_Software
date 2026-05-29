@@ -9257,6 +9257,71 @@ body,
 
 
 
+
+
+
+
+
+
+
+
+/* =========================================================
+   Spreadsheet Settings: Source Mode Toggle
+========================================================= */
+
+.spreadsheet-source-mode-toggle {
+  width: fit-content;
+  display: inline-flex;
+  gap: 4px;
+
+  padding: 4px;
+  border: 1px solid #dfe4ec;
+  border-radius: 9px;
+  background: #f7f8fb;
+}
+
+.spreadsheet-source-mode-toggle button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #687083;
+
+  padding: 0 12px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.spreadsheet-source-mode-toggle button:hover {
+  background: #ffffff;
+  color: #443a9c;
+}
+
+.spreadsheet-source-mode-toggle button.active {
+  background: #443a9c;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(68, 58, 156, 0.16);
+}
+
+@media (max-width: 720px) {
+  .spreadsheet-source-mode-toggle {
+    width: 100%;
+  }
+
+  .spreadsheet-source-mode-toggle button {
+    flex: 1;
+  }
+}
+
+
+
+
+
+
+
 /* =========================================================
    Inquiry Pipeline View
 ========================================================= */
