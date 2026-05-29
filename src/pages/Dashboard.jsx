@@ -2892,9 +2892,14 @@ function getSavedSpreadsheetSettings() {
       return getDefaultSpreadsheetSettings();
     }
 
-    return {
+    const parsedSettings = {
       ...getDefaultSpreadsheetSettings(),
       ...JSON.parse(savedSettings),
+    };
+
+    return {
+      ...parsedSettings,
+      colorMode: "columns",
     };
   } catch (error) {
     console.error("Could not read spreadsheet settings:", error);
@@ -3253,13 +3258,14 @@ function SpreadsheetSettingsModal({
   allColumns,
   orderedColumns,
   sourceTypeOptions,
+  inputMethodCounts,
   statusOptions,
   filteredCount,
   totalCount,
   onClose,
   onReset,
 }) {
-  const [activeSettingsTab, setActiveSettingsTab] = useState("Filters");
+  const [activeSettingsTab, setActiveSettingsTab] = useState("Input Methods");
 
   const visibleColumnIds =
     settings.visibleColumnIds || allColumns.map((column) => column.id);
@@ -3338,8 +3344,8 @@ function SpreadsheetSettingsModal({
         </header>
 
         <div className="spreadsheet-settings-tabs">
-          {["Filters", "Sorting", "Columns", "Highlights", "Display"].map(
-            (tab) => (
+          {["Input Methods", "Columns", "Filters", "Sorting", "Highlights", "Display"].map(
+  (tab) => (
               <button
                 className={activeSettingsTab === tab ? "active" : ""}
                 type="button"
@@ -3353,6 +3359,125 @@ function SpreadsheetSettingsModal({
         </div>
 
         <div className="spreadsheet-settings-body">
+          {activeSettingsTab === "Input Methods" && (
+            <div className="spreadsheet-settings-section">
+              <div className="spreadsheet-settings-actions-row">
+                <button
+                  type="button"
+                  onClick={() => updateSettings({ sourceTypes: [] })}
+                >
+                  Show All Input Methods
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateSettings({
+                      sourceTypes: sourceTypeOptions.filter((sourceType) =>
+                        sourceType.toLowerCase().includes("form")
+                      ),
+                    })
+                  }
+                >
+                  Forms Only
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateSettings({
+                      sourceTypes: sourceTypeOptions.filter(
+                        (sourceType) => !sourceType.toLowerCase().includes("form")
+                      ),
+                    })
+                  }
+                >
+                  Imports Only
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    updateSettings({
+                      sourceTypes: sourceTypeOptions.filter((sourceType) =>
+                        sourceType.toLowerCase().includes("waitlist")
+                      ),
+                    })
+                  }
+                >
+                  Waitlist Only
+                </button>
+              </div>
+
+              <div className="spreadsheet-input-method-list">
+                {sourceTypeOptions.map((sourceType) => {
+                  const isVisible =
+                    settings.sourceTypes.length === 0 ||
+                    settings.sourceTypes.includes(sourceType);
+
+                  return (
+                    <div
+                      className={`spreadsheet-input-method-row ${
+                        isVisible ? "is-visible" : "is-hidden"
+                      }`}
+                      key={sourceType}
+                    >
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={isVisible}
+                          onChange={() => {
+                            if (settings.sourceTypes.length === 0) {
+                              updateSettings({
+                                sourceTypes: sourceTypeOptions.filter(
+                                  (option) => option !== sourceType
+                                ),
+                              });
+
+                              return;
+                            }
+
+                            updateSettings({
+                              sourceTypes: toggleSpreadsheetArrayValue(
+                                settings.sourceTypes,
+                                sourceType
+                              ),
+                            });
+                          }}
+                        />
+
+                        <span>
+                          <strong>{sourceType}</strong>
+                          <small>
+                            {inputMethodCounts[sourceType] || 0} row
+                            {(inputMethodCounts[sourceType] || 0) === 1 ? "" : "s"}
+                          </small>
+                        </span>
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => updateSettings({ sourceTypes: [sourceType] })}
+                      >
+                        Only
+                      </button>
+                    </div>
+                  );
+                })}
+
+                {sourceTypeOptions.length === 0 && (
+                  <div className="spreadsheet-input-method-empty">
+                    <strong>No input methods yet</strong>
+                    <p>Import a spreadsheet or submit a form to see input methods here.</p>
+                  </div>
+                )}
+              </div>
+
+              <p className="spreadsheet-settings-help-text">
+                Leaving every input method selected is the same as showing all rows.
+              </p>
+            </div>
+          )}
           {activeSettingsTab === "Filters" && (
             <div className="spreadsheet-settings-section">
               <div className="spreadsheet-settings-grid">
@@ -3456,29 +3581,7 @@ function SpreadsheetSettingsModal({
                 </label>
               </div>
 
-              <div className="spreadsheet-settings-check-group">
-                <h4>Source Types</h4>
-
-                {sourceTypeOptions.map((sourceType) => (
-                  <label key={sourceType}>
-                    <input
-                      type="checkbox"
-                      checked={settings.sourceTypes.includes(sourceType)}
-                      onChange={() =>
-                        updateSettings({
-                          sourceTypes: toggleSpreadsheetArrayValue(
-                            settings.sourceTypes,
-                            sourceType
-                          ),
-                        })
-                      }
-                    />
-                    <span>{sourceType}</span>
-                  </label>
-                ))}
-
-                {sourceTypeOptions.length === 0 && <p>No source types yet.</p>}
-              </div>
+              
 
               <div className="spreadsheet-settings-check-group">
                 <h4>Statuses</h4>
@@ -3610,20 +3713,6 @@ function SpreadsheetSettingsModal({
           {activeSettingsTab === "Highlights" && (
             <div className="spreadsheet-settings-section">
               <div className="spreadsheet-settings-grid">
-                <label className="spreadsheet-settings-field">
-                  <span>Color Mode</span>
-                  <select
-                    value={settings.colorMode}
-                    onChange={(event) =>
-                      updateSettings({ colorMode: event.target.value })
-                    }
-                  >
-                    <option value="none">No color</option>
-                    <option value="columns">Color columns by year/source</option>
-                    <option value="sourceRows">Color rows by input method</option>
-                    <option value="statusRows">Color rows by status</option>
-                  </select>
-                </label>
 
                 <label className="spreadsheet-settings-field">
                   <span>Highlight Text / Material</span>
@@ -3848,6 +3937,16 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
       ).sort(),
     [inquiryBookings]
   );
+
+  const inputMethodCounts = useMemo(() => {
+    return inquiryBookings.reduce((counts, booking) => {
+      const inputMethod = getBookingInputMethod(booking);
+
+      counts[inputMethod] = (counts[inputMethod] || 0) + 1;
+
+      return counts;
+    }, {});
+  }, [inquiryBookings]);
 
   const statusOptions = useMemo(
     () =>
@@ -4189,6 +4288,7 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
           allColumns={allSpreadsheetColumns}
           orderedColumns={orderedSpreadsheetColumns}
           sourceTypeOptions={sourceTypeOptions}
+          inputMethodCounts={inputMethodCounts}
           statusOptions={statusOptions}
           filteredCount={filteredAndSortedBookings.length}
           totalCount={inquiryBookings.length}

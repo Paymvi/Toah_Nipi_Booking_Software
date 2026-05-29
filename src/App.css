@@ -9138,6 +9138,118 @@ body,
   }
 }
 
+/* =========================================================
+   Spreadsheet Settings: Input Methods Page
+========================================================= */
+
+.spreadsheet-input-method-list {
+  display: grid;
+  gap: 8px;
+}
+
+.spreadsheet-input-method-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 12px;
+  border: 1px solid #edf0f4;
+  border-radius: 9px;
+  background: #ffffff;
+
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    opacity 150ms ease;
+}
+
+.spreadsheet-input-method-row.is-visible {
+  border-color: #dfe4ec;
+}
+
+.spreadsheet-input-method-row.is-hidden {
+  opacity: 0.62;
+  background: #f7f8fa;
+}
+
+.spreadsheet-input-method-row label {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.spreadsheet-input-method-row input {
+  margin-top: 3px;
+  accent-color: #443a9c;
+}
+
+.spreadsheet-input-method-row span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.spreadsheet-input-method-row strong {
+  color: #303442;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.spreadsheet-input-method-row small {
+  color: #858c9b;
+  font-size: 0.76rem;
+  font-weight: 400;
+}
+
+.spreadsheet-input-method-row button {
+  min-height: 32px;
+  border: 1px solid #c9c4e8;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #443a9c;
+
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.spreadsheet-input-method-row button:hover {
+  background: #f7f5ff;
+}
+
+.spreadsheet-input-method-empty {
+  padding: 18px;
+  border: 1px dashed #cfd6e1;
+  border-radius: 10px;
+  background: #fbfcfd;
+  text-align: center;
+}
+
+.spreadsheet-input-method-empty strong {
+  display: block;
+  color: #303442;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.spreadsheet-input-method-empty p {
+  margin: 6px 0 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+}
+
+@media (max-width: 720px) {
+  .spreadsheet-input-method-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
 
 
 
