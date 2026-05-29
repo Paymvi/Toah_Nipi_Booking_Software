@@ -6768,3 +6768,205 @@ body,
     justify-content: flex-start;
   }
 }
+
+
+
+/* =========================================================
+   Calendar View: Real Spacing Fix
+========================================================= */
+
+.calendar-view-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  min-width: 0;
+}
+
+/* Main calendar card */
+.calendar-view-card {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid #dfe4ec;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+}
+
+/* This is the ACTUAL header class in your JSX */
+.calendar-view-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+
+  padding: 18px 20px 16px;
+  border-bottom: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+.calendar-view-header > div {
+  min-width: 0;
+}
+
+.calendar-view-header .dashboard-eyebrow {
+  margin: 0 0 10px;
+  color: #7b8290;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.095em;
+}
+
+.calendar-view-header h2 {
+  margin: 0;
+  color: #252936;
+  font-size: clamp(1.45rem, 2vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+}
+
+.calendar-view-header p:not(.dashboard-eyebrow) {
+  max-width: 820px;
+  margin: 10px 0 0;
+  color: #4f5564;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.calendar-view-header > .secondary-dashboard-button {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+/* This targets the full calendar controls only */
+.calendar-view-card > .calendar-controls-large {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 14px 20px;
+  margin: 0;
+
+  border-bottom: 1px solid #edf0f4;
+  background: #fbfcfd;
+}
+
+.calendar-view-card > .calendar-controls-large button,
+.calendar-view-card > .calendar-controls-large select {
+  height: 36px;
+  border-radius: 7px;
+  border: 1px solid #d8dde7;
+  background: #ffffff;
+  color: #303442;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.calendar-view-card > .calendar-controls-large button {
+  width: 36px;
+  padding: 0;
+}
+
+.calendar-view-card > .calendar-controls-large select {
+  min-width: 132px;
+  padding: 0 12px;
+}
+
+.calendar-view-card > .calendar-controls-large button:hover,
+.calendar-view-card > .calendar-controls-large select:hover {
+  border-color: #c9c4e8;
+  background: #f7f5ff;
+  color: #443a9c;
+}
+
+/* Calendar grid spacing directly under the controls */
+.calendar-view-card .calendar-grid-span-mode {
+  padding: 18px 20px 20px;
+}
+
+.calendar-view-card .calendar-grid-span-mode > .calendar-weekday {
+  height: 34px;
+  padding: 0 6px 10px;
+  color: #7a8090;
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+/* Calendar cells */
+.calendar-view-card .calendar-week-row {
+  min-height: calc(118px + ((var(--calendar-event-row-count, 1) - 1) * 30px));
+}
+
+.calendar-view-card .calendar-week-row .calendar-cell {
+  padding: 30px 7px 7px;
+}
+
+.calendar-view-card .calendar-week-row .calendar-day-number {
+  top: 7px;
+  right: 8px;
+  color: #6f7687;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* Events */
+.calendar-view-card .calendar-span-event {
+  top: calc(38px + (var(--event-lane) * 30px));
+  height: 25px;
+  border-left-width: 4px;
+  border-radius: 5px;
+  box-shadow: none;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* Optional right agenda card, if shown */
+.calendar-view-agenda {
+  min-width: 0;
+}
+
+/* Responsive cleanup */
+@media (max-width: 900px) {
+  .calendar-view-header {
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+  }
+
+  .calendar-view-header > .secondary-dashboard-button {
+    margin-top: 0;
+  }
+
+  .calendar-view-card > .calendar-controls-large {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+  }
+
+  .calendar-view-card .calendar-grid-span-mode {
+    min-width: 860px;
+    max-width: none;
+    padding: 16px;
+  }
+
+  .calendar-view-card {
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+}
+
+@media (max-width: 720px) {
+  .calendar-view-header h2 {
+    font-size: 1.35rem;
+  }
+
+  .calendar-view-header p:not(.dashboard-eyebrow) {
+    font-size: 0.86rem;
+  }
+
+  .calendar-view-card > .calendar-controls-large select {
+    min-width: 112px;
+  }
+}
