@@ -31,6 +31,9 @@ import {
   FaChevronLeft,
   FaChevronRight,
   FaCog,
+  FaStar,
+  FaRegStar,
+  FaThumbtack,
 } from "react-icons/fa";
 import ExcelJS from "exceljs";
 import BookingHousingTab from "../components/BookingHousingTab";
@@ -2812,6 +2815,58 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
   );
 }
 
+const CONTACTS_VIEW_STARRED_STORAGE_KEY = "toahNipiStarredContacts";
+const CONTACTS_VIEW_STARRED_FIRST_STORAGE_KEY =
+  "toahNipiContactsStarredFirst";
+
+function getSavedContactIdList(storageKey) {
+  try {
+    const savedValue = localStorage.getItem(storageKey);
+
+    if (!savedValue) {
+      return [];
+    }
+
+    const parsedValue = JSON.parse(savedValue);
+
+    return Array.isArray(parsedValue) ? parsedValue : [];
+  } catch (error) {
+    console.error("Could not read saved contact preferences:", error);
+    return [];
+  }
+}
+
+function saveContactIdList(storageKey, contactIds) {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(contactIds));
+  } catch (error) {
+    console.error("Could not save contact preferences:", error);
+  }
+}
+
+function getSavedContactsBoolean(storageKey, fallbackValue = true) {
+  try {
+    const savedValue = localStorage.getItem(storageKey);
+
+    if (savedValue === null) {
+      return fallbackValue;
+    }
+
+    return savedValue === "true";
+  } catch (error) {
+    console.error("Could not read saved contact setting:", error);
+    return fallbackValue;
+  }
+}
+
+function saveContactsBoolean(storageKey, value) {
+  try {
+    localStorage.setItem(storageKey, String(value));
+  } catch (error) {
+    console.error("Could not save contact setting:", error);
+  }
+}
+
 function getContactsFromBookings(bookings) {
   const contactMap = new Map();
 
@@ -2866,6 +2921,55 @@ function ContactsView({ inquiryBookings, openBookingDetail }) {
     () => getContactsFromBookings(inquiryBookings),
     [inquiryBookings]
   );
+  
+const [starredContactIds, setStarredContactIds] = useState(() =>
+  getSavedContactIdList(CONTACTS_VIEW_STARRED_STORAGE_KEY)
+);
+
+const [showStarredFirst, setShowStarredFirst] = useState(() =>
+  getSavedContactsBoolean(CONTACTS_VIEW_STARRED_FIRST_STORAGE_KEY, false)
+);
+
+useEffect(() => {
+  saveContactIdList(CONTACTS_VIEW_STARRED_STORAGE_KEY, starredContactIds);
+}, [starredContactIds]);
+
+useEffect(() => {
+  saveContactsBoolean(
+    CONTACTS_VIEW_STARRED_FIRST_STORAGE_KEY,
+    showStarredFirst
+  );
+}, [showStarredFirst]);
+
+const starredContactIdSet = useMemo(
+  () => new Set(starredContactIds),
+  [starredContactIds]
+);
+
+const sortedContacts = useMemo(() => {
+  return contacts
+    .map((contact) => ({
+      ...contact,
+      isStarred: starredContactIdSet.has(contact.id),
+    }))
+    .sort((a, b) => {
+      if (showStarredFirst && a.isStarred !== b.isStarred) {
+        return a.isStarred ? -1 : 1;
+      }
+
+      return a.contactName.localeCompare(b.contactName);
+    });
+}, [contacts, starredContactIdSet, showStarredFirst]);
+
+const toggleContactStar = (contactId) => {
+  setStarredContactIds((currentIds) => {
+    if (currentIds.includes(contactId)) {
+      return currentIds.filter((id) => id !== contactId);
+    }
+
+    return [...currentIds, contactId];
+  });
+};
 
   return (
     <section className="contacts-view-page">
@@ -2896,14 +3000,39 @@ function ContactsView({ inquiryBookings, openBookingDetail }) {
               <strong>{inquiryBookings.length}</strong>
               Booking Rows
             </span>
+
+            <span>
+              <strong>{starredContactIds.length}</strong>
+              Starred
+            </span>
+
+
           </div>
         </div>
 
-        {contacts.length > 0 ? (
+        <div className="contacts-view-toolbar">
+          <label className="contacts-view-pin-toggle">
+            <input
+              type="checkbox"
+              checked={showStarredFirst}
+              onChange={(event) => setShowStarredFirst(event.target.checked)}
+            />
+
+            <span>Show starred contacts first</span>
+          </label>
+
+          <p>
+            Star important contacts to highlight them. Turn this option on to move starred
+            contacts to the top.
+          </p>
+        </div>
+
+        {sortedContacts.length > 0 ? (
           <div className="contacts-view-table-wrap">
             <table className="contacts-view-table">
               <thead>
                 <tr>
+                  <th className="contacts-view-favorite-column">Star</th>
                   <th>Contact Name</th>
                   <th>Organization</th>
                   <th>Email</th>
@@ -2914,14 +3043,49 @@ function ContactsView({ inquiryBookings, openBookingDetail }) {
               </thead>
 
               <tbody>
-                {contacts.map((contact) => {
+                {sortedContacts.map((contact) => {
                   const latestBooking =
                     contact.bookings[contact.bookings.length - 1];
 
+                  const rowClassName = [
+                    "contacts-view-row",
+                    contact.isStarred ? "contacts-view-row-starred" : "",
+                    contact.isPinned ? "contacts-view-row-pinned" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+
                   return (
-                    <tr key={contact.id}>
+                    <tr className={rowClassName} key={contact.id}>
+                      <td className="contacts-view-favorite-cell">
+                        <button
+                          className={`contact-star-button ${
+                            contact.isStarred ? "active" : ""
+                          }`}
+                          type="button"
+                          onClick={() => toggleContactStar(contact.id)}
+                          aria-label={
+                            contact.isStarred
+                              ? `Unstar ${contact.contactName}`
+                              : `Star ${contact.contactName}`
+                          }
+                          title={contact.isStarred ? "Unstar" : "Star"}
+                        >
+                          {contact.isStarred ? <FaStar /> : <FaRegStar />}
+                        </button>
+                      </td>
+
                       <td>
-                        <strong>{contact.contactName}</strong>
+                        <div className="contacts-view-name-cell">
+                          <strong>{contact.contactName}</strong>
+
+                          {contact.isPinned && (
+                            <span className="contact-pinned-chip">
+                              <FaThumbtack />
+                              Pinned
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       <td>{contact.organizationName}</td>
@@ -2933,13 +3097,26 @@ function ContactsView({ inquiryBookings, openBookingDetail }) {
                       <td>{contact.bookings.length}</td>
 
                       <td>
-                        <button
-                          className="table-link"
-                          type="button"
-                          onClick={() => openBookingDetail(latestBooking)}
-                        >
-                          View Booking
-                        </button>
+                        <div className="contacts-view-actions">
+                          <button
+                            className={`contact-pin-button ${
+                              contact.isPinned ? "active" : ""
+                            }`}
+                            type="button"
+                            onClick={() => toggleContactPin(contact.id)}
+                          >
+                            <FaThumbtack />
+                            {contact.isPinned ? "Unpin" : "Pin"}
+                          </button>
+
+                          <button
+                            className="table-link"
+                            type="button"
+                            onClick={() => openBookingDetail(latestBooking)}
+                          >
+                            View Booking
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

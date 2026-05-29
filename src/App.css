@@ -8229,7 +8229,277 @@ body,
   white-space: nowrap;
 }
 
+/* =========================================================
+   Contacts View - Starred + Pinned Contacts
+========================================================= */
 
+.contacts-view-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+
+  padding: 10px 18px;
+
+  background: #fbfcfd;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.contacts-view-toolbar p {
+  margin: 0;
+  color: #858c9b;
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.contacts-view-pin-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  color: #3f4351;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.contacts-view-pin-toggle input {
+  width: 15px;
+  height: 15px;
+  accent-color: #443a9c;
+}
+
+.contacts-view-summary span:nth-child(3) {
+  border-left-color: #c98716;
+}
+
+.contacts-view-summary span:nth-child(4) {
+  border-left-color: #443a9c;
+}
+
+/* Table layout after adding Star column */
+
+.contacts-view-table {
+  table-layout: fixed;
+  min-width: 980px;
+}
+
+.contacts-view-favorite-column,
+.contacts-view-favorite-cell {
+  width: 70px;
+  max-width: 70px;
+  text-align: center;
+}
+
+.contacts-view-table th:nth-child(2),
+.contacts-view-table td:nth-child(2) {
+  width: 190px;
+  max-width: 190px;
+}
+
+.contacts-view-table th:nth-child(3),
+.contacts-view-table td:nth-child(3) {
+  width: 260px;
+  max-width: 260px;
+}
+
+.contacts-view-table th:nth-child(4),
+.contacts-view-table td:nth-child(4) {
+  width: 290px;
+  max-width: 290px;
+}
+
+.contacts-view-table th:nth-child(5),
+.contacts-view-table td:nth-child(5) {
+  width: 130px;
+  max-width: 130px;
+}
+
+.contacts-view-table th:nth-child(6),
+.contacts-view-table td:nth-child(6) {
+  width: 90px;
+  max-width: 90px;
+}
+
+.contacts-view-table th:nth-child(7),
+.contacts-view-table td:nth-child(7) {
+  width: 190px;
+  max-width: 190px;
+}
+
+.contacts-view-table th,
+.contacts-view-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Star button */
+
+.contact-star-button {
+  width: 30px;
+  height: 30px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: #a2a8b3;
+
+  font-size: 0.9rem;
+  cursor: pointer;
+
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.contact-star-button:hover {
+  background: #fff8e8;
+  border-color: #eadcae;
+  color: #c98716;
+}
+
+.contact-star-button.active {
+  background: #fff4dc;
+  border-color: #eadcae;
+  color: #c98716;
+}
+
+/* Pinned / starred row states */
+
+.contacts-view-table tbody tr.contacts-view-row-starred td {
+  background: #fffaf0;
+}
+
+.contacts-view-table tbody tr.contacts-view-row-pinned td {
+  background: #f6f4ff;
+}
+
+.contacts-view-table tbody tr.contacts-view-row-starred:hover td {
+  background: #fff6e4;
+}
+
+.contacts-view-table tbody tr.contacts-view-row-pinned:hover td {
+  background: #f0edfa;
+}
+
+.contacts-view-row-starred td:first-child {
+  border-left: 4px solid #c98716;
+}
+
+.contacts-view-row-pinned td:first-child {
+  border-left: 4px solid #443a9c;
+}
+
+/* Contact name cell */
+
+.contacts-view-name-cell {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contacts-view-name-cell strong {
+  min-width: 0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-pinned-chip {
+  flex: 0 0 auto;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  min-height: 22px;
+  padding: 0 7px;
+
+  border-radius: 6px;
+  border: 1px solid #d7d1f0;
+  background: #f0edfa;
+  color: #443a9c;
+
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.contact-pinned-chip svg {
+  font-size: 0.64rem;
+}
+
+/* Row actions */
+
+.contacts-view-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contact-pin-button {
+  min-height: 28px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 0 9px;
+
+  border-radius: 7px;
+  border: 1px solid #dfe4ec;
+  background: #ffffff;
+  color: #565d6b;
+
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.contact-pin-button:hover {
+  border-color: #c9c4e8;
+  background: #f7f5ff;
+  color: #443a9c;
+}
+
+.contact-pin-button.active {
+  border-color: #c9c4e8;
+  background: #f0edfa;
+  color: #443a9c;
+}
+
+.contacts-view-actions .table-link {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .contacts-view-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .contacts-view-table {
+    min-width: 980px;
+  }
+}
 
 
 
