@@ -10693,3 +10693,171 @@ body,
     width: 100%;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Sidebar Form/Dashboard Toggle
+========================================================= */
+
+.sidebar-app-switcher {
+  padding: 0 14px 14px;
+  border-bottom: 1px solid #edf0f4;
+  margin-bottom: 12px;
+}
+
+.sidebar-app-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  background: #f6f7f9;
+}
+
+.sidebar-app-toggle-button {
+  min-width: 0;
+  min-height: 36px;
+
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #5f6675;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 650;
+
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.sidebar-app-toggle-button:hover {
+  background: #ffffff;
+  color: #443a9c;
+}
+
+.sidebar-app-toggle-button.active {
+  background: #443a9c;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(68, 58, 156, 0.18);
+}
+
+.sidebar-app-toggle-button svg {
+  flex: 0 0 auto;
+  font-size: 0.86rem;
+}
+
+.sidebar-app-toggle-button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Make sidebar active links consistent */
+.sidebar-link-active {
+  background: #f5f4fb;
+  color: #443a9c;
+  font-weight: 650;
+}
+
+/* =========================================================
+   Form inside dashboard shell
+========================================================= */
+
+.dashboard-form-view {
+  min-width: 0;
+}
+
+.dashboard-form-view .rental-page {
+  min-height: auto;
+  padding: 0;
+  background: transparent;
+}
+
+.dashboard-form-view .rental-card {
+  max-width: 980px;
+  margin: 0;
+  border-radius: 10px;
+  border-color: #dfe4ec;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+}
+
+.dashboard-form-view .rental-header h1 {
+  font-size: clamp(1.75rem, 2.6vw, 2.35rem);
+  font-weight: 700;
+}
+
+.dashboard-form-view .rental-header p {
+  color: #858c9b;
+}
+
+.dashboard-form-view .form-actions button {
+  border-radius: 8px;
+  background: #443a9c;
+  box-shadow: none;
+}
+
+.dashboard-form-view .form-actions button:hover {
+  background: #382f86;
+  box-shadow: 0 10px 20px rgba(68, 58, 156, 0.16);
+}
+
+/* Collapsed sidebar version */
+.dashboard-sidebar-collapsed .sidebar-app-switcher {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.dashboard-sidebar-collapsed .sidebar-app-toggle {
+  grid-template-columns: 1fr;
+  padding: 4px;
+}
+
+.dashboard-sidebar-collapsed .sidebar-app-toggle-button {
+  min-height: 38px;
+  padding: 0;
+}
+
+.dashboard-sidebar-collapsed .sidebar-app-toggle-button span {
+  display: none;
+}
+
+.dashboard-sidebar-collapsed .sidebar-app-toggle-button svg {
+  font-size: 1rem;
+}
+
+@media (max-width: 720px) {
+  .sidebar-app-switcher {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .dashboard-form-view .rental-card {
+    max-width: 100%;
+  }
+}

@@ -54,7 +54,6 @@ export const sidebarSections = [
       { label: "Spreadsheet View", icon: FaTable },
       { label: "Contacts View", icon: FaUsers },
       { label: "Inquiry Pipeline", icon: FaClipboardList, hasBadge: true },
-      { label: "Add New Booking", icon: FaPlus },
     ],
   },
   {

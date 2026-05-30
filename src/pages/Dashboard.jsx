@@ -42,6 +42,8 @@ import DashboardTopbar from "../components/DashboardTopbar";
 import BookingCalendar from "../components/BookingCalendar";
 import BookingActivities from "../components/BookingActivities";
 
+import CreateBooking from "../pages/CreateBooking";
+
 import {
   monthNames,
   sidebarSections,
@@ -7500,6 +7502,10 @@ const getCalendarEventColor = (status) => {
       setIsSpreadsheetViewLoading(false);
     }
 
+    if (nextView !== "Form") {
+      setPublicInquiries(getSavedInquiries());
+    }
+
     setActiveView(nextView);
   };
 
@@ -7551,17 +7557,39 @@ const getCalendarEventColor = (status) => {
           </button>
         </div>
 
-        <button
-          className={
-            activeView === "Dashboard" ? "sidebar-active-button" : "sidebar-link"
-          }
-          type="button"
-          onClick={() => handleActiveViewChange("Dashboard")}
-          title="Dashboard"
-        >
-          <FaHome />
-          <span>Dashboard</span>
-        </button>
+        <div className="sidebar-app-switcher">
+          <div className="sidebar-app-toggle" aria-label="Main view toggle">
+            <button
+              className={`sidebar-app-toggle-button ${
+                activeView !== "Form" ? "active" : ""
+              }`}
+              type="button"
+              onClick={() => {
+                setSelectedBooking(null);
+                handleActiveViewChange("Dashboard");
+              }}
+              title="Dashboard"
+            >
+              <FaHome />
+              <span>Dashboard</span>
+            </button>
+
+            <button
+              className={`sidebar-app-toggle-button ${
+                activeView === "Form" ? "active" : ""
+              }`}
+              type="button"
+              onClick={() => {
+                setSelectedBooking(null);
+                handleActiveViewChange("Form");
+              }}
+              title="Form"
+            >
+              <FaClipboardList />
+              <span>Form</span>
+            </button>
+          </div>
+        </div>
 
         {sidebarSections.map((section) => (
           <div className="sidebar-section" key={section.label}>
@@ -7614,30 +7642,36 @@ const getCalendarEventColor = (status) => {
 
       <section className="dashboard-main">
 
-        <DashboardTopbar
-          activeView={activeView}
-          waitlistFileInputRef={waitlistFileInputRef}
-          masterFileInputRef={masterFileInputRef}
-          master2026FileInputRef={master2026FileInputRef}
-          importEverythingFileInputRef={importEverythingFileInputRef}
-          importDropdownRef={importDropdownRef}
-          isImportMenuOpen={isImportMenuOpen}
-          setIsImportMenuOpen={setIsImportMenuOpen}
-          handleImportWaitlistSpreadsheet={handleImportWaitlistSpreadsheet}
-          handleImportMasterSpreadsheet={handleImportMasterSpreadsheet}
-          handleImportMaster2026Spreadsheet={handleImportMaster2026Spreadsheet}
-          handleImportEverythingSpreadsheet={handleImportEverythingSpreadsheet}
-          openWaitlistImportPicker={openWaitlistImportPicker}
-          openMasterImportPicker={openMasterImportPicker}
-          openMaster2026ImportPicker={openMaster2026ImportPicker}
-          openEverythingImportPicker={openEverythingImportPicker}
-          exportInquiriesToSpreadsheet={exportInquiriesToSpreadsheet}
-          refreshInquiries={refreshInquiries}
-          deleteAllInquiries={deleteAllInquiries}
-        />
+        {activeView !== "Form" && (
+          <DashboardTopbar
+            activeView={activeView}
+            waitlistFileInputRef={waitlistFileInputRef}
+            masterFileInputRef={masterFileInputRef}
+            master2026FileInputRef={master2026FileInputRef}
+            importEverythingFileInputRef={importEverythingFileInputRef}
+            importDropdownRef={importDropdownRef}
+            isImportMenuOpen={isImportMenuOpen}
+            setIsImportMenuOpen={setIsImportMenuOpen}
+            handleImportWaitlistSpreadsheet={handleImportWaitlistSpreadsheet}
+            handleImportMasterSpreadsheet={handleImportMasterSpreadsheet}
+            handleImportMaster2026Spreadsheet={handleImportMaster2026Spreadsheet}
+            handleImportEverythingSpreadsheet={handleImportEverythingSpreadsheet}
+            openWaitlistImportPicker={openWaitlistImportPicker}
+            openMasterImportPicker={openMasterImportPicker}
+            openMaster2026ImportPicker={openMaster2026ImportPicker}
+            openEverythingImportPicker={openEverythingImportPicker}
+            exportInquiriesToSpreadsheet={exportInquiriesToSpreadsheet}
+            refreshInquiries={refreshInquiries}
+            deleteAllInquiries={deleteAllInquiries}
+          />
+        )}
         
 
-        {activeView === "Booking Detail" ? (
+        {activeView === "Form" ? (
+          <section className="dashboard-form-view">
+            <CreateBooking />
+          </section>
+        ) : activeView === "Booking Detail" ? (
           <BookingDetailView
             booking={selectedBooking}
             activeTab={bookingDetailTab}
