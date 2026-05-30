@@ -21,11 +21,15 @@ import {
   FaUsers,
   FaCalendarAlt,
   FaClipboardList,
-  FaPlus,
   FaChartBar,
   FaCog,
   FaUserShield,
   FaTable,
+  FaExclamationTriangle,
+  FaFileContract,
+  FaRegCalendarCheck,
+  FaClock,
+  FaTimes,
 } from "react-icons/fa";
 
 // Month labels used by calendar dropdowns, headings, and availability views.
@@ -342,3 +346,273 @@ export function getRetreatTypeConfig(rawType) {
 
   return RETREAT_TYPE_CONFIG.other;
 }
+
+
+
+
+
+
+// Dated inquiry date filter settings.
+// These control the date range dropdown on the dashboard Dated Inquiries card.
+export const DATED_INQUIRY_DATE_FILTER_STORAGE_KEY =
+  "toahNipiDatedInquiryDateFilter";
+
+export const DATED_INQUIRY_CUSTOM_START_STORAGE_KEY =
+  "toahNipiDatedInquiryCustomStartDate";
+
+export const DATED_INQUIRY_CUSTOM_END_STORAGE_KEY =
+  "toahNipiDatedInquiryCustomEndDate";
+
+export const datedInquiryDateFilterOptions = [
+  { value: "thisMonth", label: "This Month" },
+  { value: "allTime", label: "All Time" },
+  { value: "pastMonth", label: "Past Month" },
+  { value: "nextMonth", label: "Next Month" },
+  { value: "past90Days", label: "Past 90 Days" },
+  { value: "next90Days", label: "Next 90 Days" },
+  { value: "custom", label: "Custom Date Range" },
+];
+
+// Booking detail date display settings.
+// These control the Date Display modal on the Booking Detail page.
+export const BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY =
+  "toahNipiBookingDetailDateSettings";
+
+export const DEFAULT_BOOKING_DETAIL_DATE_SETTINGS = {
+  dateFormat: "numeric",
+  includeWeekday: false,
+};
+
+export const bookingDetailDateFormatOptions = [
+  {
+    value: "numeric",
+    label: "1/10/2025",
+    description: "Compact month/day/year format.",
+  },
+  {
+    value: "shortMonth",
+    label: "Jan 10, 2025",
+    description: "Clean readable short month format.",
+  },
+  {
+    value: "longMonth",
+    label: "January 10, 2025",
+    description: "Full written-out month format.",
+  },
+  {
+    value: "iso",
+    label: "2025-01-10",
+    description: "Spreadsheet/database-style ISO format.",
+  },
+  {
+    value: "original",
+    label: "Original saved value",
+    description: "Shows the raw value stored on the booking.",
+  },
+];
+
+// Contacts view localStorage keys.
+export const CONTACTS_VIEW_STARRED_STORAGE_KEY = "toahNipiStarredContacts";
+
+export const CONTACTS_VIEW_STARRED_FIRST_STORAGE_KEY =
+  "toahNipiContactsStarredFirst";
+
+// Inquiry pipeline column configuration.
+export const INQUIRY_PIPELINE_COLUMNS = [
+  {
+    key: "newInquiry",
+    label: "New Inquiry",
+    description: "Ready for initial staff review.",
+    icon: FaClipboardList,
+  },
+  {
+    key: "needsReview",
+    label: "Needs Review",
+    description: "Missing dates, contact info, guest count, room, or type.",
+    icon: FaExclamationTriangle,
+  },
+  {
+    key: "contractSent",
+    label: "Contract Sent",
+    description: "Waiting on contract response or confirmation.",
+    icon: FaFileContract,
+  },
+  {
+    key: "confirmed",
+    label: "Confirmed",
+    description: "Confirmed bookings with enough planning information.",
+    icon: FaRegCalendarCheck,
+  },
+  {
+    key: "waitlist",
+    label: "Waitlist",
+    description: "Waitlisted groups or waitlist imports.",
+    icon: FaClock,
+  },
+  {
+    key: "cancelled",
+    label: "Cancelled",
+    description: "Cancelled bookings kept for records.",
+    icon: FaTimes,
+  },
+];
+
+// Reports view settings.
+export const REPORTS_VIEW_SETTINGS_STORAGE_KEY = "toahNipiReportsViewSettings";
+
+export const DEFAULT_REPORTS_VIEW_SETTINGS = {
+  dateRange: "thisYear",
+  customStartDate: "",
+  customEndDate: "",
+  status: "all",
+  retreatType: "all",
+  sourceMode: "all",
+};
+
+export const reportsDateRangeOptions = [
+  { value: "thisMonth", label: "This Month" },
+  { value: "nextMonth", label: "Next Month" },
+  { value: "thisYear", label: "This Year" },
+  { value: "nextYear", label: "Next Year" },
+  { value: "allTime", label: "All Time" },
+  { value: "custom", label: "Custom Date Range" },
+];
+
+// Spreadsheet view settings.
+export const SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY =
+  "toahNipiSpreadsheetViewSettings";
+
+export const SPREADSHEET_ESSENTIAL_COLUMN_LABELS = new Set([
+  "Organization",
+  "Input Method",
+  "Status",
+  "Contact Name",
+  "Email",
+  "Phone",
+  "Date Range",
+  "Guest Count",
+  "Retreat Type",
+  "Waitlist",
+  "Assigned Room / Area",
+  "Notes",
+]);
+
+export const SPREADSHEET_2026_STANDARD_LABELS = new Set([
+  "Stage of Group",
+  "Min Paying Guests",
+  "Max Paying Guests",
+  "Guest Rate",
+  "Expected Minimum Revenue",
+  "Invoice Lodging / Meals",
+  "Deposit",
+  "Deposit Received",
+  "Date of Cancellation",
+  "Reason for Cancellation",
+  "Vacancy Filled",
+  "Monthly Projected Income",
+]);
+
+export const SPREADSHEET_SHARED_STANDARD_LABELS = new Set([
+  "Organization",
+  "Input Method",
+  "Source Sheet",
+  "Source Row",
+  "Status",
+  "Submitted",
+  "Contact Name",
+  "Email",
+  "Phone",
+  "Start Date",
+  "End Date",
+  "Date Range",
+  "Guest Count",
+  "Retreat Type",
+  "Assigned Room / Area",
+  "Buildings / Rooms",
+  "Meals",
+  "# Meals",
+  "Food Allergies",
+  "Need To Know",
+  "Linen Sets",
+  "Activities",
+  "# Persons",
+  "# Nights",
+  "Camper Days",
+  "Usage Fee",
+  "$ Lodging",
+  "$ Food",
+  "$ Misc.",
+  "Returning Status",
+  "Notes",
+  "Booking ID",
+]);
+
+export const SPREADSHEET_2025_RAW_COLUMNS = new Set([
+  "Arrival Date",
+  "Departure Date",
+  "Guest Group Name",
+  "Contact Person",
+  "Contact Person Cell #",
+  "Contact Person Cell",
+  "Actual Number of Guests",
+  "Food Allergies",
+]);
+
+export const SPREADSHEET_2026_RAW_COLUMNS = new Set([
+  "name",
+  "Name",
+  "Group Leader/Contact Person",
+  "Group Leader",
+  "Phone",
+  "Estimated Number of Guests",
+  "Allergies",
+  "Contact Person Email",
+  "Stage of Group",
+  "Min. Number of Paying Guests",
+  "Minimum Number of Paying Guests",
+  "Max. Number of Paying Guests",
+  "Maximum Number of Paying Guests",
+  "Guest Rate",
+  "Exp. Minimum Revenue for Lodging/Meals",
+  "Expected Minimum Revenue for Lodging/Meals",
+  "Invoice for Lodging/Meals (does not include linens's fees or other service fees)",
+  "Invoice for Lodging/Meals",
+  "Deposit",
+  "Deposit Received",
+  "Date of Cancellation",
+  "Reason for Cancellation",
+  "Vacancy filled by another group?",
+  "Vacancy Filled By Another Group?",
+  "Monthly Sum of Projected Income",
+]);
+
+export const SPREADSHEET_SHARED_RAW_COLUMNS = new Set([
+  "Guest Group Type",
+  "Returning (R) or New (N)",
+  "Returning or New",
+  "Buildings/Rooms",
+  "Buildings",
+  "Rooms",
+  "Meals",
+  "Need to know",
+  "Need To Know",
+  "Linen Sets",
+  "Activities",
+  "#Persons",
+  "Persons",
+  "#Nights",
+  "Nights",
+  "#Meals",
+  "Meals Count",
+  "Camper Days (nightsX0.4 + mealsX0.2)",
+  "Camper Days",
+  "Usage Fee",
+  "$ Lodging",
+  "Lodging",
+  "$ Food",
+  "Food",
+  "$ Misc",
+  "$ Misc.",
+  "Misc",
+  "Notes",
+]);
