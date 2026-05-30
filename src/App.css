@@ -1683,282 +1683,6 @@ textarea {
 
 
 
-
-/* Activity Location Availability */
-
-.activity-availability-card {
-  margin-top: 26px;
-  overflow: visible;
-}
-
-.activity-availability-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 24px 24px 12px;
-}
-
-.activity-availability-header h2 {
-  margin: 0;
-  color: #2d303c;
-  font-size: 1.28rem;
-  letter-spacing: -0.02em;
-}
-
-.activity-availability-header p {
-  margin: 6px 0 0;
-  color: #8a90a0;
-  font-size: 0.92rem;
-}
-
-.activity-availability-toolbar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  padding: 4px 24px 14px;
-}
-
-.activity-availability-toolbar button {
-  width: 34px;
-  height: 34px;
-  border: 1px solid #dde1ea;
-  border-radius: 9px;
-  background: #ffffff;
-  color: #443a9c;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.activity-availability-toolbar button:hover {
-  background: #f6f5ff;
-}
-
-.activity-availability-toolbar strong {
-  color: #2f3240;
-  font-size: 0.95rem;
-}
-
-.activity-availability-scroll {
-  padding: 0 24px 24px;
-  overflow-x: auto;
-  overflow-y: visible;
-}
-
-.activity-availability-grid {
-  display: grid;
-  min-width: 1180px;
-  border: 1px solid #e1e5ec;
-  background: #ffffff;
-}
-
-.activity-location-heading,
-.activity-location-spacer,
-.activity-weekday-cell,
-.activity-day-number-cell,
-.activity-location-name,
-.activity-day-cell {
-  border-right: 1px solid #e1e5ec;
-  border-bottom: 1px solid #e1e5ec;
-}
-
-.activity-location-heading {
-  grid-row: span 2;
-  position: sticky;
-  left: 0;
-  z-index: 6;
-
-  display: flex;
-  align-items: center;
-
-  padding: 0 14px;
-  background: #ffffff;
-  color: #4f5564;
-  font-size: 0.84rem;
-  font-weight: 700;
-}
-
-.activity-location-spacer {
-  display: none;
-}
-
-.activity-weekday-cell,
-.activity-day-number-cell {
-  min-height: 30px;
-  display: grid;
-  place-items: center;
-
-  background: #fbfcfd;
-  color: #7a8090;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.activity-day-number-cell {
-  background: #ffffff;
-  color: #4f5564;
-}
-
-.activity-location-name {
-  position: sticky;
-  left: 0;
-  z-index: 5;
-
-  min-height: 32px;
-  display: flex;
-  align-items: center;
-
-  padding: 0 14px;
-  background: #ffffff;
-  color: #4f5564;
-  font-size: 0.84rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.activity-day-cell {
-  position: relative;
-  min-height: 32px;
-  background: #ffffff;
-}
-
-.activity-day-booked {
-  cursor: default;
-}
-
-.activity-day-booked.calendar-event-green {
-  background: #2f6f5f;
-}
-
-.activity-day-booked.calendar-event-purple {
-  background: #4f46a5;
-}
-
-.activity-day-booked.calendar-event-blue {
-  background: #4c65a9;
-}
-
-.activity-day-booked.calendar-event-teal {
-  background: #377d7a;
-}
-
-.activity-day-booked.calendar-event-pink {
-  background: #c87b8e;
-}
-
-.activity-day-booked.calendar-event-gold {
-  background: #d5aa3f;
-}
-
-.activity-day-continues-before {
-  border-left-color: transparent;
-}
-
-.activity-day-continues-after {
-  border-right-color: transparent;
-}
-
-.activity-availability-tooltip {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 8px);
-  z-index: 9999;
-
-  width: 250px;
-  padding: 12px;
-
-  background: #ffffff;
-  border: 1px solid #e1e5ec;
-  border-radius: 13px;
-  box-shadow: 0 16px 34px rgba(28, 35, 52, 0.18);
-
-  color: #2f3240;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(-50%) translateY(4px);
-  pointer-events: none;
-
-  transition:
-    opacity 140ms ease,
-    visibility 140ms ease,
-    transform 140ms ease;
-}
-
-.activity-day-booked:hover .activity-availability-tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-
-.activity-availability-tooltip::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -6px;
-
-  width: 12px;
-  height: 12px;
-
-  background: #ffffff;
-  border-right: 1px solid #e1e5ec;
-  border-bottom: 1px solid #e1e5ec;
-  transform: translateX(-50%) rotate(45deg);
-}
-
-.activity-availability-tooltip strong {
-  display: block;
-  color: #242735;
-  font-size: 0.88rem;
-  line-height: 1.25;
-}
-
-.activity-availability-tooltip span {
-  display: inline-flex;
-  width: fit-content;
-  margin-top: 7px;
-  border-radius: 999px;
-  padding: 4px 8px;
-  background: #f0edfa;
-  color: #443a9c;
-  font-size: 0.68rem;
-  font-weight: 700;
-}
-
-.activity-availability-tooltip p {
-  margin: 9px 0 4px;
-  color: #4f5564;
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-
-.activity-availability-tooltip small {
-  display: block;
-  color: #8c93a3;
-  font-size: 0.76rem;
-}
-
-.activity-availability-tooltip em {
-  display: block;
-  margin-top: 8px;
-  color: #8c93a3;
-  font-size: 0.72rem;
-  font-style: normal;
-  font-weight: 700;
-}
-
-@media (max-width: 720px) {
-  .activity-availability-header {
-    flex-direction: column;
-  }
-
-  .activity-availability-grid {
-    min-width: 980px;
-  }
-}
-
-
-
 /* Toggleable Availability Board */
 
 .availability-card {
@@ -2901,219 +2625,6 @@ body,
 
 
 
-
-
-
-
-
-
-
-
-/* =========================================================
-   Booking Detail Contacts Section
-========================================================= */
-
-.booking-contacts-card {
-  padding: 0;
-  overflow: hidden;
-}
-
-.booking-contacts-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 24px 24px 22px;
-}
-
-.booking-contacts-header h3 {
-  margin: 0;
-  color: #242735;
-  font-size: 1.35rem;
-  letter-spacing: -0.03em;
-}
-
-.booking-contacts-header p {
-  margin: 7px 0 0;
-  color: #2f3240;
-  font-size: 0.88rem;
-  font-weight: 700;
-}
-
-.booking-contacts-table-wrap {
-  width: 100%;
-  overflow-x: auto;
-}
-
-.booking-contacts-table {
-  width: 100%;
-  min-width: 980px;
-  border-collapse: collapse;
-}
-
-.booking-contacts-table th {
-  background: #f4f5f8;
-  color: #3f4351;
-  padding: 14px 16px;
-  text-align: left;
-  font-size: 0.76rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-.booking-contacts-table td {
-  padding: 14px 16px;
-  border-top: 1px solid #edf0f4;
-  color: #3f4351;
-  font-size: 0.92rem;
-  vertical-align: middle;
-}
-
-.booking-contact-name-button {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  color: #4f46a5;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.booking-contact-name-button:hover {
-  text-decoration: underline;
-}
-
-.booking-contact-email-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.booking-contact-email-row span {
-  color: #303442;
-  font-weight: 600;
-}
-
-.contact-small-action,
-.contact-invite-button {
-  min-height: 28px;
-  border-radius: 999px;
-  padding: 0 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font: inherit;
-  font-size: 0.72rem;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.contact-small-action {
-  border: 1px solid #b9b4df;
-  background: #ffffff;
-  color: #443a9c;
-}
-
-.contact-small-action:hover {
-  background: #f7f5ff;
-}
-
-.contact-invite-button {
-  border: 0;
-  background: #443a9c;
-  color: #ffffff;
-}
-
-.contact-invite-button:hover {
-  background: #382f86;
-}
-
-.contact-type-list {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.contact-type-pill {
-  min-height: 32px;
-  border: 1px solid #b9b4df;
-  border-radius: 999px;
-  padding: 0 8px 0 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  background: #ffffff;
-  color: #443a9c;
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.contact-type-pill button {
-  width: 18px;
-  height: 18px;
-  border: 0;
-  border-radius: 999px;
-  display: inline-grid;
-  place-items: center;
-  background: #443a9c;
-  color: #ffffff;
-  font-size: 0.58rem;
-  cursor: pointer;
-}
-
-.contact-type-add-button {
-  width: 30px;
-  height: 30px;
-  border: 0;
-  border-radius: 999px;
-  display: inline-grid;
-  place-items: center;
-  background: #443a9c;
-  color: #ffffff;
-  font-size: 0.72rem;
-  cursor: pointer;
-}
-
-.contact-type-add-button:hover,
-.contact-type-pill button:hover {
-  background: #382f86;
-}
-
-.contact-delete-button {
-  width: 38px;
-  height: 38px;
-  border: 1px solid #efcaca;
-  border-radius: 9px;
-  display: inline-grid;
-  place-items: center;
-  background: #fffafa;
-  color: #b44444;
-  cursor: pointer;
-}
-
-.contact-delete-button:hover {
-  background: #fff1f1;
-  color: #8d2f2f;
-}
-
-@media (max-width: 720px) {
-  .booking-contacts-header {
-    flex-direction: column;
-  }
-
-  .booking-contacts-header .primary-dashboard-button {
-    width: 100%;
-  }
-
-  .booking-contacts-table {
-    min-width: 900px;
-  }
-}
-
 /* =========================================================
    Booking Detail Overview Layout Adjustments
 ========================================================= */
@@ -3604,426 +3115,6 @@ body,
 
 
 
-
-
-
-
-
-
-/* =========================================================
-   Booking Detail Redesign
-   Cleaner, less busy, all font weights below 800
-========================================================= */
-
-.booking-detail-redesign {
-  display: grid;
-  gap: 18px;
-}
-
-.booking-detail-hero-clean {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 18px;
-
-  padding: 20px;
-  border: 1px solid #e3e7ee;
-  border-radius: 22px;
-  background:
-    linear-gradient(135deg, rgba(92, 111, 70, 0.08), rgba(255, 255, 255, 0) 48%),
-    #ffffff;
-  box-shadow: 0 12px 28px rgba(28, 35, 52, 0.055);
-}
-
-.booking-detail-hero-main {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.booking-detail-hero-icon {
-  width: 48px;
-  height: 48px;
-  flex: 0 0 48px;
-  border-radius: 16px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  background: #eef1ea;
-  color: #5c6f46;
-  font-size: 1.12rem;
-}
-
-.booking-detail-kicker {
-  margin: 0 0 4px;
-  color: #7f8796;
-  font-size: 0.76rem;
-  font-weight: 650;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.booking-detail-hero-clean h2 {
-  margin: 0;
-  color: #252936;
-  font-size: clamp(1.35rem, 2.2vw, 1.95rem);
-  font-weight: 700;
-  letter-spacing: -0.035em;
-  line-height: 1.12;
-}
-
-.booking-detail-meta-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  margin-top: 9px;
-}
-
-.booking-detail-meta-row span {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-
-  color: #6f7687;
-  font-size: 0.86rem;
-  font-weight: 550;
-  line-height: 1.2;
-}
-
-.booking-detail-meta-row svg {
-  color: #7d8a6d;
-  font-size: 0.82rem;
-}
-
-.booking-detail-back-button {
-  min-height: 40px;
-  border-radius: 999px;
-  font-weight: 650;
-}
-
-.booking-detail-status,
-.booking-mini-status,
-.booking-soft-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  min-height: 30px;
-  width: fit-content;
-  border-radius: 999px;
-  padding: 0 12px;
-
-  font-size: 0.74rem;
-  font-weight: 650;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.booking-mini-status,
-.booking-soft-pill {
-  border: 1px solid #d9dee8;
-  background: #ffffff;
-  color: #5d6575;
-}
-
-.booking-detail-tabs-clean {
-  padding: 0 2px;
-  border-bottom: 1px solid #dfe3ea;
-}
-
-.booking-detail-tabs-clean button {
-  padding: 13px 16px;
-  color: #737b8c;
-  font-size: 0.88rem;
-  font-weight: 650;
-}
-
-.booking-detail-tabs-clean button.active {
-  color: #443a9c;
-}
-
-.booking-detail-clean-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-  gap: 18px;
-  align-items: stretch;
-}
-
-.booking-panel-clean {
-  min-width: 0;
-  padding: 20px;
-
-  background: #ffffff;
-  border: 1px solid #e4e8ef;
-  border-radius: 20px;
-  box-shadow: 0 10px 26px rgba(28, 35, 52, 0.045);
-}
-
-.booking-panel-main,
-.booking-panel-financials {
-  min-height: 100%;
-}
-
-.detail-card-header-clean {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 18px;
-}
-
-.detail-card-title-clean {
-  min-width: 0;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.detail-card-title-clean h3 {
-  margin: 0;
-  color: #262a37;
-  font-size: 1.08rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1.2;
-}
-
-.detail-card-title-clean p {
-  margin: 4px 0 0;
-  color: #858c9b;
-  font-size: 0.85rem;
-  font-weight: 450;
-  line-height: 1.35;
-}
-
-.detail-card-icon-clean {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  border-radius: 12px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  background: #f0f3ec;
-  color: #5c6f46;
-  font-size: 0.88rem;
-}
-
-.detail-card-action-clean {
-  flex: 0 0 auto;
-}
-
-.detail-field-grid-clean {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 15px 18px;
-}
-
-.detail-stack-clean {
-  display: grid;
-  gap: 14px;
-}
-
-.detail-field-clean {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
-}
-
-.detail-field-icon-clean {
-  width: 28px;
-  height: 28px;
-  margin-top: 1px;
-  border-radius: 9px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  background: #f4f6f1;
-  color: #6d7b5d;
-  font-size: 0.74rem;
-}
-
-.detail-field-clean-warning .detail-field-icon-clean {
-  background: #fff5df;
-  color: #a36f10;
-}
-
-.detail-field-clean small {
-  display: block;
-  margin-bottom: 3px;
-
-  color: #818998;
-  font-size: 0.76rem;
-  font-weight: 650;
-  line-height: 1.2;
-}
-
-.detail-field-clean strong {
-  display: block;
-  min-width: 0;
-
-  color: #303442;
-  font-size: 0.92rem;
-  font-weight: 650;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
-
-.financial-clean-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.financial-clean-grid div {
-  min-width: 0;
-  padding: 14px;
-  border: 1px solid #edf0f4;
-  border-radius: 14px;
-  background: #fbfcfd;
-}
-
-.financial-clean-grid small {
-  display: block;
-  margin-bottom: 6px;
-  color: #818998;
-  font-size: 0.76rem;
-  font-weight: 650;
-}
-
-.financial-clean-grid strong {
-  color: #303442;
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.booking-detail-clean-row {
-  grid-column: 1 / -1;
-
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.booking-header-link {
-  border: 0;
-  background: transparent;
-  color: #443a9c;
-  padding: 0;
-  font: inherit;
-  font-size: 0.86rem;
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.booking-header-link:hover {
-  text-decoration: underline;
-}
-
-.booking-notes-panel {
-  grid-column: 1 / -1;
-}
-
-.booking-notes-panel p {
-  margin: 0;
-  color: #4f5564;
-  font-size: 0.93rem;
-  font-weight: 450;
-  line-height: 1.65;
-}
-
-/* Make contacts card match the redesigned detail page */
-.booking-detail-redesign .booking-contacts-card {
-  grid-column: 1 / -1;
-  border-radius: 20px;
-  border-color: #e4e8ef;
-  box-shadow: 0 10px 26px rgba(28, 35, 52, 0.045);
-}
-
-.booking-detail-redesign .booking-contacts-header {
-  padding: 20px;
-}
-
-.booking-detail-redesign .booking-contacts-header h3 {
-  font-size: 1.08rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-}
-
-.booking-detail-redesign .booking-contacts-header p {
-  color: #858c9b;
-  font-size: 0.85rem;
-  font-weight: 450;
-}
-
-.booking-detail-redesign .booking-contacts-table th {
-  font-weight: 650;
-}
-
-.booking-detail-redesign .booking-contact-name-button,
-.booking-detail-redesign .booking-contact-email-row span,
-.booking-detail-redesign .contact-small-action,
-.booking-detail-redesign .contact-invite-button,
-.booking-detail-redesign .contact-type-pill {
-  font-weight: 650;
-}
-
-/* This prevents older icon-heavy styles from taking over */
-.booking-detail-redesign .booking-detail-card-icon,
-.booking-detail-redesign .booking-info-icon,
-.booking-detail-redesign .booking-info-item {
-  all: unset;
-}
-
-/* Responsive */
-@media (max-width: 1180px) {
-  .booking-detail-clean-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .booking-detail-clean-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 720px) {
-  .booking-detail-hero-clean {
-    grid-template-columns: 1fr;
-    padding: 18px;
-  }
-
-  .booking-detail-hero-main {
-    align-items: flex-start;
-  }
-
-  .booking-detail-status {
-    justify-self: start;
-  }
-
-  .detail-field-grid-clean,
-  .financial-clean-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .booking-panel-clean {
-    padding: 18px;
-  }
-
-  .detail-card-header-clean {
-    flex-direction: column;
-  }
-}
 
 
 /* =========================================================
@@ -5117,6 +4208,102 @@ body,
 .dashboard-logo small {
   color: #858c9b;
   font-size: 0.74rem;
+}
+
+/* =========================================================
+   Sidebar App Toggle: Dashboard / Form
+========================================================= */
+
+.sidebar-app-switcher {
+  padding: 0 14px 14px;
+  border-bottom: 1px solid #edf0f4;
+  margin-bottom: 14px;
+}
+
+.sidebar-app-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+
+  padding: 4px;
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  background: #f7f8fb;
+}
+
+.sidebar-app-toggle-button {
+  min-width: 0;
+  min-height: 38px;
+
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #687083;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  padding: 0 10px;
+
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+
+  cursor: pointer;
+  white-space: nowrap;
+
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.sidebar-app-toggle-button:hover {
+  background: #ffffff;
+  color: #443a9c;
+}
+
+.sidebar-app-toggle-button.active {
+  background: #443a9c;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(68, 58, 156, 0.16);
+}
+
+.sidebar-app-toggle-button svg {
+  flex: 0 0 auto;
+  font-size: 0.9rem;
+}
+
+.dashboard-sidebar-collapsed .sidebar-app-switcher {
+  padding: 0;
+  border-bottom: 0;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-sidebar-collapsed .sidebar-app-toggle {
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.dashboard-sidebar-collapsed .sidebar-app-toggle-button {
+  width: 100%;
+  min-height: 48px;
+  padding: 0;
+  border-radius: 10px;
+}
+
+.dashboard-sidebar-collapsed .sidebar-app-toggle-button span {
+  display: none;
+}
+
+.dashboard-sidebar-collapsed .sidebar-app-toggle-button svg {
+  font-size: 1.2rem;
 }
 
 .sidebar-active-button,
@@ -8230,7 +7417,7 @@ body,
 }
 
 /* =========================================================
-   Contacts View - Starred + Pinned Contacts
+   Contacts View - Starred
 ========================================================= */
 
 .contacts-view-toolbar {
@@ -8378,25 +7565,16 @@ body,
   background: #fffaf0;
 }
 
-.contacts-view-table tbody tr.contacts-view-row-pinned td {
-  background: #f6f4ff;
-}
 
 .contacts-view-table tbody tr.contacts-view-row-starred:hover td {
   background: #fff6e4;
 }
 
-.contacts-view-table tbody tr.contacts-view-row-pinned:hover td {
-  background: #f0edfa;
-}
 
 .contacts-view-row-starred td:first-child {
   border-left: 4px solid #c98716;
 }
 
-.contacts-view-row-pinned td:first-child {
-  border-left: 4px solid #443a9c;
-}
 
 /* Contact name cell */
 
@@ -8416,30 +7594,6 @@ body,
   white-space: nowrap;
 }
 
-.contact-pinned-chip {
-  flex: 0 0 auto;
-
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-
-  min-height: 22px;
-  padding: 0 7px;
-
-  border-radius: 6px;
-  border: 1px solid #d7d1f0;
-  background: #f0edfa;
-  color: #443a9c;
-
-  font-size: 0.68rem;
-  font-weight: 650;
-  line-height: 1;
-}
-
-.contact-pinned-chip svg {
-  font-size: 0.64rem;
-}
-
 /* Row actions */
 
 .contacts-view-actions {
@@ -8448,43 +7602,6 @@ body,
   gap: 8px;
 }
 
-.contact-pin-button {
-  min-height: 28px;
-
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-
-  padding: 0 9px;
-
-  border-radius: 7px;
-  border: 1px solid #dfe4ec;
-  background: #ffffff;
-  color: #565d6b;
-
-  font: inherit;
-  font-size: 0.74rem;
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition:
-    background-color 140ms ease,
-    border-color 140ms ease,
-    color 140ms ease;
-}
-
-.contact-pin-button:hover {
-  border-color: #c9c4e8;
-  background: #f7f5ff;
-  color: #443a9c;
-}
-
-.contact-pin-button.active {
-  border-color: #c9c4e8;
-  background: #f0edfa;
-  color: #443a9c;
-}
 
 .contacts-view-actions .table-link {
   white-space: nowrap;
@@ -10708,156 +9825,3 @@ body,
 
 
 
-
-
-
-/* =========================================================
-   Sidebar Form/Dashboard Toggle
-========================================================= */
-
-.sidebar-app-switcher {
-  padding: 0 14px 14px;
-  border-bottom: 1px solid #edf0f4;
-  margin-bottom: 12px;
-}
-
-.sidebar-app-toggle {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  padding: 4px;
-  border: 1px solid #dfe4ec;
-  border-radius: 10px;
-  background: #f6f7f9;
-}
-
-.sidebar-app-toggle-button {
-  min-width: 0;
-  min-height: 36px;
-
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: #5f6675;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 650;
-
-  cursor: pointer;
-  transition:
-    background-color 150ms ease,
-    color 150ms ease,
-    box-shadow 150ms ease;
-}
-
-.sidebar-app-toggle-button:hover {
-  background: #ffffff;
-  color: #443a9c;
-}
-
-.sidebar-app-toggle-button.active {
-  background: #443a9c;
-  color: #ffffff;
-  box-shadow: 0 8px 18px rgba(68, 58, 156, 0.18);
-}
-
-.sidebar-app-toggle-button svg {
-  flex: 0 0 auto;
-  font-size: 0.86rem;
-}
-
-.sidebar-app-toggle-button span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Make sidebar active links consistent */
-.sidebar-link-active {
-  background: #f5f4fb;
-  color: #443a9c;
-  font-weight: 650;
-}
-
-/* =========================================================
-   Form inside dashboard shell
-========================================================= */
-
-.dashboard-form-view {
-  min-width: 0;
-}
-
-.dashboard-form-view .rental-page {
-  min-height: auto;
-  padding: 0;
-  background: transparent;
-}
-
-.dashboard-form-view .rental-card {
-  max-width: 980px;
-  margin: 0;
-  border-radius: 10px;
-  border-color: #dfe4ec;
-  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
-}
-
-.dashboard-form-view .rental-header h1 {
-  font-size: clamp(1.75rem, 2.6vw, 2.35rem);
-  font-weight: 700;
-}
-
-.dashboard-form-view .rental-header p {
-  color: #858c9b;
-}
-
-.dashboard-form-view .form-actions button {
-  border-radius: 8px;
-  background: #443a9c;
-  box-shadow: none;
-}
-
-.dashboard-form-view .form-actions button:hover {
-  background: #382f86;
-  box-shadow: 0 10px 20px rgba(68, 58, 156, 0.16);
-}
-
-/* Collapsed sidebar version */
-.dashboard-sidebar-collapsed .sidebar-app-switcher {
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.dashboard-sidebar-collapsed .sidebar-app-toggle {
-  grid-template-columns: 1fr;
-  padding: 4px;
-}
-
-.dashboard-sidebar-collapsed .sidebar-app-toggle-button {
-  min-height: 38px;
-  padding: 0;
-}
-
-.dashboard-sidebar-collapsed .sidebar-app-toggle-button span {
-  display: none;
-}
-
-.dashboard-sidebar-collapsed .sidebar-app-toggle-button svg {
-  font-size: 1rem;
-}
-
-@media (max-width: 720px) {
-  .sidebar-app-switcher {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  .dashboard-form-view .rental-card {
-    max-width: 100%;
-  }
-}
