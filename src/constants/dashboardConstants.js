@@ -169,12 +169,7 @@ export const bookingDetailTabs = [
   "Housing",
   "Activities",
   "Checklists",
-  "Emails & Documents",
-  "Invoices",
-  "Attendee Rental Page",
-  "Attendee Details",
 ];
-
 
 // Dated inquiry dashboard display settings.
 // These are used by the Dated Inquiries card on the dashboard.
