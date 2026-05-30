@@ -5193,7 +5193,6 @@ const toggleContactStar = (contactId) => {
                   const rowClassName = [
                     "contacts-view-row",
                     contact.isStarred ? "contacts-view-row-starred" : "",
-                    contact.isPinned ? "contacts-view-row-pinned" : "",
                   ]
                     .filter(Boolean)
                     .join(" ");
@@ -5222,12 +5221,6 @@ const toggleContactStar = (contactId) => {
                         <div className="contacts-view-name-cell">
                           <strong>{contact.contactName}</strong>
 
-                          {contact.isPinned && (
-                            <span className="contact-pinned-chip">
-                              <FaThumbtack />
-                              Pinned
-                            </span>
-                          )}
                         </div>
                       </td>
 
@@ -5241,16 +5234,6 @@ const toggleContactStar = (contactId) => {
 
                       <td>
                         <div className="contacts-view-actions">
-                          <button
-                            className={`contact-pin-button ${
-                              contact.isPinned ? "active" : ""
-                            }`}
-                            type="button"
-                            onClick={() => toggleContactPin(contact.id)}
-                          >
-                            <FaThumbtack />
-                            {contact.isPinned ? "Unpin" : "Pin"}
-                          </button>
 
                           <button
                             className="table-link"
