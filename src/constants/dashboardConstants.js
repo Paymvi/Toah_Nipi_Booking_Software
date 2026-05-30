@@ -168,7 +168,7 @@ export const bookingDetailTabs = [
   "Rates",
   "Housing",
   "Activities",
-  "Notes & Tasks",
+  "Checklists",
   "Emails & Documents",
   "Invoices",
   "Attendee Rental Page",

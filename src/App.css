@@ -9825,3 +9825,422 @@ body,
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Booking Detail - Checklists Tab
+========================================================= */
+
+.booking-checklist-page {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.booking-checklist-card {
+  border-radius: 10px;
+  border-color: #dfe4ec;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+}
+
+.booking-checklist-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+
+  padding: 18px;
+  border-bottom: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+.booking-checklist-header h3 {
+  margin: 0;
+  color: #252936;
+  font-size: 1.08rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.booking-checklist-header span {
+  display: block;
+  margin-top: 5px;
+  color: #858c9b;
+  font-size: 0.84rem;
+  font-weight: 400;
+}
+
+.booking-checklist-add-form {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.booking-checklist-add-form input {
+  min-height: 38px;
+  min-width: 240px;
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #303442;
+  background: #ffffff;
+  font-size: 0.84rem;
+  outline: none;
+}
+
+.booking-checklist-add-form input:focus {
+  border-color: #443a9c;
+  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+}
+
+.booking-checklist-table-wrap,
+.booking-checklist-items-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  background: #ffffff;
+}
+
+.booking-checklist-table,
+.booking-checklist-items-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.booking-checklist-table {
+  min-width: 860px;
+}
+
+.booking-checklist-items-table {
+  min-width: 1080px;
+}
+
+.booking-checklist-table th,
+.booking-checklist-items-table th {
+  padding: 11px 14px;
+  background: #f6f7f9;
+  border-bottom: 1px solid #dfe4ec;
+  color: #565d6b;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+  white-space: nowrap;
+}
+
+.booking-checklist-table td,
+.booking-checklist-items-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #edf0f4;
+  color: #3f4351;
+  font-size: 0.86rem;
+  vertical-align: middle;
+}
+
+.booking-checklist-table tbody tr:hover,
+.booking-checklist-items-table tbody tr:hover {
+  background: #fbfcfd;
+}
+
+.booking-checklist-table td strong,
+.booking-checklist-items-table td strong {
+  color: #303442;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.booking-checklist-icon-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #c9c4e8;
+  border-radius: 7px;
+  display: inline-grid;
+  place-items: center;
+  background: #ffffff;
+  color: #443a9c;
+  cursor: pointer;
+}
+
+.booking-checklist-icon-button:hover {
+  background: #f7f5ff;
+}
+
+.booking-checklist-delete-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #efcaca;
+  border-radius: 7px;
+  display: inline-grid;
+  place-items: center;
+  background: #fffafa;
+  color: #b44444;
+  cursor: pointer;
+}
+
+.booking-checklist-delete-button:hover {
+  background: #fff1f1;
+  border-color: #e6abab;
+  color: #8d2f2f;
+}
+
+.booking-checklist-progress {
+  display: grid;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.booking-checklist-progress > div {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf0f4;
+}
+
+.booking-checklist-progress > div span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #5c6f46;
+}
+
+.booking-checklist-progress small {
+  color: #858c9b;
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+/* Modal */
+
+.booking-checklist-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+
+  display: grid;
+  place-items: center;
+
+  padding: 24px;
+  background: rgba(20, 23, 34, 0.52);
+}
+
+.booking-checklist-modal {
+  width: min(1420px, 100%);
+  max-height: min(840px, calc(100vh - 48px));
+
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+
+  overflow: hidden;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #dfe4ec;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.25);
+}
+
+.booking-checklist-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+
+  padding: 18px;
+  border-bottom: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+.booking-checklist-modal-header h3 {
+  margin: 0;
+  color: #252936;
+  font-size: 1.08rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.booking-checklist-modal-header p {
+  margin: 5px 0 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+}
+
+.booking-checklist-modal-close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  display: inline-grid;
+  place-items: center;
+  background: #ffffff;
+  color: #687083;
+  cursor: pointer;
+}
+
+.booking-checklist-modal-close:hover {
+  background: #f6f7f9;
+  color: #252936;
+}
+
+.booking-checklist-item-form {
+  display: grid;
+  grid-template-columns: 100px minmax(240px, 1fr) 170px 190px auto;
+  gap: 12px;
+  align-items: end;
+
+  padding: 14px 18px;
+  border-bottom: 1px solid #edf0f4;
+  background: #fbfcfd;
+}
+
+.booking-checklist-item-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.booking-checklist-item-form label span {
+  color: #687083;
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+
+.booking-checklist-item-form input {
+  min-height: 38px;
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #303442;
+  font-size: 0.84rem;
+  outline: none;
+}
+
+.booking-checklist-item-form input:focus {
+  border-color: #443a9c;
+  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+}
+
+.booking-checklist-item-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.booking-checklist-items-table-wrap {
+  overflow: auto;
+}
+
+.booking-checklist-items-table input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #443a9c;
+  cursor: pointer;
+}
+
+.booking-checklist-status-button {
+  min-height: 34px;
+  border: 1px solid #c9c4e8;
+  border-radius: 7px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #443a9c;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.booking-checklist-status-button:hover {
+  background: #f7f5ff;
+}
+
+.booking-checklist-status-button.completed {
+  border-color: #bbd9c5;
+  background: #effaf3;
+  color: #236b3a;
+}
+
+.checklist-item-completed td {
+  background: #fcfdfb;
+}
+
+.checklist-item-completed td strong {
+  color: #6f7687;
+  text-decoration: line-through;
+}
+
+.booking-checklist-empty-row {
+  padding: 16px;
+  border: 1px dashed #cfd6e1;
+  border-radius: 8px;
+  background: #fbfcfd;
+  color: #858c9b;
+  text-align: center;
+  font-size: 0.86rem;
+}
+
+.booking-checklist-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  padding: 14px 18px;
+  border-top: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+@media (max-width: 1100px) {
+  .booking-checklist-header {
+    flex-direction: column;
+  }
+
+  .booking-checklist-add-form {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .booking-checklist-add-form input {
+    flex: 1 1 240px;
+  }
+
+  .booking-checklist-item-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .booking-checklist-item-form-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .booking-checklist-modal-backdrop {
+    padding: 12px;
+  }
+
+  .booking-checklist-modal {
+    max-height: calc(100vh - 24px);
+  }
+
+  .booking-checklist-item-form {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-checklist-add-form input,
+  .booking-checklist-add-form button {
+    width: 100%;
+  }
+}

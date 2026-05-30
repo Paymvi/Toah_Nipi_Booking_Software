@@ -511,6 +511,8 @@ function normalizeInquiry(inquiry, index) {
       recreation: [],
     },
 
+    checklists: Array.isArray(inquiry.checklists) ? inquiry.checklists : null,
+
     persons: inquiry.persons || "",
     nights: inquiry.nights || "",
     mealCount: inquiry.mealCount || "",
@@ -2204,6 +2206,684 @@ function BookingDateSettingsModal({ settings, updateSettings, onClose }) {
   );
 }
 
+function slugifyChecklistId(value) {
+  return String(value || "booking")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+function createChecklistId(prefix = "checklist") {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function getChecklistDueDateFromStart(startDate, daysBefore) {
+  const date = getLocalDate(startDate);
+
+  if (!date) {
+    return "";
+  }
+
+  date.setDate(date.getDate() - daysBefore);
+  return formatDateForInput(date);
+}
+
+function buildDefaultBookingChecklists(booking) {
+  const baseId = slugifyChecklistId(booking.id || booking.organizationName);
+
+  return [
+    {
+      id: `${baseId}-rental-checklist`,
+      name: "Rental Checklist",
+      items: [
+        {
+          id: `${baseId}-work-order`,
+          sequence: 1,
+          title: "Create work order",
+          dueDate: getChecklistDueDateFromStart(booking.startDate, 120),
+          assignedTo: "",
+          completed: false,
+          completedAt: "",
+          completedBy: "",
+        },
+        {
+          id: `${baseId}-contact-group`,
+          sequence: 2,
+          title: "Contact group leader if details are missing",
+          dueDate: getChecklistDueDateFromStart(booking.startDate, 90),
+          assignedTo: "",
+          completed: false,
+          completedAt: "",
+          completedBy: "",
+        },
+        {
+          id: `${baseId}-confirm-housing`,
+          sequence: 3,
+          title: "Confirm housing / room assignments",
+          dueDate: getChecklistDueDateFromStart(booking.startDate, 60),
+          assignedTo: "",
+          completed: false,
+          completedAt: "",
+          completedBy: "",
+        },
+        {
+          id: `${baseId}-activity-choice`,
+          sequence: 4,
+          title: "Activity choice form due",
+          dueDate: getChecklistDueDateFromStart(booking.startDate, 45),
+          assignedTo: "",
+          completed: false,
+          completedAt: "",
+          completedBy: "",
+        },
+        {
+          id: `${baseId}-group-numbers`,
+          sequence: 5,
+          title: "Final group numbers due",
+          dueDate: getChecklistDueDateFromStart(booking.startDate, 30),
+          assignedTo: "",
+          completed: false,
+          completedAt: "",
+          completedBy: "",
+        },
+        {
+          id: `${baseId}-schedule-leaders`,
+          sequence: 6,
+          title: "Send preliminary schedule to leaders",
+          dueDate: getChecklistDueDateFromStart(booking.startDate, 21),
+          assignedTo: "",
+          completed: false,
+          completedAt: "",
+          completedBy: "",
+        },
+        {
+          id: `${baseId}-dietary-review`,
+          sequence: 7,
+          title: "Review food allergies and dietary needs",
+          dueDate: getChecklistDueDateFromStart(booking.startDate, 14),
+          assignedTo: "",
+          completed: false,
+          completedAt: "",
+          completedBy: "",
+        },
+      ],
+    },
+  ];
+}
+
+function getBookingChecklists(booking) {
+  if (Array.isArray(booking.checklists)) {
+    return booking.checklists;
+  }
+
+  return buildDefaultBookingChecklists(booking);
+}
+
+function getChecklistProgress(checklist) {
+  const items = Array.isArray(checklist.items) ? checklist.items : [];
+  const totalItems = items.length;
+  const completedItems = items.filter((item) => item.completed).length;
+
+  return {
+    totalItems,
+    completedItems,
+    percentage:
+      totalItems === 0 ? 0 : Math.round((completedItems / totalItems) * 100),
+  };
+}
+
+function sortChecklistItems(items) {
+  return [...(items || [])].sort(
+    (a, b) => Number(a.sequence || 0) - Number(b.sequence || 0)
+  );
+}
+
+function createEmptyChecklistItemForm(nextSequence = 1) {
+  return {
+    sequence: nextSequence,
+    title: "",
+    dueDate: "",
+    assignedTo: "",
+  };
+}
+
+function BookingChecklistTab({ booking, onSaveBooking }) {
+  const checklists = getBookingChecklists(booking);
+
+  const [newChecklistName, setNewChecklistName] = useState("");
+  const [openChecklistId, setOpenChecklistId] = useState("");
+  const [editingItemId, setEditingItemId] = useState("");
+  const [itemForm, setItemForm] = useState(() =>
+    createEmptyChecklistItemForm()
+  );
+
+  const openChecklist = checklists.find(
+    (checklist) => checklist.id === openChecklistId
+  );
+
+  const saveChecklists = (nextChecklists) => {
+    onSaveBooking({
+      ...booking,
+      checklists: nextChecklists,
+    });
+  };
+
+  const handleAddChecklist = (event) => {
+    event.preventDefault();
+
+    const checklistName = newChecklistName.trim();
+
+    if (!checklistName) {
+      return;
+    }
+
+    const nextChecklist = {
+      id: createChecklistId("checklist"),
+      name: checklistName,
+      items: [],
+    };
+
+    saveChecklists([...checklists, nextChecklist]);
+    setNewChecklistName("");
+  };
+
+  const renameChecklist = (checklist) => {
+    const nextName = window.prompt("Checklist name", checklist.name);
+
+    if (!nextName || !nextName.trim()) {
+      return;
+    }
+
+    saveChecklists(
+      checklists.map((currentChecklist) =>
+        currentChecklist.id === checklist.id
+          ? {
+              ...currentChecklist,
+              name: nextName.trim(),
+            }
+          : currentChecklist
+      )
+    );
+  };
+
+  const deleteChecklist = (checklistId) => {
+    const confirmed = window.confirm(
+      "Delete this checklist and all of its items?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    saveChecklists(
+      checklists.filter((checklist) => checklist.id !== checklistId)
+    );
+
+    if (openChecklistId === checklistId) {
+      setOpenChecklistId("");
+    }
+  };
+
+  const startAddingItem = (checklist) => {
+    const nextSequence = (checklist.items || []).length + 1;
+    setEditingItemId("");
+    setItemForm(createEmptyChecklistItemForm(nextSequence));
+  };
+
+  const startEditingItem = (item) => {
+    setEditingItemId(item.id);
+    setItemForm({
+      sequence: item.sequence || 1,
+      title: item.title || "",
+      dueDate: item.dueDate || "",
+      assignedTo: item.assignedTo || "",
+    });
+  };
+
+  const updateItemForm = (fieldName, value) => {
+    setItemForm((currentForm) => ({
+      ...currentForm,
+      [fieldName]: value,
+    }));
+  };
+
+  const handleSaveChecklistItem = (event) => {
+    event.preventDefault();
+
+    if (!openChecklist) {
+      return;
+    }
+
+    const itemTitle = itemForm.title.trim();
+
+    if (!itemTitle) {
+      return;
+    }
+
+    const nextItem = {
+      id: editingItemId || createChecklistId("item"),
+      sequence: Number(itemForm.sequence) || 1,
+      title: itemTitle,
+      dueDate: itemForm.dueDate,
+      assignedTo: itemForm.assignedTo.trim(),
+      completed: false,
+      completedAt: "",
+      completedBy: "",
+    };
+
+    const nextChecklists = checklists.map((checklist) => {
+      if (checklist.id !== openChecklist.id) {
+        return checklist;
+      }
+
+      const existingItems = checklist.items || [];
+
+      const nextItems = editingItemId
+        ? existingItems.map((item) =>
+            item.id === editingItemId
+              ? {
+                  ...item,
+                  sequence: nextItem.sequence,
+                  title: nextItem.title,
+                  dueDate: nextItem.dueDate,
+                  assignedTo: nextItem.assignedTo,
+                }
+              : item
+          )
+        : [...existingItems, nextItem];
+
+      return {
+        ...checklist,
+        items: sortChecklistItems(nextItems),
+      };
+    });
+
+    saveChecklists(nextChecklists);
+
+    const nextSequence = (openChecklist.items || []).length + 1;
+    setEditingItemId("");
+    setItemForm(createEmptyChecklistItemForm(nextSequence));
+  };
+
+  const toggleChecklistItem = (checklistId, itemId) => {
+    const today = formatDateForInput(new Date());
+
+    saveChecklists(
+      checklists.map((checklist) => {
+        if (checklist.id !== checklistId) {
+          return checklist;
+        }
+
+        return {
+          ...checklist,
+          items: (checklist.items || []).map((item) => {
+            if (item.id !== itemId) {
+              return item;
+            }
+
+            const nextCompleted = !item.completed;
+
+            return {
+              ...item,
+              completed: nextCompleted,
+              completedAt: nextCompleted ? today : "",
+              completedBy: nextCompleted ? "Admin" : "",
+            };
+          }),
+        };
+      })
+    );
+  };
+
+  const deleteChecklistItem = (checklistId, itemId) => {
+    const confirmed = window.confirm("Delete this checklist item?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    saveChecklists(
+      checklists.map((checklist) => {
+        if (checklist.id !== checklistId) {
+          return checklist;
+        }
+
+        return {
+          ...checklist,
+          items: (checklist.items || []).filter((item) => item.id !== itemId),
+        };
+      })
+    );
+  };
+
+  return (
+    <section className="booking-checklist-page">
+      <article className="dashboard-card booking-checklist-card">
+        <div className="booking-checklist-header">
+          <div className="dashboard-heading-with-icon">
+            <span className="section-icon">
+              <FaClipboardList />
+            </span>
+
+            <div>
+              <p className="dashboard-eyebrow">Booking Workflow</p>
+              <h3>Checklists</h3>
+              <span>
+                Track internal tasks for {booking.organizationName}.
+              </span>
+            </div>
+          </div>
+
+          <form className="booking-checklist-add-form" onSubmit={handleAddChecklist}>
+            <input
+              value={newChecklistName}
+              placeholder="New checklist name..."
+              onChange={(event) => setNewChecklistName(event.target.value)}
+            />
+
+            <button className="primary-dashboard-button" type="submit">
+              <FaPlus />
+              Add Checklist
+            </button>
+          </form>
+        </div>
+
+        {checklists.length > 0 ? (
+          <div className="booking-checklist-table-wrap">
+            <table className="booking-checklist-table">
+              <thead>
+                <tr>
+                  <th aria-label="Edit"></th>
+                  <th>Checklist Name</th>
+                  <th>Progress</th>
+                  <th>Items</th>
+                  <th aria-label="Checklist Items"></th>
+                  <th aria-label="Delete"></th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {checklists.map((checklist) => {
+                  const progress = getChecklistProgress(checklist);
+
+                  return (
+                    <tr key={checklist.id}>
+                      <td>
+                        <button
+                          className="booking-checklist-icon-button"
+                          type="button"
+                          onClick={() => renameChecklist(checklist)}
+                          aria-label={`Rename ${checklist.name}`}
+                        >
+                          ✎
+                        </button>
+                      </td>
+
+                      <td>
+                        <strong>{checklist.name}</strong>
+                      </td>
+
+                      <td>
+                        <div className="booking-checklist-progress">
+                          <div>
+                            <span style={{ width: `${progress.percentage}%` }}></span>
+                          </div>
+
+                          <small>
+                            {progress.completedItems} of {progress.totalItems} complete
+                          </small>
+                        </div>
+                      </td>
+
+                      <td>{progress.totalItems}</td>
+
+                      <td>
+                        <button
+                          className="secondary-dashboard-button"
+                          type="button"
+                          onClick={() => {
+                            setOpenChecklistId(checklist.id);
+                            startAddingItem(checklist);
+                          }}
+                        >
+                          Checklist Items
+                        </button>
+                      </td>
+
+                      <td>
+                        <button
+                          className="booking-checklist-delete-button"
+                          type="button"
+                          onClick={() => deleteChecklist(checklist.id)}
+                          aria-label={`Delete ${checklist.name}`}
+                        >
+                          <FaTrashAlt />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="empty-state">
+            <strong>No checklists yet</strong>
+            <p>Add a checklist to begin tracking booking tasks.</p>
+          </div>
+        )}
+      </article>
+
+      {openChecklist && (
+        <div className="booking-checklist-modal-backdrop" role="presentation">
+          <section
+            className="booking-checklist-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${openChecklist.name} checklist items`}
+          >
+            <header className="booking-checklist-modal-header">
+              <div>
+                <h3>Checklist Items - {openChecklist.name}</h3>
+                <p>{booking.organizationName}</p>
+              </div>
+
+              <button
+                className="booking-checklist-modal-close"
+                type="button"
+                onClick={() => {
+                  setOpenChecklistId("");
+                  setEditingItemId("");
+                }}
+                aria-label="Close checklist items"
+              >
+                <FaTimes />
+              </button>
+            </header>
+
+            <form
+              className="booking-checklist-item-form"
+              onSubmit={handleSaveChecklistItem}
+            >
+              <label>
+                <span>Sequence</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={itemForm.sequence}
+                  onChange={(event) =>
+                    updateItemForm("sequence", event.target.value)
+                  }
+                />
+              </label>
+
+              <label className="booking-checklist-item-title-field">
+                <span>Title</span>
+                <input
+                  value={itemForm.title}
+                  placeholder="Example: Call primary contact"
+                  onChange={(event) => updateItemForm("title", event.target.value)}
+                />
+              </label>
+
+              <label>
+                <span>Due</span>
+                <input
+                  type="date"
+                  value={itemForm.dueDate}
+                  onChange={(event) => updateItemForm("dueDate", event.target.value)}
+                />
+              </label>
+
+              <label>
+                <span>Assigned To</span>
+                <input
+                  value={itemForm.assignedTo}
+                  placeholder="Staff name"
+                  onChange={(event) =>
+                    updateItemForm("assignedTo", event.target.value)
+                  }
+                />
+              </label>
+
+              <div className="booking-checklist-item-form-actions">
+                {editingItemId && (
+                  <button
+                    className="secondary-dashboard-button"
+                    type="button"
+                    onClick={() => {
+                      setEditingItemId("");
+                      startAddingItem(openChecklist);
+                    }}
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+
+                <button className="primary-dashboard-button" type="submit">
+                  {editingItemId ? "Save Item" : "Add Checklist Item"}
+                </button>
+              </div>
+            </form>
+
+            <div className="booking-checklist-items-table-wrap">
+              <table className="booking-checklist-items-table">
+                <thead>
+                  <tr>
+                    <th aria-label="Edit"></th>
+                    <th aria-label="Complete"></th>
+                    <th>Sequence</th>
+                    <th>Title</th>
+                    <th>Due</th>
+                    <th>Assigned To</th>
+                    <th>Status</th>
+                    <th aria-label="Delete"></th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {sortChecklistItems(openChecklist.items).map((item) => (
+                    <tr
+                      className={item.completed ? "checklist-item-completed" : ""}
+                      key={item.id}
+                    >
+                      <td>
+                        <button
+                          className="booking-checklist-icon-button"
+                          type="button"
+                          onClick={() => startEditingItem(item)}
+                          aria-label={`Edit ${item.title}`}
+                        >
+                          ✎
+                        </button>
+                      </td>
+
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(item.completed)}
+                          onChange={() =>
+                            toggleChecklistItem(openChecklist.id, item.id)
+                          }
+                          aria-label={`Toggle ${item.title}`}
+                        />
+                      </td>
+
+                      <td>{item.sequence}</td>
+
+                      <td>
+                        <strong>{item.title}</strong>
+                      </td>
+
+                      <td>{item.dueDate || "—"}</td>
+
+                      <td>{item.assignedTo || "—"}</td>
+
+                      <td>
+                        <button
+                          className={`booking-checklist-status-button ${
+                            item.completed ? "completed" : ""
+                          }`}
+                          type="button"
+                          onClick={() =>
+                            toggleChecklistItem(openChecklist.id, item.id)
+                          }
+                        >
+                          {item.completed ? (
+                            <>
+                              Completed {item.completedAt || ""}
+                              {item.completedBy ? ` by ${item.completedBy}` : ""}
+                            </>
+                          ) : (
+                            "Not Complete"
+                          )}
+                        </button>
+                      </td>
+
+                      <td>
+                        <button
+                          className="booking-checklist-delete-button"
+                          type="button"
+                          onClick={() =>
+                            deleteChecklistItem(openChecklist.id, item.id)
+                          }
+                          aria-label={`Delete ${item.title}`}
+                        >
+                          <FaTrashAlt />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {(openChecklist.items || []).length === 0 && (
+                    <tr>
+                      <td colSpan="8">
+                        <div className="booking-checklist-empty-row">
+                          No checklist items yet. Add the first item above.
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <footer className="booking-checklist-modal-footer">
+              <button
+                className="secondary-dashboard-button"
+                type="button"
+                onClick={() => setOpenChecklistId("")}
+              >
+                Close
+              </button>
+            </footer>
+          </section>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function BookingDetailView({
   booking,
   activeTab,
@@ -2639,10 +3319,19 @@ function BookingDetailView({
   />
 )}
 
+{(activeTab === "Checklists" || activeTab === "Notes & Tasks") && (
+  <BookingChecklistTab
+    booking={booking}
+    onSaveBooking={onSaveBooking}
+  />
+)}
+
 {activeTab !== "Overview" &&
   activeTab !== "Details" &&
   activeTab !== "Housing" &&
-  activeTab !== "Activities" && (
+  activeTab !== "Activities" &&
+  activeTab !== "Checklists" &&
+  activeTab !== "Notes & Tasks" && (
     <section className="dashboard-card booking-tab-placeholder">
       <h3>{activeTab}</h3>
       <p>
@@ -6653,6 +7342,10 @@ export default function Dashboard() {
 
         notes: updatedBooking.notes,
         message: updatedBooking.notes,
+
+        checklists: Array.isArray(updatedBooking.checklists)
+          ? updatedBooking.checklists
+          : null,
 
         updatedAt,
       };
