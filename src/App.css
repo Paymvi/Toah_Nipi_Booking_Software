@@ -10244,3 +10244,282 @@ body,
     width: 100%;
   }
 }
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Booking Detail - Program Logistics Tab
+========================================================= */
+
+.program-logistics-tab {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.program-logistics-card {
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+}
+
+.program-logistics-header,
+.program-logistics-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  border-bottom: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+.program-logistics-header h3,
+.program-logistics-section-header h3 {
+  margin: 0;
+  color: #252936;
+  font-size: 1.08rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.program-logistics-header span,
+.program-logistics-section-header span {
+  display: block;
+  margin-top: 5px;
+  color: #858c9b;
+  font-size: 0.84rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.program-logistics-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 18px;
+  border-bottom: 1px solid #edf0f4;
+  background: #fbfcfd;
+}
+
+.program-logistics-summary-grid div {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #e4e8ef;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.program-logistics-summary-grid small {
+  display: block;
+  color: #818998;
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+
+.program-logistics-summary-grid strong {
+  display: block;
+  margin-top: 6px;
+  color: #303442;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.program-logistics-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 18px;
+}
+
+.program-logistics-field {
+  display: grid;
+  gap: 8px;
+}
+
+.program-logistics-field span,
+.program-assignment-row label span {
+  color: #374151;
+  font-size: 0.76rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+
+.program-logistics-field textarea {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  padding: 12px;
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  outline: none;
+}
+
+.program-logistics-field textarea:focus,
+.program-assignment-row input:focus,
+.program-assignment-row select:focus {
+  border-color: #443a9c;
+  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+}
+
+.program-assignment-list {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+}
+
+.program-assignment-row {
+  display: grid;
+  grid-template-columns: 170px 220px minmax(0, 1fr) 38px;
+  gap: 12px;
+  align-items: end;
+  padding: 14px;
+  border: 1px solid #e4e8ef;
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.program-assignment-row label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.program-assignment-row input,
+.program-assignment-row select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #111827;
+  padding: 0 11px;
+  font: inherit;
+  font-size: 0.86rem;
+  outline: none;
+}
+
+.program-assignment-delete-button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #efcaca;
+  border-radius: 7px;
+  display: inline-grid;
+  place-items: center;
+  background: #fffafa;
+  color: #b44444;
+  cursor: pointer;
+}
+
+.program-assignment-delete-button:hover {
+  background: #fff1f1;
+  border-color: #e6abab;
+  color: #8d2f2f;
+}
+
+.program-logistics-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 42px 18px;
+  color: #858c9b;
+  text-align: center;
+}
+
+.program-logistics-empty svg {
+  color: #9ca3af;
+  font-size: 1.35rem;
+}
+
+.program-logistics-empty strong {
+  color: #303442;
+  font-size: 0.98rem;
+  font-weight: 650;
+}
+
+.program-logistics-empty p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.program-logistics-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 18px;
+  border-top: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+@media (max-width: 980px) {
+  .program-logistics-header,
+  .program-logistics-section-header {
+    flex-direction: column;
+  }
+
+  .program-logistics-editor-grid,
+  .program-logistics-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .program-assignment-row {
+    grid-template-columns: 1fr;
+  }
+
+  .program-assignment-delete-button {
+    width: 100%;
+  }
+}
+
+
+
+/* Fix Meals & Activities header icon alignment */
+.program-logistics-header .dashboard-heading-with-icon {
+  align-items: center;
+}
+
+.program-logistics-header .section-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0;
+  padding: 0;
+
+  border-radius: 10px;
+  background: #eef1ea;
+  color: #5c6f46;
+
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.program-logistics-header .section-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: 0 0 auto;
+}

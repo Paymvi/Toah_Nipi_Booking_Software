@@ -167,7 +167,7 @@ export const bookingDetailTabs = [
   "Details",
   "Rates",
   "Housing",
-  "Activities",
+  "Meals & Activities",
   "Checklists",
 ];
 
