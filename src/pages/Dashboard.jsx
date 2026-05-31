@@ -9433,38 +9433,40 @@ const getCalendarEventColor = (status) => {
           </button>
         </div>
 
-        <div className="sidebar-app-switcher">
-          <div className="sidebar-app-toggle" aria-label="Main view toggle">
-            <button
-              className={`sidebar-app-toggle-button ${
-                activeView !== "Form" ? "active" : ""
-              }`}
-              type="button"
-              onClick={() => {
-                setSelectedBooking(null);
-                handleActiveViewChange("Dashboard");
-              }}
-              title="Dashboard"
-            >
-              <FaHome />
-              <span>Dashboard</span>
-            </button>
+        <div className="sidebar-section sidebar-main-section">
+          <p>Main</p>
 
-            <button
-              className={`sidebar-app-toggle-button ${
-                activeView === "Form" ? "active" : ""
-              }`}
-              type="button"
-              onClick={() => {
-                setSelectedBooking(null);
-                handleActiveViewChange("Form");
-              }}
-              title="Form"
-            >
-              <FaClipboardList />
-              <span>Form</span>
-            </button>
-          </div>
+          <button
+            className={`sidebar-link ${
+              activeView === "Dashboard" ? "sidebar-link-active" : ""
+            }`}
+            type="button"
+            title="Dashboard"
+            onClick={() => {
+              setSelectedBooking(null);
+              setBookingDetailTab("Overview");
+              handleActiveViewChange("Dashboard");
+            }}
+          >
+            <FaHome />
+            <span>Dashboard</span>
+          </button>
+
+          <button
+            className={`sidebar-link ${
+              activeView === "Form" ? "sidebar-link-active" : ""
+            }`}
+            type="button"
+            title="Form"
+            onClick={() => {
+              setSelectedBooking(null);
+              setBookingDetailTab("Overview");
+              handleActiveViewChange("Form");
+            }}
+          >
+            <FaClipboardList />
+            <span>Form</span>
+          </button>
         </div>
 
         {sidebarSections.map((section) => (

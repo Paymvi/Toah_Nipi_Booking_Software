@@ -11737,3 +11737,60 @@ body,
   background: #edf6f5;
   border-color: #c6dfdd;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Sidebar Main Section + Active Link State
+========================================================= */
+
+.sidebar-main-section {
+  padding-top: 0;
+  padding-bottom: 14px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.sidebar-link-active {
+  background: #443a9c;
+  color: #ffffff;
+}
+
+.sidebar-link-active:hover {
+  background: #382f86;
+  color: #ffffff;
+}
+
+.sidebar-link-active svg {
+  color: inherit;
+}
+
+.sidebar-link-active .sidebar-badge {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+/* Collapsed sidebar behavior */
+.dashboard-sidebar-collapsed .sidebar-main-section {
+  padding: 0;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 0;
+}
+
+.dashboard-sidebar-collapsed .sidebar-main-section > p {
+  display: none;
+}
