@@ -10115,7 +10115,8 @@ body,
   letter-spacing: 0.045em;
 }
 
-.booking-checklist-item-form input {
+.booking-checklist-item-form input,
+.booking-checklist-item-form select {
   min-height: 38px;
   border: 1px solid #dfe4ec;
   border-radius: 8px;
@@ -10126,7 +10127,12 @@ body,
   outline: none;
 }
 
-.booking-checklist-item-form input:focus {
+.booking-checklist-item-form select {
+  cursor: pointer;
+}
+
+.booking-checklist-item-form input:focus,
+.booking-checklist-item-form select:focus {
   border-color: #443a9c;
   box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
 }
