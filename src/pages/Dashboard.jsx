@@ -611,6 +611,7 @@ function normalizeInquiry(inquiry, index) {
     miscCost: inquiry.miscCost || "",
 
     stageOfGroup: inquiry.stageOfGroup || "",
+    schedule: inquiry.schedule || "",
     minPayingGuests: inquiry.minPayingGuests || "",
     maxPayingGuests: inquiry.maxPayingGuests || "",
     guestRate: inquiry.guestRate || "",
@@ -1034,6 +1035,236 @@ function normalizeMaster2026SpreadsheetRow(row, index) {
 }
 
 
+function normalize2027InquirySpreadsheetRow(row, index) {
+  const arrivalDate = readSpreadsheetCell(row, [
+    "Arrival Date",
+    "Start Date",
+    "Check In",
+    "Check-in",
+  ]);
+
+  const departureDate = readSpreadsheetCell(row, [
+    "Departure Date",
+    "End Date",
+    "Check Out",
+    "Check-out",
+  ]);
+
+  const guestGroupName = readSpreadsheetCell(row, [
+    "Guest Group Name",
+    "Group Name",
+    "Organization",
+    "name",
+    "Name",
+  ]);
+
+  const guestGroupType = readSpreadsheetCell(row, [
+    "Guest Group Type",
+    "Retreat Type",
+    "Type",
+  ]);
+
+  const returningStatus = readSpreadsheetCell(row, [
+    "Returning (R) or New (N)",
+    "Returning or New",
+  ]);
+
+  const contactPerson = readSpreadsheetCell(row, [
+    "Contact Person",
+    "Group Leader/Contact Person",
+    "Group Leader",
+  ]);
+
+  const contactPhone = readSpreadsheetCell(row, [
+    "Contact Person Cell #",
+    "Phone",
+    "Phone Number",
+  ]);
+
+  const estimatedGuests = readSpreadsheetCell(row, [
+    "Estimated Number of Guests",
+    "Actual Number of Guests",
+    "Size",
+    "Group Size",
+  ]);
+
+  const buildingsRooms = readSpreadsheetCell(row, [
+    "Buildings/Rooms",
+    "Buildings",
+    "Rooms",
+  ]);
+
+  const meals = readSpreadsheetCell(row, ["Meals"]);
+
+  const foodAllergies = readSpreadsheetCell(row, [
+    "Food Allergies",
+    "Allergies",
+  ]);
+
+  const needToKnow = readSpreadsheetCell(row, [
+    "Need to know",
+    "Need To Know",
+  ]);
+
+  const linenSets = readSpreadsheetCell(row, ["Linen Sets"]);
+  const activities = readSpreadsheetCell(row, ["Activities"]);
+
+  const contactPersonEmail = readSpreadsheetCell(row, [
+    "Contact Person Email",
+    "Email",
+    "Email Address",
+  ]);
+
+  const stageOfGroup = readSpreadsheetCell(row, ["Stage of Group"]);
+
+  const minPayingGuests = readSpreadsheetCell(row, [
+    "Min. Number of Paying Guests",
+    "Minimum Number of Paying Guests",
+  ]);
+
+  const maxPayingGuests = readSpreadsheetCell(row, [
+    "Max. Number of Paying Guests",
+    "Maximum Number of Paying Guests",
+  ]);
+
+  const guestRate = readSpreadsheetCell(row, ["Guest Rate"]);
+
+  const expectedMinimumRevenue = readSpreadsheetCell(row, [
+    "Exp. Minimum Revenue",
+    "Exp. Minimum Revenue for Lodging/Meals",
+    "Expected Minimum Revenue",
+    "Expected Minimum Revenue for Lodging/Meals",
+  ]);
+
+  const schedule = readSpreadsheetCell(row, ["Schedule"]);
+
+  const deposit = readSpreadsheetCell(row, ["Deposit"]);
+  const depositReceived = readSpreadsheetCell(row, ["Deposit Received"]);
+
+  const dateOfCancellation = readSpreadsheetCell(row, [
+    "Date of Cancellation",
+  ]);
+
+  const reasonForCancellation = readSpreadsheetCell(row, [
+    "Reason for Cancellation",
+  ]);
+
+  const vacancyFilled = readSpreadsheetCell(row, [
+    "Vacancy filled by another group?",
+    "Vacancy Filled By Another Group?",
+  ]);
+
+  const persons = readSpreadsheetCell(row, ["#Persons", "Persons"]);
+  const nights = readSpreadsheetCell(row, ["#Nights", "Nights"]);
+  const mealCount = readSpreadsheetCell(row, ["#Meals", "Meals Count"]);
+
+  const camperDays = readSpreadsheetCell(row, [
+    "Camper Days (nightsX0.4 + mealsX0.2)",
+    "Camper Days",
+  ]);
+
+  const usageFee = readSpreadsheetCell(row, ["Usage Fee"]);
+  const lodgingCost = readSpreadsheetCell(row, ["$ Lodging", "Lodging"]);
+  const foodCost = readSpreadsheetCell(row, ["$ Food", "Food"]);
+  const miscCost = readSpreadsheetCell(row, ["$ Misc", "$ Misc.", "Misc"]);
+
+  const rowHasData =
+    arrivalDate ||
+    departureDate ||
+    guestGroupName ||
+    guestGroupType ||
+    contactPerson ||
+    contactPhone ||
+    estimatedGuests ||
+    buildingsRooms ||
+    contactPersonEmail ||
+    stageOfGroup ||
+    schedule;
+
+  if (!rowHasData) {
+    return null;
+  }
+
+  const startDate = formatExcelDateValue(arrivalDate);
+  const endDate = formatExcelDateValue(departureDate);
+
+  const notes = [
+    schedule ? `Schedule: ${schedule}` : "",
+    needToKnow ? `Need to know: ${needToKnow}` : "",
+    foodAllergies ? `Food allergies: ${foodAllergies}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return {
+    id: `inquiry-2027-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
+    sourceType: "2027 Inquiry",
+    detectedImportType: "2027 Inquiry",
+    sourceSheet: row.sourceSheet || "",
+    sourceRowNumber: row.sourceRowNumber || "",
+    rawSpreadsheetData: row,
+    submittedAt: new Date().toISOString(),
+
+    organizationName: String(guestGroupName || "").trim() || "Unnamed Group",
+    name: String(contactPerson || "").trim(),
+    contactName: String(contactPerson || "").trim() || "No contact name",
+    email: String(contactPersonEmail || "").trim(),
+    phone: String(contactPhone || "").trim(),
+
+    startDate,
+    endDate,
+    desiredDatesText:
+      startDate && endDate ? `${startDate} - ${endDate}` : startDate || "",
+
+    attendeeCount: String(estimatedGuests || "").trim(),
+    groupSize: String(estimatedGuests || "").trim(),
+    retreatType: String(guestGroupType || "").trim(),
+
+    roomName: String(buildingsRooms || "Unassigned").trim(),
+    buildingsRooms: String(buildingsRooms || "").trim(),
+
+    meals: String(meals || "").trim(),
+    foodAllergies: String(foodAllergies || "").trim(),
+    needToKnow: String(needToKnow || "").trim(),
+    linenSets: String(linenSets || "").trim(),
+    activities: String(activities || "").trim(),
+
+    schedule: String(schedule || "").trim(),
+    notes,
+    message: notes,
+
+    waitlist: "No",
+    status: stageOfGroup ? getStatusFromStage(stageOfGroup) : "Inquiry",
+    promoCode: "",
+
+    returningStatus: String(returningStatus || "").trim(),
+
+    stageOfGroup: String(stageOfGroup || "").trim(),
+    minPayingGuests: String(minPayingGuests || "").trim(),
+    maxPayingGuests: String(maxPayingGuests || "").trim(),
+    guestRate: String(guestRate || "").trim(),
+    expectedMinimumRevenue: String(expectedMinimumRevenue || "").trim(),
+    invoiceLodgingMeals: "",
+
+    deposit: String(deposit || "").trim(),
+    depositReceived: String(depositReceived || "").trim(),
+    dateOfCancellation: formatExcelDateValue(dateOfCancellation),
+    reasonForCancellation: String(reasonForCancellation || "").trim(),
+    vacancyFilled: String(vacancyFilled || "").trim(),
+
+    persons: String(persons || "").trim(),
+    nights: String(nights || "").trim(),
+    mealCount: String(mealCount || "").trim(),
+    camperDays: String(camperDays || "").trim(),
+
+    usageFee: String(usageFee || "").trim(),
+    lodgingCost: String(lodgingCost || "").trim(),
+    foodCost: String(foodCost || "").trim(),
+    miscCost: String(miscCost || "").trim(),
+  };
+}
+
+
 function normalizeGenericSpreadsheetRow(row, index) {
   if (!rowHasAnyData(row)) {
     return null;
@@ -1175,6 +1406,10 @@ function normalizeEverythingSpreadsheetRow(row, index) {
 
   if (detectedType === "Waitlist") {
     return normalizeWaitlistSpreadsheetRow(row, index);
+  }
+
+  if (detectedType === "2027 Inquiry") {
+    return normalize2027InquirySpreadsheetRow(row, index);
   }
 
   if (detectedType === "Master 2026") {
@@ -3808,16 +4043,16 @@ function getBookingInputMethod(booking) {
     return "Public Form";
   }
 
+  if (sourceType === "2027 Inquiry") {
+    return "Imported - 2027 Inquiry";
+  }
+
   if (sourceType === "Master 2026") {
     return "Imported - Master 2026";
   }
 
   if (sourceType === "Master") {
     return "Imported - Master";
-  }
-
-  if (sourceType === "Waitlist") {
-    return "Imported - Waitlist";
   }
 
   if (detectedImportType) {
@@ -3888,6 +4123,10 @@ function getSpreadsheetSourceClass(booking) {
 
   if (sourceType.includes("form")) {
     return "source-form";
+  }
+
+  if (sourceType.includes("2027")) {
+    return "source-inquiry-2027";
   }
 
   if (sourceType.includes("2026")) {
@@ -4133,6 +4372,10 @@ const bookingSpreadsheetColumns = [
   {
     label: "Stage of Group",
     value: (booking) => booking.stageOfGroup,
+  },
+  {
+    label: "Schedule",
+    value: (booking) => booking.schedule,
   },
   {
     label: "Min Paying Guests",
@@ -4403,6 +4646,9 @@ function getSpreadsheetSearchText(booking) {
     booking.foodAllergies,
     booking.needToKnow,
     booking.activities,
+    booking.notes,
+    booking.stageOfGroup,
+    booking.schedule,
     booking.notes,
     ...rawValues,
   ]
@@ -4771,6 +5017,19 @@ function SpreadsheetSettingsModal({
                       onClick={() =>
                         updateSettings({
                           sourceSheets: sourceSheetOptions.filter((sourceSheet) =>
+                            sourceSheet.toLowerCase().includes("2027")
+                          ),
+                        })
+                      }
+                    >
+                      2027 Sheets Only
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        updateSettings({
+                          sourceSheets: sourceSheetOptions.filter((sourceSheet) =>
                             sourceSheet.toLowerCase().includes("2026")
                           ),
                         })
@@ -4916,6 +5175,19 @@ function SpreadsheetSettingsModal({
                       Waitlist Only
                     </button>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateSettings({
+                        sourceTypes: sourceTypeOptions.filter((sourceType) =>
+                          sourceType.toLowerCase().includes("2027")
+                        ),
+                      })
+                    }
+                  >
+                    2027 Only
+                  </button>
 
                   <div className="spreadsheet-input-method-list">
                     {sourceTypeOptions.map((sourceType) => {
@@ -8273,6 +8545,7 @@ export default function Dashboard() {
   const waitlistFileInputRef = useRef(null);
   const masterFileInputRef = useRef(null);
   const master2026FileInputRef = useRef(null);
+  const inquiry2027FileInputRef = useRef(null);
   const importEverythingFileInputRef = useRef(null);
   const importDropdownRef = useRef(null);
 
@@ -8662,6 +8935,19 @@ export default function Dashboard() {
     });
   };
 
+  const handleImport2027InquirySpreadsheet = (event) => {
+    importSpreadsheet({
+      event,
+      importTypeLabel: "2027 inquiry",
+      normalizeRow: normalize2027InquirySpreadsheetRow,
+      expectedColumns: [
+        "Exp. Minimum Revenue",
+        "Schedule",
+        "Contact Person Cell #",
+      ],
+    });
+  };
+
   const handleImportEverythingSpreadsheet = async (event) => {
     const file = event.target.files?.[0];
 
@@ -8681,13 +8967,14 @@ export default function Dashboard() {
       workbook.worksheets.forEach((worksheet) => {
         const spreadsheetRows = getRowsFromWorksheetFlexible(worksheet);
 
-        const sheetCounts = {
-          Waitlist: 0,
-          Master: 0,
-          "Master 2026": 0,
-          Generic: 0,
-          skipped: 0,
-        };
+      const sheetCounts = {
+        Waitlist: 0,
+        Master: 0,
+        "Master 2026": 0,
+        "2027 Inquiry": 0,
+        Generic: 0,
+        skipped: 0,
+      };
 
         spreadsheetRows.forEach((row, index) => {
           const detectedType = detectSpreadsheetRowType(row);
@@ -8712,7 +8999,7 @@ export default function Dashboard() {
         });
 
         sheetSummaries.push(
-          `${worksheet.name}: ${spreadsheetRows.length} row(s) found, ${sheetCounts.Waitlist} waitlist, ${sheetCounts.Master} master, ${sheetCounts["Master 2026"]} master 2026, ${sheetCounts.Generic} generic`
+          `${worksheet.name}: ${spreadsheetRows.length} row(s) found, ${sheetCounts.Waitlist} waitlist, ${sheetCounts.Master} master, ${sheetCounts["Master 2026"]} master 2026, ${sheetCounts["2027 Inquiry"]} 2027 inquiries, ${sheetCounts.Generic} generic`
         );
       });
 
@@ -8758,6 +9045,11 @@ export default function Dashboard() {
   const openMaster2026ImportPicker = () => {
     setIsImportMenuOpen(false);
     master2026FileInputRef.current?.click();
+  };
+
+  const open2027InquiryImportPicker = () => {
+    inquiry2027FileInputRef.current?.click();
+    setIsImportMenuOpen(false);
   };
 
   const openEverythingImportPicker = () => {
@@ -9220,6 +9512,7 @@ const getCalendarEventColor = (status) => {
             waitlistFileInputRef={waitlistFileInputRef}
             masterFileInputRef={masterFileInputRef}
             master2026FileInputRef={master2026FileInputRef}
+            inquiry2027FileInputRef={inquiry2027FileInputRef}
             importEverythingFileInputRef={importEverythingFileInputRef}
             importDropdownRef={importDropdownRef}
             isImportMenuOpen={isImportMenuOpen}
@@ -9227,10 +9520,12 @@ const getCalendarEventColor = (status) => {
             handleImportWaitlistSpreadsheet={handleImportWaitlistSpreadsheet}
             handleImportMasterSpreadsheet={handleImportMasterSpreadsheet}
             handleImportMaster2026Spreadsheet={handleImportMaster2026Spreadsheet}
+            handleImport2027InquirySpreadsheet={handleImport2027InquirySpreadsheet}
             handleImportEverythingSpreadsheet={handleImportEverythingSpreadsheet}
             openWaitlistImportPicker={openWaitlistImportPicker}
             openMasterImportPicker={openMasterImportPicker}
             openMaster2026ImportPicker={openMaster2026ImportPicker}
+            open2027InquiryImportPicker={open2027InquiryImportPicker}
             openEverythingImportPicker={openEverythingImportPicker}
             exportInquiriesToSpreadsheet={exportInquiriesToSpreadsheet}
             refreshInquiries={refreshInquiries}

@@ -232,6 +232,25 @@ export function rowHasAnyColumn(row, possibleNames) {
 
 // Guesses what kind of imported spreadsheet row this is.
 export function detectSpreadsheetRowType(row) {
+
+  const rowColumnNames = new Set(
+    Object.keys(row || {}).map((key) => String(key).trim().toLowerCase())
+  );
+
+  const hasColumn = (columnName) =>
+    rowColumnNames.has(String(columnName).trim().toLowerCase());
+
+  const is2027Inquiry =
+    hasColumn("Guest Group Name") &&
+    hasColumn("Contact Person") &&
+    hasColumn("Contact Person Cell #") &&
+    hasColumn("Estimated Number of Guests") &&
+    (hasColumn("Exp. Minimum Revenue") || hasColumn("Schedule"));
+
+  if (is2027Inquiry) {
+    return "2027 Inquiry";
+  }
+  
   if (
     rowHasAnyColumn(row, ["Waitlist or No", "Desired Dates"]) &&
     rowHasAnyColumn(row, ["Contact Name", "Guest Group Name", "Email Address"])

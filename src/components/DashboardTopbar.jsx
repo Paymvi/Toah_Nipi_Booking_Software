@@ -52,6 +52,9 @@ export default function DashboardTopbar({
   exportInquiriesToSpreadsheet,
   refreshInquiries,
   deleteAllInquiries,
+  inquiry2027FileInputRef,
+  handleImport2027InquirySpreadsheet,
+  open2027InquiryImportPicker,
 }) {
   return (
     <header className="dashboard-topbar">
@@ -97,6 +100,14 @@ export default function DashboardTopbar({
           type="file"
           accept=".xlsx"
           onChange={handleImportMaster2026Spreadsheet}
+        />
+
+        <input
+          ref={inquiry2027FileInputRef}
+          className="dashboard-file-input"
+          type="file"
+          accept=".xlsx,.xls"
+          onChange={handleImport2027InquirySpreadsheet}
         />
 
         {/* Import dropdown menu */}
@@ -153,6 +164,14 @@ export default function DashboardTopbar({
                 <span>
                   <strong>Import Master 2026</strong>
                   <small>Upload 2026 master booking spreadsheet</small>
+                </span>
+              </button>
+
+              <button type="button" onClick={open2027InquiryImportPicker}>
+                <FaTable />
+                <span>
+                  <strong>Import 2027 Inquiries</strong>
+                  <small>Use the 2027 inquiry spreadsheet format</small>
                 </span>
               </button>
 
