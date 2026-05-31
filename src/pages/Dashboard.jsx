@@ -8034,6 +8034,7 @@ function JobsView({
   );
 
   const currentUser = staffUsers.find((user) => user.id === currentStaffUserId);
+  const activeStaffUsers = staffUsers.filter((user) => user.active);
 
   const filteredJobs = allJobs.filter((job) => {
     if (statusFilter === "all") {
@@ -8162,7 +8163,7 @@ function JobsView({
           <div className="jobs-panel-header">
             <div>
               <p className="dashboard-eyebrow">Team Workload</p>
-              <h3>Each Member & Their Jobs</h3>
+              <h3>Active Members & Their Jobs</h3>
               <span>
                 Grouped by the assigned staff name on checklists and
                 meals/activities.
@@ -8171,7 +8172,7 @@ function JobsView({
           </div>
 
           <div className="jobs-member-list">
-            {staffUsers.map((user) => {
+            {activeStaffUsers.map((user) => {
               const userJobs = sortJobsByDueDate(
                 filteredJobs.filter(
                   (job) =>
