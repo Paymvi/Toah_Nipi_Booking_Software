@@ -30,6 +30,7 @@ import {
   FaRegCalendarCheck,
   FaClock,
   FaTimes,
+  FaTasks,
 } from "react-icons/fa";
 
 // Month labels used by calendar dropdowns, headings, and availability views.
@@ -67,9 +68,8 @@ export const sidebarSections = [
   {
     label: "Administration",
     items: [
-      { label: "Setup", icon: FaCog },
-      { label: "User Administration", icon: FaUserShield },
-      { label: "Custom Fields", icon: FaTable },
+      { label: "User Admin", icon: FaUserShield },
+      { label: "Jobs", icon: FaTasks },
     ],
   },
 ];

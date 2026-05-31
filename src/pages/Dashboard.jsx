@@ -35,7 +35,11 @@ import {
   FaRegStar,
   FaThumbtack,
   FaChartBar,
+  FaUserShield,
+  FaTasks,
+  FaCheckCircle,
 } from "react-icons/fa";
+
 import ExcelJS from "exceljs";
 import BookingHousingTab from "../components/BookingHousingTab";
 import DashboardTopbar from "../components/DashboardTopbar";
@@ -300,6 +304,91 @@ function saveDashboardFilterValue(key, value) {
     localStorage.setItem(key, value);
   } catch (error) {
     console.error("Could not save dashboard filter:", error);
+  }
+}
+
+const STAFF_USERS_STORAGE_KEY = "toahNipiStaffUsers";
+const CURRENT_STAFF_USER_STORAGE_KEY = "toahNipiCurrentStaffUserId";
+
+const DEFAULT_STAFF_USERS = [
+  {
+    id: "staff-admin",
+    name: "Admin",
+    email: "admin@toahnipi.org",
+    role: "Admin",
+    active: true,
+  },
+  {
+    id: "staff-office",
+    name: "Office Staff",
+    email: "office@toahnipi.org",
+    role: "Staff",
+    active: true,
+  },
+  {
+    id: "staff-program",
+    name: "Program Staff",
+    email: "program@toahnipi.org",
+    role: "Staff",
+    active: true,
+  },
+];
+
+function normalizeStaffName(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function createStaffUserId() {
+  return `staff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function getSavedStaffUsers() {
+  try {
+    const savedUsers = localStorage.getItem(STAFF_USERS_STORAGE_KEY);
+
+    if (!savedUsers) {
+      return DEFAULT_STAFF_USERS;
+    }
+
+    const parsedUsers = JSON.parse(savedUsers);
+
+    return Array.isArray(parsedUsers) && parsedUsers.length > 0
+      ? parsedUsers
+      : DEFAULT_STAFF_USERS;
+  } catch (error) {
+    console.error("Could not read staff users:", error);
+    return DEFAULT_STAFF_USERS;
+  }
+}
+
+function saveStaffUsers(users) {
+  try {
+    localStorage.setItem(STAFF_USERS_STORAGE_KEY, JSON.stringify(users));
+  } catch (error) {
+    console.error("Could not save staff users:", error);
+  }
+}
+
+function getSavedCurrentStaffUserId(staffUsers) {
+  try {
+    const savedUserId = localStorage.getItem(CURRENT_STAFF_USER_STORAGE_KEY);
+
+    if (savedUserId && staffUsers.some((user) => user.id === savedUserId)) {
+      return savedUserId;
+    }
+
+    return staffUsers[0]?.id || "";
+  } catch (error) {
+    console.error("Could not read current staff user:", error);
+    return staffUsers[0]?.id || "";
+  }
+}
+
+function saveCurrentStaffUserId(userId) {
+  try {
+    localStorage.setItem(CURRENT_STAFF_USER_STORAGE_KEY, userId);
+  } catch (error) {
+    console.error("Could not save current staff user:", error);
   }
 }
 
@@ -2898,6 +2987,117 @@ function getProgramLogisticsAssignments(booking) {
   return Array.isArray(booking.programLogisticsAssignments)
     ? booking.programLogisticsAssignments
     : [];
+}
+
+function getAllBookingJobs(inquiryBookings) {
+  return inquiryBookings.flatMap((booking) => {
+    const checklistJobs = getBookingChecklists(booking).flatMap((checklist) =>
+      sortChecklistItems(checklist.items || []).map((item) => ({
+        id: `checklist-${booking.id}-${checklist.id}-${item.id}`,
+        sourceType: "Checklist",
+        title: item.title || "Untitled checklist item",
+        role: checklist.name || "Checklist",
+        assignedTo: item.assignedTo || "",
+        notes: "",
+        dueDate: item.dueDate || "",
+        completed: Boolean(item.completed),
+        completedAt: item.completedAt || "",
+        completedBy: item.completedBy || "",
+
+        bookingId: booking.id,
+        bookingName: booking.organizationName,
+        bookingStartDate: booking.startDate,
+        bookingEndDate: booking.endDate,
+        bookingStatus: booking.status,
+      }))
+    );
+
+    const programLogisticsJobs = getProgramLogisticsAssignments(booking).map(
+      (assignment) => ({
+        id: `program-${booking.id}-${assignment.id}`,
+        sourceType: "Program Logistics",
+        title: `${assignment.role || "General"} assignment`,
+        role: assignment.role || "General",
+        assignedTo: assignment.assignedTo || "",
+        notes: assignment.notes || "",
+        dueDate: booking.startDate || "",
+        completed: false,
+        completedAt: "",
+        completedBy: "",
+
+        bookingId: booking.id,
+        bookingName: booking.organizationName,
+        bookingStartDate: booking.startDate,
+        bookingEndDate: booking.endDate,
+        bookingStatus: booking.status,
+      })
+    );
+
+    return [...checklistJobs, ...programLogisticsJobs];
+  });
+}
+
+function getAssignedStaffNamesFromBookings(inquiryBookings) {
+  const assignedNames = new Set();
+
+  getAllBookingJobs(inquiryBookings).forEach((job) => {
+    const assignedTo = String(job.assignedTo || "").trim();
+
+    if (assignedTo) {
+      assignedNames.add(assignedTo);
+    }
+  });
+
+  return Array.from(assignedNames).sort((a, b) => a.localeCompare(b));
+}
+
+function getTaskStatusClass(task) {
+  if (task.completed) {
+    return "completed";
+  }
+
+  if (!task.dueDate) {
+    return "open";
+  }
+
+  const today = getLocalDate(formatDateForInput(new Date()));
+  const dueDate = getLocalDate(task.dueDate);
+
+  if (dueDate && dueDate < today) {
+    return "overdue";
+  }
+
+  return "open";
+}
+
+function getTaskStatusLabel(task) {
+  if (task.completed) {
+    return "Complete";
+  }
+
+  if (getTaskStatusClass(task) === "overdue") {
+    return "Overdue";
+  }
+
+  return "Open";
+}
+
+function sortJobsByDueDate(tasks) {
+  return [...tasks].sort((a, b) => {
+    if (!a.dueDate && !b.dueDate) {
+      return 0;
+    }
+
+    if (!a.dueDate) {
+      return 1;
+    }
+
+    if (!b.dueDate) {
+      return -1;
+    }
+
+    return a.dueDate.localeCompare(b.dueDate);
+  });
 }
 
 function BookingProgramLogisticsTab({ booking, onSaveBooking }) {
@@ -7444,6 +7644,628 @@ function ReportsView({ inquiryBookings }) {
   );
 }
 
+function UserAdminView({
+  staffUsers,
+  setStaffUsers,
+  currentStaffUserId,
+  setCurrentStaffUserId,
+}) {
+  const [newUserForm, setNewUserForm] = useState({
+    name: "",
+    email: "",
+    role: "Staff",
+  });
+
+  const activeUsers = staffUsers.filter((user) => user.active);
+  const inactiveUsers = staffUsers.filter((user) => !user.active);
+
+  const updateUsers = (nextUsers) => {
+    setStaffUsers(nextUsers);
+    saveStaffUsers(nextUsers);
+  };
+
+  const updateNewUserField = (fieldName, value) => {
+    setNewUserForm((currentForm) => ({
+      ...currentForm,
+      [fieldName]: value,
+    }));
+  };
+
+  const handleAddUser = (event) => {
+    event.preventDefault();
+
+    const name = newUserForm.name.trim();
+
+    if (!name) {
+      return;
+    }
+
+    const nextUser = {
+      id: createStaffUserId(),
+      name,
+      email: newUserForm.email.trim(),
+      role: newUserForm.role,
+      active: true,
+    };
+
+    const nextUsers = [...staffUsers, nextUser];
+
+    updateUsers(nextUsers);
+
+    if (!currentStaffUserId) {
+      setCurrentStaffUserId(nextUser.id);
+      saveCurrentStaffUserId(nextUser.id);
+    }
+
+    setNewUserForm({
+      name: "",
+      email: "",
+      role: "Staff",
+    });
+  };
+
+  const updateStaffUser = (userId, fieldName, value) => {
+    updateUsers(
+      staffUsers.map((user) =>
+        user.id === userId
+          ? {
+              ...user,
+              [fieldName]: value,
+            }
+          : user
+      )
+    );
+  };
+
+  const toggleStaffUserActive = (userId) => {
+    updateUsers(
+      staffUsers.map((user) =>
+        user.id === userId
+          ? {
+              ...user,
+              active: !user.active,
+            }
+          : user
+      )
+    );
+  };
+
+  const deleteStaffUser = (userId) => {
+    const confirmed = window.confirm(
+      "Delete this staff user? Existing assignments typed with this name will stay on the bookings."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const nextUsers = staffUsers.filter((user) => user.id !== userId);
+
+    updateUsers(nextUsers);
+
+    if (currentStaffUserId === userId) {
+      const fallbackUserId = nextUsers[0]?.id || "";
+
+      setCurrentStaffUserId(fallbackUserId);
+      saveCurrentStaffUserId(fallbackUserId);
+    }
+  };
+
+  return (
+    <section className="admin-page">
+      <article className="dashboard-card admin-hero-card">
+        <div className="admin-hero-header">
+          <div className="dashboard-heading-with-icon">
+            <span className="section-icon">
+              <FaUserShield />
+            </span>
+
+            <div>
+              <p className="dashboard-eyebrow">Administration</p>
+              <h2>User Admin</h2>
+              <span>
+                Manage staff members used for checklist and program logistics assignments.
+              </span>
+            </div>
+          </div>
+
+          <label className="admin-current-user-picker">
+            <span>Current User</span>
+
+            <select
+              value={currentStaffUserId}
+              onChange={(event) => {
+                setCurrentStaffUserId(event.target.value);
+                saveCurrentStaffUserId(event.target.value);
+              }}
+            >
+              {staffUsers.map((user) => (
+                <option value={user.id} key={user.id}>
+                  {user.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="admin-summary-grid">
+          <div>
+            <small>Active Users</small>
+            <strong>{activeUsers.length}</strong>
+          </div>
+
+          <div>
+            <small>Inactive Users</small>
+            <strong>{inactiveUsers.length}</strong>
+          </div>
+
+          <div>
+            <small>Total Users</small>
+            <strong>{staffUsers.length}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article className="dashboard-card admin-panel-card">
+        <div className="admin-panel-header">
+          <div>
+            <p className="dashboard-eyebrow">Create User</p>
+            <h3>Add Staff Member</h3>
+            <span>
+              Add people who can be assigned to booking checklists and meals/activities work.
+            </span>
+          </div>
+        </div>
+
+        <form className="admin-user-form" onSubmit={handleAddUser}>
+          <label>
+            <span>Name</span>
+            <input
+              value={newUserForm.name}
+              placeholder="Example: Mindy"
+              onChange={(event) => updateNewUserField("name", event.target.value)}
+            />
+          </label>
+
+          <label>
+            <span>Email</span>
+            <input
+              type="email"
+              value={newUserForm.email}
+              placeholder="name@toahnipi.org"
+              onChange={(event) => updateNewUserField("email", event.target.value)}
+            />
+          </label>
+
+          <label>
+            <span>Role</span>
+            <select
+              value={newUserForm.role}
+              onChange={(event) => updateNewUserField("role", event.target.value)}
+            >
+              <option value="Admin">Admin</option>
+              <option value="Staff">Staff</option>
+              <option value="Viewer">Viewer</option>
+            </select>
+          </label>
+
+          <button className="primary-dashboard-button" type="submit">
+            <FaPlus />
+            Add User
+          </button>
+        </form>
+      </article>
+
+      <article className="dashboard-card admin-panel-card">
+        <div className="admin-panel-header">
+          <div>
+            <p className="dashboard-eyebrow">Staff Directory</p>
+            <h3>Users</h3>
+            <span>
+              These names are matched against assignment names on booking tasks.
+            </span>
+          </div>
+        </div>
+
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Current User</th>
+                <th aria-label="Actions"></th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {staffUsers.map((user) => (
+                <tr className={!user.active ? "admin-user-inactive" : ""} key={user.id}>
+                  <td>
+                    <input
+                      value={user.name}
+                      onChange={(event) =>
+                        updateStaffUser(user.id, "name", event.target.value)
+                      }
+                    />
+                  </td>
+
+                  <td>
+                    <input
+                      type="email"
+                      value={user.email}
+                      onChange={(event) =>
+                        updateStaffUser(user.id, "email", event.target.value)
+                      }
+                    />
+                  </td>
+
+                  <td>
+                    <select
+                      value={user.role}
+                      onChange={(event) =>
+                        updateStaffUser(user.id, "role", event.target.value)
+                      }
+                    >
+                      <option value="Admin">Admin</option>
+                      <option value="Staff">Staff</option>
+                      <option value="Viewer">Viewer</option>
+                    </select>
+                  </td>
+
+                  <td>
+                    <button
+                      className={`admin-status-pill ${user.active ? "active" : "inactive"}`}
+                      type="button"
+                      onClick={() => toggleStaffUserActive(user.id)}
+                    >
+                      {user.active ? "Active" : "Inactive"}
+                    </button>
+                  </td>
+
+                  <td>
+                    {currentStaffUserId === user.id ? (
+                      <span className="admin-current-pill">Current</span>
+                    ) : (
+                      <button
+                        className="secondary-dashboard-button"
+                        type="button"
+                        onClick={() => {
+                          setCurrentStaffUserId(user.id);
+                          saveCurrentStaffUserId(user.id);
+                        }}
+                      >
+                        Use Me
+                      </button>
+                    )}
+                  </td>
+
+                  <td>
+                    <button
+                      className="booking-checklist-delete-button"
+                      type="button"
+                      onClick={() => deleteStaffUser(user.id)}
+                      aria-label={`Delete ${user.name}`}
+                    >
+                      <FaTrashAlt />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  );
+}
+
+
+function JobTaskCard({ task, openBookingDetail, booking }) {
+  const statusClass = getTaskStatusClass(task);
+
+  return (
+    <article className={`job-task-card job-task-card-${statusClass}`}>
+      <div className="job-task-main">
+        <div>
+          <span className={`job-status-pill ${statusClass}`}>
+            {getTaskStatusLabel(task)}
+          </span>
+
+          <h4>{task.title}</h4>
+
+          <p>
+            {task.bookingName} · {task.sourceType} · {task.role}
+          </p>
+        </div>
+
+        {task.completed ? (
+          <FaCheckCircle className="job-complete-icon" />
+        ) : (
+          <FaTasks className="job-open-icon" />
+        )}
+      </div>
+
+      <div className="job-task-meta">
+        <span>
+          <strong>Due</strong>
+          {task.dueDate || "No due date"}
+        </span>
+
+        <span>
+          <strong>Assigned To</strong>
+          {task.assignedTo || "Unassigned"}
+        </span>
+
+        <span>
+          <strong>Type</strong>
+          {task.sourceType}
+        </span>
+      </div>
+
+      {task.notes && <p className="job-task-notes">{task.notes}</p>}
+
+      {booking && (
+        <button
+          className="secondary-dashboard-button"
+          type="button"
+          onClick={() => openBookingDetail(booking)}
+        >
+          Open Booking
+        </button>
+      )}
+    </article>
+  );
+}
+
+function JobsView({
+  inquiryBookings,
+  staffUsers,
+  currentStaffUserId,
+  openBookingDetail,
+}) {
+  const [statusFilter, setStatusFilter] = useState("open");
+
+  const allJobs = useMemo(
+    () => getAllBookingJobs(inquiryBookings),
+    [inquiryBookings]
+  );
+
+  const currentUser = staffUsers.find((user) => user.id === currentStaffUserId);
+
+  const filteredJobs = allJobs.filter((job) => {
+    if (statusFilter === "all") {
+      return true;
+    }
+
+    if (statusFilter === "completed") {
+      return job.completed;
+    }
+
+    return !job.completed;
+  });
+
+  const myJobs = currentUser
+    ? filteredJobs.filter(
+        (job) =>
+          normalizeStaffName(job.assignedTo) ===
+          normalizeStaffName(currentUser.name)
+      )
+    : [];
+
+  const unassignedJobs = filteredJobs.filter(
+    (job) => !String(job.assignedTo || "").trim()
+  );
+
+  const findBookingForJob = (job) =>
+    inquiryBookings.find((booking) => booking.id === job.bookingId);
+
+  const openJobCount = allJobs.filter((job) => !job.completed).length;
+  const completedJobCount = allJobs.filter((job) => job.completed).length;
+  const overdueJobCount = allJobs.filter(
+    (job) => getTaskStatusClass(job) === "overdue"
+  ).length;
+
+  return (
+    <section className="jobs-page">
+      <article className="dashboard-card jobs-hero-card">
+        <div className="jobs-hero-header">
+          <div className="dashboard-heading-with-icon">
+            <span className="section-icon">
+              <FaTasks />
+            </span>
+
+            <div>
+              <p className="dashboard-eyebrow">Jobs</p>
+              <h2>Staff Tasks</h2>
+              <span>
+                View checklist tasks and meals/activities assignments by staff
+                member.
+              </span>
+            </div>
+          </div>
+
+          <label className="jobs-filter-field">
+            <span>Show</span>
+
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <option value="open">Open Jobs</option>
+              <option value="completed">Completed Jobs</option>
+              <option value="all">All Jobs</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="jobs-summary-grid">
+          <div>
+            <small>Open</small>
+            <strong>{openJobCount}</strong>
+          </div>
+
+          <div>
+            <small>Overdue</small>
+            <strong>{overdueJobCount}</strong>
+          </div>
+
+          <div>
+            <small>Completed</small>
+            <strong>{completedJobCount}</strong>
+          </div>
+
+          <div>
+            <small>Unassigned</small>
+            <strong>{unassignedJobs.length}</strong>
+          </div>
+        </div>
+      </article>
+
+      <section className="jobs-two-column-layout">
+        <article className="dashboard-card jobs-panel">
+          <div className="jobs-panel-header">
+            <div>
+              <p className="dashboard-eyebrow">My Work</p>
+              <h3>{currentUser ? `${currentUser.name}'s Jobs` : "My Jobs"}</h3>
+              <span>
+                Jobs assigned to the current staff user selected in User Admin.
+              </span>
+            </div>
+          </div>
+
+          <div className="jobs-task-list">
+            {sortJobsByDueDate(myJobs).length > 0 ? (
+              sortJobsByDueDate(myJobs).map((job) => (
+                <JobTaskCard
+                  key={job.id}
+                  task={job}
+                  booking={findBookingForJob(job)}
+                  openBookingDetail={openBookingDetail}
+                />
+              ))
+            ) : (
+              <div className="empty-state">
+                <strong>No jobs assigned to you</strong>
+                <p>
+                  Assign checklist items or program logistics work to{" "}
+                  {currentUser?.name || "the current user"} to see them here.
+                </p>
+              </div>
+            )}
+          </div>
+        </article>
+
+        <article className="dashboard-card jobs-panel">
+          <div className="jobs-panel-header">
+            <div>
+              <p className="dashboard-eyebrow">Team Workload</p>
+              <h3>Each Member & Their Jobs</h3>
+              <span>
+                Grouped by the assigned staff name on checklists and
+                meals/activities.
+              </span>
+            </div>
+          </div>
+
+          <div className="jobs-member-list">
+            {staffUsers.map((user) => {
+              const userJobs = sortJobsByDueDate(
+                filteredJobs.filter(
+                  (job) =>
+                    normalizeStaffName(job.assignedTo) ===
+                    normalizeStaffName(user.name)
+                )
+              );
+
+              return (
+                <section className="jobs-member-card" key={user.id}>
+                  <div className="jobs-member-header">
+                    <div>
+                      <strong>{user.name}</strong>
+                      <span>{user.role}</span>
+                    </div>
+
+                    <em>
+                      {userJobs.length} job{userJobs.length === 1 ? "" : "s"}
+                    </em>
+                  </div>
+
+                  {userJobs.length > 0 ? (
+                    <div className="jobs-member-tasks">
+                      {userJobs.map((job) => {
+                        const booking = findBookingForJob(job);
+
+                        return (
+                          <button
+                            className={`jobs-member-task-row jobs-member-task-${getTaskStatusClass(
+                              job
+                            )}`}
+                            type="button"
+                            key={job.id}
+                            onClick={() => booking && openBookingDetail(booking)}
+                          >
+                            <span>{job.title}</span>
+                            <small>{job.bookingName}</small>
+                            <small>{job.sourceType}</small>
+                            <em>{job.dueDate || "No due date"}</em>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="jobs-member-empty">No matching jobs.</p>
+                  )}
+                </section>
+              );
+            })}
+
+            {unassignedJobs.length > 0 && (
+              <section className="jobs-member-card jobs-unassigned-card">
+                <div className="jobs-member-header">
+                  <div>
+                    <strong>Unassigned</strong>
+                    <span>Needs assignment</span>
+                  </div>
+
+                  <em>
+                    {unassignedJobs.length} job
+                    {unassignedJobs.length === 1 ? "" : "s"}
+                  </em>
+                </div>
+
+                <div className="jobs-member-tasks">
+                  {sortJobsByDueDate(unassignedJobs).map((job) => {
+                    const booking = findBookingForJob(job);
+
+                    return (
+                      <button
+                        className={`jobs-member-task-row jobs-member-task-${getTaskStatusClass(
+                          job
+                        )}`}
+                        type="button"
+                        key={job.id}
+                        onClick={() => booking && openBookingDetail(booking)}
+                      >
+                        <span>{job.title}</span>
+                        <small>{job.bookingName}</small>
+                        <small>{job.sourceType}</small>
+                        <em>{job.dueDate || "No due date"}</em>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+          </div>
+        </article>
+      </section>
+    </section>
+  );
+}
+
 export default function Dashboard() {
   const today = new Date();
 
@@ -7458,6 +8280,12 @@ export default function Dashboard() {
   const [activeView, setActiveView] = useState("Dashboard");
   const [isSpreadsheetViewLoading, setIsSpreadsheetViewLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const [staffUsers, setStaffUsers] = useState(() => getSavedStaffUsers());
+
+  const [currentStaffUserId, setCurrentStaffUserId] = useState(() =>
+    getSavedCurrentStaffUserId(getSavedStaffUsers())
+  );
   
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [bookingDetailTab, setBookingDetailTab] = useState("Overview");
@@ -8009,6 +8837,51 @@ export default function Dashboard() {
     );
   }, [publicInquiries]);
 
+  useEffect(() => {
+    const assignedNames = getAssignedStaffNamesFromBookings(inquiryBookings);
+
+    if (assignedNames.length === 0) {
+      return;
+    }
+
+    setStaffUsers((currentUsers) => {
+      const existingNameSet = new Set(
+        currentUsers.map((user) => normalizeStaffName(user.name))
+      );
+
+      const newUsers = assignedNames
+        .filter((name) => !existingNameSet.has(normalizeStaffName(name)))
+        .map((name) => ({
+          id: createStaffUserId(),
+          name,
+          email: "",
+          role: "Staff",
+          active: true,
+        }));
+
+      if (newUsers.length === 0) {
+        return currentUsers;
+      }
+
+      const nextUsers = [...currentUsers, ...newUsers];
+
+      saveStaffUsers(nextUsers);
+
+      return nextUsers;
+    });
+  }, [inquiryBookings]);
+
+  useEffect(() => {
+    if (currentStaffUserId || staffUsers.length === 0) {
+      return;
+    }
+
+    const fallbackUserId = staffUsers[0].id;
+
+    setCurrentStaffUserId(fallbackUserId);
+    saveCurrentStaffUserId(fallbackUserId);
+  }, [currentStaffUserId, staffUsers]);
+
   const inquiryPipelineNeedsReviewCount = useMemo(() => {
     return inquiryBookings.filter((booking) => {
       const columnKey = getInquiryPipelineColumnKey(booking);
@@ -8307,11 +9180,6 @@ const getCalendarEventColor = (status) => {
 
             {section.items.map((item) => {
               const Icon = item.icon;
-              const isCalendarView = item.label === "Calendar View";
-              const isSpreadsheetView = item.label === "Spreadsheet View";
-              const isContactsView = item.label === "Contacts View";
-              const isInquiryPipeline = item.label === "Inquiry Pipeline";
-              const isReportsView = item.label === "Reports";
 
               return (
                 <button
@@ -8322,15 +9190,8 @@ const getCalendarEventColor = (status) => {
                   type="button"
                   title={item.label}
                   onClick={() => {
-                    if (
-                      isCalendarView ||
-                      isSpreadsheetView ||
-                      isContactsView ||
-                      isInquiryPipeline ||
-                      isReportsView
-                    ) {
-                      handleActiveViewChange(item.label);
-                    }
+                    setSelectedBooking(null);
+                    handleActiveViewChange(item.label);
                   }}
                 >
                   <Icon />
@@ -8549,6 +9410,20 @@ const getCalendarEventColor = (status) => {
           />
         ) : activeView === "Reports" ? (
           <ReportsView inquiryBookings={inquiryBookings} />
+        ) : activeView === "User Admin" ? (
+          <UserAdminView
+            staffUsers={staffUsers}
+            setStaffUsers={setStaffUsers}
+            currentStaffUserId={currentStaffUserId}
+            setCurrentStaffUserId={setCurrentStaffUserId}
+          />
+        ) : activeView === "Jobs" ? (
+          <JobsView
+            inquiryBookings={inquiryBookings}
+            staffUsers={staffUsers}
+            currentStaffUserId={currentStaffUserId}
+            openBookingDetail={openBookingDetail}
+          />
         ) : (
           <>
         <section className="dashboard-stats-grid">
