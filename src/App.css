@@ -7645,8 +7645,175 @@ body,
 
 
 
+/* =========================================================
+   OVERRIDE: Contacts View Star Column Width Fix
+========================================================= */
 
+/* Make the whole contacts table a little tighter after adding Star */
+.contacts-view-table {
+  table-layout: fixed;
+  min-width: 900px;
+}
 
+/* Star column - compact */
+.contacts-view-table th:nth-child(1),
+.contacts-view-table td:nth-child(1),
+.contacts-view-favorite-column,
+.contacts-view-favorite-cell {
+  width: 46px !important;
+  min-width: 46px !important;
+  max-width: 46px !important;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+  text-align: center;
+}
+
+/* Contact Name */
+.contacts-view-table th:nth-child(2),
+.contacts-view-table td:nth-child(2) {
+  width: 180px !important;
+  max-width: 180px !important;
+}
+
+/* Organization */
+.contacts-view-table th:nth-child(3),
+.contacts-view-table td:nth-child(3) {
+  width: 250px !important;
+  max-width: 250px !important;
+}
+
+/* Email */
+.contacts-view-table th:nth-child(4),
+.contacts-view-table td:nth-child(4) {
+  width: 280px !important;
+  max-width: 280px !important;
+}
+
+/* Phone */
+.contacts-view-table th:nth-child(5),
+.contacts-view-table td:nth-child(5) {
+  width: 125px !important;
+  max-width: 125px !important;
+}
+
+/* Bookings */
+.contacts-view-table th:nth-child(6),
+.contacts-view-table td:nth-child(6) {
+  width: 80px !important;
+  max-width: 80px !important;
+  text-align: center;
+}
+
+/* Actions */
+.contacts-view-table th:nth-child(7),
+.contacts-view-table td:nth-child(7) {
+  width: 140px !important;
+  max-width: 140px !important;
+}
+
+/* Smaller star button so it doesn't feel like a giant cell */
+.contacts-view-favorite-cell .contact-star-button {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+
+/* Keep the starred row left stripe without making the star column wider */
+.contacts-view-row-starred td:first-child {
+  border-left: 3px solid #c98716;
+}
+
+/* Keep contacts table reasonable, but give star column spreadsheet spacing */
+.contacts-view-table {
+  table-layout: fixed;
+  min-width: 980px;
+}
+
+/* Star column - match Spreadsheet View */
+.contacts-view-table th:nth-child(1),
+.contacts-view-table td:nth-child(1),
+.contacts-view-favorite-column,
+.contacts-view-favorite-cell {
+  width: 58px !important;
+  min-width: 58px !important;
+  max-width: 58px !important;
+
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+
+  text-align: center;
+  border-right: 1px solid #dfe4ec;
+}
+
+/* Header should feel like the spreadsheet star header */
+.contacts-view-table th.contacts-view-favorite-column {
+  background: #eef0f5;
+  color: #303442;
+}
+
+/* Restore the normal star button size used by spreadsheet */
+.contacts-view-favorite-cell .contact-star-button,
+.contacts-view-favorite-cell .spreadsheet-star-button {
+  width: 30px !important;
+  height: 30px !important;
+  margin: 0 auto;
+
+  border-radius: 7px;
+  font-size: 0.9rem;
+}
+
+/* Keep row tint matching the spreadsheet starred-row feel */
+.contacts-view-table tbody tr.contacts-view-row-starred td {
+  background: #fffaf0;
+}
+
+.contacts-view-table tbody tr.contacts-view-row-starred:hover td {
+  background: #fff6e4;
+}
+
+/* Match spreadsheet's left gold stripe size */
+.contacts-view-row-starred td:first-child {
+  border-left: 4px solid #c98716 !important;
+}
+
+/* Shift the rest of the contact columns back to sane widths */
+.contacts-view-table th:nth-child(2),
+.contacts-view-table td:nth-child(2) {
+  width: 190px !important;
+  max-width: 190px !important;
+}
+
+.contacts-view-table th:nth-child(3),
+.contacts-view-table td:nth-child(3) {
+  width: 260px !important;
+  max-width: 260px !important;
+}
+
+.contacts-view-table th:nth-child(4),
+.contacts-view-table td:nth-child(4) {
+  width: 290px !important;
+  max-width: 290px !important;
+}
+
+.contacts-view-table th:nth-child(5),
+.contacts-view-table td:nth-child(5) {
+  width: 130px !important;
+  max-width: 130px !important;
+}
+
+.contacts-view-table th:nth-child(6),
+.contacts-view-table td:nth-child(6) {
+  width: 90px !important;
+  max-width: 90px !important;
+  text-align: center;
+}
+
+.contacts-view-table th:nth-child(7),
+.contacts-view-table td:nth-child(7) {
+  width: 190px !important;
+  max-width: 190px !important;
+}
 
 
 
