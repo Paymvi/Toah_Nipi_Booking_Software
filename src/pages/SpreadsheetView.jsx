@@ -1083,6 +1083,225 @@ function SpreadsheetRowPreviewPopup({ booking }) {
   );
 }
 
+
+function getSpreadsheetSchemaColumns(...columnGroups) {
+  return Array.from(
+    new Set(
+      columnGroups.flatMap((columns) => Array.from(columns || []))
+    )
+  ).filter(Boolean);
+}
+
+const SPREADSHEET_2027_INQUIRY_COLUMNS = [
+  "Arrival Date",
+  "Departure Date",
+  "Guest Group Name",
+  "Guest Group Type",
+  "Returning (R) or New (N)",
+  "Contact Person",
+  "Contact Person Cell #",
+  "Estimated Number of Guests",
+  "Buildings/Rooms",
+  "Meals",
+  "Food Allergies",
+  "Need to know",
+  "Linen Sets",
+  "Activities",
+  "Contact Person Email",
+  "Stage of Group",
+  "Min. Number of Paying Guests",
+  "Max. Number of Paying Guests",
+  "Guest Rate",
+  "Exp. Minimum Revenue",
+  "Schedule",
+  "Deposit",
+  "Deposit Received",
+  "Date of Cancellation",
+  "Reason for Cancellation",
+  "Vacancy filled by another group?",
+  "#Persons",
+  "#Nights",
+  "#Meals",
+  "Camper Days (nightsX0.4 + mealsX0.2)",
+  "Usage Fee",
+  "$ Lodging",
+  "$ Food",
+  "$ Misc",
+];
+
+const SPREADSHEET_FORM_SCHEMA_FIELDS = [
+  "Organization / Church or Ministry Name",
+  "Contact Name",
+  "Email",
+  "Phone",
+  "Desired Dates",
+  "Group Size",
+  "Retreat Type",
+  "Promo Code",
+  "Message / Notes",
+];
+
+const SPREADSHEET_SCHEMA_FIELD_MAPPINGS = [
+  {
+    appField: "Organization",
+    sourceHeaders: ["Guest Group Name", "Organization", "Church/Ministry Name"],
+  },
+  {
+    appField: "Contact Name",
+    sourceHeaders: ["Contact Person", "Contact Name", "Name"],
+  },
+  {
+    appField: "Email",
+    sourceHeaders: ["Contact Person Email", "Email"],
+  },
+  {
+    appField: "Phone",
+    sourceHeaders: ["Contact Person Cell #", "Phone", "Cell #"],
+  },
+  {
+    appField: "Start Date",
+    sourceHeaders: ["Arrival Date", "Start Date"],
+  },
+  {
+    appField: "End Date",
+    sourceHeaders: ["Departure Date", "End Date"],
+  },
+  {
+    appField: "Guest Count",
+    sourceHeaders: ["Estimated Number of Guests", "#Persons", "Group Size"],
+  },
+  {
+    appField: "Buildings / Rooms",
+    sourceHeaders: ["Buildings/Rooms", "Assigned Room / Area"],
+  },
+  {
+    appField: "Meals",
+    sourceHeaders: ["Meals", "#Meals"],
+  },
+  {
+    appField: "Food Allergies",
+    sourceHeaders: ["Food Allergies"],
+  },
+  {
+    appField: "Need To Know",
+    sourceHeaders: ["Need to know", "Need To Know"],
+  },
+  {
+    appField: "Activities",
+    sourceHeaders: ["Activities"],
+  },
+  {
+    appField: "Financials",
+    sourceHeaders: [
+      "Usage Fee",
+      "$ Lodging",
+      "$ Food",
+      "$ Misc",
+      "Deposit",
+      "Deposit Received",
+      "Guest Rate",
+      "Exp. Minimum Revenue",
+    ],
+  },
+];
+
+const SPREADSHEET_IMPORT_SCHEMAS = [
+  {
+    id: "public-form",
+    title: "Public Form / Manual Entry",
+    badge: "No spreadsheet",
+    summary:
+      "Rows submitted through the public form do not need spreadsheet headers. The app reads the form fields directly.",
+    expectedFile: "None",
+    detectedAs: 'sourceType is "Form" or empty',
+    inputMethod: "Public Form",
+    sourceSheet: "Public Form / No Sheet",
+    expectedColumns: SPREADSHEET_FORM_SCHEMA_FIELDS,
+    notes: [
+      "Best for new inquiries submitted through the website form.",
+      "Missing email or phone values are displayed as N/A in the spreadsheet.",
+      "These rows usually do not have original spreadsheet columns.",
+    ],
+  },
+  {
+    id: "master-2025",
+    title: "Master / 2025 Import",
+    badge: "Spreadsheet import",
+    summary:
+      "Use this for older master-booking spreadsheets that follow the 2025-style columns.",
+    expectedFile: ".xlsx workbook with header row",
+    detectedAs: 'sourceType becomes "Master"',
+    inputMethod: "Imported - Master",
+    sourceSheet: "The worksheet name from the Excel file",
+    expectedColumns: getSpreadsheetSchemaColumns(
+      SPREADSHEET_SHARED_RAW_COLUMNS,
+      SPREADSHEET_2025_RAW_COLUMNS
+    ),
+    notes: [
+      "The imported row is normalized into the standard booking fields where possible.",
+      "Extra spreadsheet columns are still preserved as Original columns.",
+      "Source Sheet and Source Row are stored so staff can trace the row back to the workbook.",
+    ],
+  },
+  {
+    id: "master-2026",
+    title: "Master 2026 Import",
+    badge: "Spreadsheet import",
+    summary:
+      "Use this for the 2026 master spreadsheet format. This is the cleaner current master-booking structure.",
+    expectedFile: ".xlsx workbook with header row",
+    detectedAs: 'sourceType becomes "Master 2026"',
+    inputMethod: "Imported - Master 2026",
+    sourceSheet: "The worksheet name from the Excel file",
+    expectedColumns: getSpreadsheetSchemaColumns(
+      SPREADSHEET_SHARED_RAW_COLUMNS,
+      SPREADSHEET_2026_RAW_COLUMNS
+    ),
+    notes: [
+      "Best for the main 2026 booking spreadsheet.",
+      "Shared columns are treated as compatible with other master imports.",
+      "2026-only columns are still visible as Original columns if enabled.",
+    ],
+  },
+  {
+    id: "inquiry-2027",
+    title: "2027 Inquiry Import",
+    badge: "Spreadsheet import",
+    summary:
+      "Use this for the 2027 inquiry sheet format with arrival/departure dates, guest group details, meals, activities, financials, and cancellation fields.",
+    expectedFile: ".xlsx workbook with 2027 inquiry headers",
+    detectedAs: 'sourceType becomes "2027 Inquiry"',
+    inputMethod: "Imported - 2027 Inquiry",
+    sourceSheet: "Any worksheet name containing the imported 2027 inquiry rows",
+    expectedColumns: SPREADSHEET_2027_INQUIRY_COLUMNS,
+    notes: [
+      "Best for the 2027 inquiry / planning spreadsheet.",
+      "Arrival Date and Departure Date become the main booking date range.",
+      "Financial and logistics columns are preserved so they can be shown or hidden in the spreadsheet.",
+    ],
+  },
+];
+
+function SpreadsheetSchemaChipList({ title, items }) {
+  const cleanItems = Array.from(new Set((items || []).filter(Boolean)));
+
+  return (
+    <div className="spreadsheet-schema-field-block">
+      <h5>{title}</h5>
+
+      {cleanItems.length > 0 ? (
+        <div className="spreadsheet-schema-chip-list">
+          {cleanItems.map((item) => (
+            <span key={item}>{item}</span>
+          ))}
+        </div>
+      ) : (
+        <p>No fixed spreadsheet headers required.</p>
+      )}
+    </div>
+  );
+}
+
 function SpreadsheetSettingsModal({
   settings,
   updateSettings,
@@ -1225,6 +1444,7 @@ function SpreadsheetSettingsModal({
             "Sorting",
             "Highlights",
             "Display",
+            "Schema",
             "Saved Views",
           ].map(
   (tab) => (
@@ -2003,6 +2223,103 @@ function SpreadsheetSettingsModal({
                   <span>Show starred rows first</span>
                 </label>
               </div>
+            </div>
+          )}
+
+          {activeSettingsTab === "Schema" && (
+            <div className="spreadsheet-settings-section">
+              <div className="spreadsheet-schema-intro">
+                <div>
+                  <h4>Import Schema Reference</h4>
+                  <p>
+                    This explains what each import option expects, how imported rows are
+                    detected, and where the imported data appears in the spreadsheet.
+                  </p>
+                </div>
+
+                <span>{SPREADSHEET_IMPORT_SCHEMAS.length} import types</span>
+              </div>
+
+              <div className="spreadsheet-schema-grid">
+                {SPREADSHEET_IMPORT_SCHEMAS.map((schema) => (
+                  <article className="spreadsheet-schema-card" key={schema.id}>
+                    <header className="spreadsheet-schema-card-header">
+                      <div>
+                        <span>{schema.badge}</span>
+                        <h4>{schema.title}</h4>
+                        <p>{schema.summary}</p>
+                      </div>
+                    </header>
+
+                    <dl className="spreadsheet-schema-meta">
+                      <div>
+                        <dt>Expected file</dt>
+                        <dd>{schema.expectedFile}</dd>
+                      </div>
+
+                      <div>
+                        <dt>Detected as</dt>
+                        <dd>{schema.detectedAs}</dd>
+                      </div>
+
+                      <div>
+                        <dt>Input Method</dt>
+                        <dd>{schema.inputMethod}</dd>
+                      </div>
+
+                      <div>
+                        <dt>Source Sheet</dt>
+                        <dd>{schema.sourceSheet}</dd>
+                      </div>
+                    </dl>
+
+                    <SpreadsheetSchemaChipList
+                      title="Expected / recognized columns"
+                      items={schema.expectedColumns}
+                    />
+
+                    <div className="spreadsheet-schema-notes">
+                      <h5>What happens after import</h5>
+
+                      <ul>
+                        {schema.notes.map((note) => (
+                          <li key={note}>{note}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <article className="spreadsheet-schema-mapping-card">
+                <div>
+                  <h4>Standard Field Mapping</h4>
+                  <p>
+                    These are the main source headers staff should look for when preparing
+                    an import file. The app tries to normalize these into the standard
+                    spreadsheet columns.
+                  </p>
+                </div>
+
+                <div className="spreadsheet-schema-mapping-list">
+                  {SPREADSHEET_SCHEMA_FIELD_MAPPINGS.map((mapping) => (
+                    <div className="spreadsheet-schema-mapping-row" key={mapping.appField}>
+                      <strong>{mapping.appField}</strong>
+
+                      <div>
+                        {mapping.sourceHeaders.map((header) => (
+                          <span key={header}>{header}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <p className="spreadsheet-settings-help-text">
+                Extra imported columns are not thrown away. They are preserved from
+                rawSpreadsheetData and can appear in the Columns tab as Original columns.
+              </p>
             </div>
           )}
 
