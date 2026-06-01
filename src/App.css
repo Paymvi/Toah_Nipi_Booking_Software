@@ -9835,14 +9835,84 @@ body,
   }
 }
 
+/* =========================================================
+   FINAL OVERRIDE: Reports Retreat Type Table Bar Width Fix
+   Keeps the bars shorter so Bookings / Guests / Revenue fit
+========================================================= */
 
+.reports-table {
+  table-layout: fixed;
+  min-width: 0;
+  width: 100%;
+}
 
+/* Retreat Type column */
+.reports-table th:first-child,
+.reports-table td:first-child {
+  width: 52%;
+  max-width: 52%;
+}
 
+/* Bookings / Guests / Revenue columns */
+.reports-table th:nth-child(2),
+.reports-table td:nth-child(2),
+.reports-table th:nth-child(3),
+.reports-table td:nth-child(3),
+.reports-table th:nth-child(4),
+.reports-table td:nth-child(4) {
+  width: 16%;
+  max-width: 16%;
+  text-align: left;
+  white-space: nowrap;
+}
 
+/* Keep the retreat name visible */
+.reports-table td:first-child strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
+/* This is the actual bar */
+.reports-table .reports-mini-track {
+  width: min(100%, 520px);
+  max-width: 520px;
+}
 
+/* Make the bar a little shorter on medium screens */
+@media (max-width: 1200px) {
+  .reports-table th:first-child,
+  .reports-table td:first-child {
+    width: 46%;
+    max-width: 46%;
+  }
 
+  .reports-table th:nth-child(2),
+  .reports-table td:nth-child(2),
+  .reports-table th:nth-child(3),
+  .reports-table td:nth-child(3),
+  .reports-table th:nth-child(4),
+  .reports-table td:nth-child(4) {
+    width: 18%;
+    max-width: 18%;
+  }
 
+  .reports-table .reports-mini-track {
+    max-width: 380px;
+  }
+}
+
+/* On small screens, let the table scroll instead of crushing text */
+@media (max-width: 760px) {
+  .reports-table {
+    min-width: 720px;
+  }
+
+  .reports-table .reports-mini-track {
+    max-width: 320px;
+  }
+}
 
 
 
@@ -12936,6 +13006,14 @@ body,
     width: 100%;
   }
 }
+
+
+
+
+
+
+
+
 
 
 
