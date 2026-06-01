@@ -12718,3 +12718,200 @@ body,
 .spreadsheet-active-settings-actions .spreadsheet-reset-view-button:hover {
   color: #822727;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Spreadsheet Settings: Saved Views
+========================================================= */
+
+.spreadsheet-saved-views-create {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px) auto;
+  gap: 14px;
+  align-items: end;
+
+  padding: 14px;
+  border: 1px solid #edf0f4;
+  border-radius: 10px;
+  background: #fbfcfd;
+}
+
+.spreadsheet-saved-views-create h4,
+.spreadsheet-saved-view-card h4 {
+  margin: 0;
+  color: #252936;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.spreadsheet-saved-views-create p {
+  margin: 5px 0 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.spreadsheet-saved-views-create .primary-dashboard-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.spreadsheet-saved-views-list {
+  display: grid;
+  gap: 10px;
+}
+
+.spreadsheet-saved-view-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+
+  padding: 14px;
+  border: 1px solid #edf0f4;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.spreadsheet-saved-view-card.is-default {
+  border-color: #c9c4e8;
+  background: #fbfaff;
+}
+
+.spreadsheet-saved-view-main {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.spreadsheet-saved-view-main > div {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.spreadsheet-saved-view-main p {
+  margin: 0;
+  color: #858c9b;
+  font-size: 0.8rem;
+}
+
+.spreadsheet-saved-view-badge {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+
+  padding: 0 8px;
+  border: 1px solid #d7d1f0;
+  border-radius: 999px;
+  background: #f0edfa;
+  color: #443a9c;
+
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.spreadsheet-saved-view-default {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  color: #3f4351;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.spreadsheet-saved-view-default input {
+  accent-color: #443a9c;
+}
+
+.spreadsheet-saved-view-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.spreadsheet-saved-view-actions button {
+  min-height: 32px;
+  border: 1px solid #c9c4e8;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #443a9c;
+
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.spreadsheet-saved-view-actions button:hover {
+  background: #f7f5ff;
+}
+
+.spreadsheet-saved-view-actions .spreadsheet-saved-view-danger {
+  border-color: #efcaca;
+  color: #9f2f2f;
+}
+
+.spreadsheet-saved-view-actions .spreadsheet-saved-view-danger:hover {
+  background: #fff1f1;
+}
+
+.spreadsheet-saved-views-empty {
+  padding: 18px;
+  border: 1px dashed #cfd6e1;
+  border-radius: 10px;
+  background: #fbfcfd;
+  text-align: center;
+}
+
+.spreadsheet-saved-views-empty strong {
+  display: block;
+  color: #303442;
+  font-size: 0.94rem;
+  font-weight: 650;
+}
+
+.spreadsheet-saved-views-empty p {
+  margin: 6px 0 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+}
+
+@media (max-width: 820px) {
+  .spreadsheet-saved-views-create,
+  .spreadsheet-saved-view-card {
+    grid-template-columns: 1fr;
+  }
+
+  .spreadsheet-saved-view-actions {
+    justify-content: flex-start;
+  }
+
+  .spreadsheet-saved-views-create .primary-dashboard-button {
+    width: 100%;
+  }
+}
+
+
+

@@ -477,8 +477,111 @@ function getDefaultSpreadsheetSettings() {
   };
 }
 
+const SPREADSHEET_SAVED_VIEWS_STORAGE_KEY =
+  "bookingSpreadsheetSavedViews";
+
+function normalizeSpreadsheetSettings(settings = {}) {
+  const parsedSettings = {
+    ...getDefaultSpreadsheetSettings(),
+    ...(settings || {}),
+  };
+
+  return {
+    ...parsedSettings,
+    showColumnCategoryColors: Boolean(parsedSettings.showColumnCategoryColors),
+    colorMode: "none",
+  };
+}
+
+function createSpreadsheetSavedViewId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  return `saved-view-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function getSavedSpreadsheetSavedViews() {
+  try {
+    const savedValue = localStorage.getItem(SPREADSHEET_SAVED_VIEWS_STORAGE_KEY);
+
+    if (!savedValue) {
+      return [];
+    }
+
+    const parsedValue = JSON.parse(savedValue);
+
+    if (!Array.isArray(parsedValue)) {
+      return [];
+    }
+
+    return parsedValue
+      .filter(
+        (savedView) =>
+          savedView &&
+          typeof savedView === "object" &&
+          savedView.id &&
+          savedView.name &&
+          savedView.settings
+      )
+      .map((savedView) => ({
+        id: String(savedView.id),
+        name: String(savedView.name),
+        createdAt: savedView.createdAt || "",
+        updatedAt: savedView.updatedAt || savedView.createdAt || "",
+        isDefault: Boolean(savedView.isDefault),
+        settings: normalizeSpreadsheetSettings(savedView.settings),
+      }));
+  } catch (error) {
+    console.error("Could not read saved spreadsheet views:", error);
+    return [];
+  }
+}
+
+function saveSpreadsheetSavedViews(savedViews) {
+  try {
+    localStorage.setItem(
+      SPREADSHEET_SAVED_VIEWS_STORAGE_KEY,
+      JSON.stringify(savedViews)
+    );
+  } catch (error) {
+    console.error("Could not save spreadsheet views:", error);
+  }
+}
+
+function getDefaultSpreadsheetSavedView() {
+  return (
+    getSavedSpreadsheetSavedViews().find((savedView) => savedView.isDefault) ||
+    null
+  );
+}
+
+function formatSpreadsheetSavedViewDate(value) {
+  if (!value) {
+    return "Not saved yet";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Not saved yet";
+  }
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 function getSavedSpreadsheetSettings() {
   try {
+    const defaultSavedView = getDefaultSpreadsheetSavedView();
+
+    if (defaultSavedView) {
+      return normalizeSpreadsheetSettings(defaultSavedView.settings);
+    }
+
     const savedSettings = localStorage.getItem(
       SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY
     );
@@ -487,16 +590,7 @@ function getSavedSpreadsheetSettings() {
       return getDefaultSpreadsheetSettings();
     }
 
-    const parsedSettings = {
-      ...getDefaultSpreadsheetSettings(),
-      ...JSON.parse(savedSettings),
-    };
-
-    return {
-      ...parsedSettings,
-      showColumnCategoryColors: Boolean(parsedSettings.showColumnCategoryColors),
-      colorMode: "none",
-    };
+    return normalizeSpreadsheetSettings(JSON.parse(savedSettings));
   } catch (error) {
     console.error("Could not read spreadsheet settings:", error);
     return getDefaultSpreadsheetSettings();
@@ -1002,10 +1096,30 @@ function SpreadsheetSettingsModal({
   statusOptions,
   filteredCount,
   totalCount,
+  savedViews,
+  onSaveSavedView,
+  onApplySavedView,
+  onUpdateSavedView,
+  onDeleteSavedView,
+  onSetDefaultSavedView,
   onClose,
   onReset,
 }) {
   const [activeSettingsTab, setActiveSettingsTab] = useState("Sources");
+
+  const [savedViewName, setSavedViewName] = useState("");
+
+  const handleSaveSavedView = () => {
+    const cleanName = savedViewName.trim();
+
+    if (!cleanName) {
+      return;
+    }
+
+    onSaveSavedView(cleanName);
+    setSavedViewName("");
+  };
+
 
   const visibleColumnIds =
     settings.visibleColumnIds || allColumns.map((column) => column.id);
@@ -1104,7 +1218,15 @@ function SpreadsheetSettingsModal({
         </header>
 
         <div className="spreadsheet-settings-tabs">
-          {["Sources", "Columns", "Filters", "Sorting", "Highlights", "Display"].map(
+          {[
+            "Sources",
+            "Columns",
+            "Filters",
+            "Sorting",
+            "Highlights",
+            "Display",
+            "Saved Views",
+          ].map(
   (tab) => (
               <button
                 className={activeSettingsTab === tab ? "active" : ""}
@@ -1883,6 +2005,124 @@ function SpreadsheetSettingsModal({
               </div>
             </div>
           )}
+
+          {activeSettingsTab === "Saved Views" && (
+            <div className="spreadsheet-settings-section">
+              <div className="spreadsheet-saved-views-create">
+                <div>
+                  <h4>Save Current View</h4>
+                  <p>
+                    Save your current sources, filters, sorting, columns, highlights, and
+                    display choices as a reusable view.
+                  </p>
+                </div>
+
+                <label className="spreadsheet-settings-field">
+                  <span>View Name</span>
+                  <input
+                    value={savedViewName}
+                    placeholder="Example: Simplified View"
+                    onChange={(event) => setSavedViewName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        handleSaveSavedView();
+                      }
+                    }}
+                  />
+                </label>
+
+                <button
+                  className="primary-dashboard-button"
+                  type="button"
+                  disabled={!savedViewName.trim()}
+                  onClick={handleSaveSavedView}
+                >
+                  Save View
+                </button>
+              </div>
+
+              {savedViews.length > 0 ? (
+                <div className="spreadsheet-saved-views-list">
+                  {savedViews.map((savedView) => (
+                    <article
+                      className={`spreadsheet-saved-view-card ${
+                        savedView.isDefault ? "is-default" : ""
+                      }`}
+                      key={savedView.id}
+                    >
+                      <div className="spreadsheet-saved-view-main">
+                        <div>
+                          <h4>{savedView.name}</h4>
+
+                          {savedView.isDefault && (
+                            <span className="spreadsheet-saved-view-badge">
+                              Startup View
+                            </span>
+                          )}
+                        </div>
+
+                        <p>
+                          Last updated{" "}
+                          {formatSpreadsheetSavedViewDate(
+                            savedView.updatedAt || savedView.createdAt
+                          )}
+                        </p>
+
+                        <label className="spreadsheet-saved-view-default">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(savedView.isDefault)}
+                            onChange={(event) =>
+                              onSetDefaultSavedView(
+                                event.target.checked ? savedView.id : null
+                              )
+                            }
+                          />
+                          <span>Use this view when Spreadsheet View opens</span>
+                        </label>
+                      </div>
+
+                      <div className="spreadsheet-saved-view-actions">
+                        <button
+                          type="button"
+                          onClick={() => onApplySavedView(savedView.id)}
+                        >
+                          Apply
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => onUpdateSavedView(savedView.id)}
+                        >
+                          Update
+                        </button>
+
+                        <button
+                          className="spreadsheet-saved-view-danger"
+                          type="button"
+                          onClick={() => onDeleteSavedView(savedView.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="spreadsheet-saved-views-empty">
+                  <strong>No saved views yet</strong>
+                  <p>
+                    Adjust your spreadsheet settings, name the setup, and save it here.
+                  </p>
+                </div>
+              )}
+
+              <p className="spreadsheet-settings-help-text">
+                Applying a saved view changes the spreadsheet immediately. Updating a saved
+                view overwrites it with whatever your current settings are.
+              </p>
+            </div>
+          )}
         </div>
 
         <footer className="spreadsheet-settings-footer">
@@ -1967,6 +2207,10 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
     getSavedSpreadsheetSettings()
   );
 
+  const [savedSpreadsheetViews, setSavedSpreadsheetViews] = useState(() =>
+    getSavedSpreadsheetSavedViews()
+  );
+
   const [starredSpreadsheetBookingIds, setStarredSpreadsheetBookingIds] =
     useState(() =>
       getSavedSpreadsheetStarIdList(SPREADSHEET_VIEW_STARRED_STORAGE_KEY)
@@ -1975,6 +2219,10 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
   useEffect(() => {
     saveSpreadsheetSettings(spreadsheetSettings);
   }, [spreadsheetSettings]);
+
+  useEffect(() => {
+    saveSpreadsheetSavedViews(savedSpreadsheetViews);
+  }, [savedSpreadsheetViews]);
 
     useEffect(() => {
     saveSpreadsheetStarIdList(
@@ -2259,6 +2507,93 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
 
   const resetSpreadsheetSettings = () => {
     setSpreadsheetSettings(getDefaultSpreadsheetSettings());
+  };
+
+  const saveCurrentSpreadsheetSavedView = (viewName) => {
+    const cleanName = String(viewName || "").trim();
+
+    if (!cleanName) {
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const settingsSnapshot = normalizeSpreadsheetSettings(spreadsheetSettings);
+
+    setSavedSpreadsheetViews((currentViews) => {
+      const existingView = currentViews.find(
+        (savedView) =>
+          savedView.name.trim().toLowerCase() === cleanName.toLowerCase()
+      );
+
+      if (existingView) {
+        return currentViews.map((savedView) =>
+          savedView.id === existingView.id
+            ? {
+                ...savedView,
+                name: cleanName,
+                settings: settingsSnapshot,
+                updatedAt: now,
+              }
+            : savedView
+        );
+      }
+
+      return [
+        ...currentViews,
+        {
+          id: createSpreadsheetSavedViewId(),
+          name: cleanName,
+          settings: settingsSnapshot,
+          createdAt: now,
+          updatedAt: now,
+          isDefault: false,
+        },
+      ];
+    });
+  };
+
+  const applySpreadsheetSavedView = (savedViewId) => {
+    const savedView = savedSpreadsheetViews.find(
+      (currentSavedView) => currentSavedView.id === savedViewId
+    );
+
+    if (!savedView) {
+      return;
+    }
+
+    setSpreadsheetSettings(normalizeSpreadsheetSettings(savedView.settings));
+  };
+
+  const updateSpreadsheetSavedView = (savedViewId) => {
+    const now = new Date().toISOString();
+    const settingsSnapshot = normalizeSpreadsheetSettings(spreadsheetSettings);
+
+    setSavedSpreadsheetViews((currentViews) =>
+      currentViews.map((savedView) =>
+        savedView.id === savedViewId
+          ? {
+              ...savedView,
+              settings: settingsSnapshot,
+              updatedAt: now,
+            }
+          : savedView
+      )
+    );
+  };
+
+  const deleteSpreadsheetSavedView = (savedViewId) => {
+    setSavedSpreadsheetViews((currentViews) =>
+      currentViews.filter((savedView) => savedView.id !== savedViewId)
+    );
+  };
+
+  const setDefaultSpreadsheetSavedView = (savedViewId) => {
+    setSavedSpreadsheetViews((currentViews) =>
+      currentViews.map((savedView) => ({
+        ...savedView,
+        isDefault: savedViewId ? savedView.id === savedViewId : false,
+      }))
+    );
   };
 
   const formCount = inquiryBookings.filter(
@@ -2630,6 +2965,12 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
           statusOptions={statusOptions}
           filteredCount={filteredAndSortedBookings.length}
           totalCount={inquiryBookings.length}
+          savedViews={savedSpreadsheetViews}
+          onSaveSavedView={saveCurrentSpreadsheetSavedView}
+          onApplySavedView={applySpreadsheetSavedView}
+          onUpdateSavedView={updateSpreadsheetSavedView}
+          onDeleteSavedView={deleteSpreadsheetSavedView}
+          onSetDefaultSavedView={setDefaultSpreadsheetSavedView}
           onClose={() => setIsSettingsOpen(false)}
           onReset={resetSpreadsheetSettings}
         />
