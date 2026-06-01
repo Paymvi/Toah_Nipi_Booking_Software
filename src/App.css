@@ -7819,6 +7819,68 @@ body,
 
 
 /* =========================================================
+   Contacts View: Click Cell To Copy
+========================================================= */
+
+.contacts-view-copy-cell {
+  position: relative;
+  cursor: copy;
+}
+
+.contacts-view-copy-cell:hover {
+  color: #303442;
+}
+
+.contacts-view-copy-cell:focus-visible {
+  outline: 3px solid rgba(68, 58, 156, 0.14);
+  outline-offset: -3px;
+}
+
+.contacts-view-copy-cell.is-copied {
+  background: #f7f5ff !important;
+  color: #443a9c;
+}
+
+.contacts-view-copy-cell-content {
+  min-width: 0;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contacts-view-copy-cell.is-copied .contacts-view-copy-cell-content {
+  padding-right: 58px;
+}
+
+.contacts-view-copy-feedback {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #443a9c;
+  color: #ffffff;
+
+  font-size: 0.66rem;
+  font-weight: 650;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.contacts-view-copy-cell .contacts-view-name-cell {
+  max-width: 100%;
+}
+
+
+
+/* =========================================================
    Spreadsheet View: Full Settings Modal + Advanced Controls
 ========================================================= */
 

@@ -103,6 +103,33 @@ function getContactsFromBookings(bookings) {
   );
 }
 
+async function copyTextToClipboard(text) {
+  const textToCopy = String(text ?? "").trim();
+
+  if (!textToCopy) {
+    return;
+  }
+
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(textToCopy);
+    return;
+  }
+
+  const textArea = document.createElement("textarea");
+  textArea.value = textToCopy;
+  textArea.setAttribute("readonly", "");
+  textArea.style.position = "fixed";
+  textArea.style.left = "-9999px";
+  textArea.style.top = "-9999px";
+
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+
+  document.execCommand("copy");
+  document.body.removeChild(textArea);
+}
+
 export default function ContactsView({ inquiryBookings, openBookingDetail }) {
   const contacts = useMemo(
     () => getContactsFromBookings(inquiryBookings),
@@ -116,6 +143,8 @@ export default function ContactsView({ inquiryBookings, openBookingDetail }) {
   const [showStarredFirst, setShowStarredFirst] = useState(() =>
     getSavedContactsBoolean(CONTACTS_VIEW_STARRED_FIRST_STORAGE_KEY, false)
   );
+
+  const [copiedContactCell, setCopiedContactCell] = useState("");
 
   useEffect(() => {
     saveContactIdList(CONTACTS_VIEW_STARRED_STORAGE_KEY, starredContactIds);
@@ -157,6 +186,57 @@ export default function ContactsView({ inquiryBookings, openBookingDetail }) {
       return [...currentIds, contactId];
     });
   };
+
+  const copyContactCellValue = async (value, cellId) => {
+    const textToCopy = String(value ?? "").trim();
+
+    if (!textToCopy) {
+      return;
+    }
+
+    try {
+      await copyTextToClipboard(textToCopy);
+
+      setCopiedContactCell(cellId);
+
+      window.setTimeout(() => {
+        setCopiedContactCell((currentCellId) =>
+          currentCellId === cellId ? "" : currentCellId
+        );
+      }, 1100);
+    } catch (error) {
+      console.error("Could not copy contact cell:", error);
+    }
+  };
+
+  function CopyableContactCell({ cellId, copyLabel, value, children }) {
+    const isCopied = copiedContactCell === cellId;
+
+    return (
+      <td
+        className={`contacts-view-copy-cell ${isCopied ? "is-copied" : ""}`}
+        role="button"
+        tabIndex={0}
+        title={isCopied ? "Copied!" : `Click to copy ${copyLabel}`}
+        aria-label={`Copy ${copyLabel}`}
+        onClick={() => copyContactCellValue(value, cellId)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            copyContactCellValue(value, cellId);
+          }
+        }}
+      >
+        <div className="contacts-view-copy-cell-content">
+          {children ?? value ?? "N/A"}
+        </div>
+
+        {isCopied && (
+          <span className="contacts-view-copy-feedback">Copied</span>
+        )}
+      </td>
+    );
+  }
 
   return (
     <section className="contacts-view-page">
@@ -259,19 +339,47 @@ export default function ContactsView({ inquiryBookings, openBookingDetail }) {
                         </button>
                       </td>
 
-                      <td>
+                      <CopyableContactCell
+                        cellId={`${contact.id}-contact-name`}
+                        copyLabel="contact name"
+                        value={contact.contactName}
+                      >
                         <div className="contacts-view-name-cell">
                           <strong>{contact.contactName}</strong>
                         </div>
-                      </td>
+                      </CopyableContactCell>
 
-                      <td>{contact.organizationName}</td>
+                      <CopyableContactCell
+                        cellId={`${contact.id}-organization`}
+                        copyLabel="organization"
+                        value={contact.organizationName}
+                      >
+                        {contact.organizationName}
+                      </CopyableContactCell>
 
-                      <td>{contact.email || "N/A"}</td>
+                      <CopyableContactCell
+                        cellId={`${contact.id}-email`}
+                        copyLabel="email"
+                        value={contact.email || "N/A"}
+                      >
+                        {contact.email || "N/A"}
+                      </CopyableContactCell>
 
-                      <td>{contact.phone || "N/A"}</td>
+                      <CopyableContactCell
+                        cellId={`${contact.id}-phone`}
+                        copyLabel="phone"
+                        value={contact.phone || "N/A"}
+                      >
+                        {contact.phone || "N/A"}
+                      </CopyableContactCell>
 
-                      <td>{contact.bookings.length}</td>
+                      <CopyableContactCell
+                        cellId={`${contact.id}-bookings`}
+                        copyLabel="booking count"
+                        value={contact.bookings.length}
+                      >
+                        {contact.bookings.length}
+                      </CopyableContactCell>
 
                       <td>
                         <div className="contacts-view-actions">
