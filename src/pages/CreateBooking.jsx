@@ -108,7 +108,7 @@ export default function CreateBooking() {
               <input
                 type="text"
                 name="organizationName"
-                placeholder="Fort Collins Christian Church Youth Group"
+                placeholder="Your-Group-Name"
                 value={formData.organizationName}
                 onChange={handleChange}
                 required
@@ -120,7 +120,7 @@ export default function CreateBooking() {
               <input
                 type="text"
                 name="firstName"
-                placeholder="Steve"
+                placeholder="John"
                 value={formData.firstName}
                 onChange={handleChange}
                 required
@@ -132,7 +132,7 @@ export default function CreateBooking() {
               <input
                 type="text"
                 name="lastName"
-                placeholder="Rivard"
+                placeholder="Smith"
                 value={formData.lastName}
                 onChange={handleChange}
                 required
@@ -144,7 +144,7 @@ export default function CreateBooking() {
               <input
                 type="email"
                 name="email"
-                placeholder="stever@mailinator.com"
+                placeholder="your-email@email.com"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -156,7 +156,7 @@ export default function CreateBooking() {
               <input
                 type="tel"
                 name="phone"
-                placeholder="970-525-8759"
+                placeholder="123-456-7890"
                 value={formData.phone}
                 onChange={handleChange}
               />
