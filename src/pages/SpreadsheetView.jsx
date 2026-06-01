@@ -849,6 +849,19 @@ function getSpreadsheetPreviewDateText(booking) {
 }
 
 function SpreadsheetRowPreviewPopup({ booking }) {
+  const previewFlags = [
+    String(booking.waitlist || "").toLowerCase() === "yes" ? "Waitlist" : "",
+    isSpreadsheetUsableValue(booking.foodAllergies) ? "Food allergies" : "",
+    isSpreadsheetUsableValue(booking.needToKnow) ? "Need to know" : "",
+  ].filter(Boolean);
+
+  const sourceLabel = getBookingInputMethod(booking);
+  const sourceSheetLabel = getBookingSourceSheetLabel(booking);
+
+  const sourceText = [sourceLabel, sourceSheetLabel]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <div className="spreadsheet-row-hover-popup" role="tooltip">
       <div className="spreadsheet-row-hover-popup-top">
@@ -866,10 +879,14 @@ function SpreadsheetRowPreviewPopup({ booking }) {
         </em>
       </div>
 
+      <p className="spreadsheet-row-hover-popup-source" title={sourceText}>
+        {sourceText}
+      </p>
+
       <dl>
         <div>
           <dt>Type</dt>
-          <dd>{booking.retreatType || getBookingInputMethod(booking)}</dd>
+          <dd>{booking.retreatType || "—"}</dd>
         </div>
 
         <div>
@@ -889,11 +906,17 @@ function SpreadsheetRowPreviewPopup({ booking }) {
 
         <div>
           <dt>Room</dt>
-          <dd>
-            {booking.roomName ||
-              booking.buildingsRooms ||
-              "Unassigned"}
-          </dd>
+          <dd>{booking.roomName || booking.buildingsRooms || "Unassigned"}</dd>
+        </div>
+
+        <div>
+          <dt>Meals</dt>
+          <dd>{booking.meals || booking.mealCount || "—"}</dd>
+        </div>
+
+        <div>
+          <dt>Flags</dt>
+          <dd>{previewFlags.length > 0 ? previewFlags.join(" · ") : "None"}</dd>
         </div>
       </dl>
     </div>

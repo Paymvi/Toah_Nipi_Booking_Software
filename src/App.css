@@ -11868,43 +11868,59 @@ body,
 .spreadsheet-table tbody tr:hover td:first-child {
   z-index: 80;
 }
+.spreadsheet-table td {
+  position: relative;
+}
+
+.spreadsheet-cell-content {
+  position: relative;
+  z-index: 1;
+}
+
+.spreadsheet-table td.spreadsheet-row-preview-cell {
+  overflow: visible;
+}
+
+.spreadsheet-table tbody tr:hover td.spreadsheet-row-preview-cell {
+  z-index: 80;
+}
 
 .spreadsheet-row-hover-popup {
   position: absolute;
-  left: 18px;
-  top: calc(100% - 2px);
+  left: 12px;
+  top: calc(100% + 4px);
   z-index: 90;
 
-  width: min(430px, 72vw);
-  padding: 18px 20px;
+  width: min(360px, 68vw);
+  padding: 13px 14px;
 
   border: 1px solid #dfe4ec;
-  border-radius: 14px;
+  border-radius: 8px;
   background: #ffffff;
-  box-shadow: 0 18px 45px rgba(31, 42, 68, 0.18);
+  box-shadow: 0 12px 28px rgba(28, 35, 52, 0.16);
 
-  color: #273043;
+  color: #303442;
   text-align: left;
   white-space: normal;
 
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translateY(8px) scale(0.98);
+  transform: translateY(4px);
   transition:
-    opacity 140ms ease,
-    visibility 140ms ease,
-    transform 140ms ease;
+    opacity 130ms ease,
+    visibility 130ms ease,
+    transform 130ms ease;
 }
 
 .spreadsheet-row-hover-popup::before {
   content: "";
   position: absolute;
-  top: -9px;
-  left: 28px;
+  top: -6px;
+  left: 18px;
 
-  width: 16px;
-  height: 16px;
+  width: 11px;
+  height: 11px;
 
   border-left: 1px solid #dfe4ec;
   border-top: 1px solid #dfe4ec;
@@ -11915,67 +11931,88 @@ body,
 .spreadsheet-table tbody tr:hover .spreadsheet-row-hover-popup {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
 }
 
 .spreadsheet-row-hover-popup-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 8px;
 }
 
 .spreadsheet-row-hover-popup-top strong {
   display: block;
-  color: #151d2f;
-  font-size: 1.05rem;
-  font-weight: 780;
+  color: #252936;
+  font-size: 0.92rem;
+  font-weight: 650;
   line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 
 .spreadsheet-row-hover-popup-top span {
   display: block;
-  margin-top: 8px;
-  color: #3d4658;
-  font-size: 0.95rem;
-  font-weight: 650;
+  margin-top: 4px;
+  color: #687083;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.35;
 }
 
 .spreadsheet-row-hover-popup-top em {
   flex: 0 0 auto;
   font-style: normal;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 7px;
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+
+.spreadsheet-row-hover-popup-source {
+  margin: 0 0 10px;
+  padding: 7px 9px;
+
+  border: 1px solid #edf0f4;
+  border-radius: 7px;
+  background: #fbfcfd;
+
+  color: #7b8290;
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1.35;
 }
 
 .spreadsheet-row-hover-popup dl {
   display: grid;
-  gap: 11px;
+  gap: 7px;
   margin: 0;
 }
 
 .spreadsheet-row-hover-popup dl div {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: 74px minmax(0, 1fr);
+  gap: 10px;
   align-items: start;
 }
 
 .spreadsheet-row-hover-popup dt {
   color: #8a92a3;
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  font-size: 0.66rem;
+  font-weight: 650;
+  letter-spacing: 0.055em;
   text-transform: uppercase;
 }
 
 .spreadsheet-row-hover-popup dd {
   margin: 0;
-  color: #273043;
-  font-size: 0.92rem;
-  font-weight: 650;
-  line-height: 1.4;
+  color: #3f4351;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
-
 
 .spreadsheet-table td.spreadsheet-row-preview-cell {
   overflow: visible;
@@ -12196,4 +12233,33 @@ body,
   .spreadsheet-view-summary {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+
+
+
+
+
+
+
+
+.spreadsheet-row-hover-popup-source {
+  margin: 8px 0 10px;
+  padding: 8px 10px;
+
+  max-width: 100%;
+
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  font-size: 0.74rem;
+  line-height: 1.2;
+  font-weight: 600;
+
+  color: #707789;
+  background: #f8fafc;
+  border: 1px solid #e5eaf1;
+  border-radius: 9px;
 }
