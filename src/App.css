@@ -6379,7 +6379,31 @@ body,
 
 
 
+/* =========================================================
+   FINAL OVERRIDE: Dated Inquiries Card Radius Fix
+========================================================= */
 
+.dated-inquiries-dashboard-card {
+  border-radius: 10px;
+  overflow: visible;
+}
+
+/* Since overflow is visible, the inside sections need their own radius */
+.dated-inquiries-dashboard-card > :first-child {
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+.dated-inquiries-dashboard-card > :last-child {
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+/* Make sure the header itself rounds correctly */
+.dated-inquiries-dashboard-header {
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
 
 
 
