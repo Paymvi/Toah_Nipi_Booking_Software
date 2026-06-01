@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { FaCog, FaTable, FaTimes } from "react-icons/fa";
+import { FaCog, FaInfoCircle, FaTable, FaTimes } from "react-icons/fa";
 
 import {
   SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY,
@@ -446,6 +446,7 @@ function getDefaultSpreadsheetSettings() {
 
     freezeFirstColumn: true,
     compactRows: false,
+    showRowPreviewPopups: false,
 
     colorMode: "none",
 
@@ -832,6 +833,71 @@ function toggleSpreadsheetArrayValue(values, value) {
   }
 
   return [...currentValues, value];
+}
+
+function getSpreadsheetPreviewDateText(booking) {
+  const dateRange = getSpreadsheetDateRangeDisplay(
+    booking.startDate,
+    booking.endDate
+  );
+
+  if (dateRange && dateRange !== "N/A") {
+    return dateRange;
+  }
+
+  return getSpreadsheetDisplayValue(booking.desiredDatesText);
+}
+
+function SpreadsheetRowPreviewPopup({ booking }) {
+  return (
+    <div className="spreadsheet-row-hover-popup" role="tooltip">
+      <div className="spreadsheet-row-hover-popup-top">
+        <div>
+          <strong>{booking.organizationName || "Unnamed Organization"}</strong>
+          <span>{getSpreadsheetPreviewDateText(booking)}</span>
+        </div>
+
+        <em
+          className={`spreadsheet-status-pill ${getSpreadsheetStatusClass(
+            booking.status
+          )}`}
+        >
+          {getSpreadsheetDisplayValue(booking.status)}
+        </em>
+      </div>
+
+      <dl>
+        <div>
+          <dt>Type</dt>
+          <dd>{booking.retreatType || getBookingInputMethod(booking)}</dd>
+        </div>
+
+        <div>
+          <dt>Guests</dt>
+          <dd>
+            {booking.attendeeCount ||
+              booking.groupSize ||
+              booking.persons ||
+              "—"}
+          </dd>
+        </div>
+
+        <div>
+          <dt>Contact</dt>
+          <dd>{booking.contactName || "No contact name"}</dd>
+        </div>
+
+        <div>
+          <dt>Room</dt>
+          <dd>
+            {booking.roomName ||
+              booking.buildingsRooms ||
+              "Unassigned"}
+          </dd>
+        </div>
+      </dl>
+    </div>
+  );
 }
 
 function SpreadsheetSettingsModal({
@@ -1994,11 +2060,11 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
             <div>
               <p className="dashboard-eyebrow">Spreadsheet View</p>
               <h2>All Booking Data</h2>
-              <p>
+              {/* <p>
                 A full spreadsheet-style view of every
                 <br />
                 form submission + imported booking row.
-              </p>
+              </p> */}
             </div>
           </div>
 
@@ -2030,14 +2096,33 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
               </span>
             </div>
 
-            <button
-              className="primary-dashboard-button spreadsheet-settings-button"
-              type="button"
-              onClick={() => setIsSettingsOpen(true)}
-            >
-              <FaCog />
-              Settings
-            </button>
+            <div className="spreadsheet-settings-stack">
+              <button
+                className="primary-dashboard-button spreadsheet-settings-button"
+                type="button"
+                onClick={() => setIsSettingsOpen(true)}
+              >
+                <FaCog />
+                Settings
+              </button>
+
+              <label className="spreadsheet-row-preview-toggle">
+                <input
+                  type="checkbox"
+                  checked={Boolean(spreadsheetSettings.showRowPreviewPopups)}
+                  onChange={(event) =>
+                    updateSpreadsheetSettings({
+                      showRowPreviewPopups: event.target.checked,
+                    })
+                  }
+                />
+
+                <span>
+                  <FaInfoCircle />
+                  Row popups
+                </span>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -2135,22 +2220,35 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
                       key={booking.id}
                     >
                       {visibleSpreadsheetColumns.map((column, columnIndex) => (
-                        <td
-                          className={getSpreadsheetCellClass({
+                      <td
+                        className={[
+                          getSpreadsheetCellClass({
                             column,
                             columnIndex,
                             booking,
                             settings: spreadsheetSettings,
-                          })}
-                          key={`${booking.id}-${column.id}`}
-                          title={getSpreadsheetDisplayValue(
-                            getSpreadsheetComparableValue(column, booking)
-                          )}
-                        >
+                          }),
+                          columnIndex === 0 && spreadsheetSettings.showRowPreviewPopups
+                            ? "spreadsheet-row-preview-cell"
+                            : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        key={`${booking.id}-${column.id}`}
+                        title={getSpreadsheetDisplayValue(
+                          getSpreadsheetComparableValue(column, booking)
+                        )}
+                      >
+                        <span className="spreadsheet-cell-content">
                           {column.render
                             ? column.render(booking, openBookingDetail)
                             : getSpreadsheetDisplayValue(column.value(booking))}
-                        </td>
+                        </span>
+
+                        {columnIndex === 0 && spreadsheetSettings.showRowPreviewPopups && (
+                          <SpreadsheetRowPreviewPopup booking={booking} />
+                        )}
+                      </td>
                       ))}
                     </tr>
                   ))}

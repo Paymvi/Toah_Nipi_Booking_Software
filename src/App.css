@@ -11800,3 +11800,400 @@ body,
 .dashboard-sidebar-collapsed .sidebar-main-section > p {
   display: none;
 }
+
+
+
+
+
+
+
+
+
+.spreadsheet-settings-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.spreadsheet-row-preview-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 7px 11px;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 999px;
+  background: #f7faf6;
+
+  color: #52606d;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.spreadsheet-row-preview-toggle input {
+  margin: 0;
+  accent-color: #5f766f;
+}
+
+.spreadsheet-row-preview-toggle span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.spreadsheet-row-preview-toggle svg {
+  font-size: 0.8rem;
+}
+
+.spreadsheet-row-preview-toggle:hover {
+  border-color: #b8c5be;
+  background: #eef5ee;
+  color: #395f52;
+}
+
+.spreadsheet-table td {
+  position: relative;
+}
+
+.spreadsheet-cell-content {
+  position: relative;
+  z-index: 1;
+}
+
+.spreadsheet-table tbody tr:hover td:first-child {
+  z-index: 80;
+}
+
+.spreadsheet-row-hover-popup {
+  position: absolute;
+  left: 18px;
+  top: calc(100% - 2px);
+  z-index: 90;
+
+  width: min(430px, 72vw);
+  padding: 18px 20px;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(31, 42, 68, 0.18);
+
+  color: #273043;
+  text-align: left;
+  white-space: normal;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(8px) scale(0.98);
+  transition:
+    opacity 140ms ease,
+    visibility 140ms ease,
+    transform 140ms ease;
+}
+
+.spreadsheet-row-hover-popup::before {
+  content: "";
+  position: absolute;
+  top: -9px;
+  left: 28px;
+
+  width: 16px;
+  height: 16px;
+
+  border-left: 1px solid #dfe4ec;
+  border-top: 1px solid #dfe4ec;
+  background: #ffffff;
+  transform: rotate(45deg);
+}
+
+.spreadsheet-table tbody tr:hover .spreadsheet-row-hover-popup {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.spreadsheet-row-hover-popup-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.spreadsheet-row-hover-popup-top strong {
+  display: block;
+  color: #151d2f;
+  font-size: 1.05rem;
+  font-weight: 780;
+  line-height: 1.25;
+}
+
+.spreadsheet-row-hover-popup-top span {
+  display: block;
+  margin-top: 8px;
+  color: #3d4658;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.spreadsheet-row-hover-popup-top em {
+  flex: 0 0 auto;
+  font-style: normal;
+}
+
+.spreadsheet-row-hover-popup dl {
+  display: grid;
+  gap: 11px;
+  margin: 0;
+}
+
+.spreadsheet-row-hover-popup dl div {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.spreadsheet-row-hover-popup dt {
+  color: #8a92a3;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spreadsheet-row-hover-popup dd {
+  margin: 0;
+  color: #273043;
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+
+.spreadsheet-table td.spreadsheet-row-preview-cell {
+  overflow: visible;
+}
+
+.spreadsheet-table tbody tr:hover td.spreadsheet-row-preview-cell {
+  z-index: 80;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Spreadsheet Header Actions: Cleaner Settings + Row Popup Toggle
+========================================================= */
+
+.spreadsheet-view-header {
+  align-items: flex-start;
+}
+
+.spreadsheet-view-header-actions {
+  flex: 1 1 760px;
+  min-width: 0;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 178px;
+  align-items: start;
+  gap: 14px;
+}
+
+.spreadsheet-view-summary {
+  min-width: 0;
+
+  display: grid;
+  grid-template-columns: repeat(5, minmax(112px, 1fr));
+  gap: 10px;
+
+  justify-content: stretch;
+}
+
+.spreadsheet-view-summary span {
+  min-width: 0;
+  height: 72px;
+
+  justify-content: center;
+  padding: 11px 14px;
+
+  border-radius: 9px;
+}
+
+.spreadsheet-settings-stack {
+  width: 178px;
+
+  display: grid;
+  gap: 8px;
+
+  align-self: start;
+  justify-self: end;
+}
+
+.spreadsheet-settings-stack .spreadsheet-settings-button {
+  width: 100%;
+  min-height: 46px;
+
+  border-radius: 9px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+/* Make Row Popups look like a clean mini setting instead of a random checkbox pill */
+
+.spreadsheet-row-preview-toggle {
+  width: 100%;
+  min-height: 38px;
+
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+
+  padding: 7px 10px;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 9px;
+  background: #fbfcfd;
+
+  color: #565d6b;
+  font-size: 0.8rem;
+  font-weight: 650;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.spreadsheet-row-preview-toggle:hover {
+  background: #f6f7f9;
+  border-color: #cfd6e1;
+  color: #303442;
+}
+
+.spreadsheet-row-preview-toggle input {
+  appearance: none;
+  -webkit-appearance: none;
+
+  position: relative;
+
+  width: 36px;
+  height: 20px;
+  margin: 0;
+
+  border: 1px solid #cfd6e1;
+  border-radius: 999px;
+  background: #e8ebf1;
+
+  cursor: pointer;
+
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.spreadsheet-row-preview-toggle input::before {
+  content: "";
+
+  position: absolute;
+  top: 2px;
+  left: 2px;
+
+  width: 14px;
+  height: 14px;
+
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(28, 35, 52, 0.2);
+
+  transition: transform 140ms ease;
+}
+
+.spreadsheet-row-preview-toggle input:checked {
+  background: #443a9c;
+  border-color: #443a9c;
+}
+
+.spreadsheet-row-preview-toggle input:checked::before {
+  transform: translateX(16px);
+}
+
+.spreadsheet-row-preview-toggle span {
+  min-width: 0;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.spreadsheet-row-preview-toggle svg {
+  flex: 0 0 auto;
+  color: #7b8290;
+  font-size: 0.78rem;
+}
+
+.spreadsheet-row-preview-toggle:has(input:checked) {
+  border-color: #c9c4e8;
+  background: #f7f5ff;
+  color: #443a9c;
+}
+
+.spreadsheet-row-preview-toggle:has(input:checked) svg {
+  color: #443a9c;
+}
+
+/* Keep it nice on smaller screens */
+
+@media (max-width: 1280px) {
+  .spreadsheet-view-header {
+    flex-direction: column;
+  }
+
+  .spreadsheet-view-header-actions {
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .spreadsheet-view-summary {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  }
+
+  .spreadsheet-settings-stack {
+    width: 178px;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 720px) {
+  .spreadsheet-settings-stack {
+    width: 100%;
+  }
+
+  .spreadsheet-view-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+}
