@@ -456,18 +456,24 @@ function getDefaultSpreadsheetSettings() {
     compactRows: false,
     showRowPreviewPopups: false,
     showStarredRowsFirst: false,
-    visibleSummaryCardIds: null,
+    visibleSummaryCardIds: [
+      "shown",
+      "totalRows",
+      "starredRows",
+      "hiddenColumns",
+    ],
 
     colorMode: "none",
 
-    highlightMissingContact: true,
-    highlightMissingDates: true,
-    highlightWaitlist: true,
-    highlightCancelled: true,
-    highlightFoodAllergies: true,
+    highlightMissingContact: false,
+    highlightMissingDates: false,
+    highlightWaitlist: false,
+    highlightCancelled: false,
+    highlightFoodAllergies: false,
 
     customHighlightText: "",
     customHighlightColumnId: "all",
+
   };
 }
 
@@ -2451,12 +2457,25 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
                 </strong>
               </span>
 
+              <div className="spreadsheet-active-settings-actions">
+              
               <button
                 type="button"
                 onClick={() => setIsSettingsOpen(true)}
               >
                 Edit View
               </button>
+
+              <button
+                className="spreadsheet-reset-view-button"
+                type="button"
+                onClick={resetSpreadsheetSettings}
+              >
+                Reset View
+              </button>
+
+              
+            </div>
             </div>
 
             <div className="spreadsheet-table-wrap">

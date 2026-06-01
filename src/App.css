@@ -12673,3 +12673,48 @@ body,
 .spreadsheet-starred-first-toggle svg {
   color: #c98716;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Spreadsheet View: Visible Reset Button
+========================================================= */
+
+.spreadsheet-active-settings-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.spreadsheet-active-settings-actions button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #443a9c;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.spreadsheet-active-settings-actions button:hover {
+  text-decoration: underline;
+}
+
+.spreadsheet-active-settings-actions .spreadsheet-reset-view-button {
+  color: #9f2f2f;
+}
+
+.spreadsheet-active-settings-actions .spreadsheet-reset-view-button:hover {
+  color: #822727;
+}
