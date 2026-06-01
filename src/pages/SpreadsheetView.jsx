@@ -447,6 +447,7 @@ function getDefaultSpreadsheetSettings() {
     freezeFirstColumn: true,
     compactRows: false,
     showRowPreviewPopups: false,
+    visibleSummaryCardIds: null,
 
     colorMode: "none",
 
@@ -928,6 +929,7 @@ function SpreadsheetSettingsModal({
   updateSettings,
   allColumns,
   orderedColumns,
+  summaryCards,
   sourceTypeOptions,
   inputMethodCounts,
   sourceSheetOptions,
@@ -942,6 +944,26 @@ function SpreadsheetSettingsModal({
 
   const visibleColumnIds =
     settings.visibleColumnIds || allColumns.map((column) => column.id);
+
+  const allSummaryCardIds = summaryCards.map((card) => card.id);
+
+  const visibleSummaryCardIds =
+    settings.visibleSummaryCardIds || allSummaryCardIds;
+
+  const toggleSummaryCardVisibility = (cardId) => {
+    const currentVisibleIds = settings.visibleSummaryCardIds || allSummaryCardIds;
+
+    const nextVisibleIds = currentVisibleIds.includes(cardId)
+      ? currentVisibleIds.filter((id) => id !== cardId)
+      : [...currentVisibleIds, cardId];
+
+    updateSettings({
+      visibleSummaryCardIds:
+        nextVisibleIds.length === allSummaryCardIds.length
+          ? null
+          : nextVisibleIds,
+    });
+  };
 
   const toggleColumnVisibility = (columnId) => {
     const currentVisibleIds =
@@ -1709,6 +1731,56 @@ function SpreadsheetSettingsModal({
           {activeSettingsTab === "Display" && (
             <div className="spreadsheet-settings-section">
               <div className="spreadsheet-settings-check-group">
+                <h4>Summary Cards</h4>
+
+                <p className="spreadsheet-settings-help-text">
+                  Choose which cards appear at the top of the Spreadsheet View.
+                </p>
+
+                <div className="spreadsheet-settings-actions-row">
+                  <button
+                    type="button"
+                    onClick={() => updateSettings({ visibleSummaryCardIds: null })}
+                  >
+                    Show All Cards
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => updateSettings({ visibleSummaryCardIds: [] })}
+                  >
+                    Hide All Cards
+                  </button>
+                </div>
+
+                <div className="spreadsheet-summary-card-settings-list">
+                  {summaryCards.map((card) => {
+                    const isVisible = visibleSummaryCardIds.includes(card.id);
+
+                    return (
+                      <label
+                        className={`spreadsheet-summary-card-setting ${
+                          isVisible ? "is-visible" : "is-hidden"
+                        }`}
+                        key={card.id}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isVisible}
+                          onChange={() => toggleSummaryCardVisibility(card.id)}
+                        />
+
+                        <span>
+                          <strong>{card.label}</strong>
+                          <small>Current value: {card.value}</small>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="spreadsheet-settings-check-group">
                 <h4>Table Display</h4>
 
                 <label>
@@ -2071,6 +2143,61 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
   const hiddenColumnCount =
     allSpreadsheetColumns.length - visibleSpreadsheetColumns.length;
 
+
+  const spreadsheetSummaryCards = useMemo(
+    () => [
+      {
+        id: "shown",
+        label: "Shown",
+        value: filteredAndSortedBookings.length,
+        className: "spreadsheet-summary-card-shown",
+      },
+      {
+        id: "totalRows",
+        label: "Total Rows",
+        value: inquiryBookings.length,
+        className: "spreadsheet-summary-card-total",
+      },
+      {
+        id: "forms",
+        label: "Forms",
+        value: formCount,
+        className: "spreadsheet-summary-card-forms",
+      },
+      {
+        id: "imports",
+        label: "Imports",
+        value: importedCount,
+        className: "spreadsheet-summary-card-imports",
+      },
+      {
+        id: "hiddenColumns",
+        label: "Hidden Columns",
+        value: hiddenColumnCount,
+        className: "spreadsheet-summary-card-hidden-columns",
+      },
+    ],
+    [
+      filteredAndSortedBookings.length,
+      inquiryBookings.length,
+      formCount,
+      importedCount,
+      hiddenColumnCount,
+    ]
+  );
+
+  const visibleSummaryCards = useMemo(() => {
+    const visibleSummaryCardIds =
+      spreadsheetSettings.visibleSummaryCardIds ||
+      spreadsheetSummaryCards.map((card) => card.id);
+
+    const visibleSummaryCardIdSet = new Set(visibleSummaryCardIds);
+
+    return spreadsheetSummaryCards.filter((card) =>
+      visibleSummaryCardIdSet.has(card.id)
+    );
+  }, [spreadsheetSettings.visibleSummaryCardIds, spreadsheetSummaryCards]);
+
   return (
     <section className="spreadsheet-view-page">
       <article className="dashboard-card spreadsheet-view-card">
@@ -2092,32 +2219,19 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
           </div>
 
           <div className="spreadsheet-view-header-actions">
-            <div className="spreadsheet-view-summary">
-              <span>
-                <strong>{filteredAndSortedBookings.length}</strong>
-                Shown
-              </span>
-
-              <span>
-                <strong>{inquiryBookings.length}</strong>
-                Total Rows
-              </span>
-
-              <span>
-                <strong>{formCount}</strong>
-                Forms
-              </span>
-
-              <span>
-                <strong>{importedCount}</strong>
-                Imports
-              </span>
-
-              <span>
-                <strong>{hiddenColumnCount}</strong>
-                Hidden Columns
-              </span>
-            </div>
+            {visibleSummaryCards.length > 0 && (
+              <div className="spreadsheet-view-summary">
+                {visibleSummaryCards.map((card) => (
+                  <span
+                    className={`spreadsheet-summary-card ${card.className}`}
+                    key={card.id}
+                  >
+                    <strong>{card.value}</strong>
+                    {card.label}
+                  </span>
+                ))}
+              </div>
+            )}
 
             <div className="spreadsheet-settings-stack">
               <button
@@ -2304,6 +2418,7 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
           updateSettings={updateSpreadsheetSettings}
           allColumns={allSpreadsheetColumns}
           orderedColumns={orderedSpreadsheetColumns}
+          summaryCards={spreadsheetSummaryCards}
           sourceTypeOptions={sourceTypeOptions}
           inputMethodCounts={inputMethodCounts}
           sourceSheetOptions={sourceSheetOptions}
