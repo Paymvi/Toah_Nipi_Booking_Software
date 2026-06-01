@@ -1,8 +1,144 @@
+import { useMemo, useState } from "react";
+
 import BookingCalendar from "../components/BookingCalendar";
 
 import { monthNames } from "../constants/dashboardConstants";
 
 import { formatDateRange } from "../utils/dateUtils";
+
+const calendarViewOptions = [
+  { value: "month", label: "Month" },
+  { value: "week", label: "Week" },
+  { value: "year", label: "Year" },
+];
+
+const weekDayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function parseDateOnly(value) {
+  if (!value) return null;
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+
+  const rawValue = String(value).trim();
+
+  if (!rawValue) return null;
+
+  const datePart = rawValue.split("T")[0];
+  const datePieces = datePart.split("-").map(Number);
+
+  if (
+    datePieces.length >= 3 &&
+    datePieces.every((piece) => Number.isFinite(piece))
+  ) {
+    return new Date(datePieces[0], datePieces[1] - 1, datePieces[2]);
+  }
+
+  const parsedDate = new Date(rawValue);
+
+  if (Number.isNaN(parsedDate.getTime())) return null;
+
+  return new Date(
+    parsedDate.getFullYear(),
+    parsedDate.getMonth(),
+    parsedDate.getDate()
+  );
+}
+
+function getInquiryDateRange(inquiry) {
+  const startDate = parseDateOnly(inquiry.startDate);
+  const endDate = parseDateOnly(inquiry.endDate) || startDate;
+
+  if (!startDate) return null;
+
+  if (endDate < startDate) {
+    return {
+      startDate: endDate,
+      endDate: startDate,
+    };
+  }
+
+  return {
+    startDate,
+    endDate,
+  };
+}
+
+function addDays(date, dayCount) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + dayCount);
+  return nextDate;
+}
+
+function getStartOfWeek(date) {
+  const startDate = new Date(date);
+  startDate.setDate(startDate.getDate() - startDate.getDay());
+  startDate.setHours(0, 0, 0, 0);
+  return startDate;
+}
+
+function getFocusedWeekStart(selectedYear, selectedMonth) {
+  const today = new Date();
+
+  const focusedDate =
+    today.getFullYear() === selectedYear && today.getMonth() === selectedMonth
+      ? today
+      : new Date(selectedYear, selectedMonth, 1);
+
+  return getStartOfWeek(focusedDate);
+}
+
+function inquiryTouchesDate(inquiry, date) {
+  const range = getInquiryDateRange(inquiry);
+
+  if (!range) return false;
+
+  return range.startDate <= date && range.endDate >= date;
+}
+
+function inquiryTouchesMonth(inquiry, year, month) {
+  const range = getInquiryDateRange(inquiry);
+
+  if (!range) return false;
+
+  const monthStart = new Date(year, month, 1);
+  const monthEnd = new Date(year, month + 1, 0);
+
+  return range.startDate <= monthEnd && range.endDate >= monthStart;
+}
+
+function inquiryTouchesYear(inquiry, year) {
+  const range = getInquiryDateRange(inquiry);
+
+  if (!range) return false;
+
+  const yearStart = new Date(year, 0, 1);
+  const yearEnd = new Date(year, 11, 31);
+
+  return range.startDate <= yearEnd && range.endDate >= yearStart;
+}
+
+function formatShortDate(date) {
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatWeekRange(weekStart) {
+  const weekEnd = addDays(weekStart, 6);
+
+  if (weekStart.getFullYear() === weekEnd.getFullYear()) {
+    return `${formatShortDate(weekStart)} – ${formatShortDate(
+      weekEnd
+    )}, ${weekEnd.getFullYear()}`;
+  }
+
+  return `${formatShortDate(weekStart)}, ${weekStart.getFullYear()} – ${formatShortDate(
+    weekEnd
+  )}, ${weekEnd.getFullYear()}`;
+}
 
 export default function CalendarView({
   calendarCells,
@@ -17,6 +153,138 @@ export default function CalendarView({
   goToNextMonth,
   getCalendarEventColor,
 }) {
+  const [calendarView, setCalendarView] = useState("month");
+  const [selectedWeekStart, setSelectedWeekStart] = useState(() =>
+    getStartOfWeek(new Date())
+  );
+
+  const safeDatedInquiries = datedInquiries || [];
+
+  const yearOptions = useMemo(() => {
+    return Array.from(
+      new Set([2025, 2026, 2027, 2028, 2029, 2030, selectedYear])
+    ).sort((firstYear, secondYear) => firstYear - secondYear);
+  }, [selectedYear]);
+
+  const selectedWeekDays = useMemo(() => {
+    return weekDayLabels.map((dayLabel, index) => {
+      const date = addDays(selectedWeekStart, index);
+      const today = new Date();
+
+      return {
+        date,
+        dayLabel,
+        isToday:
+          date.getFullYear() === today.getFullYear() &&
+          date.getMonth() === today.getMonth() &&
+          date.getDate() === today.getDate(),
+        inquiries: safeDatedInquiries.filter((inquiry) =>
+          inquiryTouchesDate(inquiry, date)
+        ),
+      };
+    });
+  }, [safeDatedInquiries, selectedWeekStart]);
+
+  const selectedYearMonths = useMemo(() => {
+    return monthNames.map((monthName, monthIndex) => ({
+      monthName,
+      monthIndex,
+      inquiries: safeDatedInquiries.filter((inquiry) =>
+        inquiryTouchesMonth(inquiry, selectedYear, monthIndex)
+      ),
+    }));
+  }, [safeDatedInquiries, selectedYear]);
+
+  const selectedWeekInquiries = useMemo(() => {
+    const weekEnd = addDays(selectedWeekStart, 6);
+
+    return safeDatedInquiries.filter((inquiry) => {
+      const range = getInquiryDateRange(inquiry);
+
+      if (!range) return false;
+
+      return range.startDate <= weekEnd && range.endDate >= selectedWeekStart;
+    });
+  }, [safeDatedInquiries, selectedWeekStart]);
+
+  const selectedYearInquiries = useMemo(() => {
+    return safeDatedInquiries.filter((inquiry) =>
+      inquiryTouchesYear(inquiry, selectedYear)
+    );
+  }, [safeDatedInquiries, selectedYear]);
+
+  const visibleAgendaItems =
+    calendarView === "week"
+      ? selectedWeekInquiries
+      : calendarView === "year"
+      ? selectedYearInquiries
+      : selectedMonthInquiries;
+
+  const agendaTitle =
+    calendarView === "week"
+      ? "This Week"
+      : calendarView === "year"
+      ? `${selectedYear}`
+      : "This Month";
+
+  const agendaDescription =
+    calendarView === "week"
+      ? `${visibleAgendaItems.length} dated booking${
+          visibleAgendaItems.length === 1 ? "" : "s"
+        } shown for ${formatWeekRange(selectedWeekStart)}.`
+      : calendarView === "year"
+      ? `${visibleAgendaItems.length} dated booking${
+          visibleAgendaItems.length === 1 ? "" : "s"
+        } shown for the year.`
+      : `${visibleAgendaItems.length} dated booking${
+          visibleAgendaItems.length === 1 ? "" : "s"
+        } shown.`;
+
+  function handleCalendarViewChange(nextView) {
+    setCalendarView(nextView);
+
+    if (nextView === "week") {
+      setSelectedWeekStart(getFocusedWeekStart(selectedYear, selectedMonth));
+    }
+  }
+
+  function goToTodayForCurrentView() {
+    const today = new Date();
+
+    if (calendarView === "month") {
+      goToCurrentMonth();
+      return;
+    }
+
+    setSelectedMonth(today.getMonth());
+    setSelectedYear(today.getFullYear());
+
+    if (calendarView === "week") {
+      setSelectedWeekStart(getStartOfWeek(today));
+    }
+  }
+
+  function goToPreviousWeek() {
+    const nextWeekStart = addDays(selectedWeekStart, -7);
+
+    setSelectedWeekStart(nextWeekStart);
+    setSelectedMonth(nextWeekStart.getMonth());
+    setSelectedYear(nextWeekStart.getFullYear());
+  }
+
+  function goToNextWeek() {
+    const nextWeekStart = addDays(selectedWeekStart, 7);
+
+    setSelectedWeekStart(nextWeekStart);
+    setSelectedMonth(nextWeekStart.getMonth());
+    setSelectedYear(nextWeekStart.getFullYear());
+  }
+
+  function openMonthFromYearView(monthIndex) {
+    setSelectedMonth(monthIndex);
+    setCalendarView("month");
+  }
+
   return (
     <section className="calendar-view-page">
       <article className="dashboard-card calendar-view-card">
@@ -25,7 +293,11 @@ export default function CalendarView({
             <p className="dashboard-eyebrow">Rentals & Events</p>
 
             <h2>
-              {monthNames[selectedMonth]} {selectedYear}
+              {calendarView === "year"
+                ? selectedYear
+                : calendarView === "week"
+                ? formatWeekRange(selectedWeekStart)
+                : `${monthNames[selectedMonth]} ${selectedYear}`}
             </h2>
 
             <p>
@@ -37,52 +309,204 @@ export default function CalendarView({
           <button
             className="secondary-dashboard-button"
             type="button"
-            onClick={goToCurrentMonth}
+            onClick={goToTodayForCurrentView}
           >
-            This Month
+            {calendarView === "month" ? "This Month" : "Today"}
           </button>
         </div>
 
-        <div className="calendar-controls calendar-controls-large">
-          <button type="button" onClick={goToPreviousMonth}>
-            «
-          </button>
-
-          <select
-            value={selectedMonth}
-            onChange={(event) => setSelectedMonth(Number(event.target.value))}
-          >
-            {monthNames.map((month, index) => (
-              <option value={index} key={month}>
-                {month}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedYear}
-            onChange={(event) => setSelectedYear(Number(event.target.value))}
-          >
-            {[2025, 2026, 2027, 2028, 2029, 2030].map((year) => (
-              <option value={year} key={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-
-          <button type="button" onClick={goToNextMonth}>
-            »
-          </button>
+        <div className="calendar-view-switcher" aria-label="Calendar views">
+          {calendarViewOptions.map((option) => (
+            <button
+              className={calendarView === option.value ? "active" : ""}
+              type="button"
+              key={option.value}
+              onClick={() => handleCalendarViewChange(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
 
-        <BookingCalendar
-          calendarCells={calendarCells}
-          datedInquiries={datedInquiries}
-          selectedYear={selectedYear}
-          selectedMonth={selectedMonth}
-          getCalendarEventColor={getCalendarEventColor}
-          isLarge
-        />
+        {calendarView === "month" && (
+          <>
+            <div className="calendar-controls calendar-controls-large">
+              <button type="button" onClick={goToPreviousMonth}>
+                «
+              </button>
+
+              <select
+                value={selectedMonth}
+                onChange={(event) =>
+                  setSelectedMonth(Number(event.target.value))
+                }
+              >
+                {monthNames.map((month, index) => (
+                  <option value={index} key={month}>
+                    {month}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={selectedYear}
+                onChange={(event) =>
+                  setSelectedYear(Number(event.target.value))
+                }
+              >
+                {yearOptions.map((year) => (
+                  <option value={year} key={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+
+              <button type="button" onClick={goToNextMonth}>
+                »
+              </button>
+            </div>
+
+            <BookingCalendar
+              calendarCells={calendarCells}
+              datedInquiries={safeDatedInquiries}
+              selectedYear={selectedYear}
+              selectedMonth={selectedMonth}
+              getCalendarEventColor={getCalendarEventColor}
+              isLarge
+            />
+          </>
+        )}
+
+        {calendarView === "week" && (
+          <div className="calendar-week-view">
+            <div className="calendar-week-controls">
+              <button type="button" onClick={goToPreviousWeek}>
+                ‹ Previous Week
+              </button>
+
+              <strong>{formatWeekRange(selectedWeekStart)}</strong>
+
+              <button type="button" onClick={goToNextWeek}>
+                Next Week ›
+              </button>
+            </div>
+
+            <div className="calendar-week-grid">
+              {selectedWeekDays.map((day) => (
+                <div
+                  className={`calendar-week-day ${
+                    day.isToday ? "calendar-week-day-today" : ""
+                  }`}
+                  key={day.date.toISOString()}
+                >
+                  <div className="calendar-week-day-header">
+                    <span>{day.dayLabel}</span>
+                    <strong>{day.date.getDate()}</strong>
+                  </div>
+
+                  {day.inquiries.length > 0 ? (
+                    <div className="calendar-week-events">
+                      {day.inquiries.map((inquiry) => (
+                        <div
+                          className={`calendar-week-event ${getCalendarEventColor(
+                            inquiry.status
+                          )}`}
+                          key={`${inquiry.id}-${day.date.toISOString()}`}
+                        >
+                          <strong>{inquiry.organizationName}</strong>
+
+                          <span>{inquiry.status}</span>
+
+                          <small>
+                            {inquiry.retreatType || "No retreat type"}
+                          </small>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="calendar-week-empty">No bookings</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {calendarView === "year" && (
+          <div className="calendar-year-view">
+            <div className="calendar-controls calendar-controls-large">
+              <button
+                type="button"
+                onClick={() => setSelectedYear(selectedYear - 1)}
+              >
+                «
+              </button>
+
+              <select
+                value={selectedYear}
+                onChange={(event) =>
+                  setSelectedYear(Number(event.target.value))
+                }
+              >
+                {yearOptions.map((year) => (
+                  <option value={year} key={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={() => setSelectedYear(selectedYear + 1)}
+              >
+                »
+              </button>
+            </div>
+
+            <div className="calendar-year-grid">
+              {selectedYearMonths.map((month) => (
+                <button
+                  className="calendar-year-card"
+                  type="button"
+                  key={month.monthName}
+                  onClick={() => openMonthFromYearView(month.monthIndex)}
+                >
+                  <div>
+                    <span>{month.monthName}</span>
+
+                    <strong>{month.inquiries.length}</strong>
+                  </div>
+
+                  <small>
+                    dated booking
+                    {month.inquiries.length === 1 ? "" : "s"}
+                  </small>
+
+                  {month.inquiries.length > 0 ? (
+                    <div className="calendar-year-preview-list">
+                      {month.inquiries.slice(0, 3).map((inquiry) => (
+                        <p key={inquiry.id}>
+                          <i
+                            className={`legend-dot ${getCalendarEventColor(
+                              inquiry.status
+                            )}`}
+                          ></i>
+                          {inquiry.organizationName}
+                        </p>
+                      ))}
+
+                      {month.inquiries.length > 3 && (
+                        <em>+{month.inquiries.length - 3} more</em>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="calendar-year-empty">No dated bookings</p>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="calendar-legend">
           <span>
@@ -105,18 +529,15 @@ export default function CalendarView({
       <aside className="dashboard-card calendar-view-agenda">
         <div className="dashboard-card-header">
           <div>
-            <h2>This Month</h2>
+            <h2>{agendaTitle}</h2>
 
-            <p>
-              {selectedMonthInquiries.length} dated booking
-              {selectedMonthInquiries.length === 1 ? "" : "s"} shown.
-            </p>
+            <p>{agendaDescription}</p>
           </div>
         </div>
 
-        {selectedMonthInquiries.length > 0 ? (
+        {visibleAgendaItems.length > 0 ? (
           <div className="calendar-agenda-list">
-            {selectedMonthInquiries.map((inquiry) => (
+            {visibleAgendaItems.map((inquiry) => (
               <div className="calendar-agenda-card" key={inquiry.id}>
                 <div>
                   <strong>{inquiry.organizationName}</strong>
@@ -141,7 +562,7 @@ export default function CalendarView({
           </div>
         ) : (
           <div className="empty-state">
-            <strong>No dated bookings this month</strong>
+            <strong>No dated bookings shown</strong>
 
             <p>
               Import a master spreadsheet or submit the public form with dates to
