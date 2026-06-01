@@ -1730,7 +1730,7 @@ function SpreadsheetSettingsModal({
 
           {activeSettingsTab === "Display" && (
             <div className="spreadsheet-settings-section">
-              <div className="spreadsheet-settings-check-group">
+              <div className="spreadsheet-settings-check-group spreadsheet-summary-card-settings-panel">
                 <h4>Summary Cards</h4>
 
                 <p className="spreadsheet-settings-help-text">
@@ -1759,7 +1759,7 @@ function SpreadsheetSettingsModal({
 
                     return (
                       <label
-                        className={`spreadsheet-summary-card-setting ${
+                        className={`spreadsheet-summary-card-setting ${card.className} ${
                           isVisible ? "is-visible" : "is-hidden"
                         }`}
                         key={card.id}
