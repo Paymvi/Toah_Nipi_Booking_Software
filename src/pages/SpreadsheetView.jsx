@@ -1,9 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { FaCog, FaInfoCircle, FaTable, FaTimes } from "react-icons/fa";
+import {
+  FaCog,
+  FaInfoCircle,
+  FaRegStar,
+  FaStar,
+  FaTable,
+  FaTimes,
+} from "react-icons/fa";
 
 import {
   SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY,
+  SPREADSHEET_VIEW_STARRED_STORAGE_KEY,
   SPREADSHEET_ESSENTIAL_COLUMN_LABELS,
   SPREADSHEET_2026_STANDARD_LABELS,
   SPREADSHEET_SHARED_STANDARD_LABELS,
@@ -447,6 +455,7 @@ function getDefaultSpreadsheetSettings() {
     freezeFirstColumn: true,
     compactRows: false,
     showRowPreviewPopups: false,
+    showStarredRowsFirst: false,
     visibleSummaryCardIds: null,
 
     colorMode: "none",
@@ -496,6 +505,56 @@ function saveSpreadsheetSettings(settings) {
     );
   } catch (error) {
     console.error("Could not save spreadsheet settings:", error);
+  }
+}
+
+function getSpreadsheetBookingStarId(booking) {
+  const bookingId = String(booking.id || "").trim();
+
+  if (bookingId) {
+    return bookingId;
+  }
+
+  const rawDataSignature =
+    booking.rawSpreadsheetData && typeof booking.rawSpreadsheetData === "object"
+      ? JSON.stringify(booking.rawSpreadsheetData)
+      : "";
+
+  return [
+    getBookingSourceSheetLabel(booking),
+    booking.sourceRowNumber,
+    booking.organizationName,
+    booking.contactName,
+    booking.startDate,
+    booking.endDate,
+    rawDataSignature,
+  ]
+    .map((value) => String(value || "").trim().toLowerCase())
+    .join("|");
+}
+
+function getSavedSpreadsheetStarIdList(storageKey) {
+  try {
+    const savedValue = localStorage.getItem(storageKey);
+
+    if (!savedValue) {
+      return [];
+    }
+
+    const parsedValue = JSON.parse(savedValue);
+
+    return Array.isArray(parsedValue) ? parsedValue : [];
+  } catch (error) {
+    console.error("Could not read saved spreadsheet stars:", error);
+    return [];
+  }
+}
+
+function saveSpreadsheetStarIdList(storageKey, bookingIds) {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(bookingIds));
+  } catch (error) {
+    console.error("Could not save spreadsheet stars:", error);
   }
 }
 
@@ -1804,6 +1863,17 @@ function SpreadsheetSettingsModal({
                   />
                   <span>Compact rows</span>
                 </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(settings.showStarredRowsFirst)}
+                    onChange={(event) =>
+                      updateSettings({ showStarredRowsFirst: event.target.checked })
+                    }
+                  />
+                  <span>Show starred rows first</span>
+                </label>
               </div>
             </div>
           )}
@@ -1891,9 +1961,38 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
     getSavedSpreadsheetSettings()
   );
 
+  const [starredSpreadsheetBookingIds, setStarredSpreadsheetBookingIds] =
+    useState(() =>
+      getSavedSpreadsheetStarIdList(SPREADSHEET_VIEW_STARRED_STORAGE_KEY)
+    );
+
   useEffect(() => {
     saveSpreadsheetSettings(spreadsheetSettings);
   }, [spreadsheetSettings]);
+
+    useEffect(() => {
+    saveSpreadsheetStarIdList(
+      SPREADSHEET_VIEW_STARRED_STORAGE_KEY,
+      starredSpreadsheetBookingIds
+    );
+  }, [starredSpreadsheetBookingIds]);
+
+  const starredSpreadsheetBookingIdSet = useMemo(
+    () => new Set(starredSpreadsheetBookingIds),
+    [starredSpreadsheetBookingIds]
+  );
+
+  const toggleSpreadsheetBookingStar = (booking) => {
+    const bookingStarId = getSpreadsheetBookingStarId(booking);
+
+    setStarredSpreadsheetBookingIds((currentIds) => {
+      if (currentIds.includes(bookingStarId)) {
+        return currentIds.filter((id) => id !== bookingStarId);
+      }
+
+      return [...currentIds, bookingStarId];
+    });
+  };
 
   const rawSpreadsheetColumns = useMemo(
     () => getRawSpreadsheetColumns(inquiryBookings),
@@ -1993,7 +2092,7 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
     [inquiryBookings]
   );
 
-  const filteredAndSortedBookings = useMemo(() => {
+    const filteredAndSortedBookings = useMemo(() => {
     const searchText = spreadsheetSettings.searchText.trim().toLowerCase();
     const minGuests = getSpreadsheetNumber(spreadsheetSettings.minGuests);
     const maxGuests = getSpreadsheetNumber(spreadsheetSettings.maxGuests);
@@ -2009,7 +2108,9 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
       if (spreadsheetSettings.sourceFilterMode === "inputMethod") {
         if (
           spreadsheetSettings.sourceTypes.length > 0 &&
-          !spreadsheetSettings.sourceTypes.includes(getBookingInputMethod(booking))
+          !spreadsheetSettings.sourceTypes.includes(
+            getBookingInputMethod(booking)
+          )
         ) {
           return false;
         }
@@ -2092,11 +2193,25 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
       (column) => column.id === spreadsheetSettings.sortColumnId
     );
 
-    if (!sortColumn) {
-      return filteredBookings;
-    }
-
     return [...filteredBookings].sort((a, b) => {
+      const aIsStarred = starredSpreadsheetBookingIdSet.has(
+        getSpreadsheetBookingStarId(a)
+      );
+      const bIsStarred = starredSpreadsheetBookingIdSet.has(
+        getSpreadsheetBookingStarId(b)
+      );
+
+      if (
+        spreadsheetSettings.showStarredRowsFirst &&
+        aIsStarred !== bIsStarred
+      ) {
+        return aIsStarred ? -1 : 1;
+      }
+
+      if (!sortColumn) {
+        return 0;
+      }
+
       const result = compareSpreadsheetValues(
         getSpreadsheetComparableValue(sortColumn, a),
         getSpreadsheetComparableValue(sortColumn, b)
@@ -2104,7 +2219,12 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
 
       return spreadsheetSettings.sortDirection === "desc" ? -result : result;
     });
-  }, [inquiryBookings, spreadsheetSettings, allSpreadsheetColumns]);
+  }, [
+    inquiryBookings,
+    spreadsheetSettings,
+    allSpreadsheetColumns,
+    starredSpreadsheetBookingIdSet,
+  ]);
 
   const updateSpreadsheetSettings = (updates) => {
     setSpreadsheetSettings((currentSettings) => ({
@@ -2143,6 +2263,9 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
   const hiddenColumnCount =
     allSpreadsheetColumns.length - visibleSpreadsheetColumns.length;
 
+  const starredSpreadsheetCount = inquiryBookings.filter((booking) =>
+    starredSpreadsheetBookingIdSet.has(getSpreadsheetBookingStarId(booking))
+  ).length;
 
   const spreadsheetSummaryCards = useMemo(
     () => [
@@ -2157,6 +2280,12 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
         label: "Total Rows",
         value: inquiryBookings.length,
         className: "spreadsheet-summary-card-total",
+      },
+      {
+        id: "starredRows",
+        label: "Starred",
+        value: starredSpreadsheetCount,
+        className: "spreadsheet-summary-card-starred",
       },
       {
         id: "forms",
@@ -2180,6 +2309,7 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
     [
       filteredAndSortedBookings.length,
       inquiryBookings.length,
+      starredSpreadsheetCount,
       formCount,
       importedCount,
       hiddenColumnCount,
@@ -2259,6 +2389,26 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
                   Row popups
                 </span>
               </label>
+
+              <label className="spreadsheet-row-preview-toggle spreadsheet-starred-first-toggle">
+                <input
+                  type="checkbox"
+                  checked={Boolean(spreadsheetSettings.showStarredRowsFirst)}
+                  onChange={(event) =>
+                    updateSpreadsheetSettings({
+                      showStarredRowsFirst: event.target.checked,
+                    })
+                  }
+                />
+
+                <span>
+                  <FaStar />
+                  Starred first
+                </span>
+              </label>
+
+
+
             </div>
           </div>
         </div>
@@ -2310,9 +2460,10 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
             </div>
 
             <div className="spreadsheet-table-wrap">
-              <table className="spreadsheet-table">
+              <table className="spreadsheet-table spreadsheet-table-with-stars">
                 <thead>
                   <tr>
+                    <th className="spreadsheet-star-column">Star</th>
                     {visibleSpreadsheetColumns.map((column, columnIndex) => {
                       const isSorted =
                         spreadsheetSettings.sortColumnId === column.id;
@@ -2348,47 +2499,81 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
                 </thead>
 
                 <tbody>
-                  {filteredAndSortedBookings.map((booking) => (
-                    <tr
-                      className={getSpreadsheetRowClass(
-                        booking,
-                        spreadsheetSettings
-                      )}
-                      key={booking.id}
-                    >
-                      {visibleSpreadsheetColumns.map((column, columnIndex) => (
-                      <td
-                        className={[
-                          getSpreadsheetCellClass({
-                            column,
-                            columnIndex,
-                            booking,
-                            settings: spreadsheetSettings,
-                          }),
-                          columnIndex === 0 && spreadsheetSettings.showRowPreviewPopups
-                            ? "spreadsheet-row-preview-cell"
-                            : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                        key={`${booking.id}-${column.id}`}
-                        title={getSpreadsheetDisplayValue(
-                          getSpreadsheetComparableValue(column, booking)
-                        )}
-                      >
-                        <span className="spreadsheet-cell-content">
-                          {column.render
-                            ? column.render(booking, openBookingDetail)
-                            : getSpreadsheetDisplayValue(column.value(booking))}
-                        </span>
+                  {filteredAndSortedBookings.map((booking) => {
+                    const bookingStarId = getSpreadsheetBookingStarId(booking);
+                    const isStarred =
+                      starredSpreadsheetBookingIdSet.has(bookingStarId);
 
-                        {columnIndex === 0 && spreadsheetSettings.showRowPreviewPopups && (
-                          <SpreadsheetRowPreviewPopup booking={booking} />
-                        )}
-                      </td>
-                      ))}
-                    </tr>
-                  ))}
+                    const rowClassName = [
+                      getSpreadsheetRowClass(booking, spreadsheetSettings),
+                      isStarred ? "spreadsheet-row-starred" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ");
+
+                    return (
+                      <tr className={rowClassName} key={booking.id}>
+                        <td className="spreadsheet-star-column spreadsheet-star-cell">
+                          <button
+                            className={`contact-star-button spreadsheet-star-button ${
+                              isStarred ? "active" : ""
+                            }`}
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              toggleSpreadsheetBookingStar(booking);
+                            }}
+                            aria-label={
+                              isStarred
+                                ? `Unstar ${
+                                    booking.organizationName || "this spreadsheet row"
+                                  }`
+                                : `Star ${
+                                    booking.organizationName || "this spreadsheet row"
+                                  }`
+                            }
+                            title={isStarred ? "Unstar" : "Star"}
+                          >
+                            {isStarred ? <FaStar /> : <FaRegStar />}
+                          </button>
+                        </td>
+
+                        {visibleSpreadsheetColumns.map((column, columnIndex) => (
+                          <td
+                            className={[
+                              getSpreadsheetCellClass({
+                                column,
+                                columnIndex,
+                                booking,
+                                settings: spreadsheetSettings,
+                              }),
+                              columnIndex === 0 &&
+                              spreadsheetSettings.showRowPreviewPopups
+                                ? "spreadsheet-row-preview-cell"
+                                : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
+                            key={`${booking.id}-${column.id}`}
+                            title={getSpreadsheetDisplayValue(
+                              getSpreadsheetComparableValue(column, booking)
+                            )}
+                          >
+                            <span className="spreadsheet-cell-content">
+                              {column.render
+                                ? column.render(booking, openBookingDetail)
+                                : getSpreadsheetDisplayValue(column.value(booking))}
+                            </span>
+
+                            {columnIndex === 0 &&
+                              spreadsheetSettings.showRowPreviewPopups && (
+                                <SpreadsheetRowPreviewPopup booking={booking} />
+                              )}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

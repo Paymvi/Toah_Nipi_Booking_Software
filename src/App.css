@@ -12556,3 +12556,120 @@ body,
     grid-template-columns: 1fr;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Spreadsheet View: Starred Rows
+========================================================= */
+
+.spreadsheet-summary-card-starred {
+  border-left-color: #c98716 !important;
+}
+
+.spreadsheet-table-with-stars {
+  min-width: 2660px;
+}
+
+/* Sticky star column */
+
+.spreadsheet-table th.spreadsheet-star-column,
+.spreadsheet-table td.spreadsheet-star-column {
+  position: sticky;
+  left: 0;
+
+  width: 58px;
+  min-width: 58px;
+  max-width: 58px;
+
+  padding-left: 8px;
+  padding-right: 8px;
+
+  text-align: center;
+  border-right: 1px solid #dfe4ec;
+}
+
+.spreadsheet-table th.spreadsheet-star-column {
+  z-index: 8;
+  background: #eef0f5;
+  color: #303442;
+}
+
+.spreadsheet-table td.spreadsheet-star-column {
+  z-index: 4;
+  background: #ffffff;
+}
+
+/* Since the star column is sticky at left: 0,
+   move the frozen first data column over by the star width. */
+
+.spreadsheet-table-with-stars .spreadsheet-sticky-column {
+  left: 58px;
+}
+
+.spreadsheet-table-with-stars th.spreadsheet-sticky-column {
+  z-index: 7;
+}
+
+.spreadsheet-table-with-stars td.spreadsheet-sticky-column {
+  z-index: 3;
+}
+
+/* Keep normal row backgrounds working with the sticky star cell */
+
+.spreadsheet-table tbody tr:nth-child(even) td.spreadsheet-star-column {
+  background: #fbfcfd;
+}
+
+.spreadsheet-table tbody tr:hover td.spreadsheet-star-column {
+  background: #f4f6f8;
+}
+
+/* Star button inside spreadsheet */
+
+.spreadsheet-star-cell {
+  overflow: visible;
+}
+
+.spreadsheet-star-button {
+  margin: 0 auto;
+}
+
+/* Starred row state */
+
+.spreadsheet-table tbody tr.spreadsheet-row-starred td,
+.spreadsheet-table tbody tr.spreadsheet-row-starred .spreadsheet-sticky-column,
+.spreadsheet-table tbody tr.spreadsheet-row-starred td.spreadsheet-star-column {
+  background: #fffaf0;
+}
+
+.spreadsheet-table tbody tr.spreadsheet-row-starred:hover td,
+.spreadsheet-table tbody tr.spreadsheet-row-starred:hover .spreadsheet-sticky-column,
+.spreadsheet-table tbody tr.spreadsheet-row-starred:hover td.spreadsheet-star-column {
+  background: #fff6e4;
+}
+
+.spreadsheet-row-starred td.spreadsheet-star-column {
+  border-left: 4px solid #c98716;
+}
+
+/* Top toggle polish */
+
+.spreadsheet-starred-first-toggle svg {
+  color: #c98716;
+}

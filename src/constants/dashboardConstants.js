@@ -611,3 +611,7 @@ export const SPREADSHEET_SHARED_RAW_COLUMNS = new Set([
   "Misc",
   "Notes",
 ]);
+
+
+export const SPREADSHEET_VIEW_STARRED_STORAGE_KEY =
+  "spreadsheetViewStarredBookingIds";

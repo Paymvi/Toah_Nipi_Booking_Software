@@ -35,6 +35,8 @@ import {
   FaUserShield,
   FaTasks,
   FaCheckCircle,
+  FaRegStar,
+  FaStar,
 } from "react-icons/fa";
 
 import ExcelJS from "exceljs";
@@ -73,6 +75,19 @@ import {
   RETREAT_TYPE_LEGEND_KEYS,
   getInquiryRetreatType,
   getRetreatTypeConfig,
+
+  
+} from "../constants/dashboardConstants";
+
+import {
+  SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY,
+  SPREADSHEET_VIEW_STARRED_STORAGE_KEY,
+  SPREADSHEET_ESSENTIAL_COLUMN_LABELS,
+  SPREADSHEET_2026_STANDARD_LABELS,
+  SPREADSHEET_SHARED_STANDARD_LABELS,
+  SPREADSHEET_2025_RAW_COLUMNS,
+  SPREADSHEET_2026_RAW_COLUMNS,
+  SPREADSHEET_SHARED_RAW_COLUMNS,
 } from "../constants/dashboardConstants";
 
 import {
