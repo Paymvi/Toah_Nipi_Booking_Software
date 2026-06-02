@@ -14024,3 +14024,397 @@ body,
     align-self: flex-start;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.spreadsheet-background-rendering-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dbe3ef;
+  background: #f8fafc;
+  color: #64748b;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.spreadsheet-background-rendering-pill::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 999px;
+  background: #94a3b8;
+  animation: spreadsheet-rendering-pulse 1s ease-in-out infinite;
+}
+
+@keyframes spreadsheet-rendering-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.spreadsheet-view-page {
+  position: relative;
+}
+
+.spreadsheet-view-page-first-chunk-loading {
+  min-height: 520px;
+}
+
+.spreadsheet-first-chunk-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  align-items: start;
+  padding: 0;
+  background: var(--dashboard-page-background, #f6f8fb);
+}
+
+.spreadsheet-first-chunk-loading-overlay .spreadsheet-loading-card {
+  width: 100%;
+  min-height: 420px;
+}
+
+.spreadsheet-view-page-first-chunk-loading > .spreadsheet-view-card {
+  pointer-events: none;
+}
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Year Calendar Heatmap View
+========================================================= */
+
+.calendar-year-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.calendar-year-toolbar .calendar-controls-large {
+  margin: 0;
+  padding: 0;
+  border-bottom: 0;
+  background: transparent;
+  justify-content: flex-start;
+}
+
+.calendar-year-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 4px;
+  border: 1px solid #dfe4ec;
+  border-radius: 9px;
+  background: #f7f8fb;
+}
+
+.calendar-year-view-toggle button {
+  min-height: 34px;
+
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #687083;
+
+  padding: 0 12px;
+
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.calendar-year-view-toggle button:hover {
+  background: #ffffff;
+  color: #443a9c;
+}
+
+.calendar-year-view-toggle button.active {
+  background: #443a9c;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(68, 58, 156, 0.16);
+}
+
+.calendar-year-heatmap-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  padding: 10px 12px;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  background: #fbfcfd;
+
+  color: #687083;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.calendar-year-heatmap-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.calendar-year-heatmap-legend em {
+  color: #858c9b;
+  font-style: normal;
+}
+
+.calendar-year-heatmap {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.calendar-year-heatmap-month {
+  min-width: 0;
+
+  padding: 12px;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.calendar-year-heatmap-month-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  margin-bottom: 10px;
+}
+
+.calendar-year-heatmap-month-header strong {
+  color: #252936;
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.calendar-year-heatmap-weekdays,
+.calendar-year-heatmap-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.calendar-year-heatmap-weekdays {
+  margin-bottom: 5px;
+}
+
+.calendar-year-heatmap-weekdays span {
+  color: #9aa1ad;
+  font-size: 0.64rem;
+  font-weight: 650;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.calendar-year-heatmap-day-empty {
+  min-height: 30px;
+}
+
+.calendar-year-heatmap-day {
+  position: relative;
+
+  min-height: 30px;
+  min-width: 0;
+
+  border: 1px solid #edf0f4;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #6f7687;
+
+  padding: 0;
+
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.calendar-year-heatmap-day span {
+  position: relative;
+  z-index: 2;
+}
+
+.calendar-year-heatmap-day strong {
+  position: absolute;
+  top: 2px;
+  right: 3px;
+  z-index: 3;
+
+  min-width: 14px;
+  height: 14px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #303442;
+
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.calendar-year-heatmap-day-active:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(28, 35, 52, 0.1);
+}
+
+.calendar-year-heatmap-day:focus-visible {
+  outline: 3px solid rgba(68, 58, 156, 0.14);
+  outline-offset: 2px;
+}
+
+.calendar-year-heatmap-day-confirmed {
+  background: rgb(47 111 95 / var(--heat-opacity));
+  border-color: rgb(47 111 95 / 0.34);
+  color: #173b32;
+}
+
+.calendar-year-heatmap-day-inquiry {
+  background: rgb(213 170 63 / var(--heat-opacity));
+  border-color: rgb(213 170 63 / 0.4);
+  color: #5f470d;
+}
+
+.calendar-year-heatmap-day-contract {
+  background: rgb(76 101 169 / var(--heat-opacity));
+  border-color: rgb(76 101 169 / 0.35);
+  color: #263765;
+}
+
+.calendar-year-heatmap-day-other {
+  background: rgb(79 70 165 / var(--heat-opacity));
+  border-color: rgb(79 70 165 / 0.3);
+  color: #30275f;
+}
+
+.calendar-year-heatmap-day-dots {
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  z-index: 3;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+
+  transform: translateX(-50%);
+}
+
+.calendar-year-heatmap-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+
+  display: inline-block;
+
+  border-radius: 999px;
+}
+
+.calendar-year-heatmap-dot-confirmed {
+  background: #2f6f5f;
+}
+
+.calendar-year-heatmap-dot-inquiry {
+  background: #d5aa3f;
+}
+
+.calendar-year-heatmap-dot-contract {
+  background: #4c65a9;
+}
+
+.calendar-year-heatmap-dot-other {
+  background: #4f46a5;
+}
+
+@media (max-width: 1280px) {
+  .calendar-year-heatmap {
+    grid-template-columns: repeat(3, minmax(190px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .calendar-year-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .calendar-year-view-toggle {
+    width: fit-content;
+  }
+
+  .calendar-year-heatmap {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .calendar-year-view-toggle {
+    width: 100%;
+  }
+
+  .calendar-year-view-toggle button {
+    flex: 1;
+  }
+
+  .calendar-year-heatmap {
+    grid-template-columns: 1fr;
+  }
+}

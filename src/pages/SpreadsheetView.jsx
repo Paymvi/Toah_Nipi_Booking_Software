@@ -27,8 +27,19 @@ import {
 } from "../utils/dateUtils";
 
 
+/* 
+Progressive spreadsheet loading:
 
+  1. The Spreadsheet page starts by processing only the first 75 booking rows.
+  2. Once those first rows are rendered, the loading overlay goes away.
+  3. The rest of the bookings are processed in 75-row chunks in the background.
+  4. This avoids filtering/sorting/building columns from the entire dataset before
+     the user can see the page.
+*/
 
+const SPREADSHEET_INITIAL_ROW_LIMIT = 75;
+const SPREADSHEET_ROW_BATCH_SIZE = 75;
+const SPREADSHEET_BACKGROUND_RENDER_DELAY = 5;
 
 
 function getBookingInputMethod(booking) {
@@ -1315,14 +1326,9 @@ function SpreadsheetSettingsModal({
   statusOptions,
   filteredCount,
   totalCount,
+  processedBookingCount,
+  isProcessingRemainingRows,
   savedViews,
-  onSaveSavedView,
-  onApplySavedView,
-  onUpdateSavedView,
-  onDeleteSavedView,
-  onSetDefaultSavedView,
-  onClose,
-  onReset,
 }) {
   const [activeSettingsTab, setActiveSettingsTab] = useState("Sources");
 
@@ -1422,7 +1428,11 @@ function SpreadsheetSettingsModal({
             <p className="dashboard-eyebrow">Spreadsheet Settings</p>
             <h3>Customize All Booking Data</h3>
             <span>
-              Showing {filteredCount} of {totalCount} rows.
+              Showing {filteredCount} matching row{filteredCount === 1 ? "" : "s"} from{" "}
+              {processedBookingCount} processed row{processedBookingCount === 1 ? "" : "s"}
+              {isProcessingRemainingRows
+                ? ` while ${totalCount - processedBookingCount} more continue loading.`
+                : "."}
             </span>
           </div>
 
@@ -2518,8 +2528,88 @@ function SpreadsheetViewLoadingScreen({ rowCount }) {
   );
 }
 
-function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
+function SpreadsheetFirstChunkLoadingOverlay({ rowCount, firstChunkCount }) {
+  return (
+    <div
+      className="spreadsheet-first-chunk-loading-overlay"
+      role="status"
+      aria-live="polite"
+    >
+      <article className="dashboard-card spreadsheet-view-card spreadsheet-loading-card">
+        <div className="spreadsheet-loading-hero">
+          <span className="spreadsheet-loading-icon">
+            <FaTable />
+          </span>
+
+          <div className="spreadsheet-loading-copy">
+            <p className="dashboard-eyebrow">Spreadsheet View</p>
+            <h2>Preparing the first rows</h2>
+            <p>
+              Showing the page as soon as the first {firstChunkCount} row
+              {firstChunkCount === 1 ? "" : "s"} are ready. The rest will keep
+              loading in the background.
+            </p>
+          </div>
+
+          <span className="spreadsheet-loading-spinner" aria-hidden="true" />
+        </div>
+
+        <div className="spreadsheet-loading-summary">
+          <span>
+            <strong>{firstChunkCount}</strong>
+            First rows
+          </span>
+
+          <span>
+            <strong>{rowCount}</strong>
+            Total rows
+          </span>
+
+          <span>
+            <strong>Fast</strong>
+            Startup
+          </span>
+        </div>
+
+        <div className="spreadsheet-loading-table-preview" aria-hidden="true">
+          <div className="spreadsheet-loading-preview-header">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
+          {Array.from({ length: 7 }).map((_, index) => (
+            <div className="spreadsheet-loading-preview-row" key={index}>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          ))}
+        </div>
+      </article>
+    </div>
+  );
+}
+
+function BookingSpreadsheetView({
+  inquiryBookings,
+  openBookingDetail,
+  holdLoadingScreenUntilFirstChunk = false,
+  isDataStillLoading = false,
+}) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  const [isFirstChunkPainted, setIsFirstChunkPainted] = useState(
+    !holdLoadingScreenUntilFirstChunk
+  );
+
+  const [processedBookingLimit, setProcessedBookingLimit] = useState(
+    SPREADSHEET_INITIAL_ROW_LIMIT
+  );
   const [spreadsheetSettings, setSpreadsheetSettings] = useState(() =>
     getSavedSpreadsheetSettings()
   );
@@ -2553,6 +2643,23 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
     [starredSpreadsheetBookingIds]
   );
 
+  const processedInquiryBookings = useMemo(() => {
+    const safeBookings = Array.isArray(inquiryBookings) ? inquiryBookings : [];
+
+    return safeBookings.slice(
+      0,
+      Math.min(processedBookingLimit, safeBookings.length)
+    );
+  }, [inquiryBookings, processedBookingLimit]);
+
+  const processedBookingCount = processedInquiryBookings.length;
+  const totalBookingCount = inquiryBookings.length;
+
+  const hasMoreRowsToProcess = processedBookingCount < totalBookingCount;
+
+  const isProcessingRemainingRows =
+    isDataStillLoading || hasMoreRowsToProcess;
+
   const toggleSpreadsheetBookingStar = (booking) => {
     const bookingStarId = getSpreadsheetBookingStarId(booking);
 
@@ -2566,8 +2673,8 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
   };
 
   const rawSpreadsheetColumns = useMemo(
-    () => getRawSpreadsheetColumns(inquiryBookings),
-    [inquiryBookings]
+    () => getRawSpreadsheetColumns(processedInquiryBookings),
+    [processedInquiryBookings]
   );
 
   const allSpreadsheetColumns = useMemo(() => {
@@ -2615,52 +2722,56 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
     () =>
       Array.from(
         new Set(
-          inquiryBookings
+          processedInquiryBookings
             .map((booking) => getBookingInputMethod(booking))
             .filter(Boolean)
         )
       ).sort(),
-    [inquiryBookings]
+    [processedInquiryBookings]
   );
 
   const inputMethodCounts = useMemo(() => {
-    return inquiryBookings.reduce((counts, booking) => {
+    return processedInquiryBookings.reduce((counts, booking) => {
       const inputMethod = getBookingInputMethod(booking);
 
       counts[inputMethod] = (counts[inputMethod] || 0) + 1;
 
       return counts;
     }, {});
-  }, [inquiryBookings]);
+  }, [processedInquiryBookings]);
 
   const sourceSheetOptions = useMemo(
     () =>
       Array.from(
         new Set(
-          inquiryBookings
+          processedInquiryBookings
             .map((booking) => getBookingSourceSheetLabel(booking))
             .filter(Boolean)
         )
       ).sort(),
-    [inquiryBookings]
+    [processedInquiryBookings]
   );
 
   const sourceSheetCounts = useMemo(() => {
-    return inquiryBookings.reduce((counts, booking) => {
+    return processedInquiryBookings.reduce((counts, booking) => {
       const sourceSheet = getBookingSourceSheetLabel(booking);
 
       counts[sourceSheet] = (counts[sourceSheet] || 0) + 1;
 
       return counts;
     }, {});
-  }, [inquiryBookings]);
+  }, [processedInquiryBookings]);
 
   const statusOptions = useMemo(
     () =>
       Array.from(
-        new Set(inquiryBookings.map((booking) => booking.status).filter(Boolean))
+        new Set(
+          processedInquiryBookings
+            .map((booking) => booking.status)
+            .filter(Boolean)
+        )
       ).sort(),
-    [inquiryBookings]
+    [processedInquiryBookings]
   );
 
     const filteredAndSortedBookings = useMemo(() => {
@@ -2668,7 +2779,7 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
     const minGuests = getSpreadsheetNumber(spreadsheetSettings.minGuests);
     const maxGuests = getSpreadsheetNumber(spreadsheetSettings.maxGuests);
 
-    const filteredBookings = inquiryBookings.filter((booking) => {
+    const filteredBookings = processedInquiryBookings.filter((booking) => {
       if (
         searchText &&
         !getSpreadsheetSearchText(booking).includes(searchText)
@@ -2791,10 +2902,155 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
       return spreadsheetSettings.sortDirection === "desc" ? -result : result;
     });
   }, [
-    inquiryBookings,
+    processedInquiryBookings,
     spreadsheetSettings,
     allSpreadsheetColumns,
     starredSpreadsheetBookingIdSet,
+  ]);
+
+
+  const sourceTypesResetKey = spreadsheetSettings.sourceTypes.join("|");
+  const sourceSheetsResetKey = spreadsheetSettings.sourceSheets.join("|");
+  const statusesResetKey = spreadsheetSettings.statuses.join("|");
+
+  const spreadsheetProcessingResetKey = useMemo(
+    () =>
+      [
+        spreadsheetSettings.searchText,
+        spreadsheetSettings.sourceFilterMode,
+        sourceTypesResetKey,
+        sourceSheetsResetKey,
+        statusesResetKey,
+        spreadsheetSettings.waitlist,
+        spreadsheetSettings.startDate,
+        spreadsheetSettings.endDate,
+        spreadsheetSettings.minGuests,
+        spreadsheetSettings.maxGuests,
+        spreadsheetSettings.hasEmail,
+        spreadsheetSettings.hasPhone,
+        spreadsheetSettings.sortColumnId,
+        spreadsheetSettings.sortDirection,
+        spreadsheetSettings.showStarredRowsFirst,
+        spreadsheetSettings.visibleColumnIds
+          ? spreadsheetSettings.visibleColumnIds.join("|")
+          : "all-columns",
+        spreadsheetSettings.columnOrder
+          ? spreadsheetSettings.columnOrder.join("|")
+          : "default-order",
+      ].join("::"),
+    [
+      spreadsheetSettings.searchText,
+      spreadsheetSettings.sourceFilterMode,
+      sourceTypesResetKey,
+      sourceSheetsResetKey,
+      statusesResetKey,
+      spreadsheetSettings.waitlist,
+      spreadsheetSettings.startDate,
+      spreadsheetSettings.endDate,
+      spreadsheetSettings.minGuests,
+      spreadsheetSettings.maxGuests,
+      spreadsheetSettings.hasEmail,
+      spreadsheetSettings.hasPhone,
+      spreadsheetSettings.sortColumnId,
+      spreadsheetSettings.sortDirection,
+      spreadsheetSettings.showStarredRowsFirst,
+      spreadsheetSettings.visibleColumnIds,
+      spreadsheetSettings.columnOrder,
+    ]
+  );
+
+  const firstBookingKey = inquiryBookings[0]
+    ? getSpreadsheetBookingStarId(inquiryBookings[0])
+    : "empty";
+
+  const firstChunkLoadingKey = `${inquiryBookings.length > 0 ? "has-rows" : "empty"}::${firstBookingKey}`;
+
+  const visibleProgressiveBookings = filteredAndSortedBookings;
+
+  const hasMoreProgressiveRows = isProcessingRemainingRows;
+
+  useEffect(() => {
+    setProcessedBookingLimit(SPREADSHEET_INITIAL_ROW_LIMIT);
+  }, [spreadsheetProcessingResetKey]);
+
+  useEffect(() => {
+    if (!holdLoadingScreenUntilFirstChunk) {
+      return;
+    }
+
+    setIsFirstChunkPainted(false);
+  }, [holdLoadingScreenUntilFirstChunk, firstChunkLoadingKey]);
+
+  useEffect(() => {
+    if (!holdLoadingScreenUntilFirstChunk || isFirstChunkPainted) {
+      return;
+    }
+
+    const hasSomethingReadyToShow =
+      visibleProgressiveBookings.length > 0 ||
+      processedInquiryBookings.length > 0 ||
+      inquiryBookings.length === 0;
+
+    if (!hasSomethingReadyToShow) {
+      return;
+    }
+
+    let secondFrameId = 0;
+
+    const firstFrameId = window.requestAnimationFrame(() => {
+      secondFrameId = window.requestAnimationFrame(() => {
+        setIsFirstChunkPainted(true);
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrameId);
+
+      if (secondFrameId) {
+        window.cancelAnimationFrame(secondFrameId);
+      }
+    };
+  }, [
+    holdLoadingScreenUntilFirstChunk,
+    isFirstChunkPainted,
+    visibleProgressiveBookings.length,
+    processedInquiryBookings.length,
+    inquiryBookings.length,
+  ]);
+
+  useEffect(() => {
+    if (!isFirstChunkPainted || !hasMoreRowsToProcess) {
+      return;
+    }
+
+    const processNextChunk = () => {
+      setProcessedBookingLimit((currentLimit) =>
+        Math.min(
+          currentLimit + SPREADSHEET_ROW_BATCH_SIZE,
+          inquiryBookings.length
+        )
+      );
+    };
+
+    if ("requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(processNextChunk, {
+        timeout: 250,
+      });
+
+      return () => window.cancelIdleCallback(idleId);
+    }
+
+    const renderTimer = window.setTimeout(
+      processNextChunk,
+      SPREADSHEET_BACKGROUND_RENDER_DELAY
+    );
+
+    return () => window.clearTimeout(renderTimer);
+  }, [
+    isFirstChunkPainted,
+    hasMoreRowsToProcess,
+    inquiryBookings.length,
+    processedBookingLimit,
   ]);
 
   const updateSpreadsheetSettings = (updates) => {
@@ -2913,30 +3169,31 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
     );
   };
 
-  const formCount = inquiryBookings.filter(
+  const formCount = processedInquiryBookings.filter(
     (booking) => booking.sourceType === "Form"
   ).length;
 
-  const importedCount = inquiryBookings.length - formCount;
-  const hiddenColumnCount =
-    allSpreadsheetColumns.length - visibleSpreadsheetColumns.length;
+  const importedCount = processedInquiryBookings.length - formCount;
 
-  const starredSpreadsheetCount = inquiryBookings.filter((booking) =>
+  const starredSpreadsheetCount = processedInquiryBookings.filter((booking) =>
     starredSpreadsheetBookingIdSet.has(getSpreadsheetBookingStarId(booking))
   ).length;
+
+  const hiddenColumnCount =
+  allSpreadsheetColumns.length - visibleSpreadsheetColumns.length;
 
   const spreadsheetSummaryCards = useMemo(
     () => [
       {
         id: "shown",
-        label: "Shown",
+        label: "Shown Now",
         value: filteredAndSortedBookings.length,
         className: "spreadsheet-summary-card-shown",
       },
       {
         id: "totalRows",
         label: "Total Rows",
-        value: inquiryBookings.length,
+        value: totalBookingCount,
         className: "spreadsheet-summary-card-total",
       },
       {
@@ -2986,8 +3243,17 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
     );
   }, [spreadsheetSettings.visibleSummaryCardIds, spreadsheetSummaryCards]);
 
+  const shouldShowFirstChunkLoadingScreen =
+  holdLoadingScreenUntilFirstChunk && !isFirstChunkPainted;
+
   return (
-    <section className="spreadsheet-view-page">
+    <section
+      className={`spreadsheet-view-page ${
+        shouldShowFirstChunkLoadingScreen
+          ? "spreadsheet-view-page-first-chunk-loading"
+          : ""
+      }`}
+    >
       <article className="dashboard-card spreadsheet-view-card">
         <div className="spreadsheet-view-header">
           <div className="dashboard-heading-with-icon">
@@ -3094,9 +3360,9 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
               </span>
 
               <span>
-                Columns:{" "}
+                Processed:{" "}
                 <strong>
-                  {visibleSpreadsheetColumns.length}/{allSpreadsheetColumns.length}
+                  {processedBookingCount}/{totalBookingCount}
                 </strong>
               </span>
 
@@ -3108,6 +3374,12 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
                     : "Source Sheet"}
                 </strong>
               </span>
+
+              {/* {hasMoreProgressiveRows && (
+                <span className="spreadsheet-background-rendering-pill">
+                  Loading remaining rows...
+                </span>
+              )} */}
 
               <div className="spreadsheet-active-settings-actions">
               
@@ -3170,7 +3442,7 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
                 </thead>
 
                 <tbody>
-                  {filteredAndSortedBookings.map((booking) => {
+                  {visibleProgressiveBookings.map((booking) => {
                     const bookingStarId = getSpreadsheetBookingStarId(booking);
                     const isStarred =
                       starredSpreadsheetBookingIdSet.has(bookingStarId);
@@ -3290,8 +3562,21 @@ function BookingSpreadsheetView({ inquiryBookings, openBookingDetail }) {
           onSetDefaultSavedView={setDefaultSpreadsheetSavedView}
           onClose={() => setIsSettingsOpen(false)}
           onReset={resetSpreadsheetSettings}
+          processedBookingCount={processedBookingCount}
+          isProcessingRemainingRows={isProcessingRemainingRows}
         />
       )}
+
+      {shouldShowFirstChunkLoadingScreen && (
+        <SpreadsheetFirstChunkLoadingOverlay
+          rowCount={inquiryBookings.length}
+          firstChunkCount={Math.min(
+            SPREADSHEET_INITIAL_ROW_LIMIT,
+            inquiryBookings.length || SPREADSHEET_INITIAL_ROW_LIMIT
+          )}
+        />
+      )}
+
     </section>
   );
 }
@@ -3302,7 +3587,9 @@ export default function SpreadsheetView({
   openBookingDetail,
   isLoading = false,
 }) {
-  if (isLoading) {
+  const hasRowsReady = inquiryBookings.length > 0;
+
+  if (isLoading && !hasRowsReady) {
     return <SpreadsheetViewLoadingScreen rowCount={inquiryBookings.length} />;
   }
 
@@ -3310,6 +3597,8 @@ export default function SpreadsheetView({
     <BookingSpreadsheetView
       inquiryBookings={inquiryBookings}
       openBookingDetail={openBookingDetail}
+      holdLoadingScreenUntilFirstChunk
+      isDataStillLoading={isLoading}
     />
   );
 }

@@ -12,6 +12,78 @@ const calendarViewOptions = [
   { value: "year", label: "Year" },
 ];
 
+const yearDisplayViewOptions = [
+  { value: "heatmap", label: "Heatmap" },
+  { value: "cards", label: "Cards" },
+];
+
+const heatOpacityByCount = {
+  0: "0",
+  1: "0.22",
+  2: "0.36",
+  3: "0.5",
+  4: "0.64",
+  5: "0.78",
+};
+
+function getHeatmapOpacity(totalCount) {
+  return heatOpacityByCount[Math.min(totalCount, 5)] || "0";
+}
+
+function getHeatmapBucketForInquiry(inquiry, getCalendarEventColor) {
+  const colorClass = getCalendarEventColor(inquiry.status);
+
+  if (colorClass === "calendar-event-green") return "confirmed";
+  if (colorClass === "calendar-event-gold") return "inquiry";
+  if (colorClass === "calendar-event-blue") return "contract";
+
+  const statusText = String(inquiry.status || "").toLowerCase();
+
+  if (statusText.includes("confirmed")) return "confirmed";
+  if (statusText.includes("contract")) return "contract";
+  if (statusText.includes("inquir")) return "inquiry";
+
+  return "other";
+}
+
+function getPrimaryHeatmapBucket(bucketCounts) {
+  const bucketOrder = ["confirmed", "contract", "inquiry", "other"];
+
+  return bucketOrder.reduce((bestBucket, bucket) => {
+    if (!bestBucket) {
+      return bucketCounts[bucket] > 0 ? bucket : null;
+    }
+
+    return bucketCounts[bucket] > bucketCounts[bestBucket]
+      ? bucket
+      : bestBucket;
+  }, null);
+}
+
+function getHeatmapDayTitle(day) {
+  const dateLabel = day.date.toLocaleDateString(undefined, {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  if (!day.totalCount) {
+    return `${dateLabel}: No dated bookings`;
+  }
+
+  const bookingNames = day.inquiries
+    .slice(0, 3)
+    .map((inquiry) => inquiry.organizationName || "Unnamed booking")
+    .join(", ");
+
+  const moreText =
+    day.totalCount > 3 ? `, +${day.totalCount - 3} more` : "";
+
+  return `${dateLabel}: ${day.totalCount} dated booking${
+    day.totalCount === 1 ? "" : "s"
+  } — ${bookingNames}${moreText}`;
+}
+
 const weekDayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function parseDateOnly(value) {
@@ -154,6 +226,7 @@ export default function CalendarView({
   getCalendarEventColor,
 }) {
   const [calendarView, setCalendarView] = useState("month");
+  const [yearDisplayView, setYearDisplayView] = useState("heatmap");
   const [selectedWeekStart, setSelectedWeekStart] = useState(() =>
     getStartOfWeek(new Date())
   );
@@ -194,6 +267,63 @@ export default function CalendarView({
       ),
     }));
   }, [safeDatedInquiries, selectedYear]);
+
+  const selectedYearHeatmapMonths = useMemo(() => {
+    return monthNames.map((monthName, monthIndex) => {
+      const daysInMonth = new Date(selectedYear, monthIndex + 1, 0).getDate();
+      const leadingBlankDays = new Date(selectedYear, monthIndex, 1).getDay();
+
+      const days = Array.from({ length: daysInMonth }, (_, dayOffset) => {
+        const date = new Date(selectedYear, monthIndex, dayOffset + 1);
+
+        const inquiries = safeDatedInquiries.filter((inquiry) =>
+          inquiryTouchesDate(inquiry, date)
+        );
+
+        const bucketCounts = inquiries.reduce(
+          (counts, inquiry) => {
+            const bucket = getHeatmapBucketForInquiry(
+              inquiry,
+              getCalendarEventColor
+            );
+
+            return {
+              ...counts,
+              [bucket]: counts[bucket] + 1,
+            };
+          },
+          {
+            confirmed: 0,
+            contract: 0,
+            inquiry: 0,
+            other: 0,
+          }
+        );
+
+        const activeBuckets = Object.keys(bucketCounts).filter(
+          (bucket) => bucketCounts[bucket] > 0
+        );
+
+        return {
+          date,
+          dayNumber: dayOffset + 1,
+          inquiries,
+          totalCount: inquiries.length,
+          bucketCounts,
+          activeBuckets,
+          primaryBucket: getPrimaryHeatmapBucket(bucketCounts),
+          heatOpacity: getHeatmapOpacity(inquiries.length),
+        };
+      });
+
+      return {
+        monthName,
+        monthIndex,
+        leadingBlankDays,
+        days,
+      };
+    });
+  }, [getCalendarEventColor, safeDatedInquiries, selectedYear]);
 
   const selectedWeekInquiries = useMemo(() => {
     const weekEnd = addDays(selectedWeekStart, 6);
@@ -245,6 +375,10 @@ export default function CalendarView({
 
     if (nextView === "week") {
       setSelectedWeekStart(getFocusedWeekStart(selectedYear, selectedMonth));
+    }
+
+    if (nextView === "year") {
+      setYearDisplayView("heatmap");
     }
   }
 
@@ -434,77 +568,193 @@ export default function CalendarView({
 
         {calendarView === "year" && (
           <div className="calendar-year-view">
-            <div className="calendar-controls calendar-controls-large">
-              <button
-                type="button"
-                onClick={() => setSelectedYear(selectedYear - 1)}
-              >
-                «
-              </button>
-
-              <select
-                value={selectedYear}
-                onChange={(event) =>
-                  setSelectedYear(Number(event.target.value))
-                }
-              >
-                {yearOptions.map((year) => (
-                  <option value={year} key={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-
-              <button
-                type="button"
-                onClick={() => setSelectedYear(selectedYear + 1)}
-              >
-                »
-              </button>
-            </div>
-
-            <div className="calendar-year-grid">
-              {selectedYearMonths.map((month) => (
+            <div className="calendar-year-toolbar">
+              <div className="calendar-controls calendar-controls-large calendar-year-controls">
                 <button
-                  className="calendar-year-card"
                   type="button"
-                  key={month.monthName}
-                  onClick={() => openMonthFromYearView(month.monthIndex)}
+                  onClick={() => setSelectedYear(selectedYear - 1)}
                 >
-                  <div>
-                    <span>{month.monthName}</span>
-
-                    <strong>{month.inquiries.length}</strong>
-                  </div>
-
-                  <small>
-                    dated booking
-                    {month.inquiries.length === 1 ? "" : "s"}
-                  </small>
-
-                  {month.inquiries.length > 0 ? (
-                    <div className="calendar-year-preview-list">
-                      {month.inquiries.slice(0, 3).map((inquiry) => (
-                        <p key={inquiry.id}>
-                          <i
-                            className={`legend-dot ${getCalendarEventColor(
-                              inquiry.status
-                            )}`}
-                          ></i>
-                          {inquiry.organizationName}
-                        </p>
-                      ))}
-
-                      {month.inquiries.length > 3 && (
-                        <em>+{month.inquiries.length - 3} more</em>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="calendar-year-empty">No dated bookings</p>
-                  )}
+                  «
                 </button>
-              ))}
+
+                <select
+                  value={selectedYear}
+                  onChange={(event) => setSelectedYear(Number(event.target.value))}
+                >
+                  {yearOptions.map((year) => (
+                    <option value={year} key={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedYear(selectedYear + 1)}
+                >
+                  »
+                </button>
+              </div>
+
+              <div
+                className="calendar-year-view-toggle"
+                aria-label="Year display views"
+              >
+                {yearDisplayViewOptions.map((option) => (
+                  <button
+                    className={yearDisplayView === option.value ? "active" : ""}
+                    type="button"
+                    key={option.value}
+                    onClick={() => setYearDisplayView(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {yearDisplayView === "heatmap" && (
+              <>
+                <div className="calendar-year-heatmap-legend">
+                  <span>
+                    <i className="calendar-year-heatmap-dot calendar-year-heatmap-dot-confirmed"></i>
+                    Confirmed
+                  </span>
+
+                  <span>
+                    <i className="calendar-year-heatmap-dot calendar-year-heatmap-dot-inquiry"></i>
+                    Inquiry
+                  </span>
+
+                  <span>
+                    <i className="calendar-year-heatmap-dot calendar-year-heatmap-dot-contract"></i>
+                    Contract Sent
+                  </span>
+
+                  <em>Darker days have more dated bookings.</em>
+                </div>
+
+                <div className="calendar-year-heatmap">
+                  {selectedYearHeatmapMonths.map((month) => (
+                    <section
+                      className="calendar-year-heatmap-month"
+                      key={month.monthName}
+                    >
+                      <div className="calendar-year-heatmap-month-header">
+                        <strong>{month.monthName}</strong>
+                      </div>
+
+                      <div className="calendar-year-heatmap-weekdays">
+                        {weekDayLabels.map((dayLabel) => (
+                          <span key={dayLabel}>{dayLabel.slice(0, 1)}</span>
+                        ))}
+                      </div>
+
+                      <div className="calendar-year-heatmap-days">
+                        {Array.from({ length: month.leadingBlankDays }).map(
+                          (_, blankIndex) => (
+                            <span
+                              className="calendar-year-heatmap-day-empty"
+                              key={`blank-${month.monthName}-${blankIndex}`}
+                            ></span>
+                          )
+                        )}
+
+                        {month.days.map((day) => {
+                          const dayClasses = [
+                            "calendar-year-heatmap-day",
+                            day.totalCount > 0
+                              ? "calendar-year-heatmap-day-active"
+                              : "",
+                            day.primaryBucket
+                              ? `calendar-year-heatmap-day-${day.primaryBucket}`
+                              : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ");
+
+                          return (
+                            <button
+                              className={dayClasses}
+                              type="button"
+                              key={day.date.toISOString()}
+                              title={getHeatmapDayTitle(day)}
+                              aria-label={getHeatmapDayTitle(day)}
+                              style={{
+                                "--heat-opacity": day.heatOpacity,
+                              }}
+                              onClick={() => openMonthFromYearView(month.monthIndex)}
+                            >
+                              <span>{day.dayNumber}</span>
+
+                              {day.totalCount > 1 && (
+                                <strong>{day.totalCount}</strong>
+                              )}
+
+                              {day.activeBuckets.length > 1 && (
+                                <div className="calendar-year-heatmap-day-dots">
+                                  {day.activeBuckets.map((bucket) => (
+                                    <i
+                                      className={`calendar-year-heatmap-dot calendar-year-heatmap-dot-${bucket}`}
+                                      key={bucket}
+                                    ></i>
+                                  ))}
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {yearDisplayView === "cards" && (
+              <div className="calendar-year-grid">
+                {selectedYearMonths.map((month) => (
+                  <button
+                    className="calendar-year-card"
+                    type="button"
+                    key={month.monthName}
+                    onClick={() => openMonthFromYearView(month.monthIndex)}
+                  >
+                    <div>
+                      <span>{month.monthName}</span>
+
+                      <strong>{month.inquiries.length}</strong>
+                    </div>
+
+                    <small>
+                      dated booking
+                      {month.inquiries.length === 1 ? "" : "s"}
+                    </small>
+
+                    {month.inquiries.length > 0 ? (
+                      <div className="calendar-year-preview-list">
+                        {month.inquiries.slice(0, 3).map((inquiry) => (
+                          <p key={inquiry.id}>
+                            <i
+                              className={`legend-dot ${getCalendarEventColor(
+                                inquiry.status
+                              )}`}
+                            ></i>
+                            {inquiry.organizationName}
+                          </p>
+                        ))}
+
+                        {month.inquiries.length > 3 && (
+                          <em>+{month.inquiries.length - 3} more</em>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="calendar-year-empty">No dated bookings</p>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
