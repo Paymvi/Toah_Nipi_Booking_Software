@@ -11081,7 +11081,106 @@ body,
 }
 
 
+/* =========================================================
+   OVERRIDE: Checklist Icon Placement Only
+   Keep original icon-box size, only center the SVG
+========================================================= */
 
+/* Keep the header aligned nicely without making it huge */
+.booking-checklist-page .booking-profile-header,
+.booking-checklist-page .booking-checklist-header,
+.booking-checklist-page .booking-activities__header {
+  align-items: center !important;
+}
+
+/* Keep the left header row aligned */
+.booking-checklist-page .booking-detail-title-block,
+.booking-checklist-page .booking-profile-header-title,
+.booking-checklist-page .booking-checklist-header > div:first-child,
+.booking-checklist-page .booking-activities__header > div:first-child {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-width: 0;
+}
+
+/* IMPORTANT: original-ish size, not the huge 64px version */
+.booking-checklist-page .booking-detail-main-icon,
+.booking-checklist-page .booking-profile-avatar,
+.booking-checklist-page .section-icon,
+.booking-checklist-page .booking-work-section-icon {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  flex: 0 0 44px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border-radius: 10px !important;
+  background: #eef1ea !important;
+  color: #7b8290 !important;
+
+  line-height: 1 !important;
+  text-align: center !important;
+}
+
+/* This fixes the actual clipboard placement */
+.booking-checklist-page .booking-detail-main-icon svg,
+.booking-checklist-page .booking-profile-avatar svg,
+.booking-checklist-page .section-icon svg,
+.booking-checklist-page .booking-work-section-icon svg {
+  width: 20px !important;
+  height: 20px !important;
+
+  display: block !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+
+  flex: 0 0 auto !important;
+  color: currentColor !important;
+}
+
+/* Keep the text from getting squished/cut weirdly */
+.booking-checklist-page .booking-profile-header-title > div,
+.booking-checklist-page .booking-detail-title-block > div,
+.booking-checklist-page .booking-checklist-header > div:first-child > div,
+.booking-checklist-page .booking-activities__header > div:first-child > div {
+  min-width: 0;
+}
+
+/* Keep the description on one clean line */
+.booking-checklist-page .booking-profile-header-title p:not(:first-child),
+.booking-checklist-page .booking-checklist-header span,
+.booking-checklist-page .booking-activities__header p:not(.booking-activities__eyebrow) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mobile: allow the description to wrap */
+@media (max-width: 720px) {
+  .booking-checklist-page .booking-profile-header,
+  .booking-checklist-page .booking-checklist-header,
+  .booking-checklist-page .booking-activities__header {
+    align-items: flex-start !important;
+  }
+
+  .booking-checklist-page .booking-profile-header-title p:not(:first-child),
+  .booking-checklist-page .booking-checklist-header span,
+  .booking-checklist-page .booking-activities__header p:not(.booking-activities__eyebrow) {
+    white-space: normal;
+  }
+}
 
 
 
