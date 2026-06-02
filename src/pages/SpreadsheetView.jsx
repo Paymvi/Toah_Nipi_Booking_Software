@@ -1329,6 +1329,13 @@ function SpreadsheetSettingsModal({
   processedBookingCount,
   isProcessingRemainingRows,
   savedViews,
+  onSaveSavedView,
+  onApplySavedView,
+  onUpdateSavedView,
+  onDeleteSavedView,
+  onSetDefaultSavedView,
+  onClose,
+  onReset,
 }) {
   const [activeSettingsTab, setActiveSettingsTab] = useState("Sources");
 
