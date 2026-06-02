@@ -3256,23 +3256,18 @@ function BookingSpreadsheetView({
     >
       <article className="dashboard-card spreadsheet-view-card">
         <div className="spreadsheet-view-header">
-          <div className="dashboard-heading-with-icon">
-            <span className="section-icon">
-              <FaTable />
-            </span>
+          <div className="spreadsheet-view-header-main">
+            <div className="dashboard-heading-with-icon">
+              <span className="section-icon">
+                <FaTable />
+              </span>
 
-            <div>
-              <p className="dashboard-eyebrow">Spreadsheet View</p>
-              <h2>All Booking Data</h2>
-              {/* <p>
-                A full spreadsheet-style view of every
-                <br />
-                form submission + imported booking row.
-              </p> */}
+              <div>
+                <p className="dashboard-eyebrow">Spreadsheet View</p>
+                <h2>All Booking Data</h2>
+              </div>
             </div>
-          </div>
 
-          <div className="spreadsheet-view-header-actions">
             {visibleSummaryCards.length > 0 && (
               <div className="spreadsheet-view-summary">
                 {visibleSummaryCards.map((card) => (
@@ -3286,89 +3281,85 @@ function BookingSpreadsheetView({
                 ))}
               </div>
             )}
+          </div>
 
-            <div className="spreadsheet-settings-stack">
-              <button
-                className="primary-dashboard-button spreadsheet-settings-button"
-                type="button"
-                onClick={() => setIsSettingsOpen(true)}
-              >
-                <FaCog />
-                Settings
-              </button>
+          <div className="spreadsheet-settings-stack">
+            <button
+              className="primary-dashboard-button spreadsheet-settings-button"
+              type="button"
+              onClick={() => setIsSettingsOpen(true)}
+            >
+              <FaCog />
+              Settings
+            </button>
 
-              <label className="spreadsheet-row-preview-toggle">
+            <label className="spreadsheet-row-preview-toggle">
+              <input
+                type="checkbox"
+                checked={Boolean(spreadsheetSettings.showRowPreviewPopups)}
+                onChange={(event) =>
+                  updateSpreadsheetSettings({
+                    showRowPreviewPopups: event.target.checked,
+                  })
+                }
+              />
+
+              <span>
+                <FaInfoCircle />
+                Row popups
+              </span>
+            </label>
+
+            <label className="spreadsheet-row-preview-toggle spreadsheet-starred-first-toggle">
+              <input
+                type="checkbox"
+                checked={Boolean(spreadsheetSettings.showStarredRowsFirst)}
+                onChange={(event) =>
+                  updateSpreadsheetSettings({
+                    showStarredRowsFirst: event.target.checked,
+                  })
+                }
+              />
+
+              <span>
+                <FaStar />
+                Starred first
+              </span>
+            </label>
+
+            <div className="spreadsheet-header-search">
+              <label htmlFor="spreadsheet-header-search-input">
+                Search Everything
+              </label>
+
+              <div className="spreadsheet-header-search-control">
                 <input
-                  type="checkbox"
-                  checked={Boolean(spreadsheetSettings.showRowPreviewPopups)}
+                  id="spreadsheet-header-search-input"
+                  type="search"
+                  value={spreadsheetSettings.searchText}
+                  placeholder="Search bookings..."
                   onChange={(event) =>
                     updateSpreadsheetSettings({
-                      showRowPreviewPopups: event.target.checked,
+                      searchText: event.target.value,
                     })
                   }
                 />
 
-                <span>
-                  <FaInfoCircle />
-                  Row popups
-                </span>
-              </label>
-
-              <label className="spreadsheet-row-preview-toggle spreadsheet-starred-first-toggle">
-                <input
-                  type="checkbox"
-                  checked={Boolean(spreadsheetSettings.showStarredRowsFirst)}
-                  onChange={(event) =>
-                    updateSpreadsheetSettings({
-                      showStarredRowsFirst: event.target.checked,
-                    })
-                  }
-                />
-
-                <span>
-                  <FaStar />
-                  Starred first
-                </span>
-              </label>
-
-
-              <div className="spreadsheet-header-search">
-                <label htmlFor="spreadsheet-header-search-input">
-                  Search Everything
-                </label>
-
-                <div className="spreadsheet-header-search-control">
-                  <input
-                    id="spreadsheet-header-search-input"
-                    type="search"
-                    value={spreadsheetSettings.searchText}
-                    placeholder="Search bookings..."
-                    onChange={(event) =>
+                {spreadsheetSettings.searchText && (
+                  <button
+                    type="button"
+                    className="spreadsheet-header-search-clear"
+                    onClick={() =>
                       updateSpreadsheetSettings({
-                        searchText: event.target.value,
+                        searchText: "",
                       })
                     }
-                  />
-
-                  {spreadsheetSettings.searchText && (
-                    <button
-                      type="button"
-                      className="spreadsheet-header-search-clear"
-                      onClick={() =>
-                        updateSpreadsheetSettings({
-                          searchText: "",
-                        })
-                      }
-                      aria-label="Clear spreadsheet search"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
+                    aria-label="Clear spreadsheet search"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
-
-
-
             </div>
           </div>
         </div>

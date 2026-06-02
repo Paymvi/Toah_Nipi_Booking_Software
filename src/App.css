@@ -13374,105 +13374,72 @@ body,
   min-width: 0;
 }
 
+
 /* =========================================================
-   FINAL OVERRIDE: Spreadsheet Header Cards + Controls Layout
-   Keeps cards to 4 per row without overlapping settings
+   FINAL OVERRIDE: Spreadsheet Header Title / Cards / Controls
+   Cards sit directly under "All Booking Data"
 ========================================================= */
 
 .spreadsheet-view-header {
   display: grid !important;
-  grid-template-columns: minmax(240px, auto) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 320px;
   align-items: start;
-  gap: 22px;
+  gap: 24px;
+
+  padding: 18px;
 }
 
-.spreadsheet-view-header > .dashboard-heading-with-icon {
+.spreadsheet-view-header-main {
   min-width: 0;
+  display: grid;
+  gap: 18px;
+  align-content: start;
 }
 
-.spreadsheet-view-header-actions {
-  display: grid !important;
-  grid-template-columns: minmax(0, auto) 300px;
-  align-items: start;
-  justify-content: end;
-  gap: 16px;
-
-  width: 100%;
+.spreadsheet-view-header-main .dashboard-heading-with-icon {
   min-width: 0;
 }
 
 .spreadsheet-view-summary {
   display: grid !important;
-  grid-template-columns: repeat(4, 135px);
-  justify-content: end;
-  align-content: start;
+  grid-template-columns: repeat(4, minmax(135px, 1fr));
   gap: 10px;
 
-  width: auto;
-  max-width: calc((135px * 4) + (10px * 3));
-  min-width: 0;
+  width: 100%;
+  max-width: 920px;
+
+  justify-content: start;
+  align-content: start;
+
+  /* Lines the cards up under the title text instead of under the icon */
+  margin-left: 47px;
 }
 
 .spreadsheet-view-summary .spreadsheet-summary-card,
 .spreadsheet-view-summary span {
-  width: 135px;
+  width: 100%;
   min-width: 0;
-  max-width: 135px;
+  max-width: none;
 }
 
 .spreadsheet-settings-stack {
-  width: 300px;
-  min-width: 300px;
-  max-width: 300px;
+  width: 320px;
+  min-width: 320px;
+  max-width: 320px;
+
   justify-self: end;
+  align-self: start;
 }
 
-@media (max-width: 1450px) {
-  .spreadsheet-view-header {
-    grid-template-columns: 1fr;
-  }
-
-  .spreadsheet-view-header-actions {
-    grid-template-columns: minmax(0, 1fr) 300px;
-    justify-content: stretch;
-  }
-
-  .spreadsheet-view-summary {
-    justify-content: start;
-  }
+.spreadsheet-settings-stack .spreadsheet-settings-button,
+.spreadsheet-settings-stack .spreadsheet-row-preview-toggle,
+.spreadsheet-settings-stack .spreadsheet-header-search {
+  width: 100%;
 }
 
-@media (max-width: 900px) {
-  .spreadsheet-view-header-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .spreadsheet-view-summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-width: none;
-    width: 100%;
-  }
-
-  .spreadsheet-view-summary .spreadsheet-summary-card,
-  .spreadsheet-view-summary span {
-    width: 100%;
-    max-width: none;
-  }
-
-  .spreadsheet-settings-stack {
-    width: 100%;
-    min-width: 0;
-    max-width: none;
-    justify-self: stretch;
-  }
+.spreadsheet-header-search {
+  max-width: none;
 }
-
-@media (max-width: 560px) {
-  .spreadsheet-view-summary {
-    grid-template-columns: 1fr;
-  }
-}
-
 
 
 
