@@ -5844,7 +5844,11 @@ body,
 .spreadsheet-table-wrap {
   width: 100%;
   max-width: 100%;
-  max-height: calc(100vh - 250px);
+
+  /* Header row + about 20 body rows */
+  height: calc(38px + (36px * 20));
+  max-height: none;
+
   overflow: auto;
   background: #ffffff;
 }
