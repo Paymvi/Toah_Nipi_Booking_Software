@@ -3332,6 +3332,42 @@ function BookingSpreadsheetView({
               </label>
 
 
+              <div className="spreadsheet-header-search">
+                <label htmlFor="spreadsheet-header-search-input">
+                  Search Everything
+                </label>
+
+                <div className="spreadsheet-header-search-control">
+                  <input
+                    id="spreadsheet-header-search-input"
+                    type="search"
+                    value={spreadsheetSettings.searchText}
+                    placeholder="Search bookings..."
+                    onChange={(event) =>
+                      updateSpreadsheetSettings({
+                        searchText: event.target.value,
+                      })
+                    }
+                  />
+
+                  {spreadsheetSettings.searchText && (
+                    <button
+                      type="button"
+                      className="spreadsheet-header-search-clear"
+                      onClick={() =>
+                        updateSpreadsheetSettings({
+                          searchText: "",
+                        })
+                      }
+                      aria-label="Clear spreadsheet search"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              </div>
+
+
 
             </div>
           </div>
