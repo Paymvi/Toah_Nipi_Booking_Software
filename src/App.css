@@ -17511,3 +17511,36 @@ body,
   width: 9px;
   height: 9px;
 }
+
+
+
+
+
+
+
+.reports-monthly-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: 0 0 14px;
+
+  color: #252936;
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.reports-monthly-heading svg {
+  flex: 0 0 auto;
+  width: 0.92em;
+  height: 0.92em;
+
+  color: inherit;
+  opacity: 0.72;
+}
+
+.reports-monthly-heading span {
+  min-width: 0;
+}

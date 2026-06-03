@@ -1206,7 +1206,10 @@ function ReportsView({ inquiryBookings }) {
           {monthlyRows.length > 0 ? (
             <div className="reports-monthly-grid">
               <div>
-                <h4>Bookings by Month</h4>
+                <h4 className="reports-monthly-heading">
+                  <FaClipboardList aria-hidden="true" />
+                  <span>Bookings by Month</span>
+                </h4>
 
                 <div className="reports-bar-list">
                   {monthlyRows.map((row) => (
@@ -1226,7 +1229,10 @@ function ReportsView({ inquiryBookings }) {
               </div>
 
               <div>
-                <h4>Guests by Month</h4>
+                <h4 className="reports-monthly-heading">
+                  <FaUsers aria-hidden="true" />
+                  <span>Guests by Month</span>
+                </h4>
 
                 <div className="reports-bar-list">
                   {monthlyRows.map((row) => (
@@ -1242,7 +1248,10 @@ function ReportsView({ inquiryBookings }) {
               </div>
 
               <div>
-                <h4>Revenue by Month</h4>
+                <h4 className="reports-monthly-heading">
+                  <FaDollarSign aria-hidden="true" />
+                  <span>Revenue by Month</span>
+                </h4>
 
                 <div className="reports-bar-list">
                   {monthlyRows.map((row) => (
