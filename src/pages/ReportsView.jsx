@@ -214,7 +214,7 @@ function getReportsGuestCount(booking) {
   );
 }
 
-function getReportsRevenue(booking) {
+function getReportsRevenueDetails(booking) {
   const invoiceTotal = getReportsNumber(booking.invoiceLodgingMeals);
   const expectedMinimumRevenue = getReportsNumber(booking.expectedMinimumRevenue);
   const monthlyProjectedIncome = getReportsNumber(booking.monthlyProjectedIncome);
@@ -225,12 +225,48 @@ function getReportsRevenue(booking) {
     getReportsNumber(booking.foodCost) +
     getReportsNumber(booking.miscCost);
 
-  return (
-    invoiceTotal ||
-    expectedMinimumRevenue ||
-    monthlyProjectedIncome ||
-    itemizedTotal
-  );
+  if (invoiceTotal) {
+    return {
+      value: invoiceTotal,
+      source: "Invoice Total",
+      confidence: "high",
+    };
+  }
+
+  if (expectedMinimumRevenue) {
+    return {
+      value: expectedMinimumRevenue,
+      source: "Expected Minimum",
+      confidence: "medium",
+    };
+  }
+
+  if (monthlyProjectedIncome) {
+    return {
+      value: monthlyProjectedIncome,
+      source: "Monthly Projection",
+      confidence: "medium",
+    };
+  }
+
+  if (itemizedTotal) {
+    return {
+      value: itemizedTotal,
+      source: "Itemized Fallback",
+      confidence: "low",
+    };
+  }
+
+  return {
+    value: 0,
+    source: "Missing",
+    confidence: "missing",
+  };
+}
+
+
+function getReportsRevenue(booking) {
+  return getReportsRevenueDetails(booking).value;
 }
 
 function formatReportsCurrency(value) {
@@ -478,6 +514,46 @@ function ReportsView({ inquiryBookings }) {
     0
   );
 
+  const revenueSourceRows = useMemo(() => {
+    const sourceMap = new Map();
+
+    filteredReportBookings.forEach((booking) => {
+      const revenueDetails = getReportsRevenueDetails(booking);
+
+      if (!sourceMap.has(revenueDetails.source)) {
+        sourceMap.set(revenueDetails.source, {
+          label: revenueDetails.source,
+          count: 0,
+          value: 0,
+          confidence: revenueDetails.confidence,
+        });
+      }
+
+      const row = sourceMap.get(revenueDetails.source);
+
+      row.count += 1;
+      row.value += revenueDetails.value;
+    });
+
+    const confidenceOrder = {
+      high: 1,
+      medium: 2,
+      low: 3,
+      missing: 4,
+    };
+
+    return Array.from(sourceMap.values()).sort(
+      (a, b) =>
+        confidenceOrder[a.confidence] - confidenceOrder[b.confidence] ||
+        b.count - a.count
+    );
+  }, [filteredReportBookings]);
+
+  const maxRevenueSourceValue = Math.max(
+    0,
+    ...revenueSourceRows.map((row) => row.value)
+  );
+
   const monthlyRows = useMemo(() => {
     const monthMap = new Map();
 
@@ -722,6 +798,16 @@ function ReportsView({ inquiryBookings }) {
         rows: revenueBreakdown.map((item) => [item.label, item.value]),
       },
       {
+        title: "Revenue Source Confidence",
+        headers: ["Source", "Rows", "Revenue", "Confidence"],
+        rows: revenueSourceRows.map((row) => [
+          row.label,
+          row.count,
+          row.value,
+          row.confidence,
+        ]),
+      },
+      {
         title: "Retreat Type Breakdown",
         headers: ["Retreat Type", "Bookings", "Guests", "Revenue"],
         rows: retreatTypeRows.map((row) => [
@@ -959,6 +1045,25 @@ function ReportsView({ inquiryBookings }) {
                     />
                   ))}
                 </div>
+
+                <div className="reports-revenue-confidence">
+                  <h4>Source Confidence</h4>
+
+                  <div className="reports-bar-list">
+                    {revenueSourceRows.map((row) => (
+                      <ReportBarRow
+                        key={row.label}
+                        label={row.label}
+                        value={row.value}
+                        maxValue={maxRevenueSourceValue}
+                        valueLabel={`${row.count} row${row.count === 1 ? "" : "s"} · ${formatReportsCurrency(row.value)}`}
+                        helper={`${row.confidence} confidence`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+
               </div>
 
               <div>

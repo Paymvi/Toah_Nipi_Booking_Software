@@ -16747,3 +16747,34 @@ body,
 .spreadsheet-retreat-type-pill.retreat-type-other {
   --retreat-type-rgb: 100 116 139;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.reports-revenue-confidence {
+  margin-top: 1.35rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid rgba(60, 61, 31, 0.12);
+}
+
+.reports-revenue-confidence h4 {
+  margin: 0 0 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--dashboard-text, #2f3219);
+}
