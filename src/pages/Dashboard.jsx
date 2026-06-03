@@ -762,6 +762,191 @@ function getBackupDetailGroups(backup) {
   ];
 }
 
+function tryParseBackupJsonValue(value) {
+  try {
+    return {
+      didParse: true,
+      parsedValue: JSON.parse(value),
+    };
+  } catch {
+    return {
+      didParse: false,
+      parsedValue: null,
+    };
+  }
+}
+
+function formatBackupStorageSize(value) {
+  if (value === null || value === undefined) {
+    return "0 B";
+  }
+
+  const bytes = new Blob([String(value)]).size;
+
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function getBackupTechnicalCategory(key) {
+  if (key === "toahNipiPublicInquiries") {
+    return "Booking data";
+  }
+
+  if (
+    key === STAFF_USERS_STORAGE_KEY ||
+    key === CURRENT_STAFF_USER_STORAGE_KEY
+  ) {
+    return "Staff data";
+  }
+
+  if (
+    key === SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY ||
+    key === SPREADSHEET_VIEW_STARRED_STORAGE_KEY
+  ) {
+    return "Spreadsheet";
+  }
+
+  if (key === REPORTS_VIEW_SETTINGS_STORAGE_KEY) {
+    return "Reports";
+  }
+
+  if (
+    key === DATED_INQUIRY_SETTINGS_STORAGE_KEY ||
+    key === DATED_INQUIRY_DATE_FILTER_STORAGE_KEY ||
+    key === DATED_INQUIRY_CUSTOM_START_STORAGE_KEY ||
+    key === DATED_INQUIRY_CUSTOM_END_STORAGE_KEY ||
+    key === BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY
+  ) {
+    return "Dashboard settings";
+  }
+
+  return "Other app data";
+}
+
+function getBackupTechnicalPreview(value) {
+  if (value === null || value === undefined || value === "") {
+    return "No saved value";
+  }
+
+  const textValue = String(value);
+  const { didParse, parsedValue } = tryParseBackupJsonValue(textValue);
+
+  const previewText = didParse
+    ? JSON.stringify(parsedValue, null, 2)
+    : textValue;
+
+  if (!previewText) {
+    return "Saved empty value";
+  }
+
+  return previewText.length > 900
+    ? `${previewText.slice(0, 900)}\n...`
+    : previewText;
+}
+
+function getBackupTechnicalValueInfo(value) {
+  if (value === null || value === undefined || value === "") {
+    return {
+      hasValue: false,
+      typeLabel: "Empty",
+      summary: "No saved value",
+    };
+  }
+
+  const textValue = String(value);
+  const { didParse, parsedValue } = tryParseBackupJsonValue(textValue);
+
+  if (!didParse) {
+    return {
+      hasValue: true,
+      typeLabel: "Plain text",
+      summary: textValue,
+    };
+  }
+
+  if (Array.isArray(parsedValue)) {
+    return {
+      hasValue: true,
+      typeLabel: "JSON array",
+      summary: `${parsedValue.length} item${parsedValue.length === 1 ? "" : "s"}`,
+    };
+  }
+
+  if (parsedValue && typeof parsedValue === "object") {
+    const keyCount = Object.keys(parsedValue).length;
+
+    return {
+      hasValue: true,
+      typeLabel: "JSON object",
+      summary: `${keyCount} field${keyCount === 1 ? "" : "s"}`,
+    };
+  }
+
+  if (typeof parsedValue === "boolean") {
+    return {
+      hasValue: true,
+      typeLabel: "Boolean",
+      summary: parsedValue ? "true" : "false",
+    };
+  }
+
+  if (typeof parsedValue === "number") {
+    return {
+      hasValue: true,
+      typeLabel: "Number",
+      summary: String(parsedValue),
+    };
+  }
+
+  if (typeof parsedValue === "string") {
+    return {
+      hasValue: true,
+      typeLabel: "String",
+      summary: parsedValue || "Saved empty string",
+    };
+  }
+
+  return {
+    hasValue: true,
+    typeLabel: "JSON value",
+    summary: String(parsedValue),
+  };
+}
+
+function getBackupTechnicalRows(backup) {
+  const storageData = backup?.storageData || {};
+
+  return Object.entries(storageData)
+    .map(([key, value]) => {
+      const valueInfo = getBackupTechnicalValueInfo(value);
+
+      return {
+        key,
+        label: DASHBOARD_BACKUP_KEY_LABELS[key] || key,
+        category: getBackupTechnicalCategory(key),
+        hasValue: valueInfo.hasValue,
+        typeLabel: valueInfo.typeLabel,
+        summary: valueInfo.summary,
+        sizeLabel: formatBackupStorageSize(value),
+        preview: getBackupTechnicalPreview(value),
+      };
+    })
+    .sort((a, b) => {
+      if (a.hasValue !== b.hasValue) {
+        return a.hasValue ? -1 : 1;
+      }
+
+      return a.category.localeCompare(b.category) || a.label.localeCompare(b.label);
+    });
+}
+
 const DEFAULT_STAFF_USERS = [
   {
     id: "staff-admin",
@@ -5643,6 +5828,8 @@ function DashboardBackupModal({
     backupHistory[0]?.id || ""
   );
 
+  const [backupDetailMode, setBackupDetailMode] = useState("friendly");
+
   useEffect(() => {
     if (!expandedBackupId && backupHistory[0]?.id) {
       setExpandedBackupId(backupHistory[0].id);
@@ -5714,8 +5901,11 @@ function DashboardBackupModal({
                 const isExpanded = expandedBackupId === backup.id;
                 const detailGroups = getBackupDetailGroups(backup);
                 const savedDetailGroups = detailGroups.filter((group) => group.hasValue);
-                const emptyDetailGroups = detailGroups.filter((group) => !group.hasValue);
-                
+                const emptyDetailGroups = detailGroups.filter((group) => !group.hasValue);       
+                const technicalRows = getBackupTechnicalRows(backup);
+                const savedTechnicalRows = technicalRows.filter((row) => row.hasValue);
+                const emptyTechnicalRows = technicalRows.filter((row) => !row.hasValue);
+
                 return (
                   <article
                     className={`dashboard-backup-card ${
@@ -5799,7 +5989,7 @@ function DashboardBackupModal({
                           <div>
                             <strong>What this backup includes</strong>
                             <p>
-                              A plain-English rundown of the dashboard data saved in this backup.
+                              Switch between a staff-friendly summary and a technical storage view.
                             </p>
                           </div>
 
@@ -5809,40 +5999,134 @@ function DashboardBackupModal({
                           </span>
                         </div>
 
-                        <div className="dashboard-backup-friendly-list">
-                          {savedDetailGroups.map((group) => (
-                            <article
-                              className={`dashboard-backup-friendly-card dashboard-backup-friendly-card-${group.tone}`}
-                              key={group.id}
-                            >
-                              <div className="dashboard-backup-friendly-icon">
-                                <FaCheckCircle />
-                              </div>
+                        <div
+                          className="dashboard-backup-detail-mode-toggle"
+                          role="tablist"
+                          aria-label="Backup detail display mode"
+                        >
+                          <button
+                            className={backupDetailMode === "friendly" ? "active" : ""}
+                            type="button"
+                            onClick={() => setBackupDetailMode("friendly")}
+                          >
+                            Friendly
+                          </button>
 
-                              <div>
-                                <h5>{group.title}</h5>
-                                <strong>{group.status}</strong>
-                                <p>{group.description}</p>
-                              </div>
-                            </article>
-                          ))}
+                          <button
+                            className={backupDetailMode === "technical" ? "active" : ""}
+                            type="button"
+                            onClick={() => setBackupDetailMode("technical")}
+                          >
+                            Technical
+                          </button>
                         </div>
 
-                        {emptyDetailGroups.length > 0 && (
-                          <details className="dashboard-backup-empty-details">
-                            <summary>
-                              Show areas that were not saved in this backup
-                            </summary>
+                        {backupDetailMode === "friendly" ? (
+                          <>
+                            <div className="dashboard-backup-friendly-list">
+                              {savedDetailGroups.map((group) => (
+                                <article
+                                  className={`dashboard-backup-friendly-card dashboard-backup-friendly-card-${group.tone}`}
+                                  key={group.id}
+                                >
+                                  <div className="dashboard-backup-friendly-icon">
+                                    <FaCheckCircle />
+                                  </div>
 
-                            <div className="dashboard-backup-empty-detail-list">
-                              {emptyDetailGroups.map((group) => (
-                                <div key={group.id}>
-                                  <span>{group.title}</span>
-                                  <small>{group.status}</small>
-                                </div>
+                                  <div>
+                                    <h5>{group.title}</h5>
+                                    <strong>{group.status}</strong>
+                                    <p>{group.description}</p>
+                                  </div>
+                                </article>
                               ))}
                             </div>
-                          </details>
+
+                            {emptyDetailGroups.length > 0 && (
+                              <details className="dashboard-backup-empty-details">
+                                <summary>Show areas that were not saved in this backup</summary>
+
+                                <div className="dashboard-backup-empty-detail-list">
+                                  {emptyDetailGroups.map((group) => (
+                                    <div key={group.id}>
+                                      <span>{group.title}</span>
+                                      <small>{group.status}</small>
+                                    </div>
+                                  ))}
+                                </div>
+                              </details>
+                            )}
+                          </>
+                        ) : (
+                          <div className="dashboard-backup-technical-panel">
+                            <div className="dashboard-backup-technical-summary">
+                              <span>
+                                <strong>{technicalRows.length}</strong>
+                                Total storage keys
+                              </span>
+
+                              <span>
+                                <strong>{savedTechnicalRows.length}</strong>
+                                Keys with data
+                              </span>
+
+                              <span>
+                                <strong>{emptyTechnicalRows.length}</strong>
+                                Empty keys
+                              </span>
+
+                              <span>
+                                <strong>
+                                  {formatBackupStorageSize(
+                                    JSON.stringify(backup.storageData || {})
+                                  )}
+                                </strong>
+                                Approx. backup size
+                              </span>
+                            </div>
+
+                            <div className="dashboard-backup-technical-list">
+                              {technicalRows.map((row) => (
+                                <article
+                                  className={`dashboard-backup-technical-card ${
+                                    !row.hasValue ? "is-empty" : ""
+                                  }`}
+                                  key={row.key}
+                                >
+                                  <header>
+                                    <div>
+                                      <span>{row.category}</span>
+                                      <h5>{row.label}</h5>
+                                    </div>
+
+                                    <code>{row.key}</code>
+                                  </header>
+
+                                  <div className="dashboard-backup-technical-meta">
+                                    <span>
+                                      Type
+                                      <strong>{row.typeLabel}</strong>
+                                    </span>
+
+                                    <span>
+                                      Summary
+                                      <strong>{row.summary}</strong>
+                                    </span>
+
+                                    <span>
+                                      Size
+                                      <strong>{row.sizeLabel}</strong>
+                                    </span>
+                                  </div>
+
+                                  <details className="dashboard-backup-technical-preview">
+                                    <summary>Preview saved value</summary>
+                                    <pre>{row.preview}</pre>
+                                  </details>
+                                </article>
+                              ))}
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
