@@ -37,6 +37,9 @@ import {
   FaCheckCircle,
   FaRegStar,
   FaStar,
+  FaDownload,
+  FaUpload,
+  FaDatabase,
 } from "react-icons/fa";
 
 import ExcelJS from "exceljs";
@@ -328,6 +331,286 @@ function saveDashboardFilterValue(key, value) {
 
 const STAFF_USERS_STORAGE_KEY = "toahNipiStaffUsers";
 const CURRENT_STAFF_USER_STORAGE_KEY = "toahNipiCurrentStaffUserId";
+
+const DASHBOARD_BACKUP_HISTORY_STORAGE_KEY = "toahNipiDashboardBackupHistory";
+const DASHBOARD_BACKUP_VERSION = 1;
+const MAX_DASHBOARD_BACKUPS_TO_KEEP = 12;
+
+const DASHBOARD_BACKUP_CORE_KEYS = [
+  "toahNipiPublicInquiries",
+  STAFF_USERS_STORAGE_KEY,
+  CURRENT_STAFF_USER_STORAGE_KEY,
+  DATED_INQUIRY_SETTINGS_STORAGE_KEY,
+  DATED_INQUIRY_DATE_FILTER_STORAGE_KEY,
+  DATED_INQUIRY_CUSTOM_START_STORAGE_KEY,
+  DATED_INQUIRY_CUSTOM_END_STORAGE_KEY,
+  BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY,
+  REPORTS_VIEW_SETTINGS_STORAGE_KEY,
+  SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY,
+  SPREADSHEET_VIEW_STARRED_STORAGE_KEY,
+];
+
+const DASHBOARD_BACKUP_KEY_LABELS = {
+  toahNipiPublicInquiries: "Bookings, inquiries, imports, checklists, assignments",
+  [STAFF_USERS_STORAGE_KEY]: "Staff users",
+  [CURRENT_STAFF_USER_STORAGE_KEY]: "Current staff user",
+  [DATED_INQUIRY_SETTINGS_STORAGE_KEY]: "Dated inquiry display settings",
+  [DATED_INQUIRY_DATE_FILTER_STORAGE_KEY]: "Dated inquiry date filter",
+  [DATED_INQUIRY_CUSTOM_START_STORAGE_KEY]: "Dated inquiry custom start date",
+  [DATED_INQUIRY_CUSTOM_END_STORAGE_KEY]: "Dated inquiry custom end date",
+  [BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY]: "Booking detail date settings",
+  [REPORTS_VIEW_SETTINGS_STORAGE_KEY]: "Reports settings",
+  [SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY]: "Spreadsheet view settings",
+  [SPREADSHEET_VIEW_STARRED_STORAGE_KEY]: "Spreadsheet starred rows",
+};
+
+function createDashboardBackupId() {
+  return `backup-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function safeParseBackupJson(value, fallbackValue = null) {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallbackValue;
+  }
+}
+
+function getDashboardBackupKeys() {
+  const backupKeys = new Set(DASHBOARD_BACKUP_CORE_KEYS);
+
+  try {
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+
+      if (
+        key &&
+        key.startsWith("toahNipi") &&
+        key !== DASHBOARD_BACKUP_HISTORY_STORAGE_KEY
+      ) {
+        backupKeys.add(key);
+      }
+    }
+  } catch (error) {
+    console.error("Could not scan dashboard storage keys:", error);
+  }
+
+  return Array.from(backupKeys).sort((a, b) => a.localeCompare(b));
+}
+
+function getDashboardBackupHistory() {
+  try {
+    const savedBackups = localStorage.getItem(
+      DASHBOARD_BACKUP_HISTORY_STORAGE_KEY
+    );
+
+    if (!savedBackups) {
+      return [];
+    }
+
+    const parsedBackups = JSON.parse(savedBackups);
+
+    if (!Array.isArray(parsedBackups)) {
+      return [];
+    }
+
+    return parsedBackups
+      .filter((backup) => backup && backup.id && backup.createdAt)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } catch (error) {
+    console.error("Could not read dashboard backup history:", error);
+    return [];
+  }
+}
+
+function saveDashboardBackupHistory(backups) {
+  try {
+    const backupsToSave = [...backups]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, MAX_DASHBOARD_BACKUPS_TO_KEEP);
+
+    localStorage.setItem(
+      DASHBOARD_BACKUP_HISTORY_STORAGE_KEY,
+      JSON.stringify(backupsToSave)
+    );
+
+    return backupsToSave;
+  } catch (error) {
+    console.error("Could not save dashboard backup history:", error);
+    return backups;
+  }
+}
+
+function getBackupStorageData() {
+  const storageData = {};
+
+  getDashboardBackupKeys().forEach((key) => {
+    storageData[key] = localStorage.getItem(key);
+  });
+
+  return storageData;
+}
+
+function getArrayCountFromBackupValue(value) {
+  const parsedValue = safeParseBackupJson(value, []);
+
+  return Array.isArray(parsedValue) ? parsedValue.length : 0;
+}
+
+function getObjectKeyCountFromBackupValue(value) {
+  const parsedValue = safeParseBackupJson(value, {});
+
+  return parsedValue && typeof parsedValue === "object" && !Array.isArray(parsedValue)
+    ? Object.keys(parsedValue).length
+    : 0;
+}
+
+function getBackupStats(backup) {
+  const storageData = backup?.storageData || {};
+
+  const bookingCount = getArrayCountFromBackupValue(
+    storageData.toahNipiPublicInquiries
+  );
+
+  const staffCount = getArrayCountFromBackupValue(
+    storageData[STAFF_USERS_STORAGE_KEY]
+  );
+
+  const starredCount = getArrayCountFromBackupValue(
+    storageData[SPREADSHEET_VIEW_STARRED_STORAGE_KEY]
+  );
+
+  const savedKeysCount = Object.values(storageData).filter(
+    (value) => value !== null && value !== undefined
+  ).length;
+
+  return {
+    bookingCount,
+    staffCount,
+    starredCount,
+    savedKeysCount,
+  };
+}
+
+function createDashboardBackupSnapshot() {
+  const createdAt = new Date().toISOString();
+  const storageData = getBackupStorageData();
+
+  const backup = {
+    id: createDashboardBackupId(),
+    appName: "Toah Nipi Staff Dashboard",
+    backupType: "dashboard-local-storage",
+    version: DASHBOARD_BACKUP_VERSION,
+    createdAt,
+    storageData,
+  };
+
+  return {
+    ...backup,
+    stats: getBackupStats(backup),
+  };
+}
+
+function normalizeImportedDashboardBackup(rawBackup) {
+  if (!rawBackup || typeof rawBackup !== "object") {
+    return null;
+  }
+
+  const storageData = rawBackup.storageData || rawBackup.localStorageData;
+
+  if (!storageData || typeof storageData !== "object") {
+    return null;
+  }
+
+  const normalizedBackup = {
+    id: rawBackup.id || createDashboardBackupId(),
+    appName: rawBackup.appName || "Toah Nipi Staff Dashboard",
+    backupType: rawBackup.backupType || "dashboard-local-storage",
+    version: rawBackup.version || DASHBOARD_BACKUP_VERSION,
+    createdAt: rawBackup.createdAt || new Date().toISOString(),
+    importedAt: new Date().toISOString(),
+    storageData,
+  };
+
+  return {
+    ...normalizedBackup,
+    stats: getBackupStats(normalizedBackup),
+  };
+}
+
+function downloadDashboardBackupFile(backup) {
+  const fileDate = new Date(backup.createdAt)
+    .toISOString()
+    .slice(0, 19)
+    .replace(/[:T]/g, "-");
+
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {
+    type: "application/json",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `toah-nipi-dashboard-backup-${fileDate}.json`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
+
+function formatBackupDate(value) {
+  if (!value) {
+    return "Unknown date";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown date";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function getBackupDetailRows(backup) {
+  const storageData = backup?.storageData || {};
+
+  return Object.entries(storageData)
+    .map(([key, value]) => {
+      const hasValue = value !== null && value !== undefined && value !== "";
+      const parsedValue = hasValue ? safeParseBackupJson(value, null) : null;
+
+      let summary = hasValue ? "Saved" : "No saved value";
+
+      if (Array.isArray(parsedValue)) {
+        summary = `${parsedValue.length} item${parsedValue.length === 1 ? "" : "s"}`;
+      } else if (parsedValue && typeof parsedValue === "object") {
+        summary = `${Object.keys(parsedValue).length} setting${
+          Object.keys(parsedValue).length === 1 ? "" : "s"
+        }`;
+      } else if (typeof parsedValue === "string") {
+        summary = parsedValue || "Saved text value";
+      } else if (typeof parsedValue === "boolean") {
+        summary = parsedValue ? "Enabled" : "Disabled";
+      } else if (typeof parsedValue === "number") {
+        summary = String(parsedValue);
+      }
+
+      return {
+        key,
+        label: DASHBOARD_BACKUP_KEY_LABELS[key] || key,
+        summary,
+        hasValue,
+      };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
 
 const DEFAULT_STAFF_USERS = [
   {
@@ -5164,11 +5447,262 @@ function JobsView({
   );
 }
 
+function DashboardBackupControls({ onExportBackup, onOpenBackupModal }) {
+  return (
+    <section className="dashboard-backup-toolbar" aria-label="Dashboard backups">
+      <div>
+        <p className="dashboard-eyebrow">Backups</p>
+        <strong>Protect dashboard data</strong>
+        <span>
+          Export a JSON backup or restore from saved backup history.
+        </span>
+      </div>
+
+      <div className="dashboard-backup-toolbar-actions">
+        <button
+          className="secondary-dashboard-button"
+          type="button"
+          onClick={onOpenBackupModal}
+        >
+          <FaUpload />
+          Import Backup
+        </button>
+
+        <button
+          className="primary-dashboard-button"
+          type="button"
+          onClick={onExportBackup}
+        >
+          <FaDownload />
+          Export Backup
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function DashboardBackupModal({
+  backupHistory,
+  onClose,
+  onRestoreBackup,
+  onDeleteBackup,
+  onImportBackupFile,
+}) {
+  const backupFileInputRef = useRef(null);
+  const [expandedBackupId, setExpandedBackupId] = useState(
+    backupHistory[0]?.id || ""
+  );
+
+  useEffect(() => {
+    if (!expandedBackupId && backupHistory[0]?.id) {
+      setExpandedBackupId(backupHistory[0].id);
+    }
+  }, [backupHistory, expandedBackupId]);
+
+  return (
+    <div className="dashboard-backup-backdrop" role="presentation">
+      <section
+        className="dashboard-backup-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Import dashboard backup"
+      >
+        <header className="dashboard-backup-modal-header">
+          <div className="dashboard-heading-with-icon">
+            <span className="section-icon">
+              <FaDatabase />
+            </span>
+
+            <div>
+              <p className="dashboard-eyebrow">Backup Library</p>
+              <h3>Import Dashboard Backup</h3>
+              <span>
+                Choose a saved backup below. The most recent backup appears first.
+              </span>
+            </div>
+          </div>
+
+          <button
+            className="spreadsheet-settings-close-button"
+            type="button"
+            onClick={onClose}
+            aria-label="Close backup modal"
+          >
+            <FaTimes />
+          </button>
+        </header>
+
+        <div className="dashboard-backup-modal-actions">
+          <button
+            className="secondary-dashboard-button"
+            type="button"
+            onClick={() => backupFileInputRef.current?.click()}
+          >
+            <FaUpload />
+            Upload Backup File
+          </button>
+
+          <input
+            ref={backupFileInputRef}
+            className="dashboard-file-input"
+            type="file"
+            accept="application/json,.json"
+            onChange={onImportBackupFile}
+          />
+
+          <p>
+            Uploaded files are added to this backup list so you can review them
+            before restoring.
+          </p>
+        </div>
+
+        <div className="dashboard-backup-modal-body">
+          {backupHistory.length > 0 ? (
+            <div className="dashboard-backup-list">
+              {backupHistory.map((backup, index) => {
+                const stats = backup.stats || getBackupStats(backup);
+                const isExpanded = expandedBackupId === backup.id;
+                const detailRows = getBackupDetailRows(backup);
+
+                return (
+                  <article
+                    className={`dashboard-backup-card ${
+                      index === 0 ? "dashboard-backup-card-latest" : ""
+                    }`}
+                    key={backup.id}
+                  >
+                    <div className="dashboard-backup-card-main">
+                      <div>
+                        <div className="dashboard-backup-title-row">
+                          <h4>
+                            {index === 0 ? "Most Recent Backup" : "Saved Backup"}
+                          </h4>
+
+                          {backup.importedAt && (
+                            <span className="dashboard-backup-imported-pill">
+                              Imported file
+                            </span>
+                          )}
+                        </div>
+
+                        <p>{formatBackupDate(backup.createdAt)}</p>
+                      </div>
+
+                      <div className="dashboard-backup-stats">
+                        <span>
+                          <strong>{stats.bookingCount}</strong>
+                          Bookings
+                        </span>
+
+                        <span>
+                          <strong>{stats.staffCount}</strong>
+                          Staff
+                        </span>
+
+                        <span>
+                          <strong>{stats.starredCount}</strong>
+                          Starred
+                        </span>
+
+                        <span>
+                          <strong>{stats.savedKeysCount}</strong>
+                          Saved areas
+                        </span>
+                      </div>
+                    </div>
+
+                    <aside className="dashboard-backup-card-actions">
+                      <button
+                        className="secondary-dashboard-button"
+                        type="button"
+                        onClick={() =>
+                          setExpandedBackupId(isExpanded ? "" : backup.id)
+                        }
+                      >
+                        <FaInfoCircle />
+                        {isExpanded ? "Hide Details" : "View Details"}
+                      </button>
+
+                      <button
+                        className="primary-dashboard-button"
+                        type="button"
+                        onClick={() => onRestoreBackup(backup)}
+                      >
+                        Restore
+                      </button>
+
+                      <button
+                        className="dashboard-backup-delete-button"
+                        type="button"
+                        onClick={() => onDeleteBackup(backup.id)}
+                        aria-label="Delete backup"
+                      >
+                        <FaTrashAlt />
+                      </button>
+                    </aside>
+
+                    {isExpanded && (
+                      <div className="dashboard-backup-details">
+                        <div className="dashboard-backup-details-header">
+                          <strong>What this backup saves</strong>
+                          <span>{detailRows.length} storage area(s)</span>
+                        </div>
+
+                        <div className="dashboard-backup-detail-list">
+                          {detailRows.map((row) => (
+                            <div
+                              className={!row.hasValue ? "is-empty" : ""}
+                              key={row.key}
+                            >
+                              <span>{row.label}</span>
+                              <strong>{row.summary}</strong>
+                              <small>{row.key}</small>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="dashboard-backup-empty">
+              <FaDatabase />
+              <strong>No backups saved yet</strong>
+              <p>
+                Click Export Backup first. That will download a JSON file and add
+                a backup card here.
+              </p>
+            </div>
+          )}
+        </div>
+
+        <footer className="dashboard-backup-modal-footer">
+          <button
+            className="secondary-dashboard-button"
+            type="button"
+            onClick={onClose}
+          >
+            Done
+          </button>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const today = new Date();
 
   const waitlistFileInputRef = useRef(null);
   const masterFileInputRef = useRef(null);
+
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [backupHistory, setBackupHistory] = useState(() =>
+    getDashboardBackupHistory()
+  );
+
   const master2026FileInputRef = useRef(null);
   const inquiry2027FileInputRef = useRef(null);
   const importEverythingFileInputRef = useRef(null);
@@ -6012,6 +6546,105 @@ const getCalendarEventColor = (status) => {
     setActiveView("Booking Detail");
   };
 
+  const exportDashboardBackup = () => {
+    const backup = createDashboardBackupSnapshot();
+
+    const nextBackupHistory = saveDashboardBackupHistory([
+      backup,
+      ...backupHistory,
+    ]);
+
+    setBackupHistory(nextBackupHistory);
+    downloadDashboardBackupFile(backup);
+
+    alert("Backup exported and saved to backup history.");
+  };
+
+  const restoreDashboardBackup = (backup) => {
+    const confirmed = window.confirm(
+      "Restore this backup? This will replace the current dashboard data in this browser."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const backupKeys = getDashboardBackupKeys();
+      const backupStorageData = backup.storageData || {};
+
+      backupKeys.forEach((key) => {
+        if (
+          Object.prototype.hasOwnProperty.call(backupStorageData, key) &&
+          backupStorageData[key] !== null &&
+          backupStorageData[key] !== undefined
+        ) {
+          localStorage.setItem(key, backupStorageData[key]);
+        } else if (key !== DASHBOARD_BACKUP_HISTORY_STORAGE_KEY) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      setSelectedBooking(null);
+      setBookingDetailTab("Overview");
+      setActiveView("Dashboard");
+
+      alert("Backup restored. The dashboard will reload so every view picks up the restored data.");
+      window.location.reload();
+    } catch (error) {
+      console.error("Could not restore dashboard backup:", error);
+      alert("Sorry, that backup could not be restored.");
+    }
+  };
+
+  const deleteDashboardBackup = (backupId) => {
+    const confirmed = window.confirm("Delete this saved backup from history?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    const nextBackupHistory = backupHistory.filter(
+      (backup) => backup.id !== backupId
+    );
+
+    const savedHistory = saveDashboardBackupHistory(nextBackupHistory);
+    setBackupHistory(savedHistory);
+  };
+
+  const importDashboardBackupFile = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const fileText = await file.text();
+      const parsedBackup = JSON.parse(fileText);
+      const normalizedBackup = normalizeImportedDashboardBackup(parsedBackup);
+
+      if (!normalizedBackup) {
+        alert("That file does not look like a valid dashboard backup.");
+        return;
+      }
+
+      const nextBackupHistory = saveDashboardBackupHistory([
+        normalizedBackup,
+        ...backupHistory,
+      ]);
+
+      setBackupHistory(nextBackupHistory);
+
+      alert("Backup file imported into backup history. You can review it before restoring.");
+    } catch (error) {
+      console.error("Could not import dashboard backup file:", error);
+      alert("Sorry, that backup file could not be imported.");
+    } finally {
+      event.target.value = "";
+    }
+  };
+
   return (
     <main
       className={`dashboard-shell ${
@@ -6118,29 +6751,50 @@ const getCalendarEventColor = (status) => {
       <section className="dashboard-main">
 
         {activeView !== "Form" && (
-          <DashboardTopbar
-            activeView={activeView}
-            waitlistFileInputRef={waitlistFileInputRef}
-            masterFileInputRef={masterFileInputRef}
-            master2026FileInputRef={master2026FileInputRef}
-            inquiry2027FileInputRef={inquiry2027FileInputRef}
-            importEverythingFileInputRef={importEverythingFileInputRef}
-            importDropdownRef={importDropdownRef}
-            isImportMenuOpen={isImportMenuOpen}
-            setIsImportMenuOpen={setIsImportMenuOpen}
-            handleImportWaitlistSpreadsheet={handleImportWaitlistSpreadsheet}
-            handleImportMasterSpreadsheet={handleImportMasterSpreadsheet}
-            handleImportMaster2026Spreadsheet={handleImportMaster2026Spreadsheet}
-            handleImport2027InquirySpreadsheet={handleImport2027InquirySpreadsheet}
-            handleImportEverythingSpreadsheet={handleImportEverythingSpreadsheet}
-            openWaitlistImportPicker={openWaitlistImportPicker}
-            openMasterImportPicker={openMasterImportPicker}
-            openMaster2026ImportPicker={openMaster2026ImportPicker}
-            open2027InquiryImportPicker={open2027InquiryImportPicker}
-            openEverythingImportPicker={openEverythingImportPicker}
-            exportInquiriesToSpreadsheet={exportInquiriesToSpreadsheet}
-            refreshInquiries={refreshInquiries}
-            deleteAllInquiries={deleteAllInquiries}
+          <>
+            <DashboardTopbar
+              activeView={activeView}
+              waitlistFileInputRef={waitlistFileInputRef}
+              masterFileInputRef={masterFileInputRef}
+              master2026FileInputRef={master2026FileInputRef}
+              inquiry2027FileInputRef={inquiry2027FileInputRef}
+              importEverythingFileInputRef={importEverythingFileInputRef}
+              importDropdownRef={importDropdownRef}
+              isImportMenuOpen={isImportMenuOpen}
+              setIsImportMenuOpen={setIsImportMenuOpen}
+              handleImportWaitlistSpreadsheet={handleImportWaitlistSpreadsheet}
+              handleImportMasterSpreadsheet={handleImportMasterSpreadsheet}
+              handleImportMaster2026Spreadsheet={handleImportMaster2026Spreadsheet}
+              handleImport2027InquirySpreadsheet={handleImport2027InquirySpreadsheet}
+              handleImportEverythingSpreadsheet={handleImportEverythingSpreadsheet}
+              openWaitlistImportPicker={openWaitlistImportPicker}
+              openMasterImportPicker={openMasterImportPicker}
+              openMaster2026ImportPicker={openMaster2026ImportPicker}
+              open2027InquiryImportPicker={open2027InquiryImportPicker}
+              openEverythingImportPicker={openEverythingImportPicker}
+              exportInquiriesToSpreadsheet={exportInquiriesToSpreadsheet}
+              refreshInquiries={refreshInquiries}
+              deleteAllInquiries={deleteAllInquiries}
+            />
+
+            <DashboardBackupControls
+              onExportBackup={exportDashboardBackup}
+              onOpenBackupModal={() => {
+                setBackupHistory(getDashboardBackupHistory());
+                setIsBackupModalOpen(true);
+              }}
+            />
+
+          </>
+        )}
+
+        {isBackupModalOpen && (
+          <DashboardBackupModal
+            backupHistory={backupHistory}
+            onClose={() => setIsBackupModalOpen(false)}
+            onRestoreBackup={restoreDashboardBackup}
+            onDeleteBackup={deleteDashboardBackup}
+            onImportBackupFile={importDashboardBackupFile}
           />
         )}
 
