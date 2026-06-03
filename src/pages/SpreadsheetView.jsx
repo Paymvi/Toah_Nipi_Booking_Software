@@ -186,6 +186,85 @@ function getSpreadsheetWaitlistClass(waitlist) {
     : "waitlist-no";
 }
 
+function getSpreadsheetRetreatTypeClass(retreatType) {
+  const normalizedType = String(retreatType || "")
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and");
+
+  if (!normalizedType || normalizedType === "n/a" || normalizedType === "—") {
+    return "retreat-type-other";
+  }
+
+  if (normalizedType === "pr" || normalizedType.includes("personal retreat")) {
+    return "retreat-type-pr";
+  }
+
+  if (normalizedType.includes("men")) {
+    return "retreat-type-men";
+  }
+
+  if (normalizedType.includes("women")) {
+    return "retreat-type-women";
+  }
+
+  if (
+    normalizedType.includes("student") ||
+    normalizedType.includes("youth") ||
+    normalizedType.includes("college") ||
+    normalizedType.includes("hs ") ||
+    normalizedType.includes("high school") ||
+    normalizedType.includes("middle school")
+  ) {
+    return "retreat-type-students-youth";
+  }
+
+  if (normalizedType.includes("family") || normalizedType.includes("families")) {
+    return "retreat-type-families";
+  }
+
+  if (normalizedType.includes("adult")) {
+    return "retreat-type-adults";
+  }
+
+  if (
+    normalizedType.includes("staff") ||
+    normalizedType.includes("leader") ||
+    normalizedType.includes("leadership")
+  ) {
+    return "retreat-type-staff-leaders";
+  }
+
+  if (
+    normalizedType.includes("pastor") ||
+    normalizedType.includes("elder") ||
+    normalizedType.includes("clergy")
+  ) {
+    return "retreat-type-pastors-elders";
+  }
+
+  if (
+    normalizedType.includes("friend") ||
+    normalizedType.includes("host")
+  ) {
+    return "retreat-type-friends-hosts";
+  }
+
+  if (
+    normalizedType.includes("event") ||
+    normalizedType.includes("wedding") ||
+    normalizedType.includes("conference")
+  ) {
+    return "retreat-type-events";
+  }
+
+  if (normalizedType.includes("day use") || normalizedType.includes("day-use")) {
+    return "retreat-type-day-use";
+  }
+
+  return "retreat-type-other";
+}
+
 function getRawSpreadsheetColumns(bookings) {
   const columns = new Set();
 
@@ -295,6 +374,15 @@ const bookingSpreadsheetColumns = [
   {
     label: "Retreat Type",
     value: (booking) => booking.retreatType,
+    render: (booking) => (
+      <span
+        className={`spreadsheet-retreat-type-pill ${getSpreadsheetRetreatTypeClass(
+          booking.retreatType
+        )}`}
+      >
+        {getSpreadsheetDisplayValue(booking.retreatType)}
+      </span>
+    ),
   },
   {
     label: "Promo Code",

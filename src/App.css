@@ -16656,3 +16656,94 @@ body,
     grid-template-columns: 1fr;
   }
 }
+
+
+
+
+
+
+
+/* Retreat Type badges */
+
+.spreadsheet-retreat-type-pill {
+  --retreat-type-rgb: 100 116 139;
+
+  max-width: 100%;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 28px;
+  padding: 0 11px;
+
+  border-radius: 8px;
+  border: 1px solid rgb(var(--retreat-type-rgb) / 0.24);
+  background: rgb(var(--retreat-type-rgb) / 0.1);
+  color: rgb(var(--retreat-type-rgb) / 1);
+
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.spreadsheet-retreat-type-pill::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 999px;
+  background: rgb(var(--retreat-type-rgb) / 1);
+}
+
+/* Same colors as the dashboard retreat type legend */
+
+.spreadsheet-retreat-type-pill.retreat-type-pr {
+  --retreat-type-rgb: 92 107 192;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-day-use {
+  --retreat-type-rgb: 99 102 113;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-men {
+  --retreat-type-rgb: 37 99 235;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-women {
+  --retreat-type-rgb: 190 80 145;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-students-youth {
+  --retreat-type-rgb: 217 119 6;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-families {
+  --retreat-type-rgb: 13 148 136;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-adults {
+  --retreat-type-rgb: 79 70 229;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-staff-leaders {
+  --retreat-type-rgb: 22 101 52;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-pastors-elders {
+  --retreat-type-rgb: 126 87 194;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-friends-hosts {
+  --retreat-type-rgb: 8 145 178;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-events {
+  --retreat-type-rgb: 194 65 12;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-other {
+  --retreat-type-rgb: 100 116 139;
+}
