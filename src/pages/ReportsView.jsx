@@ -8,6 +8,7 @@ import {
   FaTable,
   FaUsers,
   FaClock,
+  FaQuestionCircle,
 } from "react-icons/fa";
 
 import {
@@ -383,7 +384,8 @@ function ReportSummaryCard({ icon: Icon, label, value, helper, tone = "default" 
 }
 
 function ReportBarRow({ label, value, maxValue, valueLabel, helper }) {
-  const width = maxValue > 0 ? Math.max((value / maxValue) * 100, 4) : 0;
+  const width =
+    maxValue > 0 && value > 0 ? Math.max((value / maxValue) * 100, 4) : 0;
 
   return (
     <div className="reports-bar-row">
@@ -1046,22 +1048,6 @@ function ReportsView({ inquiryBookings }) {
                   ))}
                 </div>
 
-                <div className="reports-revenue-confidence">
-                  <h4>Source Confidence</h4>
-
-                  <div className="reports-bar-list">
-                    {revenueSourceRows.map((row) => (
-                      <ReportBarRow
-                        key={row.label}
-                        label={row.label}
-                        value={row.value}
-                        maxValue={maxRevenueSourceValue}
-                        valueLabel={`${row.count} row${row.count === 1 ? "" : "s"} · ${formatReportsCurrency(row.value)}`}
-                        helper={`${row.confidence} confidence`}
-                      />
-                    ))}
-                  </div>
-                </div>
 
 
               </div>
@@ -1127,6 +1113,87 @@ function ReportsView({ inquiryBookings }) {
                 valueLabel={formatReportsCurrency(item.value)}
               />
             ))}
+          </div>
+
+          <div className="reports-revenue-confidence">
+            <div className="reports-help-heading">
+              <h4>Revenue Source Confidence</h4>
+
+              <details className="reports-help-popover">
+                <summary aria-label="Explain revenue source confidence">
+                  <FaQuestionCircle />
+                </summary>
+
+                <div className="reports-help-card">
+                  <strong>How revenue confidence works</strong>
+
+                  <p>
+                    Each booking is counted once. The report checks revenue fields in
+                    order and uses the first usable value it finds, so the same booking
+                    is not double-counted.
+                  </p>
+
+                  <ol>
+                    <li>
+                      <strong>Invoice Total</strong>
+                      <span>
+                        Uses <code>invoiceLodgingMeals</code>. This is highest
+                        confidence because it is closest to an actual billing total.
+                      </span>
+                    </li>
+
+                    <li>
+                      <strong>Expected Minimum</strong>
+                      <span>
+                        Used when there is no invoice total. It comes from{" "}
+                        <code>expectedMinimumRevenue</code>, so it is useful but still
+                        more of an estimate.
+                      </span>
+                    </li>
+
+                    <li>
+                      <strong>Monthly Projection</strong>
+                      <span>
+                        Used when invoice and expected minimum are both missing. It
+                        comes from <code>monthlyProjectedIncome</code>.
+                      </span>
+                    </li>
+
+                    <li>
+                      <strong>Itemized Fallback</strong>
+                      <span>
+                        Used when the main revenue fields are missing. It adds{" "}
+                        <code>usageFee</code> + <code>lodgingCost</code> +{" "}
+                        <code>foodCost</code> + <code>miscCost</code>.
+                      </span>
+                    </li>
+
+                    <li>
+                      <strong>Missing</strong>
+                      <span>
+                        No usable revenue value was found, so the booking counts as a
+                        row but adds <code>$0</code> to projected revenue.
+                      </span>
+                    </li>
+                  </ol>
+                </div>
+              </details>
+            </div>
+
+            <div className="reports-bar-list">
+              {revenueSourceRows.map((row) => (
+                <ReportBarRow
+                  key={row.label}
+                  label={row.label}
+                  value={row.value}
+                  maxValue={maxRevenueSourceValue}
+                  valueLabel={`${row.count} row${
+                    row.count === 1 ? "" : "s"
+                  } · ${formatReportsCurrency(row.value)}`}
+                  helper={`${row.confidence} confidence`}
+                />
+              ))}
+            </div>
           </div>
         </article>
 

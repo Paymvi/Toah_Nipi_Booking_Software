@@ -16766,15 +16766,574 @@ body,
 
 
 
-.reports-revenue-confidence {
-  margin-top: 1.35rem;
-  padding-top: 1.15rem;
-  border-top: 1px solid rgba(60, 61, 31, 0.12);
-}
-
 .reports-revenue-confidence h4 {
   margin: 0 0 0.85rem;
   font-size: 0.9rem;
   font-weight: 800;
   color: var(--dashboard-text, #2f3219);
+}
+
+
+
+
+
+
+
+.reports-help-card strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 850;
+}
+
+.reports-help-card p {
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: rgba(47, 50, 25, 0.74);
+}
+
+.reports-help-card ol {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.reports-help-card li {
+  padding-left: 0.15rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: rgba(47, 50, 25, 0.74);
+}
+
+.reports-help-card li strong {
+  margin: 0 0 0.15rem;
+  font-size: 0.8rem;
+  color: #202312;
+}
+
+.reports-help-card li span {
+  display: block;
+}
+
+.reports-help-card code {
+  padding: 0.08rem 0.28rem;
+  border-radius: 0.35rem;
+  background: rgba(79, 67, 158, 0.08);
+  color: #4f439e;
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
+
+.reports-help-heading h4 {
+  margin: 0;
+}
+
+
+.reports-help-popover summary {
+  width: 1.35rem;
+  height: 1.35rem;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+  border: 1px solid rgba(60, 61, 31, 0.18);
+  background: rgba(255, 255, 255, 0.78);
+  color: rgba(60, 61, 31, 0.72);
+
+  cursor: pointer;
+  list-style: none;
+
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.reports-help-popover summary::-webkit-details-marker {
+  display: none;
+}
+
+.reports-help-popover summary:hover {
+  transform: translateY(-1px);
+  background: rgba(79, 67, 158, 0.1);
+  color: #4f439e;
+  border-color: rgba(79, 67, 158, 0.28);
+}
+
+.reports-help-popover[open] summary {
+  background: rgba(79, 67, 158, 0.12);
+  color: #4f439e;
+  border-color: rgba(79, 67, 158, 0.32);
+}
+
+
+
+.reports-panel {
+  overflow: visible;
+}
+
+.reports-revenue-confidence {
+  position: relative;
+  margin-top: 1.35rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid rgba(60, 61, 31, 0.12);
+  overflow: visible;
+}
+
+.reports-help-card {
+  z-index: 200;
+}
+
+
+
+
+/* =========================================================
+   Reports: Revenue Source Confidence
+========================================================= */
+
+.reports-panel {
+  overflow: visible;
+}
+
+.reports-revenue-confidence {
+  position: relative;
+  margin-top: 1.15rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(47, 50, 25, 0.1);
+  overflow: visible;
+}
+
+/* Heading row */
+
+.reports-help-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.9rem;
+}
+
+.reports-help-heading h4 {
+  margin: 0;
+  color: #252936;
+  font-size: 0.95rem;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+/* Question mark button */
+
+.reports-help-popover {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.reports-help-popover summary {
+  width: 1.35rem;
+  height: 1.35rem;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  border: 1px solid rgba(92, 111, 70, 0.24);
+  border-radius: 999px;
+  background: #f6f7f4;
+  color: #657455;
+
+  cursor: pointer;
+  list-style: none;
+
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.reports-help-popover summary::-webkit-details-marker {
+  display: none;
+}
+
+.reports-help-popover summary svg {
+  width: 0.78rem;
+  height: 0.78rem;
+  display: block;
+}
+
+.reports-help-popover summary:hover {
+  transform: translateY(-1px);
+  background: #eef1ea;
+  border-color: rgba(92, 111, 70, 0.38);
+  color: #4f6240;
+  box-shadow: 0 6px 14px rgba(28, 35, 52, 0.08);
+}
+
+.reports-help-popover[open] summary {
+  background: #eef1ea;
+  border-color: rgba(92, 111, 70, 0.42);
+  color: #4f6240;
+}
+
+/* Help card */
+
+.reports-help-card {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  z-index: 200;
+
+  width: min(34rem, 82vw);
+  padding: 1rem 1.05rem;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(28, 35, 52, 0.16);
+
+  color: #252936;
+}
+
+.reports-help-card > strong {
+  display: block;
+  margin-bottom: 0.45rem;
+  color: #252936;
+  font-size: 0.88rem;
+  font-weight: 750;
+}
+
+.reports-help-card p {
+  margin: 0 0 0.85rem;
+  color: #687083;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.reports-help-card ol {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.reports-help-card li {
+  padding-left: 0.2rem;
+  color: #687083;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.reports-help-card li strong {
+  display: block;
+  margin: 0 0 0.15rem;
+  color: #252936;
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.reports-help-card li span {
+  display: block;
+}
+
+.reports-help-card code {
+  padding: 0.08rem 0.28rem;
+  border-radius: 0.35rem;
+  background: rgba(92, 111, 70, 0.1);
+  color: #4f6240;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   FINAL OVERRIDE: Revenue Source Confidence Polish
+   Must stay at the very bottom of App.css
+========================================================= */
+
+.reports-panel {
+  overflow: visible;
+}
+
+.reports-revenue-confidence {
+  position: relative;
+  margin: 1rem 18px 18px;
+  padding: 14px;
+  border: 1px solid #e2e7ee;
+  border-radius: 10px;
+  background: #fbfcfd;
+  overflow: visible;
+}
+
+/* Header */
+
+.reports-revenue-confidence .reports-help-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.85rem;
+}
+
+.reports-revenue-confidence .reports-help-heading h4 {
+  margin: 0;
+  color: #252936;
+  font-size: 0.92rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+/* Question mark */
+
+.reports-revenue-confidence .reports-help-popover {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.reports-revenue-confidence .reports-help-popover summary {
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #cfd8c7;
+  border-radius: 999px;
+  background: #f3f6f1;
+  color: #5c6f46;
+
+  cursor: pointer;
+  list-style: none;
+
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.reports-revenue-confidence .reports-help-popover summary::-webkit-details-marker {
+  display: none;
+}
+
+.reports-revenue-confidence .reports-help-popover summary svg {
+  width: 0.72rem;
+  height: 0.72rem;
+  display: block;
+}
+
+.reports-revenue-confidence .reports-help-popover summary:hover,
+.reports-revenue-confidence .reports-help-popover[open] summary {
+  transform: translateY(-1px);
+  background: #eaf0e6;
+  border-color: #b8c7ae;
+  color: #445a34;
+}
+
+/* Popover card */
+
+.reports-revenue-confidence .reports-help-card {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  z-index: 300;
+
+  width: min(34rem, 82vw);
+  padding: 1rem;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(28, 35, 52, 0.16);
+
+  color: #252936;
+}
+
+.reports-revenue-confidence .reports-help-card > strong {
+  display: block;
+  margin: 0 0 0.45rem;
+  color: #252936;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.reports-revenue-confidence .reports-help-card p {
+  margin: 0 0 0.85rem;
+  color: #687083;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.reports-revenue-confidence .reports-help-card ol {
+  display: grid;
+  gap: 0.68rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.reports-revenue-confidence .reports-help-card li {
+  padding-left: 0.15rem;
+  color: #687083;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.reports-revenue-confidence .reports-help-card li strong {
+  display: block;
+  margin: 0 0 0.12rem;
+  color: #252936;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.reports-revenue-confidence .reports-help-card li span {
+  display: block;
+}
+
+.reports-revenue-confidence .reports-help-card code {
+  padding: 0.08rem 0.28rem;
+  border-radius: 0.35rem;
+  background: rgba(92, 111, 70, 0.1);
+  color: #4f6240;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* The actual confidence rows */
+
+.reports-revenue-confidence .reports-bar-list {
+  padding: 0;
+  gap: 10px;
+}
+
+.reports-revenue-confidence .reports-bar-row {
+  gap: 5px;
+}
+
+.reports-revenue-confidence .reports-bar-row-top {
+  gap: 12px;
+}
+
+.reports-revenue-confidence .reports-bar-row-top strong {
+  color: #252936;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.reports-revenue-confidence .reports-bar-row-top span {
+  color: #4f5564;
+  font-size: 0.78rem;
+  font-weight: 550;
+}
+
+.reports-revenue-confidence .reports-bar-track {
+  height: 7px;
+  background: #e8edf1;
+}
+
+.reports-revenue-confidence .reports-bar-track span {
+  background: #5c6f46 !important;
+}
+
+.reports-revenue-confidence .reports-bar-row small {
+  color: #7f8796;
+  font-size: 0.72rem;
+  font-weight: 400;
+}
+
+
+/* =========================================================
+   FINAL FIX: Revenue Confidence Help Popover Position
+   Keeps the help card inside the reports panel
+========================================================= */
+
+.reports-revenue-confidence {
+  position: relative;
+  overflow: visible;
+}
+
+.reports-revenue-confidence .reports-help-heading {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.85rem;
+}
+
+.reports-revenue-confidence .reports-help-popover {
+  position: static;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* This is the important part */
+.reports-revenue-confidence .reports-help-card {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  left: 0;
+  right: 0;
+  z-index: 999;
+
+  width: auto;
+  max-width: none;
+  min-width: 0;
+
+  padding: 1rem;
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(28, 35, 52, 0.16);
+
+  overflow-wrap: anywhere;
+}
+
+/* Keep inline code from forcing the card wider */
+.reports-revenue-confidence .reports-help-card code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   FINAL OVERRIDE: Revenue Confidence Yellow Theme
+========================================================= */
+
+.reports-revenue-confidence .reports-bar-track {
+  background: #edf0f4;
+}
+
+.reports-revenue-confidence .reports-bar-track span {
+  background: #b8860b !important;
+}
+
+/* Question mark button */
+
+.reports-revenue-confidence .reports-help-popover summary {
+  border-color: #e0c878;
+  background: #fbf5e4;
+  color: #8a6412;
+}
+
+.reports-revenue-confidence .reports-help-popover summary:hover,
+.reports-revenue-confidence .reports-help-popover[open] summary {
+  background: #f4e7bd;
+  border-color: #d6b957;
+  color: #6f4f0d;
+}
+
+/* Code chips inside the help card */
+
+.reports-revenue-confidence .reports-help-card code {
+  background: rgba(184, 134, 11, 0.12);
+  color: #7a5609;
 }
