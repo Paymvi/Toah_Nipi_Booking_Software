@@ -1171,6 +1171,52 @@ function getBackupTechnicalPreview(value) {
     : previewText;
 }
 
+function getBackupTechnicalInlinePreview(value) {
+  if (value === null || value === undefined || value === "") {
+    return "null";
+  }
+
+  const textValue = String(value);
+  const { didParse, parsedValue } = tryParseBackupJsonValue(textValue);
+
+  if (!didParse) {
+    return textValue.length > 180 ? `${textValue.slice(0, 180)}…` : textValue;
+  }
+
+  if (Array.isArray(parsedValue)) {
+    if (parsedValue.length === 0) {
+      return "[]";
+    }
+
+    const firstItem = parsedValue[0];
+
+    if (firstItem && typeof firstItem === "object" && !Array.isArray(firstItem)) {
+      const sampleKeys = Object.keys(firstItem).slice(0, 6);
+
+      return `[${parsedValue.length} object${
+        parsedValue.length === 1 ? "" : "s"
+      } · fields: ${sampleKeys.join(", ")}${
+        Object.keys(firstItem).length > sampleKeys.length ? ", …" : ""
+      }]`;
+    }
+
+    return `[${parsedValue.length} value${
+      parsedValue.length === 1 ? "" : "s"
+    } · sample: ${JSON.stringify(firstItem)}]`;
+  }
+
+  if (parsedValue && typeof parsedValue === "object") {
+    const keys = Object.keys(parsedValue);
+    const sampleKeys = keys.slice(0, 8);
+
+    return `{ ${sampleKeys.join(", ")}${keys.length > sampleKeys.length ? ", …" : ""} }`;
+  }
+
+  const preview = JSON.stringify(parsedValue);
+
+  return preview.length > 180 ? `${preview.slice(0, 180)}…` : preview;
+}
+
 function getBackupTechnicalValueInfo(value) {
   if (value === null || value === undefined || value === "") {
     return {
@@ -1249,12 +1295,14 @@ function getBackupTechnicalRows(backup) {
 
       return {
         key,
+        path: `storageData.${key}`,
         label: DASHBOARD_BACKUP_KEY_LABELS[key] || key,
         category: getBackupTechnicalCategory(key),
         hasValue: valueInfo.hasValue,
         typeLabel: valueInfo.typeLabel,
         summary: valueInfo.summary,
         sizeLabel: formatBackupStorageSize(value),
+        compactPreview: getBackupTechnicalInlinePreview(value),
         preview: getBackupTechnicalPreview(value),
       };
     })
@@ -6413,72 +6461,90 @@ function DashboardBackupModal({
                             )}
                           </>
                         ) : (
-                          <div className="dashboard-backup-technical-panel">
-                            <div className="dashboard-backup-technical-summary">
+                          <div className="dashboard-backup-technical-panel dashboard-backup-technical-panel-compact">
+                            <div className="dashboard-backup-technical-manifest-top">
+                              <div>
+                                <strong>Backup manifest</strong>
+                                <span>
+                                  Compact view of the storage keys included in this backup.
+                                </span>
+                              </div>
+
+                              <code>version: {backup.version || DASHBOARD_BACKUP_VERSION}</code>
+                            </div>
+
+                            <div className="dashboard-backup-technical-compact-summary">
                               <span>
                                 <strong>{technicalRows.length}</strong>
-                                Total storage keys
+                                keys
                               </span>
 
                               <span>
                                 <strong>{savedTechnicalRows.length}</strong>
-                                Keys with data
+                                saved
                               </span>
 
                               <span>
                                 <strong>{emptyTechnicalRows.length}</strong>
-                                Empty keys
+                                empty
                               </span>
 
                               <span>
                                 <strong>
-                                  {formatBackupStorageSize(
-                                    JSON.stringify(backup.storageData || {})
-                                  )}
+                                  {formatBackupStorageSize(JSON.stringify(backup.storageData || {}))}
                                 </strong>
-                                Approx. backup size
+                                size
                               </span>
                             </div>
 
-                            <div className="dashboard-backup-technical-list">
+                            <div
+                              className="dashboard-backup-technical-manifest"
+                              aria-label="Technical backup manifest"
+                            >
+                              <div className="dashboard-backup-technical-manifest-heading">
+                                <span>Key</span>
+                                <span>Area</span>
+                                <span>Type</span>
+                                <span>Summary</span>
+                                <span>Size</span>
+                              </div>
+
                               {technicalRows.map((row) => (
-                                <article
-                                  className={`dashboard-backup-technical-card ${
+                                <details
+                                  className={`dashboard-backup-technical-manifest-row ${
                                     !row.hasValue ? "is-empty" : ""
                                   }`}
                                   key={row.key}
                                 >
-                                  <header>
+                                  <summary>
+                                    <span className="dashboard-backup-technical-key-cell">
+                                      <code>{row.key}</code>
+                                      <small>{row.label}</small>
+                                    </span>
+
+                                    <span>{row.category}</span>
+                                    <span>{row.typeLabel}</span>
+                                    <span>{row.summary}</span>
+                                    <span>{row.sizeLabel}</span>
+                                  </summary>
+
+                                  <div className="dashboard-backup-technical-manifest-preview">
                                     <div>
-                                      <span>{row.category}</span>
-                                      <h5>{row.label}</h5>
+                                      <small>Path</small>
+                                      <code>{row.path}</code>
                                     </div>
 
-                                    <code>{row.key}</code>
-                                  </header>
+                                    <div>
+                                      <small>Compact value</small>
+                                      <code>{row.compactPreview}</code>
+                                    </div>
 
-                                  <div className="dashboard-backup-technical-meta">
-                                    <span>
-                                      Type
-                                      <strong>{row.typeLabel}</strong>
-                                    </span>
-
-                                    <span>
-                                      Summary
-                                      <strong>{row.summary}</strong>
-                                    </span>
-
-                                    <span>
-                                      Size
-                                      <strong>{row.sizeLabel}</strong>
-                                    </span>
+                                    <details className="dashboard-backup-technical-raw-preview">
+                                      <summary>Show raw preview</summary>
+                                      <pre>{row.preview}</pre>
+                                    </details>
                                   </div>
-
-                                  <details className="dashboard-backup-technical-preview">
-                                    <summary>Preview saved value</summary>
-                                    <pre>{row.preview}</pre>
-                                  </details>
-                                </article>
+                                </details>
                               ))}
                             </div>
                           </div>
