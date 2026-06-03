@@ -14128,6 +14128,21 @@ body,
 
 
 
+/* =========================================================
+   Dashboard Keep-Alive Views
+   Keeps heavy views mounted so they do not reload on return
+========================================================= */
+
+.dashboard-keepalive-view {
+  display: none;
+  min-width: 0;
+}
+
+.dashboard-keepalive-view-active {
+  display: block;
+}
+
+
 
 
 

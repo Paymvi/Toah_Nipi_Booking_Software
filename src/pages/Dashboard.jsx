@@ -5177,7 +5177,7 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [activeView, setActiveView] = useState("Dashboard");
-  const [isSpreadsheetViewLoading, setIsSpreadsheetViewLoading] = useState(false);
+  const [hasOpenedSpreadsheetView, setHasOpenedSpreadsheetView] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const [staffUsers, setStaffUsers] = useState(() => getSavedStaffUsers());
@@ -5994,12 +5994,8 @@ const getCalendarEventColor = (status) => {
   };
 
   const handleActiveViewChange = (nextView) => {
-    if (nextView === "Spreadsheet View" && activeView !== "Spreadsheet View") {
-      setIsSpreadsheetViewLoading(true);
-    }
-
-    if (nextView !== "Spreadsheet View") {
-      setIsSpreadsheetViewLoading(false);
+    if (nextView === "Spreadsheet View") {
+      setHasOpenedSpreadsheetView(true);
     }
 
     if (nextView !== "Form") {
@@ -6009,17 +6005,6 @@ const getCalendarEventColor = (status) => {
     setActiveView(nextView);
   };
 
-  useEffect(() => {
-    if (!isSpreadsheetViewLoading || activeView !== "Spreadsheet View") {
-      return;
-    }
-
-    const loadingTimer = window.setTimeout(() => {
-      setIsSpreadsheetViewLoading(false);
-    }, 650);
-
-    return () => window.clearTimeout(loadingTimer);
-  }, [activeView, isSpreadsheetViewLoading]);
 
   const openBookingDetail = (booking) => {
     setSelectedBooking(booking);
@@ -6158,6 +6143,21 @@ const getCalendarEventColor = (status) => {
             deleteAllInquiries={deleteAllInquiries}
           />
         )}
+
+        {hasOpenedSpreadsheetView && (
+          <section
+            className={`dashboard-keepalive-view ${
+              activeView === "Spreadsheet View" ? "dashboard-keepalive-view-active" : ""
+            }`}
+            aria-hidden={activeView !== "Spreadsheet View"}
+          >
+            <SpreadsheetView
+              inquiryBookings={inquiryBookings}
+              openBookingDetail={openBookingDetail}
+              isLoading={false}
+            />
+          </section>
+        )}
         
 
         {activeView === "Form" ? (
@@ -6191,13 +6191,7 @@ const getCalendarEventColor = (status) => {
             goToNextMonth={goToNextMonth}
             getCalendarEventColor={getCalendarEventColor}
           />
-        ) : activeView === "Spreadsheet View" ? (
-          <SpreadsheetView
-            inquiryBookings={inquiryBookings}
-            openBookingDetail={openBookingDetail}
-            isLoading={isSpreadsheetViewLoading}
-          />
-        ) : activeView === "Contacts View" ? (
+        ) : activeView === "Spreadsheet View" ? null : activeView === "Contacts View" ? (
           <ContactsView
             inquiryBookings={inquiryBookings}
             openBookingDetail={openBookingDetail}
