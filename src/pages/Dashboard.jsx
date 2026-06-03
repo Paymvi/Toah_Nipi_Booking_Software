@@ -608,41 +608,277 @@ function getBackupHasAnyValue(storageData, keys) {
   });
 }
 
+function getParsedBackupStorageValue(storageData, key, fallbackValue) {
+  const rawValue = storageData?.[key];
+
+  if (rawValue === null || rawValue === undefined || rawValue === "") {
+    return fallbackValue;
+  }
+
+  const parsedValue = safeParseBackupJson(rawValue, fallbackValue);
+
+  return parsedValue === null || parsedValue === undefined
+    ? fallbackValue
+    : parsedValue;
+}
+
+function getReadableBackupValue(value) {
+  if (value === null || value === undefined || value === "") {
+    return "Not set";
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "On" : "Off";
+  }
+
+  if (Array.isArray(value)) {
+    return `${value.length} item${value.length === 1 ? "" : "s"}`;
+  }
+
+  if (typeof value === "object") {
+    return `${Object.keys(value).length} saved setting${
+      Object.keys(value).length === 1 ? "" : "s"
+    }`;
+  }
+
+  return String(value);
+}
+
+function getReadableBackupSettingName(key) {
+  const labels = {
+    dateFormat: "Date format",
+    includeWeekday: "Show weekday",
+    tintByRetreatType: "Color cards by retreat type",
+    showRetreatTypeLegend: "Show retreat type legend",
+    dateRange: "Report date range",
+    customStartDate: "Custom start date",
+    customEndDate: "Custom end date",
+    status: "Status filter",
+    retreatType: "Retreat type filter",
+    sourceMode: "Source filter",
+    showStarredOnly: "Show starred only",
+    searchText: "Search text",
+    sortKey: "Sorted column",
+    sortDirection: "Sort direction",
+    columnColorMode: "Column colors",
+    rowColorMode: "Row colors",
+    showHoverPreview: "Row hover preview",
+    density: "Row density",
+    pageSize: "Rows per page",
+  };
+
+  if (labels[key]) {
+    return labels[key];
+  }
+
+  return String(key)
+    .replace(/([A-Z])/g, " $1")
+    .replace(/[-_]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function getBackupObjectPreviewItems(objectValue, limit = 8) {
+  if (!objectValue || typeof objectValue !== "object" || Array.isArray(objectValue)) {
+    return [];
+  }
+
+  return Object.entries(objectValue)
+    .slice(0, limit)
+    .map(([key, value]) => ({
+      label: getReadableBackupSettingName(key),
+      value: getReadableBackupValue(value),
+    }));
+}
+
+function getBackupCountByField(items, fieldName, fallbackLabel = "Blank") {
+  return items.reduce((counts, item) => {
+    const label = String(item?.[fieldName] || fallbackLabel).trim() || fallbackLabel;
+
+    counts[label] = (counts[label] || 0) + 1;
+
+    return counts;
+  }, {});
+}
+
+function getTopBackupCounts(counts, limit = 4) {
+  return Object.entries(counts)
+    .sort(([, aCount], [, bCount]) => bCount - aCount)
+    .slice(0, limit)
+    .map(([label, count]) => ({
+      label,
+      value: `${count} item${count === 1 ? "" : "s"}`,
+    }));
+}
+
+function getBackupFriendlyDateFilterLabel(value) {
+  const labels = {
+    thisMonth: "This Month",
+    nextMonth: "Next Month",
+    pastMonth: "Past Month",
+    past90Days: "Past 90 Days",
+    next90Days: "Next 90 Days",
+    allTime: "All Time",
+    custom: "Custom Date Range",
+  };
+
+  return labels[value] || value || "Not set";
+}
+
+function getBackupFriendlySourceModeLabel(value) {
+  const labels = {
+    all: "Forms + Imports",
+    forms: "Forms Only",
+    imports: "Imports Only",
+  };
+
+  return labels[value] || value || "Not set";
+}
+
 function getBackupDetailGroups(backup) {
   const storageData = backup?.storageData || {};
 
-  const bookingCount = getArrayCountFromBackupValue(
-    storageData.toahNipiPublicInquiries
+  const bookings = getParsedBackupStorageValue(
+    storageData,
+    "toahNipiPublicInquiries",
+    []
   );
 
-  const staffCount = getArrayCountFromBackupValue(
-    storageData[STAFF_USERS_STORAGE_KEY]
+  const staffUsers = getParsedBackupStorageValue(
+    storageData,
+    STAFF_USERS_STORAGE_KEY,
+    []
   );
 
-  const starredCount = getArrayCountFromBackupValue(
-    storageData[SPREADSHEET_VIEW_STARRED_STORAGE_KEY]
+  const currentStaffUserId = storageData[CURRENT_STAFF_USER_STORAGE_KEY] || "";
+
+  const currentStaffUser =
+    Array.isArray(staffUsers) && currentStaffUserId
+      ? staffUsers.find((user) => user.id === currentStaffUserId)
+      : null;
+
+  const spreadsheetSettings = getParsedBackupStorageValue(
+    storageData,
+    SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY,
+    {}
   );
 
-  const bookingDetailSettingsCount = getObjectKeyCountFromBackupValue(
-    storageData[BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY]
+  const spreadsheetStarredRows = getParsedBackupStorageValue(
+    storageData,
+    SPREADSHEET_VIEW_STARRED_STORAGE_KEY,
+    []
   );
 
-  const datedInquirySettingsCount = getObjectKeyCountFromBackupValue(
-    storageData[DATED_INQUIRY_SETTINGS_STORAGE_KEY]
+  const bookingDetailDateSettings = getParsedBackupStorageValue(
+    storageData,
+    BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY,
+    {}
   );
 
-  const reportsSettingsCount = getObjectKeyCountFromBackupValue(
-    storageData[REPORTS_VIEW_SETTINGS_STORAGE_KEY]
+  const datedInquirySettings = getParsedBackupStorageValue(
+    storageData,
+    DATED_INQUIRY_SETTINGS_STORAGE_KEY,
+    {}
   );
 
-  const spreadsheetSettingsCount = getObjectKeyCountFromBackupValue(
-    storageData[SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY]
+  const reportsSettings = getParsedBackupStorageValue(
+    storageData,
+    REPORTS_VIEW_SETTINGS_STORAGE_KEY,
+    {}
   );
 
-  const filterKeys = [
-    DATED_INQUIRY_DATE_FILTER_STORAGE_KEY,
-    DATED_INQUIRY_CUSTOM_START_STORAGE_KEY,
-    DATED_INQUIRY_CUSTOM_END_STORAGE_KEY,
+  const bookingCount = Array.isArray(bookings) ? bookings.length : 0;
+  const staffCount = Array.isArray(staffUsers) ? staffUsers.length : 0;
+  const activeStaffCount = Array.isArray(staffUsers)
+    ? staffUsers.filter((user) => user.active).length
+    : 0;
+
+  const starredCount = Array.isArray(spreadsheetStarredRows)
+    ? spreadsheetStarredRows.length
+    : 0;
+
+  const bookingStatusItems = Array.isArray(bookings)
+    ? getTopBackupCounts(getBackupCountByField(bookings, "status"), 4)
+    : [];
+
+  const bookingSourceItems = Array.isArray(bookings)
+    ? getTopBackupCounts(getBackupCountByField(bookings, "sourceType"), 4)
+    : [];
+
+  const missingDatesCount = Array.isArray(bookings)
+    ? bookings.filter((booking) => !booking.startDate).length
+    : 0;
+
+  const missingContactCount = Array.isArray(bookings)
+    ? bookings.filter((booking) => !booking.email && !booking.phone).length
+    : 0;
+
+  const spreadsheetSettingItems =
+    spreadsheetSettings && typeof spreadsheetSettings === "object"
+      ? getBackupObjectPreviewItems(spreadsheetSettings, 8)
+      : [];
+
+  const bookingDetailDateItems =
+    bookingDetailDateSettings && typeof bookingDetailDateSettings === "object"
+      ? getBackupObjectPreviewItems(bookingDetailDateSettings, 6)
+      : [];
+
+  const datedInquirySettingItems =
+    datedInquirySettings && typeof datedInquirySettings === "object"
+      ? getBackupObjectPreviewItems(datedInquirySettings, 6)
+      : [];
+
+  const reportsSettingItems =
+    reportsSettings && typeof reportsSettings === "object"
+      ? [
+          {
+            label: "Date range",
+            value: getBackupFriendlyDateFilterLabel(reportsSettings.dateRange),
+          },
+          {
+            label: "Status",
+            value: reportsSettings.status || "All statuses",
+          },
+          {
+            label: "Retreat type",
+            value: reportsSettings.retreatType || "All retreat types",
+          },
+          {
+            label: "Source",
+            value: getBackupFriendlySourceModeLabel(reportsSettings.sourceMode),
+          },
+          {
+            label: "Custom start",
+            value: reportsSettings.customStartDate || "Not set",
+          },
+          {
+            label: "Custom end",
+            value: reportsSettings.customEndDate || "Not set",
+          },
+        ]
+      : [];
+
+  const dashboardFilterItems = [
+    {
+      label: "Dated inquiry date range",
+      value: getBackupFriendlyDateFilterLabel(
+        storageData[DATED_INQUIRY_DATE_FILTER_STORAGE_KEY]
+      ),
+    },
+    {
+      label: "Custom start date",
+      value: storageData[DATED_INQUIRY_CUSTOM_START_STORAGE_KEY] || "Not set",
+    },
+    {
+      label: "Custom end date",
+      value: storageData[DATED_INQUIRY_CUSTOM_END_STORAGE_KEY] || "Not set",
+    },
+  ];
+
+  const displaySettingItems = [
+    ...bookingDetailDateItems,
+    ...datedInquirySettingItems,
   ];
 
   const savedKeys = Object.entries(storageData).filter(
@@ -669,11 +905,36 @@ function getBackupDetailGroups(backup) {
     {
       id: "booking-records",
       title: "Booking records",
-      status: bookingCount > 0 ? `${bookingCount} saved record${bookingCount === 1 ? "" : "s"}` : "No booking records saved",
+      status:
+        bookingCount > 0
+          ? `${bookingCount} saved record${bookingCount === 1 ? "" : "s"}`
+          : "No booking records saved",
       description:
-        "Guest groups, public form inquiries, spreadsheet imports, booking edits, checklists, notes, and program assignments.",
+        "Bookings, inquiries, imports, checklists, notes, and assignments.",
       hasValue: bookingCount > 0,
       tone: "green",
+      items: [
+        {
+          label: "Total records",
+          value: bookingCount,
+        },
+        {
+          label: "Missing dates",
+          value: missingDatesCount,
+        },
+        {
+          label: "Missing email + phone",
+          value: missingContactCount,
+        },
+        ...bookingStatusItems.map((item) => ({
+          label: `Status: ${item.label}`,
+          value: item.value,
+        })),
+        ...bookingSourceItems.map((item) => ({
+          label: `Source: ${item.label}`,
+          value: item.value,
+        })),
+      ],
     },
     {
       id: "staff-setup",
@@ -683,81 +944,140 @@ function getBackupDetailGroups(backup) {
           ? `${staffCount} staff member${staffCount === 1 ? "" : "s"} saved`
           : "No staff users saved",
       description:
-        "Staff users, active/inactive status, roles, and the currently selected staff member.",
+        "Staff users, roles, active status, and current staff selection.",
       hasValue: getBackupHasAnyValue(storageData, [
         STAFF_USERS_STORAGE_KEY,
         CURRENT_STAFF_USER_STORAGE_KEY,
       ]),
       tone: "blue",
+      items: [
+        {
+          label: "Total staff",
+          value: staffCount,
+        },
+        {
+          label: "Active staff",
+          value: activeStaffCount,
+        },
+        {
+          label: "Current staff user",
+          value: currentStaffUser?.name || "Not selected",
+        },
+        {
+          label: "Saved staff names",
+          value:
+            Array.isArray(staffUsers) && staffUsers.length > 0
+              ? staffUsers.map((user) => user.name).join(", ")
+              : "None",
+        },
+      ],
     },
     {
       id: "spreadsheet-preferences",
       title: "Spreadsheet preferences",
       status:
-        spreadsheetSettingsCount > 0 || starredCount > 0
-          ? `${spreadsheetSettingsCount} setting${spreadsheetSettingsCount === 1 ? "" : "s"} · ${starredCount} starred row${starredCount === 1 ? "" : "s"}`
+        spreadsheetSettingItems.length > 0 || starredCount > 0
+          ? `${spreadsheetSettingItems.length} setting${
+              spreadsheetSettingItems.length === 1 ? "" : "s"
+            } · ${starredCount} starred row${starredCount === 1 ? "" : "s"}`
           : "No spreadsheet preferences saved",
       description:
-        "Visible columns, filters, sorting, saved views, summary cards, display choices, and starred spreadsheet rows.",
+        "Spreadsheet layout, filters, saved views, cards, and starred rows.",
       hasValue: getBackupHasAnyValue(storageData, [
         SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY,
         SPREADSHEET_VIEW_STARRED_STORAGE_KEY,
       ]),
       tone: "purple",
+      items: [
+        {
+          label: "Starred rows",
+          value: starredCount,
+        },
+        ...spreadsheetSettingItems,
+      ],
     },
     {
       id: "dashboard-filters",
       title: "Dashboard filters",
-      status: getBackupHasAnyValue(storageData, filterKeys)
+      status: getBackupHasAnyValue(storageData, [
+        DATED_INQUIRY_DATE_FILTER_STORAGE_KEY,
+        DATED_INQUIRY_CUSTOM_START_STORAGE_KEY,
+        DATED_INQUIRY_CUSTOM_END_STORAGE_KEY,
+      ])
         ? "Saved dashboard filter choices"
         : "No dashboard filters saved",
       description:
-        "The selected date range for dated inquiries, including custom start and end dates when used.",
-      hasValue: getBackupHasAnyValue(storageData, filterKeys),
+        "The saved date range used by the dashboard dated inquiry list.",
+      hasValue: getBackupHasAnyValue(storageData, [
+        DATED_INQUIRY_DATE_FILTER_STORAGE_KEY,
+        DATED_INQUIRY_CUSTOM_START_STORAGE_KEY,
+        DATED_INQUIRY_CUSTOM_END_STORAGE_KEY,
+      ]),
       tone: "gold",
+      items: dashboardFilterItems,
     },
     {
       id: "display-settings",
       title: "Display settings",
       status:
-        bookingDetailSettingsCount + datedInquirySettingsCount > 0
-          ? `${bookingDetailSettingsCount + datedInquirySettingsCount} display setting${
-              bookingDetailSettingsCount + datedInquirySettingsCount === 1 ? "" : "s"
+        displaySettingItems.length > 0
+          ? `${displaySettingItems.length} display setting${
+              displaySettingItems.length === 1 ? "" : "s"
             } saved`
           : "No display settings saved",
       description:
-        "Booking detail date formatting, dated inquiry card display options, and related dashboard view preferences.",
+        "Date formatting and dated inquiry display choices.",
       hasValue: getBackupHasAnyValue(storageData, [
         BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY,
         DATED_INQUIRY_SETTINGS_STORAGE_KEY,
       ]),
       tone: "teal",
+      items: displaySettingItems,
     },
     {
       id: "reports-settings",
       title: "Reports settings",
       status:
-        reportsSettingsCount > 0
-          ? `${reportsSettingsCount} report setting${reportsSettingsCount === 1 ? "" : "s"} saved`
+        reportsSettingItems.length > 0
+          ? `${reportsSettingItems.length} report setting${
+              reportsSettingItems.length === 1 ? "" : "s"
+            } saved`
           : "No report settings saved",
       description:
-        "Reports page filters such as date range, status, retreat type, and source mode.",
+        "Reports page filters like date range, status, type, and source.",
       hasValue: getBackupHasAnyValue(storageData, [
         REPORTS_VIEW_SETTINGS_STORAGE_KEY,
       ]),
       tone: "indigo",
+      items: reportsSettingItems,
     },
     {
       id: "other-app-data",
       title: "Other app data",
       status:
         extraSavedKeys.length > 0
-          ? `${extraSavedKeys.length} extra saved area${extraSavedKeys.length === 1 ? "" : "s"}`
+          ? `${extraSavedKeys.length} extra saved area${
+              extraSavedKeys.length === 1 ? "" : "s"
+            }`
           : "No extra app data",
       description:
-        "Additional Toah Nipi dashboard data saved by newer or future features.",
+        "Additional saved data from newer or future dashboard features.",
       hasValue: extraSavedKeys.length > 0,
       tone: "gray",
+      items:
+        extraSavedKeys.length > 0
+          ? extraSavedKeys.map(([key, value]) => ({
+              label: key,
+              value: getReadableBackupValue(
+                safeParseBackupJson(value, value)
+              ),
+            }))
+          : [
+              {
+                label: "Extra app data",
+                value: "None",
+              },
+            ],
     },
   ];
 }
@@ -5829,12 +6149,17 @@ function DashboardBackupModal({
   );
 
   const [backupDetailMode, setBackupDetailMode] = useState("friendly");
+  const [expandedFriendlyGroupId, setExpandedFriendlyGroupId] = useState("");
 
   useEffect(() => {
     if (!expandedBackupId && backupHistory[0]?.id) {
       setExpandedBackupId(backupHistory[0].id);
     }
   }, [backupHistory, expandedBackupId]);
+
+  useEffect(() => {
+    setExpandedFriendlyGroupId("");
+  }, [expandedBackupId, backupDetailMode]);
 
   return (
     <div className="dashboard-backup-backdrop" role="presentation">
@@ -5986,12 +6311,12 @@ function DashboardBackupModal({
                     {isExpanded && (
                       <div className="dashboard-backup-details dashboard-backup-details-friendly">
                         <div className="dashboard-backup-details-header">
-                          <div>
+                          {/* <div>
                             <strong>What this backup includes</strong>
                             <p>
                               Switch between a staff-friendly summary and a technical storage view.
                             </p>
-                          </div>
+                          </div> */}
 
                           <span>
                             {savedDetailGroups.length} active area
@@ -6024,22 +6349,52 @@ function DashboardBackupModal({
                         {backupDetailMode === "friendly" ? (
                           <>
                             <div className="dashboard-backup-friendly-list">
-                              {savedDetailGroups.map((group) => (
-                                <article
-                                  className={`dashboard-backup-friendly-card dashboard-backup-friendly-card-${group.tone}`}
-                                  key={group.id}
-                                >
-                                  <div className="dashboard-backup-friendly-icon">
-                                    <FaCheckCircle />
-                                  </div>
+                              {savedDetailGroups.map((group) => {
+                                const isGroupExpanded = expandedFriendlyGroupId === group.id;
 
-                                  <div>
-                                    <h5>{group.title}</h5>
-                                    <strong>{group.status}</strong>
-                                    <p>{group.description}</p>
-                                  </div>
-                                </article>
-                              ))}
+                                return (
+                                  <article
+                                    className={`dashboard-backup-friendly-card dashboard-backup-friendly-card-${group.tone} ${
+                                      isGroupExpanded ? "dashboard-backup-friendly-card-expanded" : ""
+                                    }`}
+                                    key={group.id}
+                                  >
+                                    <button
+                                      className="dashboard-backup-friendly-card-button"
+                                      type="button"
+                                      onClick={() =>
+                                        setExpandedFriendlyGroupId(isGroupExpanded ? "" : group.id)
+                                      }
+                                      aria-expanded={isGroupExpanded}
+                                    >
+                                      <div className="dashboard-backup-friendly-icon">
+                                        <FaCheckCircle />
+                                      </div>
+
+                                      <div className="dashboard-backup-friendly-main">
+                                        <h5>{group.title}</h5>
+                                        <strong>{group.status}</strong>
+                                        <p>{group.description}</p>
+                                      </div>
+
+                                      <span className="dashboard-backup-friendly-expand-label">
+                                        {isGroupExpanded ? "Hide" : "Details"}
+                                      </span>
+                                    </button>
+
+                                    {isGroupExpanded && (
+                                      <div className="dashboard-backup-friendly-quick-details">
+                                        {group.items.map((item) => (
+                                          <div key={`${group.id}-${item.label}`}>
+                                            <span>{item.label}</span>
+                                            <strong>{item.value}</strong>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </article>
+                                );
+                              })}
                             </div>
 
                             {emptyDetailGroups.length > 0 && (

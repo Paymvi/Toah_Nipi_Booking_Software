@@ -15857,9 +15857,460 @@ body,
   }
 }
 
+/* =========================================================
+   Backup Friendly Cards - Quick Under-the-Hood Details
+========================================================= */
+
+.dashboard-backup-friendly-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.dashboard-backup-friendly-card-button {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 11px;
+  align-items: flex-start;
+
+  border: 0;
+  background: transparent;
+  color: inherit;
+
+  padding: 13px;
+
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-backup-friendly-card-button:hover {
+  background: #fbfcfd;
+}
+
+.dashboard-backup-friendly-card-button:focus-visible {
+  outline: 3px solid rgba(68, 58, 156, 0.14);
+  outline-offset: -3px;
+}
+
+.dashboard-backup-friendly-main {
+  min-width: 0;
+}
+
+.dashboard-backup-friendly-expand-label {
+  min-height: 28px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 9px;
+  border: 1px solid #dfe4ec;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #443a9c;
+
+  font-size: 0.74rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.dashboard-backup-friendly-card-button:hover .dashboard-backup-friendly-expand-label {
+  background: #f7f5ff;
+  border-color: #c9c4e8;
+}
+
+.dashboard-backup-friendly-card-expanded {
+  background: #ffffff;
+  box-shadow: 0 6px 16px rgba(28, 35, 52, 0.045);
+}
+
+.dashboard-backup-friendly-card-expanded .dashboard-backup-friendly-expand-label {
+  background: #443a9c;
+  border-color: #443a9c;
+  color: #ffffff;
+}
+
+.dashboard-backup-friendly-quick-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+
+  padding: 0 13px 13px 58px;
+}
+
+.dashboard-backup-friendly-quick-details div {
+  min-width: 0;
+
+  display: grid;
+  gap: 4px;
+
+  padding: 9px 10px;
+  border: 1px solid #edf0f4;
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.dashboard-backup-friendly-quick-details span {
+  color: #858c9b;
+  font-size: 0.68rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+}
+
+.dashboard-backup-friendly-quick-details strong {
+  color: #303442;
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.35;
+
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .dashboard-backup-friendly-card-button {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+  .dashboard-backup-friendly-expand-label {
+    grid-column: 2;
+    width: fit-content;
+  }
+
+  .dashboard-backup-friendly-quick-details {
+    grid-template-columns: 1fr;
+    padding-left: 13px;
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboard-backup-friendly-card-button {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-backup-friendly-expand-label {
+    grid-column: auto;
+  }
+}
+
+
+
+/* =========================================================
+   FINAL FIX: Backup Friendly Cards Layout
+   Prevents old grid card styles from squeezing the new button layout
+========================================================= */
+
+.dashboard-backup-friendly-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.dashboard-backup-friendly-card {
+  width: 100%;
+  min-width: 0;
+
+  /* IMPORTANT: kills the old card grid layout */
+  display: block !important;
+  grid-template-columns: none !important;
+  gap: 0 !important;
+
+  padding: 0 !important;
+  overflow: hidden;
+
+  border: 1px solid #e4e8ef;
+  border-left: 4px solid #7d8493;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.dashboard-backup-friendly-card-button {
+  width: 100%;
+  min-width: 0;
+
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) max-content;
+  gap: 12px;
+  align-items: flex-start;
+
+  border: 0;
+  background: transparent;
+  color: inherit;
+
+  padding: 14px;
+
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-backup-friendly-card-button:hover {
+  background: #fbfcfd;
+}
+
+.dashboard-backup-friendly-card-button:focus-visible {
+  outline: 3px solid rgba(68, 58, 156, 0.14);
+  outline-offset: -3px;
+}
+
+.dashboard-backup-friendly-icon {
+  grid-column: 1;
+  grid-row: 1;
+
+  width: 30px;
+  height: 30px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+  background: #f4f5f8;
+  color: #687083;
+
+  font-size: 0.82rem;
+}
+
+.dashboard-backup-friendly-main {
+  grid-column: 2;
+  min-width: 0;
+  max-width: 100%;
+
+  display: grid;
+  gap: 6px;
+}
+
+.dashboard-backup-friendly-main h5 {
+  margin: 0;
+  color: #252936;
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.dashboard-backup-friendly-main strong {
+  display: block;
+  margin: 0;
+  color: #5c6f46;
+  font-size: 0.84rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.dashboard-backup-friendly-main p {
+  margin: 0;
+  color: #687083;
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.dashboard-backup-friendly-expand-label {
+  grid-column: 3;
+  justify-self: end;
+  align-self: start;
+
+  min-height: 28px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 10px;
+  border: 1px solid #dfe4ec;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #443a9c;
+
+  font-size: 0.74rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.dashboard-backup-friendly-card-button:hover .dashboard-backup-friendly-expand-label {
+  background: #f7f5ff;
+  border-color: #c9c4e8;
+}
+
+.dashboard-backup-friendly-card-expanded {
+  background: #ffffff;
+  box-shadow: 0 6px 16px rgba(28, 35, 52, 0.045);
+}
+
+.dashboard-backup-friendly-card-expanded .dashboard-backup-friendly-expand-label {
+  background: #443a9c;
+  border-color: #443a9c;
+  color: #ffffff;
+}
+
+.dashboard-backup-friendly-quick-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+
+  padding: 0 14px 14px 60px;
+}
+
+.dashboard-backup-friendly-quick-details div {
+  min-width: 0;
+
+  display: grid;
+  gap: 4px;
+
+  padding: 9px 10px;
+  border: 1px solid #edf0f4;
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.dashboard-backup-friendly-quick-details span {
+  color: #858c9b;
+  font-size: 0.68rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+}
+
+.dashboard-backup-friendly-quick-details strong {
+  color: #303442;
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* Keep the tone colors working */
+
+.dashboard-backup-friendly-card-green {
+  border-left-color: #2f6f5f;
+}
+
+.dashboard-backup-friendly-card-blue {
+  border-left-color: #4c65a9;
+}
+
+.dashboard-backup-friendly-card-purple,
+.dashboard-backup-friendly-card-indigo {
+  border-left-color: #443a9c;
+}
+
+.dashboard-backup-friendly-card-gold {
+  border-left-color: #d5aa3f;
+}
+
+.dashboard-backup-friendly-card-teal {
+  border-left-color: #377d7a;
+}
+
+.dashboard-backup-friendly-card-gray {
+  border-left-color: #8a90a0;
+}
+
+.dashboard-backup-friendly-card-green .dashboard-backup-friendly-icon {
+  background: #edf4ef;
+  color: #2f6f5f;
+}
+
+.dashboard-backup-friendly-card-blue .dashboard-backup-friendly-icon {
+  background: #eef3fb;
+  color: #4c65a9;
+}
+
+.dashboard-backup-friendly-card-purple .dashboard-backup-friendly-icon,
+.dashboard-backup-friendly-card-indigo .dashboard-backup-friendly-icon {
+  background: #f0edfa;
+  color: #443a9c;
+}
+
+.dashboard-backup-friendly-card-gold .dashboard-backup-friendly-icon {
+  background: #fbf5e4;
+  color: #9a6f08;
+}
+
+.dashboard-backup-friendly-card-teal .dashboard-backup-friendly-icon {
+  background: #edf6f5;
+  color: #377d7a;
+}
+
+.dashboard-backup-friendly-card-gray .dashboard-backup-friendly-icon {
+  background: #f4f5f8;
+  color: #6f7687;
+}
+
+@media (max-width: 1050px) {
+  .dashboard-backup-friendly-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-backup-friendly-card-button {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+  .dashboard-backup-friendly-expand-label {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .dashboard-backup-friendly-quick-details {
+    grid-template-columns: 1fr;
+    padding-left: 14px;
+  }
+}
 
 
 
 
 
+
+
+
+
+
+/* =========================================================
+   Backup Modal Header Icon Fix
+   Keeps the database icon centered inside the square
+========================================================= */
+
+.dashboard-backup-modal-header .section-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border-radius: 10px;
+  background: #eef0eb;
+  color: #858c9b;
+
+  line-height: 1;
+}
+
+.dashboard-backup-modal-header .section-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+/* Make sure only the subtitle span gets the backup header text styling */
+.dashboard-backup-modal-header .dashboard-heading-with-icon > div > span {
+  display: block;
+  margin-top: 5px;
+  color: #858c9b;
+  font-size: 0.84rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
 
