@@ -374,15 +374,23 @@ const bookingSpreadsheetColumns = [
   {
     label: "Retreat Type",
     value: (booking) => booking.retreatType,
-    render: (booking) => (
-      <span
-        className={`spreadsheet-retreat-type-pill ${getSpreadsheetRetreatTypeClass(
-          booking.retreatType
-        )}`}
-      >
-        {getSpreadsheetDisplayValue(booking.retreatType)}
-      </span>
-    ),
+    render: (booking, _openBookingDetail, settings) => {
+      const displayValue = getSpreadsheetDisplayValue(booking.retreatType);
+
+      if (!settings.showRetreatTypeColors) {
+        return displayValue;
+      }
+
+      return (
+        <span
+          className={`spreadsheet-retreat-type-pill ${getSpreadsheetRetreatTypeClass(
+            booking.retreatType
+          )}`}
+        >
+          {displayValue}
+        </span>
+      );
+    },
   },
   {
     label: "Promo Code",
@@ -555,6 +563,7 @@ function getDefaultSpreadsheetSettings() {
     compactRows: false,
     showRowPreviewPopups: false,
     showStarredRowsFirst: false,
+    showRetreatTypeColors: true,
     visibleSummaryCardIds: [
       "shown",
       "totalRows",
@@ -588,6 +597,7 @@ function normalizeSpreadsheetSettings(settings = {}) {
   return {
     ...parsedSettings,
     showColumnCategoryColors: Boolean(parsedSettings.showColumnCategoryColors),
+    showRetreatTypeColors: Boolean(parsedSettings.showRetreatTypeColors),
     colorMode: "none",
   };
 }
@@ -2327,6 +2337,17 @@ function SpreadsheetSettingsModal({
                   />
                   <span>Show starred rows first</span>
                 </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(settings.showRetreatTypeColors)}
+                    onChange={(event) =>
+                      updateSettings({ showRetreatTypeColors: event.target.checked })
+                    }
+                  />
+                  <span>Color retreat type cells</span>
+                </label>
               </div>
             </div>
           )}
@@ -3626,7 +3647,7 @@ function BookingSpreadsheetView({
                           >
                             <span className="spreadsheet-cell-content">
                               {column.render
-                                ? column.render(booking, openBookingDetail)
+                                ? column.render(booking, openBookingDetail, spreadsheetSettings)
                                 : getSpreadsheetDisplayValue(column.value(booking))}
                             </span>
 
