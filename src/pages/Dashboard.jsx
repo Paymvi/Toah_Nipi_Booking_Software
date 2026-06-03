@@ -578,38 +578,188 @@ function formatBackupDate(value) {
   }).format(date);
 }
 
-function getBackupDetailRows(backup) {
+function getBackupFriendlyCount(value, fallbackLabel = "Saved") {
+  if (value === null || value === undefined || value === "") {
+    return "Not saved yet";
+  }
+
+  const parsedValue = safeParseBackupJson(value, null);
+
+  if (Array.isArray(parsedValue)) {
+    return `${parsedValue.length} saved item${parsedValue.length === 1 ? "" : "s"}`;
+  }
+
+  if (parsedValue && typeof parsedValue === "object") {
+    const count = Object.keys(parsedValue).length;
+    return `${count} saved setting${count === 1 ? "" : "s"}`;
+  }
+
+  if (typeof parsedValue === "string") {
+    return parsedValue ? fallbackLabel : "Not saved yet";
+  }
+
+  return fallbackLabel;
+}
+
+function getBackupHasAnyValue(storageData, keys) {
+  return keys.some((key) => {
+    const value = storageData[key];
+    return value !== null && value !== undefined && value !== "";
+  });
+}
+
+function getBackupDetailGroups(backup) {
   const storageData = backup?.storageData || {};
 
-  return Object.entries(storageData)
-    .map(([key, value]) => {
-      const hasValue = value !== null && value !== undefined && value !== "";
-      const parsedValue = hasValue ? safeParseBackupJson(value, null) : null;
+  const bookingCount = getArrayCountFromBackupValue(
+    storageData.toahNipiPublicInquiries
+  );
 
-      let summary = hasValue ? "Saved" : "No saved value";
+  const staffCount = getArrayCountFromBackupValue(
+    storageData[STAFF_USERS_STORAGE_KEY]
+  );
 
-      if (Array.isArray(parsedValue)) {
-        summary = `${parsedValue.length} item${parsedValue.length === 1 ? "" : "s"}`;
-      } else if (parsedValue && typeof parsedValue === "object") {
-        summary = `${Object.keys(parsedValue).length} setting${
-          Object.keys(parsedValue).length === 1 ? "" : "s"
-        }`;
-      } else if (typeof parsedValue === "string") {
-        summary = parsedValue || "Saved text value";
-      } else if (typeof parsedValue === "boolean") {
-        summary = parsedValue ? "Enabled" : "Disabled";
-      } else if (typeof parsedValue === "number") {
-        summary = String(parsedValue);
-      }
+  const starredCount = getArrayCountFromBackupValue(
+    storageData[SPREADSHEET_VIEW_STARRED_STORAGE_KEY]
+  );
 
-      return {
-        key,
-        label: DASHBOARD_BACKUP_KEY_LABELS[key] || key,
-        summary,
-        hasValue,
-      };
-    })
-    .sort((a, b) => a.label.localeCompare(b.label));
+  const bookingDetailSettingsCount = getObjectKeyCountFromBackupValue(
+    storageData[BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY]
+  );
+
+  const datedInquirySettingsCount = getObjectKeyCountFromBackupValue(
+    storageData[DATED_INQUIRY_SETTINGS_STORAGE_KEY]
+  );
+
+  const reportsSettingsCount = getObjectKeyCountFromBackupValue(
+    storageData[REPORTS_VIEW_SETTINGS_STORAGE_KEY]
+  );
+
+  const spreadsheetSettingsCount = getObjectKeyCountFromBackupValue(
+    storageData[SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY]
+  );
+
+  const filterKeys = [
+    DATED_INQUIRY_DATE_FILTER_STORAGE_KEY,
+    DATED_INQUIRY_CUSTOM_START_STORAGE_KEY,
+    DATED_INQUIRY_CUSTOM_END_STORAGE_KEY,
+  ];
+
+  const savedKeys = Object.entries(storageData).filter(
+    ([, value]) => value !== null && value !== undefined && value !== ""
+  );
+
+  const knownKeys = new Set([
+    "toahNipiPublicInquiries",
+    STAFF_USERS_STORAGE_KEY,
+    CURRENT_STAFF_USER_STORAGE_KEY,
+    DATED_INQUIRY_SETTINGS_STORAGE_KEY,
+    DATED_INQUIRY_DATE_FILTER_STORAGE_KEY,
+    DATED_INQUIRY_CUSTOM_START_STORAGE_KEY,
+    DATED_INQUIRY_CUSTOM_END_STORAGE_KEY,
+    BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY,
+    REPORTS_VIEW_SETTINGS_STORAGE_KEY,
+    SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY,
+    SPREADSHEET_VIEW_STARRED_STORAGE_KEY,
+  ]);
+
+  const extraSavedKeys = savedKeys.filter(([key]) => !knownKeys.has(key));
+
+  return [
+    {
+      id: "booking-records",
+      title: "Booking records",
+      status: bookingCount > 0 ? `${bookingCount} saved record${bookingCount === 1 ? "" : "s"}` : "No booking records saved",
+      description:
+        "Guest groups, public form inquiries, spreadsheet imports, booking edits, checklists, notes, and program assignments.",
+      hasValue: bookingCount > 0,
+      tone: "green",
+    },
+    {
+      id: "staff-setup",
+      title: "Staff setup",
+      status:
+        staffCount > 0
+          ? `${staffCount} staff member${staffCount === 1 ? "" : "s"} saved`
+          : "No staff users saved",
+      description:
+        "Staff users, active/inactive status, roles, and the currently selected staff member.",
+      hasValue: getBackupHasAnyValue(storageData, [
+        STAFF_USERS_STORAGE_KEY,
+        CURRENT_STAFF_USER_STORAGE_KEY,
+      ]),
+      tone: "blue",
+    },
+    {
+      id: "spreadsheet-preferences",
+      title: "Spreadsheet preferences",
+      status:
+        spreadsheetSettingsCount > 0 || starredCount > 0
+          ? `${spreadsheetSettingsCount} setting${spreadsheetSettingsCount === 1 ? "" : "s"} · ${starredCount} starred row${starredCount === 1 ? "" : "s"}`
+          : "No spreadsheet preferences saved",
+      description:
+        "Visible columns, filters, sorting, saved views, summary cards, display choices, and starred spreadsheet rows.",
+      hasValue: getBackupHasAnyValue(storageData, [
+        SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY,
+        SPREADSHEET_VIEW_STARRED_STORAGE_KEY,
+      ]),
+      tone: "purple",
+    },
+    {
+      id: "dashboard-filters",
+      title: "Dashboard filters",
+      status: getBackupHasAnyValue(storageData, filterKeys)
+        ? "Saved dashboard filter choices"
+        : "No dashboard filters saved",
+      description:
+        "The selected date range for dated inquiries, including custom start and end dates when used.",
+      hasValue: getBackupHasAnyValue(storageData, filterKeys),
+      tone: "gold",
+    },
+    {
+      id: "display-settings",
+      title: "Display settings",
+      status:
+        bookingDetailSettingsCount + datedInquirySettingsCount > 0
+          ? `${bookingDetailSettingsCount + datedInquirySettingsCount} display setting${
+              bookingDetailSettingsCount + datedInquirySettingsCount === 1 ? "" : "s"
+            } saved`
+          : "No display settings saved",
+      description:
+        "Booking detail date formatting, dated inquiry card display options, and related dashboard view preferences.",
+      hasValue: getBackupHasAnyValue(storageData, [
+        BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY,
+        DATED_INQUIRY_SETTINGS_STORAGE_KEY,
+      ]),
+      tone: "teal",
+    },
+    {
+      id: "reports-settings",
+      title: "Reports settings",
+      status:
+        reportsSettingsCount > 0
+          ? `${reportsSettingsCount} report setting${reportsSettingsCount === 1 ? "" : "s"} saved`
+          : "No report settings saved",
+      description:
+        "Reports page filters such as date range, status, retreat type, and source mode.",
+      hasValue: getBackupHasAnyValue(storageData, [
+        REPORTS_VIEW_SETTINGS_STORAGE_KEY,
+      ]),
+      tone: "indigo",
+    },
+    {
+      id: "other-app-data",
+      title: "Other app data",
+      status:
+        extraSavedKeys.length > 0
+          ? `${extraSavedKeys.length} extra saved area${extraSavedKeys.length === 1 ? "" : "s"}`
+          : "No extra app data",
+      description:
+        "Additional Toah Nipi dashboard data saved by newer or future features.",
+      hasValue: extraSavedKeys.length > 0,
+      tone: "gray",
+    },
+  ];
 }
 
 const DEFAULT_STAFF_USERS = [
@@ -5562,8 +5712,10 @@ function DashboardBackupModal({
               {backupHistory.map((backup, index) => {
                 const stats = backup.stats || getBackupStats(backup);
                 const isExpanded = expandedBackupId === backup.id;
-                const detailRows = getBackupDetailRows(backup);
-
+                const detailGroups = getBackupDetailGroups(backup);
+                const savedDetailGroups = detailGroups.filter((group) => group.hasValue);
+                const emptyDetailGroups = detailGroups.filter((group) => !group.hasValue);
+                
                 return (
                   <article
                     className={`dashboard-backup-card ${
@@ -5642,24 +5794,56 @@ function DashboardBackupModal({
                     </aside>
 
                     {isExpanded && (
-                      <div className="dashboard-backup-details">
+                      <div className="dashboard-backup-details dashboard-backup-details-friendly">
                         <div className="dashboard-backup-details-header">
-                          <strong>What this backup saves</strong>
-                          <span>{detailRows.length} storage area(s)</span>
+                          <div>
+                            <strong>What this backup includes</strong>
+                            <p>
+                              A plain-English rundown of the dashboard data saved in this backup.
+                            </p>
+                          </div>
+
+                          <span>
+                            {savedDetailGroups.length} active area
+                            {savedDetailGroups.length === 1 ? "" : "s"}
+                          </span>
                         </div>
 
-                        <div className="dashboard-backup-detail-list">
-                          {detailRows.map((row) => (
-                            <div
-                              className={!row.hasValue ? "is-empty" : ""}
-                              key={row.key}
+                        <div className="dashboard-backup-friendly-list">
+                          {savedDetailGroups.map((group) => (
+                            <article
+                              className={`dashboard-backup-friendly-card dashboard-backup-friendly-card-${group.tone}`}
+                              key={group.id}
                             >
-                              <span>{row.label}</span>
-                              <strong>{row.summary}</strong>
-                              <small>{row.key}</small>
-                            </div>
+                              <div className="dashboard-backup-friendly-icon">
+                                <FaCheckCircle />
+                              </div>
+
+                              <div>
+                                <h5>{group.title}</h5>
+                                <strong>{group.status}</strong>
+                                <p>{group.description}</p>
+                              </div>
+                            </article>
                           ))}
                         </div>
+
+                        {emptyDetailGroups.length > 0 && (
+                          <details className="dashboard-backup-empty-details">
+                            <summary>
+                              Show areas that were not saved in this backup
+                            </summary>
+
+                            <div className="dashboard-backup-empty-detail-list">
+                              {emptyDetailGroups.map((group) => (
+                                <div key={group.id}>
+                                  <span>{group.title}</span>
+                                  <small>{group.status}</small>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        )}
                       </div>
                     )}
                   </article>
