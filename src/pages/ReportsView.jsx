@@ -403,6 +403,179 @@ function ReportBarRow({ label, value, maxValue, valueLabel, helper }) {
   );
 }
 
+const REPORTS_RETREAT_TYPE_COLORS = {
+  pr: "#5c6bc0",
+  "day use": "#636671",
+  men: "#2563eb",
+  women: "#be5091",
+  students: "#d97706",
+  "students / youth": "#d97706",
+  youth: "#d97706",
+  families: "#0d9488",
+  adults: "#4f46e5",
+  "staff / leaders": "#166534",
+  staff: "#166534",
+  leaders: "#166534",
+  "pastors / elders": "#7e57c2",
+  pastors: "#7e57c2",
+  elders: "#7e57c2",
+  "friends / hosts": "#0891b2",
+  friends: "#0891b2",
+  hosts: "#0891b2",
+  events: "#c2410c",
+  other: "#64748b",
+  "additional types": "#94a3b8",
+  "no retreat type": "#9aa1ad",
+};
+
+const REPORTS_RETREAT_FALLBACK_COLORS = [
+  "#5c6bc0",
+  "#636671",
+  "#2563eb",
+  "#be5091",
+  "#d97706",
+  "#0d9488",
+  "#4f46e5",
+  "#166534",
+  "#7e57c2",
+  "#0891b2",
+  "#c2410c",
+  "#64748b",
+];
+
+function normalizeReportsRetreatTypeLabel(label) {
+  return String(label || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+function getRetreatPieColor(label, index) {
+  const normalizedLabel = normalizeReportsRetreatTypeLabel(label);
+
+  return (
+    REPORTS_RETREAT_TYPE_COLORS[normalizedLabel] ||
+    REPORTS_RETREAT_FALLBACK_COLORS[
+      index % REPORTS_RETREAT_FALLBACK_COLORS.length
+    ]
+  );
+}
+
+function formatRetreatPieLabel(label) {
+  const normalizedLabel = normalizeReportsRetreatTypeLabel(label);
+
+  const displayLabels = {
+    pr: "PR",
+    "day use": "Day Use",
+    men: "Men",
+    women: "Women",
+    students: "Students / Youth",
+    youth: "Students / Youth",
+    "students / youth": "Students / Youth",
+    families: "Families",
+    adults: "Adults",
+    staff: "Staff / Leaders",
+    leaders: "Staff / Leaders",
+    "staff / leaders": "Staff / Leaders",
+    pastors: "Pastors / Elders",
+    elders: "Pastors / Elders",
+    "pastors / elders": "Pastors / Elders",
+    friends: "Friends / Hosts",
+    hosts: "Friends / Hosts",
+    "friends / hosts": "Friends / Hosts",
+    events: "Events",
+    other: "Other",
+    "additional types": "Additional Types",
+    "no retreat type": "No Retreat Type",
+  };
+
+  return displayLabels[normalizedLabel] || label;
+}
+
+function ReportRetreatTypePieChart({ rows, totalBookings }) {
+  const MAX_RETREAT_PIE_GROUPS = 12;
+
+  const visibleRows = rows.filter((row) => row.bookings > 0);
+  const topRows = visibleRows.slice(0, MAX_RETREAT_PIE_GROUPS);
+  const additionalBookings = visibleRows
+    .slice(MAX_RETREAT_PIE_GROUPS)
+    .reduce((sum, row) => sum + row.bookings, 0);
+
+  const chartRows = additionalBookings
+    ? [
+        ...topRows,
+        {
+          label: "Additional Types",
+          bookings: additionalBookings,
+        },
+      ]
+    : topRows;
+
+  let runningPercent = 0;
+
+  const pieRows = chartRows.map((row, index) => {
+    const percent = totalBookings
+      ? (row.bookings / totalBookings) * 100
+      : 0;
+
+    const start = runningPercent;
+    const end = runningPercent + percent;
+
+    runningPercent = end;
+
+    return {
+      ...row,
+      label: formatRetreatPieLabel(row.label),
+      percent,
+      start,
+      end,
+      color: getRetreatPieColor(row.label, index),
+    };
+  });
+
+  const pieBackground = pieRows.length
+    ? `conic-gradient(${pieRows
+        .map((row) => `${row.color} ${row.start}% ${row.end}%`)
+        .join(", ")})`
+    : "#edf0f4";
+
+  return (
+    <div className="reports-retreat-pie-card">
+      <div
+        className="reports-retreat-pie-chart"
+        style={{ background: pieBackground }}
+        role="img"
+        aria-label="Retreat type booking breakdown pie chart"
+      >
+        <div className="reports-retreat-pie-center">
+          <strong>{formatReportsNumber(totalBookings)}</strong>
+          <span>Bookings</span>
+        </div>
+      </div>
+
+      <div className="reports-retreat-pie-legend">
+        {pieRows.map((row) => (
+          <div className="reports-retreat-pie-legend-row" key={row.label}>
+            <span
+              className="reports-retreat-pie-dot"
+              style={{ background: row.color }}
+            ></span>
+
+            <div>
+              <strong>{row.label}</strong>
+              <small>
+                {formatReportsNumber(row.bookings)} booking
+                {row.bookings === 1 ? "" : "s"} ·{" "}
+                {Math.round(row.percent)}%
+              </small>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ReportsView({ inquiryBookings }) {
   const [reportsSettings, setReportsSettings] = useState(() =>
     getSavedReportsViewSettings()
@@ -1207,45 +1380,52 @@ function ReportsView({ inquiryBookings }) {
           </div>
 
           {retreatTypeRows.length > 0 ? (
-            <div className="reports-table-wrap">
-              <table className="reports-table">
-                <thead>
-                  <tr>
-                    <th>Retreat Type</th>
-                    <th>Bookings</th>
-                    <th>Guests</th>
-                    <th>Revenue</th>
-                  </tr>
-                </thead>
+            <>
+              <ReportRetreatTypePieChart
+                rows={retreatTypeRows}
+                totalBookings={totalBookings}
+              />
 
-                <tbody>
-                  {retreatTypeRows.map((row) => (
-                    <tr key={row.label}>
-                      <td>
-                        <strong>{row.label}</strong>
-                        <div className="reports-mini-track">
-                          <span
-                            style={{
-                              width: `${
-                                maxRetreatTypeBookings
-                                  ? Math.max(
-                                      (row.bookings / maxRetreatTypeBookings) * 100,
-                                      4
-                                    )
-                                  : 0
-                              }%`,
-                            }}
-                          ></span>
-                        </div>
-                      </td>
-                      <td>{formatReportsNumber(row.bookings)}</td>
-                      <td>{formatReportsNumber(row.guests)}</td>
-                      <td>{formatReportsCurrency(row.revenue)}</td>
+              <div className="reports-table-wrap">
+                <table className="reports-table">
+                  <thead>
+                    <tr>
+                      <th>Retreat Type</th>
+                      <th>Bookings</th>
+                      <th>Guests</th>
+                      <th>Revenue</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+
+                  <tbody>
+                    {retreatTypeRows.map((row) => (
+                      <tr key={row.label}>
+                        <td>
+                          <strong>{row.label}</strong>
+                          <div className="reports-mini-track">
+                            <span
+                              style={{
+                                width: `${
+                                  maxRetreatTypeBookings
+                                    ? Math.max(
+                                        (row.bookings / maxRetreatTypeBookings) * 100,
+                                        4
+                                      )
+                                    : 0
+                                }%`,
+                              }}
+                            ></span>
+                          </div>
+                        </td>
+                        <td>{formatReportsNumber(row.bookings)}</td>
+                        <td>{formatReportsNumber(row.guests)}</td>
+                        <td>{formatReportsCurrency(row.revenue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           ) : (
             <div className="reports-empty-state">
               <strong>No retreat type data</strong>
