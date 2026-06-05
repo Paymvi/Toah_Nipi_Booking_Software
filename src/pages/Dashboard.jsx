@@ -359,6 +359,60 @@ function createStaffUserId() {
   return `staff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function normalizeStaffEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function parseStaffContactName(value) {
+  const lines = String(value || "")
+    .split(/\r?\n/g)
+    .map((line) =>
+      line
+        .replace(/^"+|"+$/g, "")
+        .replace(/^'+|'+$/g, "")
+        .trim()
+    )
+    .filter((line) => line && line !== "-");
+
+  const commaNameLine =
+    lines.find((line) => line.includes(",")) || lines[lines.length - 1] || "";
+
+  if (!commaNameLine) {
+    return "";
+  }
+
+  if (commaNameLine.includes(",")) {
+    const [lastName, firstName] = commaNameLine
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    return [firstName, lastName].filter(Boolean).join(" ");
+  }
+
+  return commaNameLine;
+}
+
+function normalizeStaffContactSpreadsheetRow({ nameCell, emailCell, index }) {
+  const name = parseStaffContactName(nameCell);
+  const email = String(emailCell || "").trim();
+
+  if (!name && !email) {
+    return null;
+  }
+
+  return {
+    id: createStaffUserId(),
+    name: name || email,
+    email,
+    role: "Staff",
+    active: true,
+    importedFrom: "Staff_Contacts",
+    importedAt: new Date().toISOString(),
+    importIndex: index,
+  };
+}
+
 function getSavedStaffUsers() {
   try {
     const savedUsers = localStorage.getItem(STAFF_USERS_STORAGE_KEY);
@@ -4031,6 +4085,7 @@ export default function Dashboard() {
 
   const waitlistFileInputRef = useRef(null);
   const masterFileInputRef = useRef(null);
+  const staffContactsFileInputRef = useRef(null);
 
 
   const master2026FileInputRef = useRef(null);
@@ -4497,10 +4552,40 @@ export default function Dashboard() {
       await workbook.xlsx.load(fileData);
 
       const allImportedRows = [];
+      const allImportedStaffContacts = [];
       const sheetSummaries = [];
 
       workbook.worksheets.forEach((worksheet) => {
         const spreadsheetRows = getRowsFromWorksheetFlexible(worksheet);
+
+        const isStaffContactsSheet =
+          String(worksheet.name || "").trim().toLowerCase() === "staff_contacts";
+
+        if (isStaffContactsSheet) {
+          let staffContactCount = 0;
+
+          worksheet.eachRow((row, rowNumber) => {
+            const nameCell = cleanExcelCellValue(row.getCell(2).value);
+            const emailCell = cleanExcelCellValue(row.getCell(3).value);
+
+            const normalizedStaffContact = normalizeStaffContactSpreadsheetRow({
+              nameCell,
+              emailCell,
+              index: rowNumber,
+            });
+
+            if (normalizedStaffContact) {
+              allImportedStaffContacts.push(normalizedStaffContact);
+              staffContactCount += 1;
+            }
+          });
+
+          sheetSummaries.push(
+            `${worksheet.name}: ${staffContactCount} staff contact(s)`
+          );
+
+          return;
+        }
 
       const sheetCounts = {
         Waitlist: 0,
@@ -4554,14 +4639,166 @@ export default function Dashboard() {
 
       setPublicInquiries(nextInquiries);
 
+      if (allImportedStaffContacts.length > 0) {
+        const nextUsers = [...staffUsers];
+
+        allImportedStaffContacts.forEach((importedUser) => {
+          const importedNameKey = normalizeStaffName(importedUser.name);
+          const importedEmailKey = normalizeStaffEmail(importedUser.email);
+
+          const existingUserIndex = nextUsers.findIndex((user) => {
+            const existingEmailKey = normalizeStaffEmail(user.email);
+            const existingNameKey = normalizeStaffName(user.name);
+
+            return (
+              (importedEmailKey && existingEmailKey === importedEmailKey) ||
+              (importedNameKey && existingNameKey === importedNameKey)
+            );
+          });
+
+          if (existingUserIndex >= 0) {
+            const existingUser = nextUsers[existingUserIndex];
+
+            nextUsers[existingUserIndex] = {
+              ...existingUser,
+              name: importedUser.name || existingUser.name,
+              email: importedUser.email || existingUser.email,
+              active: true,
+              updatedAt: new Date().toISOString(),
+            };
+
+            return;
+          }
+
+          nextUsers.push(importedUser);
+        });
+
+        saveStaffUsers(nextUsers);
+        setStaffUsers(nextUsers);
+
+        if (!currentStaffUserId && nextUsers.length > 0) {
+          setCurrentStaffUserId(nextUsers[0].id);
+          saveCurrentStaffUserId(nextUsers[0].id);
+        }
+      }
+
       alert(
-        `Imported ${allImportedRows.length} row(s) from ${workbook.worksheets.length} sheet(s).\n\n${sheetSummaries.join(
+        `Imported ${allImportedRows.length} booking row(s) and ${allImportedStaffContacts.length} staff contact(s) from ${workbook.worksheets.length} sheet(s).\n\n${sheetSummaries.join(
           "\n"
         )}`
       );
     } catch (error) {
       console.error("Could not import full workbook:", error);
       alert("Sorry, that workbook could not be imported.");
+    } finally {
+      event.target.value = "";
+    }
+  };
+
+  const handleImportStaffContactsSpreadsheet = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const fileData = await file.arrayBuffer();
+
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(fileData);
+
+      const staffWorksheet = workbook.worksheets.find(
+        (worksheet) =>
+          String(worksheet.name || "").trim().toLowerCase() === "staff_contacts"
+      );
+
+      if (!staffWorksheet) {
+        alert('No "Staff_Contacts" sheet was found in this workbook.');
+        return;
+      }
+
+      const importedStaffContacts = [];
+
+      staffWorksheet.eachRow((row, rowNumber) => {
+        const nameCell = cleanExcelCellValue(row.getCell(2).value);
+        const emailCell = cleanExcelCellValue(row.getCell(3).value);
+
+        const normalizedStaffContact = normalizeStaffContactSpreadsheetRow({
+          nameCell,
+          emailCell,
+          index: rowNumber,
+        });
+
+        if (normalizedStaffContact) {
+          importedStaffContacts.push(normalizedStaffContact);
+        }
+      });
+
+      if (importedStaffContacts.length === 0) {
+        alert(
+          'No valid staff contacts were found. Make sure "Staff_Contacts" has names in column B and emails in column C.'
+        );
+        return;
+      }
+
+      const nextUsers = [...staffUsers];
+      let addedCount = 0;
+      let updatedCount = 0;
+      let skippedCount = 0;
+
+      importedStaffContacts.forEach((importedUser) => {
+        const importedNameKey = normalizeStaffName(importedUser.name);
+        const importedEmailKey = normalizeStaffEmail(importedUser.email);
+
+        if (!importedNameKey && !importedEmailKey) {
+          skippedCount += 1;
+          return;
+        }
+
+        const existingUserIndex = nextUsers.findIndex((user) => {
+          const existingEmailKey = normalizeStaffEmail(user.email);
+          const existingNameKey = normalizeStaffName(user.name);
+
+          return (
+            (importedEmailKey && existingEmailKey === importedEmailKey) ||
+            (importedNameKey && existingNameKey === importedNameKey)
+          );
+        });
+
+        if (existingUserIndex >= 0) {
+          const existingUser = nextUsers[existingUserIndex];
+
+          nextUsers[existingUserIndex] = {
+            ...existingUser,
+            name: importedUser.name || existingUser.name,
+            email: importedUser.email || existingUser.email,
+            active: true,
+            updatedAt: new Date().toISOString(),
+          };
+
+          updatedCount += 1;
+          return;
+        }
+
+        nextUsers.push(importedUser);
+        addedCount += 1;
+      });
+
+      saveStaffUsers(nextUsers);
+      setStaffUsers(nextUsers);
+
+      if (!currentStaffUserId && nextUsers.length > 0) {
+        setCurrentStaffUserId(nextUsers[0].id);
+        saveCurrentStaffUserId(nextUsers[0].id);
+      }
+
+      alert(
+        `Imported staff contacts from Staff_Contacts.\n\nAdded: ${addedCount}\nUpdated: ${updatedCount}\nSkipped: ${skippedCount}`
+      );
+    } catch (error) {
+      console.error("Could not import staff contacts spreadsheet:", error);
+      alert("Sorry, that staff contacts spreadsheet could not be imported.");
     } finally {
       event.target.value = "";
     }
@@ -4590,6 +4827,11 @@ export default function Dashboard() {
   const openEverythingImportPicker = () => {
     setIsImportMenuOpen(false);
     importEverythingFileInputRef.current?.click();
+  };
+
+  const openStaffContactsImportPicker = () => {
+    setIsImportMenuOpen(false);
+    staffContactsFileInputRef.current?.click();
   };
 
   useEffect(() => {
@@ -5053,6 +5295,7 @@ const getCalendarEventColor = (status) => {
               activeView={activeView}
               waitlistFileInputRef={waitlistFileInputRef}
               masterFileInputRef={masterFileInputRef}
+              staffContactsFileInputRef={staffContactsFileInputRef}
               master2026FileInputRef={master2026FileInputRef}
               inquiry2027FileInputRef={inquiry2027FileInputRef}
               importEverythingFileInputRef={importEverythingFileInputRef}
@@ -5072,6 +5315,8 @@ const getCalendarEventColor = (status) => {
               exportInquiriesToSpreadsheet={exportInquiriesToSpreadsheet}
               refreshInquiries={refreshInquiries}
               deleteAllInquiries={deleteAllInquiries}
+              handleImportStaffContactsSpreadsheet={handleImportStaffContactsSpreadsheet}
+              openStaffContactsImportPicker={openStaffContactsImportPicker}
             />
 
             <DashboardBackups

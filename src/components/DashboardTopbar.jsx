@@ -30,6 +30,7 @@ import {
   FaClipboardList,
   FaTable,
   FaRegCalendarCheck,
+  FaUsers,
 } from "react-icons/fa";
 
 export default function DashboardTopbar({
@@ -37,6 +38,7 @@ export default function DashboardTopbar({
   waitlistFileInputRef,
   masterFileInputRef,
   master2026FileInputRef,
+  staffContactsFileInputRef,
   importEverythingFileInputRef,
   importDropdownRef,
   isImportMenuOpen,
@@ -44,10 +46,12 @@ export default function DashboardTopbar({
   handleImportWaitlistSpreadsheet,
   handleImportMasterSpreadsheet,
   handleImportMaster2026Spreadsheet,
+  handleImportStaffContactsSpreadsheet,
   handleImportEverythingSpreadsheet,
   openWaitlistImportPicker,
   openMasterImportPicker,
   openMaster2026ImportPicker,
+  openStaffContactsImportPicker,
   openEverythingImportPicker,
   exportInquiriesToSpreadsheet,
   refreshInquiries,
@@ -83,6 +87,15 @@ export default function DashboardTopbar({
           accept=".xlsx"
           onChange={handleImportEverythingSpreadsheet}
         />
+
+        {/* Hidden file input for staff contact imports */}
+          <input
+            className="dashboard-file-input"
+            ref={staffContactsFileInputRef}
+            type="file"
+            accept=".xlsx,.xls"
+            onChange={handleImportStaffContactsSpreadsheet}
+          />
 
         {/* Hidden file input for 2025 master spreadsheet imports */}
         <input
@@ -172,6 +185,18 @@ export default function DashboardTopbar({
                 <span>
                   <strong>Import 2027 Inquiries</strong>
                   <small>Use the 2027 inquiry spreadsheet format</small>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={openStaffContactsImportPicker}
+              >
+                <FaUsers />
+                <span>
+                  <strong>Import Staff Contacts</strong>
+                  <small>Use the Staff_Contacts sheet</small>
                 </span>
               </button>
 
