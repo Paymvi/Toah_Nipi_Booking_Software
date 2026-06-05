@@ -1017,7 +1017,7 @@ function DashboardBackupControls({ onExportBackup, onOpenBackupModal }) {
     <section className="dashboard-backup-toolbar" aria-label="Dashboard backups">
       <div>
         <p className="dashboard-eyebrow">Backups</p>
-        <strong>Protect dashboard data</strong>
+        <strong>Protect your data</strong>
         <span>
           Export a JSON backup or restore from saved backup history.
         </span>
