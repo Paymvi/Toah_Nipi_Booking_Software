@@ -1237,6 +1237,14 @@ const SPREADSHEET_FORM_SCHEMA_FIELDS = [
   "Message / Notes",
 ];
 
+const SPREADSHEET_STAFF_CONTACT_COLUMNS = [
+  "Source Sheet: Staff_Contacts",
+  "Column B: staff name block",
+  "Column C: staff email address",
+  "Name format: Last-name, First-name",
+  "Saved location: User Admin",
+];
+
 const SPREADSHEET_SCHEMA_FIELD_MAPPINGS = [
   {
     appField: "Organization",
@@ -1317,6 +1325,24 @@ const SPREADSHEET_IMPORT_SCHEMAS = [
       "Best for new inquiries submitted through the website form.",
       "Missing email or phone values are displayed as N/A in the spreadsheet.",
       "These rows usually do not have original spreadsheet columns.",
+    ],
+  },
+  {
+    id: "staff-contacts",
+    title: "Staff Contacts Import",
+    badge: "User Admin import",
+    summary:
+      "Use this for importing staff names and email addresses into User Admin so staff can be assigned to jobs, checklists, and program logistics.",
+    expectedFile: ".xlsx workbook with a Staff_Contacts worksheet",
+    detectedAs: 'worksheet name is "Staff_Contacts"',
+    inputMethod: "Imported - Staff Contacts",
+    sourceSheet: "Staff_Contacts",
+    expectedColumns: SPREADSHEET_STAFF_CONTACT_COLUMNS,
+    notes: [
+      "This import reads column B for the staff name block and column C for the email address.",
+      "Names like Last-name, First-name are cleaned into First-name Last-name before saving.",
+      "Staff contacts are saved into User Admin, not the booking Spreadsheet View.",
+      "Because these are users, they do not appear as booking rows or Source Sheet filter options.",
     ],
   },
   {
@@ -2340,8 +2366,8 @@ function SpreadsheetSettingsModal({
                 <div>
                   <h4>Import Schema Reference</h4>
                   <p>
-                    This explains what each import option expects, how imported rows are
-                    detected, and where the imported data appears in the spreadsheet.
+                    This explains what each import option expects, how imported data is
+                    detected, and where that data appears in the dashboard.
                   </p>
                 </div>
 
@@ -2382,7 +2408,7 @@ function SpreadsheetSettingsModal({
                     </dl>
 
                     <SpreadsheetSchemaChipList
-                      title="Expected / recognized columns"
+                      title="Expected / recognized columns or positions"
                       items={schema.expectedColumns}
                     />
 
