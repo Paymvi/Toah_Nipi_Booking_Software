@@ -17544,3 +17544,132 @@ body,
 .reports-monthly-heading span {
   min-width: 0;
 }
+
+
+
+
+
+
+
+.contacts-loading-card {
+  overflow: hidden;
+}
+
+.contacts-loading-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 6px 0 18px;
+}
+
+.contacts-loading-icon {
+  width: 52px;
+  height: 52px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 16px;
+  background: #eef4ec;
+  color: #4f6f3f;
+  font-size: 1.35rem;
+}
+
+.contacts-loading-copy {
+  flex: 1;
+}
+
+.contacts-loading-copy h2 {
+  margin: 2px 0 6px;
+}
+
+.contacts-loading-copy p:last-child {
+  margin: 0;
+  color: #667085;
+}
+
+.contacts-loading-spinner {
+  width: 30px;
+  height: 30px;
+
+  border: 3px solid #e2e7ee;
+  border-top-color: #4f6f3f;
+  border-radius: 999px;
+
+  animation: contacts-loading-spin 0.85s linear infinite;
+}
+
+.contacts-loading-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+
+  margin: 8px 0 18px;
+}
+
+.contacts-loading-summary span {
+  padding: 14px;
+
+  border: 1px solid #e2e7ee;
+  border-radius: 14px;
+  background: #fbfcfd;
+
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  color: #667085;
+  font-size: 0.82rem;
+}
+
+.contacts-loading-summary strong {
+  color: #1f2937;
+  font-size: 1rem;
+}
+
+.contacts-loading-table-preview {
+  display: grid;
+  gap: 10px;
+}
+
+.contacts-loading-preview-header,
+.contacts-loading-preview-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1.4fr 1.3fr 1fr;
+  gap: 12px;
+}
+
+.contacts-loading-preview-header span,
+.contacts-loading-preview-row span {
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #edf1f5, #f8fafc, #edf1f5);
+  background-size: 200% 100%;
+  animation: contacts-loading-shimmer 1.2s ease-in-out infinite;
+}
+
+.contacts-loading-preview-header span {
+  height: 12px;
+}
+
+.contacts-loading-preview-row {
+  padding: 14px;
+  border: 1px solid #edf1f5;
+  border-radius: 12px;
+}
+
+@keyframes contacts-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes contacts-loading-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+
+  100% {
+    background-position: -100% 0;
+  }
+}

@@ -6,6 +6,8 @@ import {
   CONTACTS_VIEW_STARRED_STORAGE_KEY,
 } from "../constants/dashboardConstants";
 
+const CONTACTS_RENDER_LOADING_MS = 140;
+
 function getSavedContactIdList(storageKey) {
   try {
     const savedValue = localStorage.getItem(storageKey);
@@ -130,7 +132,68 @@ async function copyTextToClipboard(text) {
   document.body.removeChild(textArea);
 }
 
-export default function ContactsView({ inquiryBookings, openBookingDetail }) {
+function ContactsViewLoadingScreen({ bookingRowCount }) {
+  return (
+    <section className="contacts-view-page">
+      <article className="dashboard-card contacts-view-card contacts-loading-card">
+        <div className="contacts-loading-hero">
+          <span className="contacts-loading-icon">
+            <FaUsers />
+          </span>
+
+          <div className="contacts-loading-copy">
+            <p className="dashboard-eyebrow">Contacts View</p>
+            <h2>Loading Contacts</h2>
+            <p>
+              Preparing contacts from {bookingRowCount} booking row
+              {bookingRowCount === 1 ? "" : "s"}, starred contacts, and copy
+              actions.
+            </p>
+          </div>
+
+          <span className="contacts-loading-spinner" aria-hidden="true" />
+        </div>
+
+        <div className="contacts-loading-summary">
+          <span>
+            <strong>{bookingRowCount}</strong>
+            Booking Rows
+          </span>
+
+          <span>
+            <strong>Saved</strong>
+            Stars
+          </span>
+
+          <span>
+            <strong>Ready</strong>
+            Contacts
+          </span>
+        </div>
+
+        <div className="contacts-loading-table-preview" aria-hidden="true">
+          <div className="contacts-loading-preview-header">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div className="contacts-loading-preview-row" key={index}>
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          ))}
+        </div>
+      </article>
+    </section>
+  );
+}
+
+function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
   const contacts = useMemo(
     () => getContactsFromBookings(inquiryBookings),
     [inquiryBookings]
@@ -238,6 +301,7 @@ export default function ContactsView({ inquiryBookings, openBookingDetail }) {
     );
   }
 
+  
   return (
     <section className="contacts-view-page">
       <article className="dashboard-card contacts-view-card">
@@ -411,3 +475,48 @@ export default function ContactsView({ inquiryBookings, openBookingDetail }) {
     </section>
   );
 }
+
+export default function ContactsView({ inquiryBookings = [], openBookingDetail }) {
+    const [shouldRenderContacts, setShouldRenderContacts] = useState(false);
+
+    useEffect(() => {
+      setShouldRenderContacts(false);
+
+      let firstFrameId = 0;
+      let secondFrameId = 0;
+      let loadingTimerId = 0;
+
+      firstFrameId = window.requestAnimationFrame(() => {
+        secondFrameId = window.requestAnimationFrame(() => {
+          loadingTimerId = window.setTimeout(() => {
+            setShouldRenderContacts(true);
+          }, CONTACTS_RENDER_LOADING_MS);
+        });
+      });
+
+      return () => {
+        window.cancelAnimationFrame(firstFrameId);
+
+        if (secondFrameId) {
+          window.cancelAnimationFrame(secondFrameId);
+        }
+
+        if (loadingTimerId) {
+          window.clearTimeout(loadingTimerId);
+        }
+      };
+    }, [inquiryBookings.length]);
+
+    if (!shouldRenderContacts) {
+      return (
+        <ContactsViewLoadingScreen bookingRowCount={inquiryBookings.length} />
+      );
+    }
+
+    return (
+      <ContactsViewContent
+        inquiryBookings={inquiryBookings}
+        openBookingDetail={openBookingDetail}
+      />
+    );
+  }
