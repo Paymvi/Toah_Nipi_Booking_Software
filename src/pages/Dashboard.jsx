@@ -112,13 +112,15 @@ import BookingChecklists, {
 
 
 import CalendarView from "../pages/CalendarView";
-import SpreadsheetView from "../pages/SpreadsheetView";
+import SpreadsheetView, { SpreadsheetViewLoadingScreen } from "../pages/SpreadsheetView";
 import ContactsView from "../pages/ContactsView";
 import InquiryPipelineView, {
   getInquiryPipelineColumnKey,
 } from "../pages/InquiryPipeline";
 import ReportsView from "../pages/ReportsView";
 
+const SPREADSHEET_VIEW_NAME = "Spreadsheet View";
+const SPREADSHEET_REVEAL_LOADING_MS = 160;
 
 
 
@@ -4040,7 +4042,12 @@ export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [activeView, setActiveView] = useState("Dashboard");
   const [hasOpenedSpreadsheetView, setHasOpenedSpreadsheetView] = useState(false);
+  const [isSpreadsheetRevealLoading, setIsSpreadsheetRevealLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const spreadsheetRevealTimerRef = useRef(null);
+  const spreadsheetRevealFrameRef = useRef(0);
+  const spreadsheetRevealSecondFrameRef = useRef(0);
 
   const [staffUsers, setStaffUsers] = useState(() => getSavedStaffUsers());
 
@@ -4105,6 +4112,47 @@ export default function Dashboard() {
       [settingName]: value,
     }));
   };
+  
+  function clearSpreadsheetRevealTimers() {
+    if (spreadsheetRevealTimerRef.current) {
+      window.clearTimeout(spreadsheetRevealTimerRef.current);
+      spreadsheetRevealTimerRef.current = null;
+    }
+
+    if (spreadsheetRevealFrameRef.current) {
+      window.cancelAnimationFrame(spreadsheetRevealFrameRef.current);
+      spreadsheetRevealFrameRef.current = 0;
+    }
+
+    if (spreadsheetRevealSecondFrameRef.current) {
+      window.cancelAnimationFrame(spreadsheetRevealSecondFrameRef.current);
+      spreadsheetRevealSecondFrameRef.current = 0;
+    }
+  }
+
+  function openDashboardView(nextView) {
+    clearSpreadsheetRevealTimers();
+
+    setSelectedBooking(null);
+    setBookingDetailTab("Overview");
+    setActiveView(nextView);
+
+    if (nextView !== SPREADSHEET_VIEW_NAME) {
+      setIsSpreadsheetRevealLoading(false);
+      return;
+    }
+
+    setHasOpenedSpreadsheetView(true);
+    setIsSpreadsheetRevealLoading(true);
+
+    spreadsheetRevealFrameRef.current = window.requestAnimationFrame(() => {
+      spreadsheetRevealSecondFrameRef.current = window.requestAnimationFrame(() => {
+        spreadsheetRevealTimerRef.current = window.setTimeout(() => {
+          setIsSpreadsheetRevealLoading(false);
+        }, SPREADSHEET_REVEAL_LOADING_MS);
+      });
+    });
+  }
 
   const refreshInquiries = () => {
     setPublicInquiries(getSavedInquiries());
@@ -4545,6 +4593,12 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
+    return () => {
+      clearSpreadsheetRevealTimers();
+    };
+  }, []);
+
+  useEffect(() => {
     const handleStorageChange = () => {
       refreshInquiries();
     };
@@ -4856,8 +4910,21 @@ const getCalendarEventColor = (status) => {
   };
 
   const handleActiveViewChange = (nextView) => {
-    if (nextView === "Spreadsheet View") {
+    clearSpreadsheetRevealTimers();
+
+    if (nextView === SPREADSHEET_VIEW_NAME) {
       setHasOpenedSpreadsheetView(true);
+      setIsSpreadsheetRevealLoading(true);
+
+      spreadsheetRevealFrameRef.current = window.requestAnimationFrame(() => {
+        spreadsheetRevealSecondFrameRef.current = window.requestAnimationFrame(() => {
+          spreadsheetRevealTimerRef.current = window.setTimeout(() => {
+            setIsSpreadsheetRevealLoading(false);
+          }, SPREADSHEET_REVEAL_LOADING_MS);
+        });
+      });
+    } else {
+      setIsSpreadsheetRevealLoading(false);
     }
 
     if (nextView !== "Form") {
@@ -4866,7 +4933,6 @@ const getCalendarEventColor = (status) => {
 
     setActiveView(nextView);
   };
-
 
   const openBookingDetail = (booking) => {
     setSelectedBooking(booking);
@@ -4958,6 +5024,7 @@ const getCalendarEventColor = (status) => {
                   title={item.label}
                   onClick={() => {
                     setSelectedBooking(null);
+                    setBookingDetailTab("Overview");
                     handleActiveViewChange(item.label);
                   }}
                 >
@@ -5018,13 +5085,21 @@ const getCalendarEventColor = (status) => {
           </>
         )}
 
+        {activeView === SPREADSHEET_VIEW_NAME && isSpreadsheetRevealLoading && (
+          <SpreadsheetViewLoadingScreen rowCount={inquiryBookings.length} />
+        )}
+
 
         {hasOpenedSpreadsheetView && (
           <section
             className={`dashboard-keepalive-view ${
-              activeView === "Spreadsheet View" ? "dashboard-keepalive-view-active" : ""
+              activeView === SPREADSHEET_VIEW_NAME && !isSpreadsheetRevealLoading
+                ? "dashboard-keepalive-view-active"
+                : ""
             }`}
-            aria-hidden={activeView !== "Spreadsheet View"}
+            aria-hidden={
+              activeView !== SPREADSHEET_VIEW_NAME || isSpreadsheetRevealLoading
+            }
           >
             <SpreadsheetView
               inquiryBookings={inquiryBookings}
@@ -5066,7 +5141,7 @@ const getCalendarEventColor = (status) => {
             goToNextMonth={goToNextMonth}
             getCalendarEventColor={getCalendarEventColor}
           />
-        ) : activeView === "Spreadsheet View" ? null : activeView === "Contacts View" ? (
+        ) : activeView === SPREADSHEET_VIEW_NAME ? null : activeView === "Contacts View" ? (
           <ContactsView
             inquiryBookings={inquiryBookings}
             openBookingDetail={openBookingDetail}

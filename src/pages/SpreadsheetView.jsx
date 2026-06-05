@@ -2564,7 +2564,7 @@ function SpreadsheetSettingsModal({
   );
 }
 
-function SpreadsheetViewLoadingScreen({ rowCount }) {
+export function SpreadsheetViewLoadingScreen({ rowCount }) {
   return (
     <section className="spreadsheet-view-page">
       <article className="dashboard-card spreadsheet-view-card spreadsheet-loading-card">
