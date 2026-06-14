@@ -694,6 +694,20 @@ function normalizeInquiry(inquiry, index) {
     reasonForCancellation: inquiry.reasonForCancellation || "",
     vacancyFilled: inquiry.vacancyFilled || "",
     monthlyProjectedIncome: inquiry.monthlyProjectedIncome || "",
+
+    archiveAddress: inquiry.archiveAddress || "",
+    archiveCity: inquiry.archiveCity || "",
+    archiveState: inquiry.archiveState || "",
+    archiveZip: inquiry.archiveZip || "",
+    archiveGuestGroup: inquiry.archiveGuestGroup || "",
+    archiveVisitDate: inquiry.archiveVisitDate || "",
+    archiveAllPriorVisitDates: inquiry.archiveAllPriorVisitDates || "",
+    archiveVisitCount: inquiry.archiveVisitCount || "",
+    archiveSourcePdfLink: inquiry.archiveSourcePdfLink || "",
+    archivePriorVisitLinks: Array.isArray(inquiry.archivePriorVisitLinks)
+      ? inquiry.archivePriorVisitLinks
+      : [],
+    archiveConfidence: inquiry.archiveConfidence || null,
   };
 }
 
@@ -1335,6 +1349,205 @@ function normalize2027InquirySpreadsheetRow(row, index) {
   };
 }
 
+const ARCHIVE_PRIOR_VISIT_LINK_COLUMNS = Array.from(
+  { length: 11 },
+  (_, index) => `Prior_Visit_${index + 1}_Link`
+);
+
+const ARCHIVE_EXPECTED_COLUMNS = [
+  "Organization",
+  "Organization_Confident",
+  "First Name",
+  "First_Name_Confident",
+  "Last Name",
+  "Last_Name_Confident",
+  "Address",
+  "Address_Confident",
+  "City",
+  "City_Confident",
+  "State",
+  "State_Confident",
+  "Zip",
+  "Zip_Confident",
+  "Email",
+  "Email_Confident",
+  "Phone Number",
+  "Phone_Number_Confident",
+  "Visit Date",
+  "Visit_Date_Confident",
+  "Guest Group",
+  "Guest_Group_Confident",
+  "All Prior Visit Dates",
+  "All_Prior_Visit_Dates_Confident",
+  "Notes",
+  "Notes_Confident",
+  "Visit Count",
+  "Visit_Count_Confident",
+  "Source_PDF_Link",
+  ...ARCHIVE_PRIOR_VISIT_LINK_COLUMNS,
+];
+
+function normalizeArchiveSpreadsheetRow(row, index) {
+  const organization = readSpreadsheetCell(row, ["Organization"]);
+  const firstName = readSpreadsheetCell(row, ["First Name"]);
+  const lastName = readSpreadsheetCell(row, ["Last Name"]);
+  const address = readSpreadsheetCell(row, ["Address"]);
+  const city = readSpreadsheetCell(row, ["City"]);
+  const state = readSpreadsheetCell(row, ["State"]);
+  const zip = readSpreadsheetCell(row, ["Zip"]);
+  const email = readSpreadsheetCell(row, ["Email"]);
+  const phone = readSpreadsheetCell(row, ["Phone Number", "Phone"]);
+  const visitDate = readSpreadsheetCell(row, ["Visit Date"]);
+  const guestGroup = readSpreadsheetCell(row, ["Guest Group"]);
+  const allPriorVisitDates = readSpreadsheetCell(row, [
+    "All Prior Visit Dates",
+  ]);
+  const notes = readSpreadsheetCell(row, ["Notes"]);
+  const visitCount = readSpreadsheetCell(row, ["Visit Count"]);
+  const sourcePdfLink = readSpreadsheetCell(row, ["Source_PDF_Link"]);
+
+  const priorVisitLinks = ARCHIVE_PRIOR_VISIT_LINK_COLUMNS.map((columnName) =>
+    readSpreadsheetCell(row, [columnName])
+  )
+    .map((link) => String(link || "").trim())
+    .filter(Boolean);
+
+  const rowHasData =
+    organization ||
+    firstName ||
+    lastName ||
+    address ||
+    city ||
+    state ||
+    zip ||
+    email ||
+    phone ||
+    visitDate ||
+    guestGroup ||
+    allPriorVisitDates ||
+    notes ||
+    visitCount ||
+    sourcePdfLink ||
+    priorVisitLinks.length > 0;
+
+  if (!rowHasData) {
+    return null;
+  }
+
+  const formattedVisitDate = formatExcelDateValue(visitDate);
+  const contactName = [firstName, lastName]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .join(" ");
+
+  const archiveNotes = [
+    notes ? String(notes).trim() : "",
+    allPriorVisitDates
+      ? `All prior visit dates: ${allPriorVisitDates}`
+      : "",
+    visitCount ? `Visit count: ${visitCount}` : "",
+    sourcePdfLink ? `Source PDF: ${sourcePdfLink}` : "",
+    priorVisitLinks.length > 0
+      ? `Prior visit links:\n${priorVisitLinks.join("\n")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return {
+    id: `archive-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
+    sourceType: "Archive",
+    detectedImportType: "Archive",
+    sourceSheet: row.sourceSheet || "",
+    sourceRowNumber: row.sourceRowNumber || "",
+    rawSpreadsheetData: row,
+    submittedAt: new Date().toISOString(),
+
+    organizationName:
+      String(organization || guestGroup || "").trim() ||
+      "Unnamed Archive Record",
+
+    name: contactName,
+    firstName: String(firstName || "").trim(),
+    lastName: String(lastName || "").trim(),
+    contactName: contactName || "No contact name",
+
+    email: String(email || "").trim(),
+    phone: String(phone || "").trim(),
+
+    startDate: formattedVisitDate,
+    endDate: formattedVisitDate,
+    desiredDatesText:
+      formattedVisitDate || String(visitDate || "").trim() || "",
+
+    attendeeCount: "",
+    groupSize: "",
+    retreatType: "Archive",
+
+    roomName: "Unassigned",
+    buildingsRooms: "",
+
+    notes: archiveNotes,
+    message: archiveNotes,
+
+    waitlist: "No",
+    status: "Archived Visit",
+    promoCode: "",
+
+    archiveAddress: String(address || "").trim(),
+    archiveCity: String(city || "").trim(),
+    archiveState: String(state || "").trim(),
+    archiveZip: String(zip || "").trim(),
+    archiveGuestGroup: String(guestGroup || "").trim(),
+    archiveVisitDate: formattedVisitDate,
+    archiveAllPriorVisitDates: String(allPriorVisitDates || "").trim(),
+    archiveVisitCount: String(visitCount || "").trim(),
+    archiveSourcePdfLink: String(sourcePdfLink || "").trim(),
+    archivePriorVisitLinks: priorVisitLinks,
+
+    archiveConfidence: {
+      organization: String(
+        readSpreadsheetCell(row, ["Organization_Confident"]) || ""
+      ).trim(),
+      firstName: String(
+        readSpreadsheetCell(row, ["First_Name_Confident"]) || ""
+      ).trim(),
+      lastName: String(
+        readSpreadsheetCell(row, ["Last_Name_Confident"]) || ""
+      ).trim(),
+      address: String(
+        readSpreadsheetCell(row, ["Address_Confident"]) || ""
+      ).trim(),
+      city: String(readSpreadsheetCell(row, ["City_Confident"]) || "").trim(),
+      state: String(
+        readSpreadsheetCell(row, ["State_Confident"]) || ""
+      ).trim(),
+      zip: String(readSpreadsheetCell(row, ["Zip_Confident"]) || "").trim(),
+      email: String(
+        readSpreadsheetCell(row, ["Email_Confident"]) || ""
+      ).trim(),
+      phone: String(
+        readSpreadsheetCell(row, ["Phone_Number_Confident"]) || ""
+      ).trim(),
+      visitDate: String(
+        readSpreadsheetCell(row, ["Visit_Date_Confident"]) || ""
+      ).trim(),
+      guestGroup: String(
+        readSpreadsheetCell(row, ["Guest_Group_Confident"]) || ""
+      ).trim(),
+      allPriorVisitDates: String(
+        readSpreadsheetCell(row, ["All_Prior_Visit_Dates_Confident"]) || ""
+      ).trim(),
+      notes: String(
+        readSpreadsheetCell(row, ["Notes_Confident"]) || ""
+      ).trim(),
+      visitCount: String(
+        readSpreadsheetCell(row, ["Visit_Count_Confident"]) || ""
+      ).trim(),
+    },
+  };
+}
+
 
 function normalizeGenericSpreadsheetRow(row, index) {
   if (!rowHasAnyData(row)) {
@@ -1477,6 +1690,10 @@ function normalizeEverythingSpreadsheetRow(row, index) {
 
   if (detectedType === "Waitlist") {
     return normalizeWaitlistSpreadsheetRow(row, index);
+  }
+
+  if (detectedType === "Archive") {
+    return normalizeArchiveSpreadsheetRow(row, index);
   }
 
   if (detectedType === "2027 Inquiry") {
@@ -4086,7 +4303,7 @@ export default function Dashboard() {
   const waitlistFileInputRef = useRef(null);
   const masterFileInputRef = useRef(null);
   const staffContactsFileInputRef = useRef(null);
-
+  const archiveFileInputRef = useRef(null);
 
   const master2026FileInputRef = useRef(null);
   const inquiry2027FileInputRef = useRef(null);
@@ -4423,7 +4640,11 @@ export default function Dashboard() {
       );
     } catch (error) {
       console.error(`Could not import ${importTypeLabel} spreadsheet:`, error);
-      alert(`Sorry, that ${importTypeLabel} spreadsheet could not be imported.`);
+
+      alert(
+        `Sorry, that ${importTypeLabel} spreadsheet could not be imported.\n\n` +
+          `Error: ${error?.message || String(error)}`
+      );
     } finally {
       event.target.value = "";
     }
@@ -4445,6 +4666,15 @@ export default function Dashboard() {
         "Additional Notes",
         "Waitlist or No",
       ],
+    });
+  };
+
+  const handleImportArchiveSpreadsheet = (event) => {
+    importSpreadsheet({
+      event,
+      importTypeLabel: "archive",
+      normalizeRow: normalizeArchiveSpreadsheetRow,
+      expectedColumns: ARCHIVE_EXPECTED_COLUMNS,
     });
   };
 
@@ -4545,6 +4775,16 @@ export default function Dashboard() {
       return;
     }
 
+    const fileName = String(file.name || "").toLowerCase();
+
+    if (!fileName.endsWith(".xlsx")) {
+      alert(
+        "Please upload a .xlsx file. Older .xls files, PDFs, Word documents, and CSV files cannot be imported here yet."
+      );
+      event.target.value = "";
+      return;
+    }
+
     try {
       const fileData = await file.arrayBuffer();
 
@@ -4587,14 +4827,15 @@ export default function Dashboard() {
           return;
         }
 
-      const sheetCounts = {
-        Waitlist: 0,
-        Master: 0,
-        "Master 2026": 0,
-        "2027 Inquiry": 0,
-        Generic: 0,
-        skipped: 0,
-      };
+        const sheetCounts = {
+          Waitlist: 0,
+          Archive: 0,
+          Master: 0,
+          "Master 2026": 0,
+          "2027 Inquiry": 0,
+          Generic: 0,
+          skipped: 0,
+        };
 
         spreadsheetRows.forEach((row, index) => {
           const detectedType = detectSpreadsheetRowType(row);
@@ -4619,8 +4860,9 @@ export default function Dashboard() {
         });
 
         sheetSummaries.push(
-          `${worksheet.name}: ${spreadsheetRows.length} row(s) found, ${sheetCounts.Waitlist} waitlist, ${sheetCounts.Master} master, ${sheetCounts["Master 2026"]} master 2026, ${sheetCounts["2027 Inquiry"]} 2027 inquiries, ${sheetCounts.Generic} generic`
+          `${worksheet.name}: ${spreadsheetRows.length} row(s) found, ${sheetCounts.Waitlist} waitlist, ${sheetCounts.Archive} archive, ${sheetCounts.Master} master, ${sheetCounts["Master 2026"]} master 2026, ${sheetCounts["2027 Inquiry"]} 2027 inquiries, ${sheetCounts.Generic} generic`
         );
+
       });
 
       if (allImportedRows.length === 0) {
@@ -4807,6 +5049,11 @@ export default function Dashboard() {
   const openWaitlistImportPicker = () => {
     setIsImportMenuOpen(false);
     waitlistFileInputRef.current?.click();
+  };
+
+  const openArchiveImportPicker = () => {
+    setIsImportMenuOpen(false);
+    archiveFileInputRef.current?.click();
   };
 
   const openMasterImportPicker = () => {
@@ -5317,6 +5564,9 @@ const getCalendarEventColor = (status) => {
               deleteAllInquiries={deleteAllInquiries}
               handleImportStaffContactsSpreadsheet={handleImportStaffContactsSpreadsheet}
               openStaffContactsImportPicker={openStaffContactsImportPicker}
+              archiveFileInputRef={archiveFileInputRef}
+              handleImportArchiveSpreadsheet={handleImportArchiveSpreadsheet}
+              openArchiveImportPicker={openArchiveImportPicker}
             />
 
             <DashboardBackups

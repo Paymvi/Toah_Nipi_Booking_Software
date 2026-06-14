@@ -2536,7 +2536,6 @@ textarea {
 
 /* =========================================================
    FIX: stop dashboard sections from hanging off the screen
-   Paste this at the VERY BOTTOM of the CSS file
 ========================================================= */
 
 html,
@@ -7460,7 +7459,6 @@ body,
 
 /* =========================================================
    FINAL OVERRIDE: Dated Inquiries Legend Shape Fix
-   Keep this at the very bottom of App.css
 ========================================================= */
 
 .dated-inquiries-type-legend-pill {
@@ -17056,7 +17054,6 @@ body,
 
 /* =========================================================
    FINAL OVERRIDE: Revenue Source Confidence Polish
-   Must stay at the very bottom of App.css
 ========================================================= */
 
 .reports-panel {
