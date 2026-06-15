@@ -39,6 +39,13 @@ import {
   FaStar,
 } from "react-icons/fa";
 
+import {
+  fetchBookings,
+  upsertBooking,
+  upsertBookings,
+  deleteAllBookings,
+} from "../services/bookingService";
+
 import ExcelJS from "exceljs";
 import BookingHousingTab from "../components/BookingHousingTab";
 import DashboardTopbar from "../components/DashboardTopbar";
@@ -4374,9 +4381,8 @@ export default function Dashboard() {
     getSavedDashboardFilterValue(DATED_INQUIRY_CUSTOM_END_STORAGE_KEY, "")
   );
 
-  const [publicInquiries, setPublicInquiries] = useState(() =>
-    getSavedInquiries()
-  );
+  const [publicInquiries, setPublicInquiries] = useState([]);
+  const [isBookingsLoading, setIsBookingsLoading] = useState(false);
 
   const updateDatedInquirySetting = (settingName, value) => {
     setDatedInquirySettings((currentSettings) => ({
@@ -4384,6 +4390,25 @@ export default function Dashboard() {
       [settingName]: value,
     }));
   };
+
+  async function loadBookingsFromSupabase() {
+    try {
+      setIsBookingsLoading(true);
+
+      const bookings = await fetchBookings();
+
+      setPublicInquiries(bookings);
+    } catch (error) {
+      console.error("Could not load bookings from Supabase:", error);
+      alert("Could not load bookings from Supabase. Check the console.");
+    } finally {
+      setIsBookingsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadBookingsFromSupabase();
+  }, []);
   
   function clearSpreadsheetRevealTimers() {
     if (spreadsheetRevealTimerRef.current) {
@@ -4427,10 +4452,10 @@ export default function Dashboard() {
   }
 
   const refreshInquiries = () => {
-    setPublicInquiries(getSavedInquiries());
+    loadBookingsFromSupabase();
   };
 
-  const deleteAllInquiries = () => {
+  const deleteAllInquiries = async () => {
     const confirmed = window.confirm(
       "Are you sure you want to delete all inquiries and imported bookings? This cannot be undone."
     );
@@ -4439,109 +4464,47 @@ export default function Dashboard() {
       return;
     }
 
-    localStorage.removeItem("toahNipiPublicInquiries");
-    setPublicInquiries([]);
+    try {
+      await deleteAllBookings();
+
+      setPublicInquiries([]);
+      setSelectedBooking(null);
+      setActiveView("Dashboard");
+    } catch (error) {
+      console.error("Could not delete bookings from Supabase:", error);
+      alert("Could not delete bookings from Supabase. Check the console.");
+    }
   };
 
 
-  const saveBookingEdits = (updatedBooking) => {
-    const updatedAt = new Date().toISOString();
-    let didUpdateExistingBooking = false;
-
-    const nextInquiries = publicInquiries.map((inquiry, index) => {
-      const normalizedInquiry = normalizeInquiry(inquiry, index);
-
-      if (normalizedInquiry.id !== updatedBooking.id) {
-        return inquiry;
-      }
-
-      didUpdateExistingBooking = true;
-
-      return {
-        ...inquiry,
+  const saveBookingEdits = async (updatedBooking) => {
+    try {
+      const bookingToSave = {
         ...updatedBooking,
-
-        id: updatedBooking.id,
-
-        organizationName: updatedBooking.organizationName,
-
-        contactName: updatedBooking.contactName,
-        name: updatedBooking.contactName,
-
-        firstName: "",
-        lastName: "",
-
-        email: updatedBooking.email,
-        phone: updatedBooking.phone,
-
-        startDate: updatedBooking.startDate,
-        endDate: updatedBooking.endDate,
-        desiredDatesText: updatedBooking.desiredDatesText,
-        desiredDates: updatedBooking.desiredDatesText,
-
-        attendeeCount: updatedBooking.attendeeCount,
-        groupSize: updatedBooking.attendeeCount,
-
-        retreatType: updatedBooking.retreatType,
-        status: updatedBooking.status,
-        waitlist: updatedBooking.waitlist,
-
-        roomName: updatedBooking.roomName,
-        buildingsRooms: updatedBooking.buildingsRooms,
-
-        meals: updatedBooking.meals,
-        foodAllergies: updatedBooking.foodAllergies,
-        needToKnow: updatedBooking.needToKnow,
-        linenSets: updatedBooking.linenSets,
-        activities: updatedBooking.activities,
-
-        programLogisticsAssignments: Array.isArray(
-          updatedBooking.programLogisticsAssignments
-        )
-          ? updatedBooking.programLogisticsAssignments
-          : [],
-
-        persons: updatedBooking.persons,
-        nights: updatedBooking.nights,
-        mealCount: updatedBooking.mealCount,
-        camperDays: updatedBooking.camperDays,
-
-        usageFee: updatedBooking.usageFee,
-        lodgingCost: updatedBooking.lodgingCost,
-        foodCost: updatedBooking.foodCost,
-        miscCost: updatedBooking.miscCost,
-
-        notes: updatedBooking.notes,
-        message: updatedBooking.notes,
-
-        checklists: Array.isArray(updatedBooking.checklists)
-          ? updatedBooking.checklists
-          : null,
-
-        updatedAt,
+        updatedAt: new Date().toISOString(),
       };
-    });
 
-    const inquiriesToSave = didUpdateExistingBooking
-      ? nextInquiries
-      : [
-          ...publicInquiries,
-          {
-            ...updatedBooking,
-            updatedAt,
-          },
-        ];
+      const savedBooking = await upsertBooking(bookingToSave);
 
-    localStorage.setItem(
-      "toahNipiPublicInquiries",
-      JSON.stringify(inquiriesToSave)
-    );
+      setPublicInquiries((currentInquiries) => {
+        const existingIndex = currentInquiries.findIndex(
+          (inquiry) => inquiry.id === savedBooking.id
+        );
 
-    setPublicInquiries(inquiriesToSave);
-    setSelectedBooking({
-      ...updatedBooking,
-      updatedAt,
-    });
+        if (existingIndex === -1) {
+          return [...currentInquiries, savedBooking];
+        }
+
+        return currentInquiries.map((inquiry) =>
+          inquiry.id === savedBooking.id ? savedBooking : inquiry
+        );
+      });
+
+      setSelectedBooking(savedBooking);
+    } catch (error) {
+      console.error("Could not save booking to Supabase:", error);
+      alert("Could not save booking to Supabase. Check the console.");
+    }
   };
 
   const importSpreadsheet = async ({
