@@ -4584,14 +4584,21 @@ export default function Dashboard() {
         return;
       }
 
-      const nextInquiries = [...publicInquiries, ...allImportedRows];
+      const savedRows = await upsertBookings(allImportedRows);
 
-      localStorage.setItem(
-        "toahNipiPublicInquiries",
-        JSON.stringify(nextInquiries)
-      );
+      setPublicInquiries((currentInquiries) => {
+        const byId = new Map();
 
-      setPublicInquiries(nextInquiries);
+        currentInquiries.forEach((booking) => {
+          byId.set(booking.id, booking);
+        });
+
+        savedRows.forEach((booking) => {
+          byId.set(booking.id, booking);
+        });
+
+        return Array.from(byId.values());
+      });
 
       const skippedMessage =
         skippedSheets.length > 0
@@ -4835,14 +4842,21 @@ export default function Dashboard() {
         return;
       }
 
-      const nextInquiries = [...publicInquiries, ...allImportedRows];
+      const savedRows = await upsertBookings(allImportedRows);
 
-      localStorage.setItem(
-        "toahNipiPublicInquiries",
-        JSON.stringify(nextInquiries)
-      );
+      setPublicInquiries((currentInquiries) => {
+        const byId = new Map();
 
-      setPublicInquiries(nextInquiries);
+        currentInquiries.forEach((booking) => {
+          byId.set(booking.id, booking);
+        });
+
+        savedRows.forEach((booking) => {
+          byId.set(booking.id, booking);
+        });
+
+        return Array.from(byId.values());
+      });
 
       if (allImportedStaffContacts.length > 0) {
         const nextUsers = [...staffUsers];
@@ -5380,7 +5394,7 @@ const getCalendarEventColor = (status) => {
     }
 
     if (nextView !== "Form") {
-      setPublicInquiries(getSavedInquiries());
+      loadBookingsFromSupabase();
     }
 
     setActiveView(nextView);
