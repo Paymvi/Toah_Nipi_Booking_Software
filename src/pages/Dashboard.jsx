@@ -55,6 +55,8 @@ import DashboardBackups from "../components/DashboardBackups";
 
 import CreateBooking from "../pages/CreateBooking";
 
+import StaffSignOutButton from "../components/StaffSignOutButton";
+
 import {
   monthNames,
   sidebarSections,
@@ -5435,6 +5437,10 @@ const getCalendarEventColor = (status) => {
           >
             {isSidebarCollapsed ? <FaChevronRight /> : <FaChevronLeft />}
           </button>
+        </div>
+
+        <div className="dashboard-sidebar-signout">
+          <StaffSignOutButton />
         </div>
 
         <div className="sidebar-section sidebar-main-section">
