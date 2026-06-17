@@ -133,6 +133,46 @@ export function getWorksheetHeaderInfo(worksheet) {
     "Date of Cancellation",
     "Reason for Cancellation",
     "Vacancy filled by another group?",
+
+        "Organization",
+    "Organization_Confident",
+    "First Name",
+    "First_Name_Confident",
+    "Last Name",
+    "Last_Name_Confident",
+    "Address",
+    "Address_Confident",
+    "City",
+    "City_Confident",
+    "State",
+    "State_Confident",
+    "Zip",
+    "Zip_Confident",
+    "Email",
+    "Email_Confident",
+    "Phone Number",
+    "Phone_Number_Confident",
+    "Visit Date",
+    "Visit_Date_Confident",
+    "Guest Group",
+    "Guest_Group_Confident",
+    "All Prior Visit Dates",
+    "All_Prior_Visit_Dates_Confident",
+    "Notes_Confident",
+    "Visit Count",
+    "Visit_Count_Confident",
+    "Source_PDF_Link",
+    "Prior_Visit_1_Link",
+    "Prior_Visit_2_Link",
+    "Prior_Visit_3_Link",
+    "Prior_Visit_4_Link",
+    "Prior_Visit_5_Link",
+    "Prior_Visit_6_Link",
+    "Prior_Visit_7_Link",
+    "Prior_Visit_8_Link",
+    "Prior_Visit_9_Link",
+    "Prior_Visit_10_Link",
+    "Prior_Visit_11_Link",
   ];
 
   const knownHeaderSet = new Set(
@@ -236,6 +276,21 @@ export function detectSpreadsheetRowType(row) {
   const rowColumnNames = new Set(
     Object.keys(row || {}).map((key) => String(key).trim().toLowerCase())
   );
+
+  const looksLikeArchive =
+    readSpreadsheetCell(row, ["Source_PDF_Link"]) ||
+    readSpreadsheetCell(row, ["All Prior Visit Dates"]) ||
+    readSpreadsheetCell(row, ["Visit Count"]) ||
+    readSpreadsheetCell(row, ["Organization_Confident"]) ||
+    readSpreadsheetCell(row, ["Visit_Date_Confident"]) ||
+    (
+      readSpreadsheetCell(row, ["Guest Group"]) &&
+      readSpreadsheetCell(row, ["Visit Date"])
+    );
+
+  if (looksLikeArchive) {
+    return "Archive";
+  }
 
   const hasColumn = (columnName) =>
     rowColumnNames.has(String(columnName).trim().toLowerCase());

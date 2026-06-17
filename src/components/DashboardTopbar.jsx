@@ -31,6 +31,7 @@ import {
   FaTable,
   FaRegCalendarCheck,
   FaUsers,
+  FaArchive,
 } from "react-icons/fa";
 
 export default function DashboardTopbar({
@@ -39,6 +40,7 @@ export default function DashboardTopbar({
   masterFileInputRef,
   master2026FileInputRef,
   staffContactsFileInputRef,
+  archiveFileInputRef,
   importEverythingFileInputRef,
   importDropdownRef,
   isImportMenuOpen,
@@ -59,6 +61,8 @@ export default function DashboardTopbar({
   inquiry2027FileInputRef,
   handleImport2027InquirySpreadsheet,
   open2027InquiryImportPicker,
+  handleImportArchiveSpreadsheet,
+  openArchiveImportPicker,
 }) {
   return (
     <header className="dashboard-topbar">
@@ -123,6 +127,14 @@ export default function DashboardTopbar({
           onChange={handleImport2027InquirySpreadsheet}
         />
 
+        <input
+          className="dashboard-file-input"
+          ref={archiveFileInputRef}
+          type="file"
+          accept=".xlsx"
+          onChange={handleImportArchiveSpreadsheet}
+        />
+
         {/* Import dropdown menu */}
         <div className="import-dropdown" ref={importDropdownRef}>
           <button
@@ -180,11 +192,27 @@ export default function DashboardTopbar({
                 </span>
               </button>
 
-              <button type="button" onClick={open2027InquiryImportPicker}>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={open2027InquiryImportPicker}
+              >
                 <FaTable />
                 <span>
                   <strong>Import 2027 Inquiries</strong>
                   <small>Use the 2027 inquiry spreadsheet format</small>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={openArchiveImportPicker}
+              >
+                <FaArchive />
+                <span>
+                  <strong>Import Archives</strong>
+                  <small>Upload historical PDF archive export</small>
                 </span>
               </button>
 
@@ -199,6 +227,8 @@ export default function DashboardTopbar({
                   <small>Use the Staff_Contacts sheet</small>
                 </span>
               </button>
+
+              
 
               {/* Opens the hidden flexible import file input */}
               <button

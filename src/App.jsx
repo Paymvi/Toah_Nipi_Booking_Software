@@ -1,10 +1,11 @@
-import { useState } from "react";
 import "./App.css";
-import CreateBooking from "./pages/CreateBooking";
 import Dashboard from "./pages/Dashboard";
+import StaffAuthGate from "./auth/StaffAuthGate";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState("form");
-
-  return <Dashboard />;
+  return (
+    <StaffAuthGate>
+      <Dashboard />
+    </StaffAuthGate>
+  );
 }

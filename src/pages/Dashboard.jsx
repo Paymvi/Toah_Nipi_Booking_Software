@@ -37,7 +37,17 @@ import {
   FaCheckCircle,
   FaRegStar,
   FaStar,
+  FaCopy,
+  FaExternalLinkAlt,
+  FaSyncAlt,
 } from "react-icons/fa";
+
+import {
+  fetchBookings,
+  upsertBooking,
+  upsertBookings,
+  deleteAllBookings,
+} from "../services/bookingService";
 
 import ExcelJS from "exceljs";
 import BookingHousingTab from "../components/BookingHousingTab";
@@ -47,6 +57,10 @@ import BookingCalendar from "../components/BookingCalendar";
 import DashboardBackups from "../components/DashboardBackups";
 
 import CreateBooking from "../pages/CreateBooking";
+
+import StaffSignOutButton from "../components/StaffSignOutButton";
+
+import { supabase } from "../lib/supabaseClient";
 
 import {
   monthNames,
@@ -694,6 +708,20 @@ function normalizeInquiry(inquiry, index) {
     reasonForCancellation: inquiry.reasonForCancellation || "",
     vacancyFilled: inquiry.vacancyFilled || "",
     monthlyProjectedIncome: inquiry.monthlyProjectedIncome || "",
+
+    archiveAddress: inquiry.archiveAddress || "",
+    archiveCity: inquiry.archiveCity || "",
+    archiveState: inquiry.archiveState || "",
+    archiveZip: inquiry.archiveZip || "",
+    archiveGuestGroup: inquiry.archiveGuestGroup || "",
+    archiveVisitDate: inquiry.archiveVisitDate || "",
+    archiveAllPriorVisitDates: inquiry.archiveAllPriorVisitDates || "",
+    archiveVisitCount: inquiry.archiveVisitCount || "",
+    archiveSourcePdfLink: inquiry.archiveSourcePdfLink || "",
+    archivePriorVisitLinks: Array.isArray(inquiry.archivePriorVisitLinks)
+      ? inquiry.archivePriorVisitLinks
+      : [],
+    archiveConfidence: inquiry.archiveConfidence || null,
   };
 }
 
@@ -1335,6 +1363,205 @@ function normalize2027InquirySpreadsheetRow(row, index) {
   };
 }
 
+const ARCHIVE_PRIOR_VISIT_LINK_COLUMNS = Array.from(
+  { length: 11 },
+  (_, index) => `Prior_Visit_${index + 1}_Link`
+);
+
+const ARCHIVE_EXPECTED_COLUMNS = [
+  "Organization",
+  "Organization_Confident",
+  "First Name",
+  "First_Name_Confident",
+  "Last Name",
+  "Last_Name_Confident",
+  "Address",
+  "Address_Confident",
+  "City",
+  "City_Confident",
+  "State",
+  "State_Confident",
+  "Zip",
+  "Zip_Confident",
+  "Email",
+  "Email_Confident",
+  "Phone Number",
+  "Phone_Number_Confident",
+  "Visit Date",
+  "Visit_Date_Confident",
+  "Guest Group",
+  "Guest_Group_Confident",
+  "All Prior Visit Dates",
+  "All_Prior_Visit_Dates_Confident",
+  "Notes",
+  "Notes_Confident",
+  "Visit Count",
+  "Visit_Count_Confident",
+  "Source_PDF_Link",
+  ...ARCHIVE_PRIOR_VISIT_LINK_COLUMNS,
+];
+
+function normalizeArchiveSpreadsheetRow(row, index) {
+  const organization = readSpreadsheetCell(row, ["Organization"]);
+  const firstName = readSpreadsheetCell(row, ["First Name"]);
+  const lastName = readSpreadsheetCell(row, ["Last Name"]);
+  const address = readSpreadsheetCell(row, ["Address"]);
+  const city = readSpreadsheetCell(row, ["City"]);
+  const state = readSpreadsheetCell(row, ["State"]);
+  const zip = readSpreadsheetCell(row, ["Zip"]);
+  const email = readSpreadsheetCell(row, ["Email"]);
+  const phone = readSpreadsheetCell(row, ["Phone Number", "Phone"]);
+  const visitDate = readSpreadsheetCell(row, ["Visit Date"]);
+  const guestGroup = readSpreadsheetCell(row, ["Guest Group"]);
+  const allPriorVisitDates = readSpreadsheetCell(row, [
+    "All Prior Visit Dates",
+  ]);
+  const notes = readSpreadsheetCell(row, ["Notes"]);
+  const visitCount = readSpreadsheetCell(row, ["Visit Count"]);
+  const sourcePdfLink = readSpreadsheetCell(row, ["Source_PDF_Link"]);
+
+  const priorVisitLinks = ARCHIVE_PRIOR_VISIT_LINK_COLUMNS.map((columnName) =>
+    readSpreadsheetCell(row, [columnName])
+  )
+    .map((link) => String(link || "").trim())
+    .filter(Boolean);
+
+  const rowHasData =
+    organization ||
+    firstName ||
+    lastName ||
+    address ||
+    city ||
+    state ||
+    zip ||
+    email ||
+    phone ||
+    visitDate ||
+    guestGroup ||
+    allPriorVisitDates ||
+    notes ||
+    visitCount ||
+    sourcePdfLink ||
+    priorVisitLinks.length > 0;
+
+  if (!rowHasData) {
+    return null;
+  }
+
+  const formattedVisitDate = formatExcelDateValue(visitDate);
+  const contactName = [firstName, lastName]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .join(" ");
+
+  const archiveNotes = [
+    notes ? String(notes).trim() : "",
+    allPriorVisitDates
+      ? `All prior visit dates: ${allPriorVisitDates}`
+      : "",
+    visitCount ? `Visit count: ${visitCount}` : "",
+    sourcePdfLink ? `Source PDF: ${sourcePdfLink}` : "",
+    priorVisitLinks.length > 0
+      ? `Prior visit links:\n${priorVisitLinks.join("\n")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return {
+    id: `archive-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
+    sourceType: "Archive",
+    detectedImportType: "Archive",
+    sourceSheet: row.sourceSheet || "",
+    sourceRowNumber: row.sourceRowNumber || "",
+    rawSpreadsheetData: row,
+    submittedAt: new Date().toISOString(),
+
+    organizationName:
+      String(organization || guestGroup || "").trim() ||
+      "Unnamed Archive Record",
+
+    name: contactName,
+    firstName: String(firstName || "").trim(),
+    lastName: String(lastName || "").trim(),
+    contactName: contactName || "No contact name",
+
+    email: String(email || "").trim(),
+    phone: String(phone || "").trim(),
+
+    startDate: formattedVisitDate,
+    endDate: formattedVisitDate,
+    desiredDatesText:
+      formattedVisitDate || String(visitDate || "").trim() || "",
+
+    attendeeCount: "",
+    groupSize: "",
+    retreatType: "Archive",
+
+    roomName: "Unassigned",
+    buildingsRooms: "",
+
+    notes: archiveNotes,
+    message: archiveNotes,
+
+    waitlist: "No",
+    status: "Archived Visit",
+    promoCode: "",
+
+    archiveAddress: String(address || "").trim(),
+    archiveCity: String(city || "").trim(),
+    archiveState: String(state || "").trim(),
+    archiveZip: String(zip || "").trim(),
+    archiveGuestGroup: String(guestGroup || "").trim(),
+    archiveVisitDate: formattedVisitDate,
+    archiveAllPriorVisitDates: String(allPriorVisitDates || "").trim(),
+    archiveVisitCount: String(visitCount || "").trim(),
+    archiveSourcePdfLink: String(sourcePdfLink || "").trim(),
+    archivePriorVisitLinks: priorVisitLinks,
+
+    archiveConfidence: {
+      organization: String(
+        readSpreadsheetCell(row, ["Organization_Confident"]) || ""
+      ).trim(),
+      firstName: String(
+        readSpreadsheetCell(row, ["First_Name_Confident"]) || ""
+      ).trim(),
+      lastName: String(
+        readSpreadsheetCell(row, ["Last_Name_Confident"]) || ""
+      ).trim(),
+      address: String(
+        readSpreadsheetCell(row, ["Address_Confident"]) || ""
+      ).trim(),
+      city: String(readSpreadsheetCell(row, ["City_Confident"]) || "").trim(),
+      state: String(
+        readSpreadsheetCell(row, ["State_Confident"]) || ""
+      ).trim(),
+      zip: String(readSpreadsheetCell(row, ["Zip_Confident"]) || "").trim(),
+      email: String(
+        readSpreadsheetCell(row, ["Email_Confident"]) || ""
+      ).trim(),
+      phone: String(
+        readSpreadsheetCell(row, ["Phone_Number_Confident"]) || ""
+      ).trim(),
+      visitDate: String(
+        readSpreadsheetCell(row, ["Visit_Date_Confident"]) || ""
+      ).trim(),
+      guestGroup: String(
+        readSpreadsheetCell(row, ["Guest_Group_Confident"]) || ""
+      ).trim(),
+      allPriorVisitDates: String(
+        readSpreadsheetCell(row, ["All_Prior_Visit_Dates_Confident"]) || ""
+      ).trim(),
+      notes: String(
+        readSpreadsheetCell(row, ["Notes_Confident"]) || ""
+      ).trim(),
+      visitCount: String(
+        readSpreadsheetCell(row, ["Visit_Count_Confident"]) || ""
+      ).trim(),
+    },
+  };
+}
+
 
 function normalizeGenericSpreadsheetRow(row, index) {
   if (!rowHasAnyData(row)) {
@@ -1477,6 +1704,10 @@ function normalizeEverythingSpreadsheetRow(row, index) {
 
   if (detectedType === "Waitlist") {
     return normalizeWaitlistSpreadsheetRow(row, index);
+  }
+
+  if (detectedType === "Archive") {
+    return normalizeArchiveSpreadsheetRow(row, index);
   }
 
   if (detectedType === "2027 Inquiry") {
@@ -4079,6 +4310,667 @@ function JobsView({
   );
 }
 
+function cleanPortalText(value, fallback = "") {
+  const text = String(value || "").trim();
+  return text || fallback;
+}
+
+function normalizePortalChecklistItem(item) {
+  return {
+    id: item.id,
+    itemId: item.item_id || "",
+    title: item.title || "Untitled item",
+    status: item.status || "notStarted",
+    required: Boolean(item.required),
+    dueDate: item.due_date || "",
+    guestAction: item.guest_action || "none",
+    uploadedFileName: item.uploaded_file_name || "",
+    lastChangedAt: item.last_changed_at || "",
+    sortOrder: item.sort_order || 0,
+  };
+}
+
+function normalizePortalDocument(document) {
+  return {
+    id: document.id,
+    title: document.title || "Untitled document",
+    documentType: document.document_type || "Document",
+    fileName: document.file_name || "",
+    status: document.status || "ready",
+    uploadedByGuest: Boolean(document.uploaded_by_guest),
+    lastChangedAt: document.last_changed_at || document.created_at || "",
+  };
+}
+
+function getPortalProgress(checklistItems = []) {
+  const total = checklistItems.length;
+
+  const completed = checklistItems.filter(
+    (item) => item.status === "completed"
+  ).length;
+
+  const needsReview = checklistItems.filter(
+    (item) => item.status === "needsReview"
+  ).length;
+
+  const waitingOnGuest = checklistItems.filter(
+    (item) => item.status === "waitingOnGuest"
+  ).length;
+
+  const notStarted = checklistItems.filter(
+    (item) => item.status === "notStarted"
+  ).length;
+
+  const open = waitingOnGuest + notStarted;
+
+  const percent =
+    total > 0 ? Math.round(((completed + needsReview) / total) * 100) : 0;
+
+  return {
+    total,
+    completed,
+    needsReview,
+    waitingOnGuest,
+    notStarted,
+    open,
+    percent,
+  };
+}
+
+function normalizePortalOverviewRecord(row) {
+  const checklistItems = Array.isArray(row.portal_checklist_items)
+    ? row.portal_checklist_items
+        .map(normalizePortalChecklistItem)
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+    : [];
+
+  const documents = Array.isArray(row.portal_documents)
+    ? row.portal_documents.map(normalizePortalDocument)
+    : [];
+
+  const progress = getPortalProgress(checklistItems);
+
+  const guestUploads = documents.filter(
+    (document) => document.uploadedByGuest
+  ).length;
+
+  return {
+    id: row.id,
+    portalToken: row.portal_token || "",
+
+    organizationName: cleanPortalText(row.organization_name, "Unnamed Organization"),
+    contactName: cleanPortalText(row.contact_name, "No contact name"),
+    email: row.email || "",
+
+    startDate: row.start_date || "",
+    endDate: row.end_date || "",
+    attendeeCount: row.attendee_count || "",
+    status: row.status || "Inquiry",
+    updatedAt: row.updated_at || "",
+
+    checklistItems,
+    documents,
+    progress,
+    guestUploads,
+  };
+}
+
+async function fetchPortalOverviewRecords() {
+  const { data, error } = await supabase
+    .from("bookings")
+    .select(`
+      id,
+      portal_token,
+      organization_name,
+      contact_name,
+      email,
+      start_date,
+      end_date,
+      attendee_count,
+      status,
+      updated_at,
+      portal_checklist_items (
+        id,
+        item_id,
+        title,
+        status,
+        required,
+        due_date,
+        guest_action,
+        uploaded_file_name,
+        last_changed_at,
+        sort_order
+      ),
+      portal_documents (
+        id,
+        title,
+        document_type,
+        file_name,
+        status,
+        uploaded_by_guest,
+        last_changed_at,
+        created_at
+      )
+    `)
+    .order("start_date", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return data.map(normalizePortalOverviewRecord);
+}
+
+function getPortalBaseUrl() {
+  return (
+    import.meta.env.VITE_GUEST_PORTAL_BASE_URL || "http://localhost:5173"
+  ).replace(/\/$/, "");
+}
+
+function buildPortalUrl(portalToken) {
+  if (!portalToken) {
+    return "";
+  }
+
+  return `${getPortalBaseUrl()}/?portal=${portalToken}`;
+}
+
+function getPortalStatusLabel(record) {
+  if (record.progress.total === 0) {
+    return "No Checklist";
+  }
+
+  if (record.progress.needsReview > 0) {
+    return "Needs Review";
+  }
+
+  if (record.progress.open > 0) {
+    return "Waiting on Guest";
+  }
+
+  return "Complete";
+}
+
+function getPortalStatusClass(record) {
+  if (record.progress.total === 0) {
+    return "no-checklist";
+  }
+
+  if (record.progress.needsReview > 0) {
+    return "needs-review";
+  }
+
+  if (record.progress.open > 0) {
+    return "waiting";
+  }
+
+  return "complete";
+}
+
+function PortalAdminSummaryCard({
+  icon: Icon,
+  label,
+  value,
+  helper,
+  tone = "default",
+}) {
+  return (
+    <article className={`portal-summary-tile portal-summary-tile-${tone}`}>
+      <span className="portal-summary-tile-icon">
+        <Icon />
+      </span>
+
+      <div>
+        <small>{label}</small>
+        <strong>{value}</strong>
+        {helper && <em>{helper}</em>}
+      </div>
+    </article>
+  );
+}
+
+function PortalAdminProgressBar({ percent }) {
+  return (
+    <div className="portal-admin-progress-track">
+      <div
+        className="portal-admin-progress-fill"
+        style={{ width: `${percent}%` }}
+      />
+    </div>
+  );
+}
+
+function PortalChecklistPreview({ items }) {
+  if (items.length === 0) {
+    return (
+      <div className="portal-checklist-preview-empty">
+        No portal checklist items yet.
+      </div>
+    );
+  }
+
+  return (
+    <div className="portal-checklist-preview">
+      {items.slice(0, 5).map((item) => (
+        <div
+          className={`portal-checklist-preview-row portal-item-${item.status}`}
+          key={item.id}
+        >
+          <span></span>
+
+          <div>
+            <strong>{item.title}</strong>
+            <small>
+              {item.status === "needsReview"
+                ? "Needs staff review"
+                : item.status === "waitingOnGuest"
+                  ? "Waiting on guest"
+                  : item.status === "completed"
+                    ? "Complete"
+                    : "Not started"}
+              {item.dueDate ? ` · Due ${item.dueDate}` : ""}
+            </small>
+          </div>
+        </div>
+      ))}
+
+      {items.length > 5 && (
+        <small className="portal-checklist-preview-more">
+          +{items.length - 5} more item{items.length - 5 === 1 ? "" : "s"}
+        </small>
+      )}
+    </div>
+  );
+}
+
+function PortalRecordCard({
+  record,
+  copiedBookingId,
+  onCopyPortalLink,
+  onOpenBooking,
+}) {
+  const portalStatusLabel = getPortalStatusLabel(record);
+  const portalStatusClass = getPortalStatusClass(record);
+  const portalUrl = buildPortalUrl(record.portalToken);
+
+  const guestLabel = record.attendeeCount
+    ? `${record.attendeeCount} guest${record.attendeeCount === "1" ? "" : "s"}`
+    : "No guest count";
+
+  return (
+    <article className={`portal-record-card portal-record-card-${portalStatusClass}`}>
+      <div className="portal-record-main">
+        <div className="portal-record-title-row">
+          <div>
+            <span className={`portal-record-status-pill ${portalStatusClass}`}>
+              {portalStatusLabel}
+            </span>
+
+            <h3>{record.organizationName}</h3>
+
+            <p>
+              {formatDateRange(record.startDate, record.endDate)} · {guestLabel}
+            </p>
+          </div>
+
+          <strong className="portal-record-progress-number">
+            {record.progress.percent}%
+          </strong>
+        </div>
+
+        <PortalAdminProgressBar percent={record.progress.percent} />
+
+        <div className="portal-record-metrics">
+          <span>
+            <strong>{record.progress.completed}</strong>
+            Complete
+          </span>
+
+          <span>
+            <strong>{record.progress.needsReview}</strong>
+            Review
+          </span>
+
+          <span>
+            <strong>{record.progress.open}</strong>
+            Open
+          </span>
+
+          <span>
+            <strong>{record.documents.length}</strong>
+            Docs
+          </span>
+        </div>
+
+        <PortalChecklistPreview items={record.checklistItems} />
+      </div>
+
+      <aside className="portal-record-side">
+        <div className="portal-record-contact">
+          <small>Primary Contact</small>
+          <strong>{record.contactName}</strong>
+          <span>{record.email || "No email"}</span>
+        </div>
+
+        <div className="portal-record-token">
+          <small>Portal Link</small>
+
+          {record.portalToken ? (
+            <code>{record.portalToken.slice(0, 10)}...</code>
+          ) : (
+            <em>No token</em>
+          )}
+        </div>
+
+        <div className="portal-record-actions">
+          <button
+            className="secondary-dashboard-button"
+            type="button"
+            onClick={() => onOpenBooking(record.id)}
+          >
+            Open Booking
+          </button>
+
+          <button
+            className="secondary-dashboard-button"
+            type="button"
+            disabled={!portalUrl}
+            onClick={() => onCopyPortalLink(record)}
+          >
+            <FaCopy />
+            {copiedBookingId === record.id ? "Copied" : "Copy Link"}
+          </button>
+
+          <a
+            className={`primary-dashboard-button ${!portalUrl ? "disabled" : ""}`}
+            href={portalUrl || undefined}
+            target="_blank"
+            rel="noreferrer"
+            aria-disabled={!portalUrl}
+          >
+            <FaExternalLinkAlt />
+            Open Portal
+          </a>
+        </div>
+      </aside>
+    </article>
+  );
+}
+
+function PortalAdminView({ inquiryBookings, openBookingDetail }) {
+  const [portalRecords, setPortalRecords] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [portalError, setPortalError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [copiedBookingId, setCopiedBookingId] = useState("");
+
+  async function loadPortalRecords() {
+    try {
+      setIsLoading(true);
+      setPortalError("");
+
+      const records = await fetchPortalOverviewRecords();
+
+      setPortalRecords(records);
+    } catch (error) {
+      console.error("Could not load portal overview:", error);
+      setPortalError("Could not load portal information. Check the console.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadPortalRecords();
+  }, []);
+
+  const summary = useMemo(() => {
+    const total = portalRecords.length;
+
+    const withChecklists = portalRecords.filter(
+      (record) => record.progress.total > 0
+    ).length;
+
+    const needsReview = portalRecords.filter(
+      (record) => record.progress.needsReview > 0
+    ).length;
+
+    const waitingOnGuest = portalRecords.filter(
+      (record) =>
+        record.progress.needsReview === 0 && record.progress.open > 0
+    ).length;
+
+    const complete = portalRecords.filter(
+      (record) =>
+        record.progress.total > 0 &&
+        record.progress.completed === record.progress.total
+    ).length;
+
+    return {
+      total,
+      withChecklists,
+      needsReview,
+      waitingOnGuest,
+      complete,
+    };
+  }, [portalRecords]);
+
+  const filteredRecords = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase();
+
+    return portalRecords
+      .filter((record) => {
+        if (!search) {
+          return true;
+        }
+
+        return [
+          record.organizationName,
+          record.contactName,
+          record.email,
+          record.status,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(search);
+      })
+      .filter((record) => {
+        if (statusFilter === "all") {
+          return true;
+        }
+
+        if (statusFilter === "needsReview") {
+          return record.progress.needsReview > 0;
+        }
+
+        if (statusFilter === "waiting") {
+          return record.progress.needsReview === 0 && record.progress.open > 0;
+        }
+
+        if (statusFilter === "complete") {
+          return (
+            record.progress.total > 0 &&
+            record.progress.completed === record.progress.total
+          );
+        }
+
+        if (statusFilter === "noChecklist") {
+          return record.progress.total === 0;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        if (b.progress.needsReview !== a.progress.needsReview) {
+          return b.progress.needsReview - a.progress.needsReview;
+        }
+
+        if (b.progress.open !== a.progress.open) {
+          return b.progress.open - a.progress.open;
+        }
+
+        return String(a.startDate || "").localeCompare(
+          String(b.startDate || "")
+        );
+      });
+  }, [portalRecords, searchTerm, statusFilter]);
+
+  async function handleCopyPortalLink(record) {
+    const portalUrl = buildPortalUrl(record.portalToken);
+
+    if (!portalUrl) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(portalUrl);
+      setCopiedBookingId(record.id);
+
+      window.setTimeout(() => {
+        setCopiedBookingId("");
+      }, 1600);
+    } catch (error) {
+      console.error("Could not copy portal link:", error);
+      alert("Could not copy the portal link.");
+    }
+  }
+
+  function handleOpenBooking(bookingId) {
+    const booking = inquiryBookings.find((inquiry) => inquiry.id === bookingId);
+
+    if (!booking) {
+      alert("Could not find this booking in the current dashboard data.");
+      return;
+    }
+
+    openBookingDetail(booking);
+  }
+
+  return (
+    <section className="portal-admin-page">
+      <article className="dashboard-card portal-admin-hero-card">
+        <div className="portal-admin-hero-header">
+          <div className="dashboard-heading-with-icon">
+            <span className="section-icon">
+              <FaKey />
+            </span>
+
+            <div>
+              <p className="dashboard-eyebrow">Guest Portals</p>
+              <h2>Portal Progress</h2>
+              <span>
+                Track each group&apos;s guest-facing checklist, documents, and review status.
+              </span>
+            </div>
+          </div>
+
+          <button
+            className="secondary-dashboard-button"
+            type="button"
+            onClick={loadPortalRecords}
+            disabled={isLoading}
+          >
+            <FaSyncAlt />
+            {isLoading ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
+
+        <div className="portal-summary-grid-admin">
+          <PortalAdminSummaryCard
+            icon={FaKey}
+            label="Total Groups"
+            value={summary.total}
+            helper="Bookings loaded from Supabase"
+          />
+
+          <PortalAdminSummaryCard
+            icon={FaTasks}
+            label="With Checklists"
+            value={summary.withChecklists}
+            helper="Groups with portal tasks"
+            tone="blue"
+          />
+
+          <PortalAdminSummaryCard
+            icon={FaExclamationTriangle}
+            label="Needs Review"
+            value={summary.needsReview}
+            helper="Guest submitted or staff review needed"
+            tone="gold"
+          />
+
+          <PortalAdminSummaryCard
+            icon={FaCheckCircle}
+            label="Complete"
+            value={summary.complete}
+            helper="All checklist items complete"
+            tone="green"
+          />
+        </div>
+      </article>
+
+      <article className="dashboard-card portal-admin-toolbar">
+        <label>
+          <span>Search</span>
+          <input
+            value={searchTerm}
+            placeholder="Search group, contact, email, or status..."
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </label>
+
+        <label>
+          <span>Status</span>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option value="all">All Portal Groups</option>
+            <option value="needsReview">Needs Review</option>
+            <option value="waiting">Waiting on Guest</option>
+            <option value="complete">Complete</option>
+            <option value="noChecklist">No Checklist</option>
+          </select>
+        </label>
+      </article>
+
+      {portalError && (
+        <section className="dashboard-card portal-admin-error">
+          <FaExclamationTriangle />
+          <strong>{portalError}</strong>
+        </section>
+      )}
+
+      {isLoading ? (
+        <section className="dashboard-card portal-admin-loading">
+          <FaClock />
+          <strong>Loading portal progress...</strong>
+        </section>
+      ) : filteredRecords.length > 0 ? (
+        <div className="portal-record-list">
+          {filteredRecords.map((record) => (
+            <PortalRecordCard
+              key={record.id}
+              record={record}
+              copiedBookingId={copiedBookingId}
+              onCopyPortalLink={handleCopyPortalLink}
+              onOpenBooking={handleOpenBooking}
+            />
+          ))}
+        </div>
+      ) : (
+        <section className="dashboard-card portal-admin-empty">
+          <strong>No portal records match this filter</strong>
+          <p>
+            Try changing the search or filter, or create checklist items for a booking.
+          </p>
+        </section>
+      )}
+    </section>
+  );
+}
+
 
 export default function Dashboard() {
   const today = new Date();
@@ -4086,7 +4978,7 @@ export default function Dashboard() {
   const waitlistFileInputRef = useRef(null);
   const masterFileInputRef = useRef(null);
   const staffContactsFileInputRef = useRef(null);
-
+  const archiveFileInputRef = useRef(null);
 
   const master2026FileInputRef = useRef(null);
   const inquiry2027FileInputRef = useRef(null);
@@ -4157,9 +5049,8 @@ export default function Dashboard() {
     getSavedDashboardFilterValue(DATED_INQUIRY_CUSTOM_END_STORAGE_KEY, "")
   );
 
-  const [publicInquiries, setPublicInquiries] = useState(() =>
-    getSavedInquiries()
-  );
+  const [publicInquiries, setPublicInquiries] = useState([]);
+  const [isBookingsLoading, setIsBookingsLoading] = useState(false);
 
   const updateDatedInquirySetting = (settingName, value) => {
     setDatedInquirySettings((currentSettings) => ({
@@ -4167,6 +5058,25 @@ export default function Dashboard() {
       [settingName]: value,
     }));
   };
+
+  async function loadBookingsFromSupabase() {
+    try {
+      setIsBookingsLoading(true);
+
+      const bookings = await fetchBookings();
+
+      setPublicInquiries(bookings);
+    } catch (error) {
+      console.error("Could not load bookings from Supabase:", error);
+      alert("Could not load bookings from Supabase. Check the console.");
+    } finally {
+      setIsBookingsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadBookingsFromSupabase();
+  }, []);
   
   function clearSpreadsheetRevealTimers() {
     if (spreadsheetRevealTimerRef.current) {
@@ -4210,10 +5120,10 @@ export default function Dashboard() {
   }
 
   const refreshInquiries = () => {
-    setPublicInquiries(getSavedInquiries());
+    loadBookingsFromSupabase();
   };
 
-  const deleteAllInquiries = () => {
+  const deleteAllInquiries = async () => {
     const confirmed = window.confirm(
       "Are you sure you want to delete all inquiries and imported bookings? This cannot be undone."
     );
@@ -4222,109 +5132,47 @@ export default function Dashboard() {
       return;
     }
 
-    localStorage.removeItem("toahNipiPublicInquiries");
-    setPublicInquiries([]);
+    try {
+      await deleteAllBookings();
+
+      setPublicInquiries([]);
+      setSelectedBooking(null);
+      setActiveView("Dashboard");
+    } catch (error) {
+      console.error("Could not delete bookings from Supabase:", error);
+      alert("Could not delete bookings from Supabase. Check the console.");
+    }
   };
 
 
-  const saveBookingEdits = (updatedBooking) => {
-    const updatedAt = new Date().toISOString();
-    let didUpdateExistingBooking = false;
-
-    const nextInquiries = publicInquiries.map((inquiry, index) => {
-      const normalizedInquiry = normalizeInquiry(inquiry, index);
-
-      if (normalizedInquiry.id !== updatedBooking.id) {
-        return inquiry;
-      }
-
-      didUpdateExistingBooking = true;
-
-      return {
-        ...inquiry,
+  const saveBookingEdits = async (updatedBooking) => {
+    try {
+      const bookingToSave = {
         ...updatedBooking,
-
-        id: updatedBooking.id,
-
-        organizationName: updatedBooking.organizationName,
-
-        contactName: updatedBooking.contactName,
-        name: updatedBooking.contactName,
-
-        firstName: "",
-        lastName: "",
-
-        email: updatedBooking.email,
-        phone: updatedBooking.phone,
-
-        startDate: updatedBooking.startDate,
-        endDate: updatedBooking.endDate,
-        desiredDatesText: updatedBooking.desiredDatesText,
-        desiredDates: updatedBooking.desiredDatesText,
-
-        attendeeCount: updatedBooking.attendeeCount,
-        groupSize: updatedBooking.attendeeCount,
-
-        retreatType: updatedBooking.retreatType,
-        status: updatedBooking.status,
-        waitlist: updatedBooking.waitlist,
-
-        roomName: updatedBooking.roomName,
-        buildingsRooms: updatedBooking.buildingsRooms,
-
-        meals: updatedBooking.meals,
-        foodAllergies: updatedBooking.foodAllergies,
-        needToKnow: updatedBooking.needToKnow,
-        linenSets: updatedBooking.linenSets,
-        activities: updatedBooking.activities,
-
-        programLogisticsAssignments: Array.isArray(
-          updatedBooking.programLogisticsAssignments
-        )
-          ? updatedBooking.programLogisticsAssignments
-          : [],
-
-        persons: updatedBooking.persons,
-        nights: updatedBooking.nights,
-        mealCount: updatedBooking.mealCount,
-        camperDays: updatedBooking.camperDays,
-
-        usageFee: updatedBooking.usageFee,
-        lodgingCost: updatedBooking.lodgingCost,
-        foodCost: updatedBooking.foodCost,
-        miscCost: updatedBooking.miscCost,
-
-        notes: updatedBooking.notes,
-        message: updatedBooking.notes,
-
-        checklists: Array.isArray(updatedBooking.checklists)
-          ? updatedBooking.checklists
-          : null,
-
-        updatedAt,
+        updatedAt: new Date().toISOString(),
       };
-    });
 
-    const inquiriesToSave = didUpdateExistingBooking
-      ? nextInquiries
-      : [
-          ...publicInquiries,
-          {
-            ...updatedBooking,
-            updatedAt,
-          },
-        ];
+      const savedBooking = await upsertBooking(bookingToSave);
 
-    localStorage.setItem(
-      "toahNipiPublicInquiries",
-      JSON.stringify(inquiriesToSave)
-    );
+      setPublicInquiries((currentInquiries) => {
+        const existingIndex = currentInquiries.findIndex(
+          (inquiry) => inquiry.id === savedBooking.id
+        );
 
-    setPublicInquiries(inquiriesToSave);
-    setSelectedBooking({
-      ...updatedBooking,
-      updatedAt,
-    });
+        if (existingIndex === -1) {
+          return [...currentInquiries, savedBooking];
+        }
+
+        return currentInquiries.map((inquiry) =>
+          inquiry.id === savedBooking.id ? savedBooking : inquiry
+        );
+      });
+
+      setSelectedBooking(savedBooking);
+    } catch (error) {
+      console.error("Could not save booking to Supabase:", error);
+      alert("Could not save booking to Supabase. Check the console.");
+    }
   };
 
   const importSpreadsheet = async ({
@@ -4404,14 +5252,21 @@ export default function Dashboard() {
         return;
       }
 
-      const nextInquiries = [...publicInquiries, ...allImportedRows];
+      const savedRows = await upsertBookings(allImportedRows);
 
-      localStorage.setItem(
-        "toahNipiPublicInquiries",
-        JSON.stringify(nextInquiries)
-      );
+      setPublicInquiries((currentInquiries) => {
+        const byId = new Map();
 
-      setPublicInquiries(nextInquiries);
+        currentInquiries.forEach((booking) => {
+          byId.set(booking.id, booking);
+        });
+
+        savedRows.forEach((booking) => {
+          byId.set(booking.id, booking);
+        });
+
+        return Array.from(byId.values());
+      });
 
       const skippedMessage =
         skippedSheets.length > 0
@@ -4423,7 +5278,11 @@ export default function Dashboard() {
       );
     } catch (error) {
       console.error(`Could not import ${importTypeLabel} spreadsheet:`, error);
-      alert(`Sorry, that ${importTypeLabel} spreadsheet could not be imported.`);
+
+      alert(
+        `Sorry, that ${importTypeLabel} spreadsheet could not be imported.\n\n` +
+          `Error: ${error?.message || String(error)}`
+      );
     } finally {
       event.target.value = "";
     }
@@ -4445,6 +5304,15 @@ export default function Dashboard() {
         "Additional Notes",
         "Waitlist or No",
       ],
+    });
+  };
+
+  const handleImportArchiveSpreadsheet = (event) => {
+    importSpreadsheet({
+      event,
+      importTypeLabel: "archive",
+      normalizeRow: normalizeArchiveSpreadsheetRow,
+      expectedColumns: ARCHIVE_EXPECTED_COLUMNS,
     });
   };
 
@@ -4545,6 +5413,16 @@ export default function Dashboard() {
       return;
     }
 
+    const fileName = String(file.name || "").toLowerCase();
+
+    if (!fileName.endsWith(".xlsx")) {
+      alert(
+        "Please upload a .xlsx file. Older .xls files, PDFs, Word documents, and CSV files cannot be imported here yet."
+      );
+      event.target.value = "";
+      return;
+    }
+
     try {
       const fileData = await file.arrayBuffer();
 
@@ -4587,14 +5465,15 @@ export default function Dashboard() {
           return;
         }
 
-      const sheetCounts = {
-        Waitlist: 0,
-        Master: 0,
-        "Master 2026": 0,
-        "2027 Inquiry": 0,
-        Generic: 0,
-        skipped: 0,
-      };
+        const sheetCounts = {
+          Waitlist: 0,
+          Archive: 0,
+          Master: 0,
+          "Master 2026": 0,
+          "2027 Inquiry": 0,
+          Generic: 0,
+          skipped: 0,
+        };
 
         spreadsheetRows.forEach((row, index) => {
           const detectedType = detectSpreadsheetRowType(row);
@@ -4619,8 +5498,9 @@ export default function Dashboard() {
         });
 
         sheetSummaries.push(
-          `${worksheet.name}: ${spreadsheetRows.length} row(s) found, ${sheetCounts.Waitlist} waitlist, ${sheetCounts.Master} master, ${sheetCounts["Master 2026"]} master 2026, ${sheetCounts["2027 Inquiry"]} 2027 inquiries, ${sheetCounts.Generic} generic`
+          `${worksheet.name}: ${spreadsheetRows.length} row(s) found, ${sheetCounts.Waitlist} waitlist, ${sheetCounts.Archive} archive, ${sheetCounts.Master} master, ${sheetCounts["Master 2026"]} master 2026, ${sheetCounts["2027 Inquiry"]} 2027 inquiries, ${sheetCounts.Generic} generic`
         );
+
       });
 
       if (allImportedRows.length === 0) {
@@ -4630,14 +5510,21 @@ export default function Dashboard() {
         return;
       }
 
-      const nextInquiries = [...publicInquiries, ...allImportedRows];
+      const savedRows = await upsertBookings(allImportedRows);
 
-      localStorage.setItem(
-        "toahNipiPublicInquiries",
-        JSON.stringify(nextInquiries)
-      );
+      setPublicInquiries((currentInquiries) => {
+        const byId = new Map();
 
-      setPublicInquiries(nextInquiries);
+        currentInquiries.forEach((booking) => {
+          byId.set(booking.id, booking);
+        });
+
+        savedRows.forEach((booking) => {
+          byId.set(booking.id, booking);
+        });
+
+        return Array.from(byId.values());
+      });
 
       if (allImportedStaffContacts.length > 0) {
         const nextUsers = [...staffUsers];
@@ -4807,6 +5694,11 @@ export default function Dashboard() {
   const openWaitlistImportPicker = () => {
     setIsImportMenuOpen(false);
     waitlistFileInputRef.current?.click();
+  };
+
+  const openArchiveImportPicker = () => {
+    setIsImportMenuOpen(false);
+    archiveFileInputRef.current?.click();
   };
 
   const openMasterImportPicker = () => {
@@ -5170,7 +6062,7 @@ const getCalendarEventColor = (status) => {
     }
 
     if (nextView !== "Form") {
-      setPublicInquiries(getSavedInquiries());
+      loadBookingsFromSupabase();
     }
 
     setActiveView(nextView);
@@ -5213,6 +6105,10 @@ const getCalendarEventColor = (status) => {
           </button>
         </div>
 
+        <div className="dashboard-sidebar-signout">
+          <StaffSignOutButton />
+        </div>
+
         <div className="sidebar-section sidebar-main-section">
           <p>Main</p>
 
@@ -5247,6 +6143,23 @@ const getCalendarEventColor = (status) => {
             <FaClipboardList />
             <span>Form</span>
           </button>
+
+          <button
+            className={`sidebar-link ${
+              activeView === "Portal View" ? "sidebar-link-active" : ""
+            }`}
+            type="button"
+            title="Portals"
+            onClick={() => {
+              setSelectedBooking(null);
+              setBookingDetailTab("Overview");
+              handleActiveViewChange("Portal View");
+            }}
+          >
+            <FaKey />
+            <span>Portals</span>
+          </button>
+
         </div>
 
         {sidebarSections.map((section) => (
@@ -5317,6 +6230,9 @@ const getCalendarEventColor = (status) => {
               deleteAllInquiries={deleteAllInquiries}
               handleImportStaffContactsSpreadsheet={handleImportStaffContactsSpreadsheet}
               openStaffContactsImportPicker={openStaffContactsImportPicker}
+              archiveFileInputRef={archiveFileInputRef}
+              handleImportArchiveSpreadsheet={handleImportArchiveSpreadsheet}
+              openArchiveImportPicker={openArchiveImportPicker}
             />
 
             <DashboardBackups
@@ -5405,6 +6321,11 @@ const getCalendarEventColor = (status) => {
           />
         ) : activeView === "Reports" ? (
           <ReportsView inquiryBookings={inquiryBookings} />
+        ) : activeView === "Portal View" ? (
+          <PortalAdminView
+            inquiryBookings={inquiryBookings}
+            openBookingDetail={openBookingDetail}
+          />
         ) : activeView === "User Admin" ? (
           <UserAdminView
             staffUsers={staffUsers}
