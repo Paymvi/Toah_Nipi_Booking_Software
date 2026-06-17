@@ -1,0 +1,3033 @@
+/* =========================================================
+   Spreadsheet View
+   Main spreadsheet table, settings modal, saved views,
+   schema tab, row previews, starred rows, loading screen,
+   and spreadsheet display controls.
+========================================================= */
+
+
+
+
+
+/* =========================================================
+   Spreadsheet View: Simple + Clean
+   Flat colors only, no gradients
+========================================================= */
+
+.spreadsheet-view-page {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.spreadsheet-view-card {
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+}
+
+.spreadsheet-view-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  background: #ffffff;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.spreadsheet-view-header h2 {
+  margin: 0;
+  color: #252936;
+  font-size: 1.2rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.spreadsheet-view-header p {
+  margin: 5px 0 0;
+  color: #858c9b;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.spreadsheet-view-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.spreadsheet-view-summary span {
+  min-width: 108px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  background: #fbfcfd;
+  border: 1px solid #dfe4ec;
+  border-left: 4px solid #443a9c;
+  border-radius: 8px;
+  color: #6f7687;
+  font-size: 0.68rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+}
+
+.spreadsheet-view-summary span:nth-child(2) {
+  border-left-color: #2f6f5f;
+}
+
+.spreadsheet-view-summary span:nth-child(3) {
+  border-left-color: #4c65a9;
+}
+
+.spreadsheet-view-summary span:nth-child(4) {
+  border-left-color: #9a6f08;
+}
+
+.spreadsheet-view-summary strong {
+  color: #252936;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.spreadsheet-table-wrap {
+  width: 100%;
+  max-width: 100%;
+
+  /* Header row + about 20 body rows */
+  height: calc(38px + (36px * 20));
+  max-height: none;
+
+  overflow: auto;
+  background: #ffffff;
+}
+
+.spreadsheet-table {
+  width: max-content;
+  min-width: 2600px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.spreadsheet-table th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  padding: 11px 14px;
+  background: #f6f7f9;
+  color: #565d6b;
+  border-bottom: 1px solid #dfe4ec;
+  border-right: 1px solid #e8ebf1;
+  font-size: 0.68rem;
+  font-weight: 650;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+  white-space: nowrap;
+}
+
+.spreadsheet-table td {
+  max-width: 250px;
+  padding: 12px 14px;
+  background: #ffffff;
+  color: #3f4351;
+  border-bottom: 1px solid #edf0f4;
+  border-right: 1px solid #f1f3f6;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spreadsheet-table tbody tr:nth-child(even) td {
+  background: #fbfcfd;
+}
+
+.spreadsheet-table tbody tr:hover td {
+  background: #f4f6f8;
+}
+
+.spreadsheet-sticky-column {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 230px;
+  max-width: 230px;
+  background: #ffffff;
+  border-right: 1px solid #cfd6e1;
+  box-shadow: 2px 0 8px rgba(28, 35, 52, 0.04);
+}
+
+.spreadsheet-table tbody tr:nth-child(even) .spreadsheet-sticky-column {
+  background: #fbfcfd;
+}
+
+.spreadsheet-table tbody tr:hover .spreadsheet-sticky-column {
+  background: #f4f6f8;
+}
+
+.spreadsheet-table th.spreadsheet-sticky-column {
+  z-index: 5;
+  background: #eef0f5;
+  color: #303442;
+}
+
+.spreadsheet-organization-button {
+  max-width: 200px;
+  overflow: hidden;
+  color: #443a9c;
+  font-weight: 650;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spreadsheet-organization-button:hover {
+  color: #382f86;
+  text-decoration: underline;
+}
+
+/* Shared badge style */
+
+.spreadsheet-source-pill,
+.spreadsheet-status-pill,
+.spreadsheet-waitlist-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  font-size: 0.7rem;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Source badges */
+
+.spreadsheet-source-pill.source-form {
+  color: #2f6f4f;
+  background: #eaf4ee;
+  border-color: #c9dfd0;
+}
+
+.spreadsheet-source-pill.source-master-2026 {
+  color: #443a9c;
+  background: #f0edfa;
+  border-color: #d7d1f0;
+}
+
+.spreadsheet-source-pill.source-master {
+  color: #4c65a9;
+  background: #eef3fb;
+  border-color: #cfdaee;
+}
+
+.spreadsheet-source-pill.source-waitlist {
+  color: #9a6f08;
+  background: #fbf5e4;
+  border-color: #eadcae;
+}
+
+.spreadsheet-source-pill.source-imported {
+  color: #4f5564;
+  background: #f4f5f8;
+  border-color: #dfe4ec;
+}
+
+/* Status badges */
+
+.spreadsheet-status-pill.status-confirmed {
+  color: #2f6f4f;
+  background: #eaf4ee;
+  border-color: #c9dfd0;
+}
+
+.spreadsheet-status-pill.status-contract {
+  color: #4c65a9;
+  background: #eef3fb;
+  border-color: #cfdaee;
+}
+
+.spreadsheet-status-pill.status-inquiry {
+  color: #956410;
+  background: #fff4dc;
+  border-color: #eadcae;
+}
+
+.spreadsheet-status-pill.status-waitlist {
+  color: #377d7a;
+  background: #edf6f5;
+  border-color: #c6dfdd;
+}
+
+.spreadsheet-status-pill.status-cancelled {
+  color: #9f2f2f;
+  background: #fbf0f0;
+  border-color: #e8c7c7;
+}
+
+.spreadsheet-status-pill.status-imported {
+  color: #443a9c;
+  background: #f0edfa;
+  border-color: #d7d1f0;
+}
+
+/* Waitlist badges */
+
+.spreadsheet-waitlist-pill.waitlist-yes {
+  color: #377d7a;
+  background: #edf6f5;
+  border-color: #c6dfdd;
+}
+
+.spreadsheet-waitlist-pill.waitlist-no {
+  color: #687083;
+  background: #f6f7f9;
+  border-color: #dfe4ec;
+}
+
+@media (max-width: 900px) {
+  .spreadsheet-view-header {
+    flex-direction: column;
+  }
+
+  .spreadsheet-view-summary {
+    justify-content: flex-start;
+  }
+}
+
+
+
+/* =========================================================
+   Spreadsheet View: Full Settings Modal + Advanced Controls
+========================================================= */
+
+.spreadsheet-view-header-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.spreadsheet-settings-button {
+  flex: 0 0 auto;
+}
+
+.spreadsheet-active-settings-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  padding: 12px 18px;
+  border-top: 1px solid #edf0f4;
+  border-bottom: 1px solid #edf0f4;
+  background: #fbfcfd;
+}
+
+.spreadsheet-active-settings-bar span {
+  color: #6f7685;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.spreadsheet-active-settings-bar strong {
+  color: #303442;
+  font-weight: 650;
+}
+
+.spreadsheet-active-settings-bar button {
+  border: 0;
+  background: transparent;
+  color: #443a9c;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.spreadsheet-active-settings-bar button:hover {
+  text-decoration: underline;
+}
+
+/* Header sort buttons */
+
+.spreadsheet-header-sort-button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  color: inherit;
+  font: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: left;
+  text-transform: inherit;
+  letter-spacing: inherit;
+
+  cursor: pointer;
+}
+
+.spreadsheet-header-sort-button em {
+  color: #443a9c;
+  font-style: normal;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* Modal shell */
+
+.spreadsheet-settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 22px;
+  background: rgba(24, 28, 38, 0.48);
+}
+
+.spreadsheet-settings-modal {
+  width: min(1040px, 100%);
+  max-height: min(820px, calc(100vh - 44px));
+
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+
+  overflow: hidden;
+  border: 1px solid #dfe4ec;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+}
+
+.spreadsheet-settings-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+
+  padding: 18px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.spreadsheet-settings-modal-header h3 {
+  margin: 0;
+  color: #252936;
+  font-size: 1.16rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.spreadsheet-settings-modal-header span {
+  display: block;
+  margin-top: 5px;
+  color: #858c9b;
+  font-size: 0.84rem;
+  font-weight: 400;
+}
+
+.spreadsheet-settings-close-button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+
+  display: inline-grid;
+  place-items: center;
+
+  background: #ffffff;
+  color: #5f6877;
+  cursor: pointer;
+}
+
+.spreadsheet-settings-close-button:hover {
+  background: #f4f5f8;
+  color: #303442;
+}
+
+/* Modal tabs */
+
+.spreadsheet-settings-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+
+  padding: 8px 12px 0;
+  border-bottom: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+.spreadsheet-settings-tabs button {
+  position: relative;
+  border: 0;
+  background: transparent;
+  color: #747b8d;
+  padding: 11px 13px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.spreadsheet-settings-tabs button:hover,
+.spreadsheet-settings-tabs button.active {
+  color: #443a9c;
+}
+
+.spreadsheet-settings-tabs button.active::after {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -1px;
+  height: 2px;
+  background: #443a9c;
+}
+
+/* Modal body */
+
+.spreadsheet-settings-body {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 18px;
+}
+
+.spreadsheet-settings-section {
+  display: grid;
+  gap: 18px;
+}
+
+.spreadsheet-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.spreadsheet-settings-field {
+  display: grid;
+  gap: 6px;
+}
+
+.spreadsheet-settings-field-wide {
+  grid-column: 1 / -1;
+}
+
+.spreadsheet-settings-field span,
+.spreadsheet-settings-check-group h4 {
+  color: #7b8290;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.065em;
+  text-transform: uppercase;
+}
+
+.spreadsheet-settings-field input,
+.spreadsheet-settings-field select {
+  width: 100%;
+  height: 38px;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #303442;
+
+  padding: 0 11px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 500;
+
+  outline: none;
+}
+
+.spreadsheet-settings-field input:focus,
+.spreadsheet-settings-field select:focus {
+  border-color: #9f98d4;
+  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+}
+
+.spreadsheet-settings-help-text {
+  margin: 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+/* Checkbox groups */
+
+.spreadsheet-settings-check-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  padding: 14px;
+  border: 1px solid #edf0f4;
+  border-radius: 10px;
+  background: #fbfcfd;
+}
+
+.spreadsheet-settings-check-group h4 {
+  width: 100%;
+  margin: 0 0 2px;
+}
+
+.spreadsheet-settings-check-group label {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 0 10px;
+  border: 1px solid #dfe4ec;
+  border-radius: 999px;
+  background: #ffffff;
+
+  color: #3f4351;
+  font-size: 0.82rem;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.spreadsheet-settings-check-group input {
+  accent-color: #443a9c;
+}
+
+.spreadsheet-settings-check-group p {
+  margin: 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+}
+
+/* Column manager */
+
+.spreadsheet-settings-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.spreadsheet-settings-actions-row button,
+.spreadsheet-column-settings-row button {
+  min-height: 32px;
+  border: 1px solid #c9c4e8;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #443a9c;
+
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.spreadsheet-settings-actions-row button:hover,
+.spreadsheet-column-settings-row button:hover:not(:disabled) {
+  background: #f7f5ff;
+}
+
+.spreadsheet-column-settings-row button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.spreadsheet-column-settings-list {
+  display: grid;
+  gap: 8px;
+}
+
+.spreadsheet-column-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 10px 12px;
+  border: 1px solid #edf0f4;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.spreadsheet-column-settings-row label {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.spreadsheet-column-settings-row input {
+  margin-top: 3px;
+  accent-color: #443a9c;
+}
+
+.spreadsheet-column-settings-row span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.spreadsheet-column-settings-row strong {
+  color: #303442;
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.spreadsheet-column-settings-row small {
+  color: #858c9b;
+  font-size: 0.74rem;
+  font-weight: 400;
+}
+
+.spreadsheet-column-settings-row > div {
+  display: inline-flex;
+  gap: 6px;
+}
+
+/* Footer */
+
+.spreadsheet-settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+
+  padding: 14px 18px;
+  border-top: 1px solid #edf0f4;
+  background: #fbfcfd;
+}
+
+/* Column color modes */
+
+.spreadsheet-table th.spreadsheet-column-both-years,
+.spreadsheet-table td.spreadsheet-column-both-years {
+  background: #f0f6f1;
+}
+
+.spreadsheet-table th.spreadsheet-column-2025-only,
+.spreadsheet-table td.spreadsheet-column-2025-only {
+  background: #f6f2e8;
+}
+
+.spreadsheet-table th.spreadsheet-column-2026-only,
+.spreadsheet-table td.spreadsheet-column-2026-only {
+  background: #eff3fb;
+}
+
+.spreadsheet-table th.spreadsheet-column-form-waitlist,
+.spreadsheet-table td.spreadsheet-column-form-waitlist {
+  background: #f4f1fb;
+}
+
+.spreadsheet-table th.spreadsheet-column-raw-other,
+.spreadsheet-table td.spreadsheet-column-raw-other {
+  background: #f7f8fa;
+}
+
+.spreadsheet-table tbody tr:nth-child(even) td.spreadsheet-column-both-years {
+  background: #eaf2eb;
+}
+
+.spreadsheet-table tbody tr:nth-child(even) td.spreadsheet-column-2025-only {
+  background: #f1eadc;
+}
+
+.spreadsheet-table tbody tr:nth-child(even) td.spreadsheet-column-2026-only {
+  background: #e8eef8;
+}
+
+.spreadsheet-table tbody tr:nth-child(even) td.spreadsheet-column-form-waitlist {
+  background: #eeeaf8;
+}
+
+.spreadsheet-table tbody tr:nth-child(even) td.spreadsheet-column-raw-other {
+  background: #f1f3f6;
+}
+
+/* Row color modes */
+
+.spreadsheet-row-source-source-form td {
+  box-shadow: inset 3px 0 0 #6d7b5d;
+}
+
+.spreadsheet-row-source-source-master td,
+.spreadsheet-row-source-source-master-2026 td {
+  box-shadow: inset 3px 0 0 #4c65a9;
+}
+
+.spreadsheet-row-source-source-waitlist td {
+  box-shadow: inset 3px 0 0 #9a6f08;
+}
+
+.spreadsheet-row-source-source-imported td {
+  box-shadow: inset 3px 0 0 #7d8493;
+}
+
+.spreadsheet-row-status-status-confirmed td {
+  box-shadow: inset 3px 0 0 #2f6f4f;
+}
+
+.spreadsheet-row-status-status-contract td {
+  box-shadow: inset 3px 0 0 #4c65a9;
+}
+
+.spreadsheet-row-status-status-cancelled td {
+  box-shadow: inset 3px 0 0 #9f2f2f;
+}
+
+.spreadsheet-row-status-status-waitlist td {
+  box-shadow: inset 3px 0 0 #9a6f08;
+}
+
+/* Highlight rules */
+
+.spreadsheet-row-missing-contact td {
+  outline: 1px solid rgba(159, 47, 47, 0.16);
+  outline-offset: -1px;
+}
+
+.spreadsheet-row-missing-dates td {
+  outline: 1px solid rgba(154, 111, 8, 0.18);
+  outline-offset: -1px;
+}
+
+.spreadsheet-row-highlight-waitlist td {
+  background-image: linear-gradient(
+    rgba(251, 245, 228, 0.72),
+    rgba(251, 245, 228, 0.72)
+  );
+}
+
+.spreadsheet-row-highlight-cancelled td {
+  background-image: linear-gradient(
+    rgba(255, 241, 241, 0.85),
+    rgba(255, 241, 241, 0.85)
+  );
+}
+
+.spreadsheet-cell-food-allergy {
+  color: #8a5a08;
+  font-weight: 650;
+}
+
+.spreadsheet-cell-custom-highlight {
+  background: #fff4bc !important;
+  color: #493b00;
+  font-weight: 650;
+}
+
+/* Color legend */
+
+.spreadsheet-color-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.spreadsheet-color-legend span {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 999px;
+  padding: 0 10px;
+
+  color: #303442;
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+/* Compact mode */
+
+.spreadsheet-table .spreadsheet-row-compact td {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  font-size: 0.8rem;
+}
+
+/* Sticky fix with colored cells */
+
+.spreadsheet-table th.spreadsheet-sticky-column,
+.spreadsheet-table td.spreadsheet-sticky-column {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  border-right: 1px solid #cfd6e1;
+  box-shadow: 2px 0 8px rgba(28, 35, 52, 0.05);
+}
+
+.spreadsheet-table th.spreadsheet-sticky-column {
+  z-index: 6;
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+  .spreadsheet-view-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .spreadsheet-settings-button {
+    width: 100%;
+  }
+
+  .spreadsheet-settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spreadsheet-settings-modal {
+    max-height: calc(100vh - 28px);
+  }
+}
+
+@media (max-width: 720px) {
+  .spreadsheet-settings-backdrop {
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .spreadsheet-settings-modal {
+    max-height: none;
+    height: calc(100vh - 24px);
+  }
+
+  .spreadsheet-settings-modal-header,
+  .spreadsheet-settings-footer {
+    padding: 14px;
+  }
+
+  .spreadsheet-settings-body {
+    padding: 14px;
+  }
+
+  .spreadsheet-column-settings-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* =========================================================
+   Spreadsheet Settings: Input Methods Page
+========================================================= */
+
+.spreadsheet-input-method-list {
+  display: grid;
+  gap: 8px;
+}
+
+.spreadsheet-input-method-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 12px;
+  border: 1px solid #edf0f4;
+  border-radius: 9px;
+  background: #ffffff;
+
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    opacity 150ms ease;
+}
+
+.spreadsheet-input-method-row.is-visible {
+  border-color: #dfe4ec;
+}
+
+.spreadsheet-input-method-row.is-hidden {
+  opacity: 0.62;
+  background: #f7f8fa;
+}
+
+.spreadsheet-input-method-row label {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.spreadsheet-input-method-row input {
+  margin-top: 3px;
+  accent-color: #443a9c;
+}
+
+.spreadsheet-input-method-row span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.spreadsheet-input-method-row strong {
+  color: #303442;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.spreadsheet-input-method-row small {
+  color: #858c9b;
+  font-size: 0.76rem;
+  font-weight: 400;
+}
+
+.spreadsheet-input-method-row button {
+  min-height: 32px;
+  border: 1px solid #c9c4e8;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #443a9c;
+
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.spreadsheet-input-method-row button:hover {
+  background: #f7f5ff;
+}
+
+.spreadsheet-input-method-empty {
+  padding: 18px;
+  border: 1px dashed #cfd6e1;
+  border-radius: 10px;
+  background: #fbfcfd;
+  text-align: center;
+}
+
+.spreadsheet-input-method-empty strong {
+  display: block;
+  color: #303442;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.spreadsheet-input-method-empty p {
+  margin: 6px 0 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+}
+
+@media (max-width: 720px) {
+  .spreadsheet-input-method-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Spreadsheet Settings: Source Mode Toggle
+========================================================= */
+
+.spreadsheet-source-mode-toggle {
+  width: fit-content;
+  display: inline-flex;
+  gap: 4px;
+
+  padding: 4px;
+  border: 1px solid #dfe4ec;
+  border-radius: 9px;
+  background: #f7f8fb;
+}
+
+.spreadsheet-source-mode-toggle button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #687083;
+
+  padding: 0 12px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.spreadsheet-source-mode-toggle button:hover {
+  background: #ffffff;
+  color: #443a9c;
+}
+
+.spreadsheet-source-mode-toggle button.active {
+  background: #443a9c;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(68, 58, 156, 0.16);
+}
+
+@media (max-width: 720px) {
+  .spreadsheet-source-mode-toggle {
+    width: 100%;
+  }
+
+  .spreadsheet-source-mode-toggle button {
+    flex: 1;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Spreadsheet View Loading Screen
+========================================================= */
+
+.spreadsheet-loading-card {
+  min-height: 520px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.spreadsheet-loading-hero {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+
+  padding: 22px 24px;
+  border-bottom: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+.spreadsheet-loading-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #f0f3ec;
+  color: #5c6f46;
+  font-size: 1rem;
+}
+
+.spreadsheet-loading-copy {
+  min-width: 0;
+}
+
+.spreadsheet-loading-copy h2 {
+  margin: 0;
+  color: #252936;
+  font-size: 1.28rem;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.spreadsheet-loading-copy p:last-child {
+  margin: 5px 0 0;
+  color: #858c9b;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.spreadsheet-loading-spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid #e4e8ef;
+  border-top-color: #443a9c;
+  border-radius: 999px;
+  animation: spreadsheetLoadingSpin 750ms linear infinite;
+}
+
+.spreadsheet-loading-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  padding: 14px 24px;
+  border-bottom: 1px solid #edf0f4;
+  background: #fbfcfd;
+}
+
+.spreadsheet-loading-summary span {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  border: 1px solid #e4e8ef;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #6f7685;
+
+  padding: 0 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.spreadsheet-loading-summary strong {
+  color: #303442;
+  font-weight: 650;
+}
+
+.spreadsheet-loading-table-preview {
+  padding: 18px 24px 24px;
+  display: grid;
+  gap: 8px;
+}
+
+.spreadsheet-loading-preview-header,
+.spreadsheet-loading-preview-row {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1fr 1fr 0.85fr;
+  gap: 10px;
+}
+
+.spreadsheet-loading-preview-header span,
+.spreadsheet-loading-preview-row span {
+  display: block;
+  border-radius: 7px;
+  background: #eef1f5;
+  animation: spreadsheetLoadingPulse 1200ms ease-in-out infinite;
+}
+
+.spreadsheet-loading-preview-header span {
+  height: 32px;
+  background: #e4e8ef;
+}
+
+.spreadsheet-loading-preview-row span {
+  height: 42px;
+}
+
+.spreadsheet-loading-preview-row:nth-child(odd) span {
+  background: #f3f5f8;
+}
+
+@keyframes spreadsheetLoadingSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spreadsheetLoadingPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .spreadsheet-loading-hero {
+    grid-template-columns: 40px minmax(0, 1fr);
+    padding: 18px;
+  }
+
+  .spreadsheet-loading-spinner {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .spreadsheet-loading-summary,
+  .spreadsheet-loading-table-preview {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .spreadsheet-loading-preview-header,
+  .spreadsheet-loading-preview-row {
+    grid-template-columns: 1.4fr 1fr 1fr;
+  }
+
+  .spreadsheet-loading-preview-header span:nth-child(n + 4),
+  .spreadsheet-loading-preview-row span:nth-child(n + 4) {
+    display: none;
+  }
+}
+
+
+
+
+.spreadsheet-source-pill.source-inquiry-2027 {
+  color: #377d7a;
+  background: #edf6f5;
+  border-color: #c6dfdd;
+}
+
+
+
+
+
+
+
+
+
+.spreadsheet-settings-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.spreadsheet-row-preview-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 7px 11px;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 999px;
+  background: #f7faf6;
+
+  color: #52606d;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.spreadsheet-row-preview-toggle input {
+  margin: 0;
+  accent-color: #5f766f;
+}
+
+.spreadsheet-row-preview-toggle span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.spreadsheet-row-preview-toggle svg {
+  font-size: 0.8rem;
+}
+
+.spreadsheet-row-preview-toggle:hover {
+  border-color: #b8c5be;
+  background: #eef5ee;
+  color: #395f52;
+}
+
+.spreadsheet-table td {
+  position: relative;
+}
+
+.spreadsheet-cell-content {
+  position: relative;
+  z-index: 1;
+}
+
+.spreadsheet-table tbody tr:hover td:first-child {
+  z-index: 80;
+}
+.spreadsheet-table td {
+  position: relative;
+}
+
+.spreadsheet-cell-content {
+  position: relative;
+  z-index: 1;
+}
+
+.spreadsheet-table td.spreadsheet-row-preview-cell {
+  overflow: visible;
+}
+
+.spreadsheet-table tbody tr:hover td.spreadsheet-row-preview-cell {
+  z-index: 80;
+}
+
+.spreadsheet-row-hover-popup {
+  position: absolute;
+  left: 12px;
+  top: calc(100% + 4px);
+  z-index: 90;
+
+  width: min(360px, 68vw);
+  padding: 13px 14px;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(28, 35, 52, 0.16);
+
+  color: #303442;
+  text-align: left;
+  white-space: normal;
+
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition:
+    opacity 130ms ease,
+    visibility 130ms ease,
+    transform 130ms ease;
+}
+
+.spreadsheet-row-hover-popup::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 18px;
+
+  width: 11px;
+  height: 11px;
+
+  border-left: 1px solid #dfe4ec;
+  border-top: 1px solid #dfe4ec;
+  background: #ffffff;
+  transform: rotate(45deg);
+}
+
+.spreadsheet-table tbody tr:hover .spreadsheet-row-hover-popup {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.spreadsheet-row-hover-popup-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.spreadsheet-row-hover-popup-top strong {
+  display: block;
+  color: #252936;
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.spreadsheet-row-hover-popup-top span {
+  display: block;
+  margin-top: 4px;
+  color: #687083;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.spreadsheet-row-hover-popup-top em {
+  flex: 0 0 auto;
+  font-style: normal;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 7px;
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+
+.spreadsheet-row-hover-popup-source {
+  margin: 0 0 10px;
+  padding: 7px 9px;
+
+  border: 1px solid #edf0f4;
+  border-radius: 7px;
+  background: #fbfcfd;
+
+  color: #7b8290;
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.spreadsheet-row-hover-popup dl {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+}
+
+.spreadsheet-row-hover-popup dl div {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.spreadsheet-row-hover-popup dt {
+  color: #8a92a3;
+  font-size: 0.66rem;
+  font-weight: 650;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.spreadsheet-row-hover-popup dd {
+  margin: 0;
+  color: #3f4351;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.spreadsheet-table td.spreadsheet-row-preview-cell {
+  overflow: visible;
+}
+
+.spreadsheet-table tbody tr:hover td.spreadsheet-row-preview-cell {
+  z-index: 80;
+}
+
+
+
+
+
+
+.spreadsheet-header-search {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-width: 210px;
+  max-width: 260px;
+}
+
+.spreadsheet-header-search > label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #667085;
+}
+
+.spreadsheet-header-search-control {
+  position: relative;
+  width: 100%;
+}
+
+.spreadsheet-header-search-control input {
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 34px 8px 11px;
+  border: 1px solid #d8dee8;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1f2937;
+  font: inherit;
+  font-size: 0.84rem;
+  outline: none;
+  box-shadow: 0 4px 12px rgba(28, 35, 52, 0.04);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.spreadsheet-header-search-control input::placeholder {
+  color: #98a2b3;
+}
+
+.spreadsheet-header-search-control input:focus {
+  border-color: #8aa996;
+  box-shadow:
+    0 0 0 3px rgba(70, 109, 88, 0.14),
+    0 4px 12px rgba(28, 35, 52, 0.06);
+}
+
+.spreadsheet-header-search-clear {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 21px;
+  height: 21px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #eef2f0;
+  color: #667085;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.spreadsheet-header-search-clear:hover {
+  background: #dfe8e2;
+  color: #243127;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Spreadsheet Header Actions: Cleaner Settings + Row Popup Toggle
+========================================================= */
+
+.spreadsheet-view-header {
+  align-items: flex-start;
+}
+
+.spreadsheet-view-header-actions {
+  flex: 1 1 760px;
+  min-width: 0;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 178px;
+  align-items: start;
+  gap: 14px;
+}
+
+.spreadsheet-view-summary {
+  min-width: 0;
+
+  display: grid;
+  grid-template-columns: repeat(5, minmax(112px, 1fr));
+  gap: 10px;
+
+  justify-content: stretch;
+}
+
+.spreadsheet-view-summary span {
+  min-width: 0;
+  height: 72px;
+
+  justify-content: center;
+  padding: 11px 14px;
+
+  border-radius: 9px;
+}
+
+.spreadsheet-settings-stack {
+  width: 178px;
+
+  display: grid;
+  gap: 8px;
+
+  align-self: start;
+  justify-self: end;
+}
+
+.spreadsheet-settings-stack .spreadsheet-settings-button {
+  width: 100%;
+  min-height: 46px;
+
+  border-radius: 9px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+/* Make Row Popups look like a clean mini setting instead of a random checkbox pill */
+
+.spreadsheet-row-preview-toggle {
+  width: 100%;
+  min-height: 38px;
+
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+
+  padding: 7px 10px;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 9px;
+  background: #fbfcfd;
+
+  color: #565d6b;
+  font-size: 0.8rem;
+  font-weight: 650;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.spreadsheet-row-preview-toggle:hover {
+  background: #f6f7f9;
+  border-color: #cfd6e1;
+  color: #303442;
+}
+
+.spreadsheet-row-preview-toggle input {
+  appearance: none;
+  -webkit-appearance: none;
+
+  position: relative;
+
+  width: 36px;
+  height: 20px;
+  margin: 0;
+
+  border: 1px solid #cfd6e1;
+  border-radius: 999px;
+  background: #e8ebf1;
+
+  cursor: pointer;
+
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.spreadsheet-row-preview-toggle input::before {
+  content: "";
+
+  position: absolute;
+  top: 2px;
+  left: 2px;
+
+  width: 14px;
+  height: 14px;
+
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(28, 35, 52, 0.2);
+
+  transition: transform 140ms ease;
+}
+
+.spreadsheet-row-preview-toggle input:checked {
+  background: #443a9c;
+  border-color: #443a9c;
+}
+
+.spreadsheet-row-preview-toggle input:checked::before {
+  transform: translateX(16px);
+}
+
+.spreadsheet-row-preview-toggle span {
+  min-width: 0;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.spreadsheet-row-preview-toggle svg {
+  flex: 0 0 auto;
+  color: #7b8290;
+  font-size: 0.78rem;
+}
+
+.spreadsheet-row-preview-toggle:has(input:checked) {
+  border-color: #c9c4e8;
+  background: #f7f5ff;
+  color: #443a9c;
+}
+
+.spreadsheet-row-preview-toggle:has(input:checked) svg {
+  color: #443a9c;
+}
+
+/* Keep it nice on smaller screens */
+
+@media (max-width: 1280px) {
+  .spreadsheet-view-header {
+    flex-direction: column;
+  }
+
+  .spreadsheet-view-header-actions {
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .spreadsheet-view-summary {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  }
+
+  .spreadsheet-settings-stack {
+    width: 178px;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 720px) {
+  .spreadsheet-settings-stack {
+    width: 100%;
+  }
+
+  .spreadsheet-view-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* =========================================================
+   Spreadsheet Header Layout
+   Keeps summary cards to 4 per row so controls have room
+========================================================= */
+
+.spreadsheet-view-header {
+  display: grid;
+  grid-template-columns: minmax(260px, auto) minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+
+.spreadsheet-view-header-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  align-items: start;
+  gap: 18px;
+  width: 100%;
+  min-width: 0;
+}
+
+.spreadsheet-view-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(135px, 1fr));
+  gap: 12px;
+  justify-self: end;
+  width: min(100%, 900px);
+  max-width: 900px;
+  min-width: 0;
+}
+
+.spreadsheet-summary-card {
+  width: 100%;
+  min-width: 0;
+}
+
+.spreadsheet-settings-stack {
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+
+/* =========================================================
+   FINAL OVERRIDE: Spreadsheet Header Title / Cards / Controls
+   Cards sit directly under "All Booking Data"
+========================================================= */
+
+.spreadsheet-view-header {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  align-items: start;
+  gap: 24px;
+
+  padding: 18px;
+}
+
+.spreadsheet-view-header-main {
+  min-width: 0;
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
+.spreadsheet-view-header-main .dashboard-heading-with-icon {
+  min-width: 0;
+}
+
+.spreadsheet-view-summary {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(135px, 1fr));
+  gap: 10px;
+
+  width: 100%;
+  max-width: 920px;
+
+  justify-content: start;
+  align-content: start;
+
+  /* Lines the cards up under the title text instead of under the icon */
+  margin-left: 47px;
+}
+
+.spreadsheet-view-summary .spreadsheet-summary-card,
+.spreadsheet-view-summary span {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.spreadsheet-settings-stack {
+  width: 320px;
+  min-width: 320px;
+  max-width: 320px;
+
+  justify-self: end;
+  align-self: start;
+}
+
+.spreadsheet-settings-stack .spreadsheet-settings-button,
+.spreadsheet-settings-stack .spreadsheet-row-preview-toggle,
+.spreadsheet-settings-stack .spreadsheet-header-search {
+  width: 100%;
+}
+
+.spreadsheet-header-search {
+  max-width: none;
+}
+
+
+
+
+
+
+.spreadsheet-row-hover-popup-source {
+  margin: 8px 0 10px;
+  padding: 8px 10px;
+
+  max-width: 100%;
+
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  font-size: 0.74rem;
+  line-height: 1.2;
+  font-weight: 600;
+
+  color: #707789;
+  background: #f8fafc;
+  border: 1px solid #e5eaf1;
+  border-radius: 9px;
+}
+
+
+
+
+
+/* =========================================================
+   Spreadsheet Summary Card Display Settings
+========================================================= */
+
+.spreadsheet-summary-card-settings-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px 14px;
+
+  padding: 16px;
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  background: #fbfcfd;
+}
+
+.spreadsheet-summary-card-settings-panel h4 {
+  grid-column: 1;
+  margin: 0;
+
+  color: #7b8290;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.065em;
+  text-transform: uppercase;
+}
+
+.spreadsheet-summary-card-settings-panel > .spreadsheet-settings-help-text {
+  grid-column: 1;
+  max-width: 520px;
+  margin: 0;
+
+  color: #858c9b;
+  font-size: 0.84rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.spreadsheet-summary-card-settings-panel > .spreadsheet-settings-actions-row {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+
+  align-self: start;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.spreadsheet-summary-card-settings-panel
+  > .spreadsheet-settings-actions-row
+  button {
+  min-height: 34px;
+  border-radius: 7px;
+  padding: 0 11px;
+
+  background: #ffffff;
+  border-color: #c9c4e8;
+  color: #443a9c;
+
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.spreadsheet-summary-card-settings-panel
+  > .spreadsheet-settings-actions-row
+  button:hover {
+  background: #f7f5ff;
+  border-color: #aaa2dc;
+}
+
+.spreadsheet-summary-card-settings-list {
+  grid-column: 1 / -1;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  gap: 10px;
+
+  margin-top: 6px;
+}
+
+.spreadsheet-summary-card-setting {
+  --summary-accent: #443a9c;
+
+  position: relative;
+  min-height: 74px;
+
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+
+  padding: 12px 13px 12px 14px;
+  overflow: hidden;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  background: #ffffff;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    opacity 140ms ease;
+}
+
+.spreadsheet-summary-card-setting::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+
+  width: 3px;
+  background: var(--summary-accent);
+  opacity: 0.35;
+}
+
+.spreadsheet-summary-card-setting:hover {
+  border-color: #cfd6e1;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(28, 35, 52, 0.045);
+}
+
+.spreadsheet-summary-card-setting.is-visible {
+  border-color: #d6d2ef;
+  background: #ffffff;
+}
+
+.spreadsheet-summary-card-setting.is-visible::before {
+  opacity: 0.95;
+}
+
+.spreadsheet-summary-card-setting.is-hidden {
+  opacity: 0.62;
+  background: #f8f9fb;
+}
+
+.spreadsheet-summary-card-setting.is-hidden::before {
+  background: #cfd6e1;
+  opacity: 0.8;
+}
+
+.spreadsheet-summary-card-setting input {
+  appearance: none;
+  -webkit-appearance: none;
+
+  position: relative;
+  z-index: 1;
+
+  width: 18px;
+  height: 18px;
+  margin: 0;
+
+  display: grid;
+  place-content: center;
+
+  border: 1px solid #b8c0ce;
+  border-radius: 5px;
+  background: #ffffff;
+
+  cursor: pointer;
+
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.spreadsheet-summary-card-setting input::after {
+  content: "";
+
+  width: 5px;
+  height: 9px;
+
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+
+  transform: rotate(45deg) scale(0);
+  transform-origin: center;
+
+  transition: transform 120ms ease;
+}
+
+.spreadsheet-summary-card-setting input:checked {
+  background: var(--summary-accent);
+  border-color: var(--summary-accent);
+}
+
+.spreadsheet-summary-card-setting input:checked::after {
+  transform: rotate(45deg) scale(1);
+}
+
+.spreadsheet-summary-card-setting input:focus-visible {
+  outline: 3px solid rgba(68, 58, 156, 0.14);
+  outline-offset: 2px;
+}
+
+.spreadsheet-summary-card-setting span {
+  position: relative;
+  z-index: 1;
+
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.spreadsheet-summary-card-setting strong {
+  color: #252936;
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.spreadsheet-summary-card-setting small {
+  width: fit-content;
+
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 22px;
+  padding: 0 8px;
+
+  border: 1px solid #edf0f4;
+  border-radius: 999px;
+  background: #f6f7f9;
+
+  color: #6f7687;
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* Same accent colors as the real summary cards */
+.spreadsheet-summary-card-setting.spreadsheet-summary-card-shown {
+  --summary-accent: #443a9c;
+}
+
+.spreadsheet-summary-card-setting.spreadsheet-summary-card-total {
+  --summary-accent: #2f6f5f;
+}
+
+.spreadsheet-summary-card-setting.spreadsheet-summary-card-forms {
+  --summary-accent: #4c65a9;
+}
+
+.spreadsheet-summary-card-setting.spreadsheet-summary-card-imports {
+  --summary-accent: #9a6f08;
+}
+
+.spreadsheet-summary-card-setting.spreadsheet-summary-card-hidden-columns {
+  --summary-accent: #687083;
+}
+
+/* Keeps each top summary card color consistent even when other cards are hidden */
+.spreadsheet-view-summary span.spreadsheet-summary-card-shown {
+  border-left-color: #443a9c;
+}
+
+.spreadsheet-view-summary span.spreadsheet-summary-card-total {
+  border-left-color: #2f6f5f;
+}
+
+.spreadsheet-view-summary span.spreadsheet-summary-card-forms {
+  border-left-color: #4c65a9;
+}
+
+.spreadsheet-view-summary span.spreadsheet-summary-card-imports {
+  border-left-color: #9a6f08;
+}
+
+.spreadsheet-view-summary span.spreadsheet-summary-card-hidden-columns {
+  border-left-color: #687083;
+}
+
+@media (max-width: 720px) {
+  .spreadsheet-summary-card-settings-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .spreadsheet-summary-card-settings-panel > .spreadsheet-settings-actions-row {
+    grid-column: 1;
+    grid-row: auto;
+    justify-content: flex-start;
+  }
+
+  .spreadsheet-summary-card-settings-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+
+
+
+/* =========================================================
+   Spreadsheet View: Starred Rows
+========================================================= */
+
+.spreadsheet-summary-card-starred {
+  border-left-color: #c98716 !important;
+}
+
+.spreadsheet-table-with-stars {
+  min-width: 2660px;
+}
+
+/* Sticky star column */
+
+.spreadsheet-table th.spreadsheet-star-column,
+.spreadsheet-table td.spreadsheet-star-column {
+  position: sticky;
+  left: 0;
+
+  width: 58px;
+  min-width: 58px;
+  max-width: 58px;
+
+  padding-left: 8px;
+  padding-right: 8px;
+
+  text-align: center;
+  border-right: 1px solid #dfe4ec;
+}
+
+.spreadsheet-table th.spreadsheet-star-column {
+  z-index: 8;
+  background: #eef0f5;
+  color: #303442;
+}
+
+.spreadsheet-table td.spreadsheet-star-column {
+  z-index: 4;
+  background: #ffffff;
+}
+
+/* Since the star column is sticky at left: 0,
+   move the frozen first data column over by the star width. */
+
+.spreadsheet-table-with-stars .spreadsheet-sticky-column {
+  left: 58px;
+}
+
+.spreadsheet-table-with-stars th.spreadsheet-sticky-column {
+  z-index: 7;
+}
+
+.spreadsheet-table-with-stars td.spreadsheet-sticky-column {
+  z-index: 3;
+}
+
+/* Keep normal row backgrounds working with the sticky star cell */
+
+.spreadsheet-table tbody tr:nth-child(even) td.spreadsheet-star-column {
+  background: #fbfcfd;
+}
+
+.spreadsheet-table tbody tr:hover td.spreadsheet-star-column {
+  background: #f4f6f8;
+}
+
+/* Star button inside spreadsheet */
+
+.spreadsheet-star-cell {
+  overflow: visible;
+}
+
+.spreadsheet-star-button {
+  margin: 0 auto;
+}
+
+/* Starred row state */
+
+.spreadsheet-table tbody tr.spreadsheet-row-starred td,
+.spreadsheet-table tbody tr.spreadsheet-row-starred .spreadsheet-sticky-column,
+.spreadsheet-table tbody tr.spreadsheet-row-starred td.spreadsheet-star-column {
+  background: #fffaf0;
+}
+
+.spreadsheet-table tbody tr.spreadsheet-row-starred:hover td,
+.spreadsheet-table tbody tr.spreadsheet-row-starred:hover .spreadsheet-sticky-column,
+.spreadsheet-table tbody tr.spreadsheet-row-starred:hover td.spreadsheet-star-column {
+  background: #fff6e4;
+}
+
+.spreadsheet-row-starred td.spreadsheet-star-column {
+  border-left: 4px solid #c98716;
+}
+
+/* Top toggle polish */
+
+.spreadsheet-starred-first-toggle svg {
+  color: #c98716;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Spreadsheet View: Visible Reset Button
+========================================================= */
+
+.spreadsheet-active-settings-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.spreadsheet-active-settings-actions button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: #443a9c;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.spreadsheet-active-settings-actions button:hover {
+  text-decoration: underline;
+}
+
+.spreadsheet-active-settings-actions .spreadsheet-reset-view-button {
+  color: #9f2f2f;
+}
+
+.spreadsheet-active-settings-actions .spreadsheet-reset-view-button:hover {
+  color: #822727;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Spreadsheet Settings: Saved Views
+========================================================= */
+
+.spreadsheet-saved-views-create {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 300px) auto;
+  gap: 14px;
+  align-items: end;
+
+  padding: 14px;
+  border: 1px solid #edf0f4;
+  border-radius: 10px;
+  background: #fbfcfd;
+}
+
+.spreadsheet-saved-views-create h4,
+.spreadsheet-saved-view-card h4 {
+  margin: 0;
+  color: #252936;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.spreadsheet-saved-views-create p {
+  margin: 5px 0 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.spreadsheet-saved-views-create .primary-dashboard-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.spreadsheet-saved-views-list {
+  display: grid;
+  gap: 10px;
+}
+
+.spreadsheet-saved-view-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+
+  padding: 14px;
+  border: 1px solid #edf0f4;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.spreadsheet-saved-view-card.is-default {
+  border-color: #c9c4e8;
+  background: #fbfaff;
+}
+
+.spreadsheet-saved-view-main {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.spreadsheet-saved-view-main > div {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.spreadsheet-saved-view-main p {
+  margin: 0;
+  color: #858c9b;
+  font-size: 0.8rem;
+}
+
+.spreadsheet-saved-view-badge {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+
+  padding: 0 8px;
+  border: 1px solid #d7d1f0;
+  border-radius: 999px;
+  background: #f0edfa;
+  color: #443a9c;
+
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.spreadsheet-saved-view-default {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  color: #3f4351;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.spreadsheet-saved-view-default input {
+  accent-color: #443a9c;
+}
+
+.spreadsheet-saved-view-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.spreadsheet-saved-view-actions button {
+  min-height: 32px;
+  border: 1px solid #c9c4e8;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #443a9c;
+
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.spreadsheet-saved-view-actions button:hover {
+  background: #f7f5ff;
+}
+
+.spreadsheet-saved-view-actions .spreadsheet-saved-view-danger {
+  border-color: #efcaca;
+  color: #9f2f2f;
+}
+
+.spreadsheet-saved-view-actions .spreadsheet-saved-view-danger:hover {
+  background: #fff1f1;
+}
+
+.spreadsheet-saved-views-empty {
+  padding: 18px;
+  border: 1px dashed #cfd6e1;
+  border-radius: 10px;
+  background: #fbfcfd;
+  text-align: center;
+}
+
+.spreadsheet-saved-views-empty strong {
+  display: block;
+  color: #303442;
+  font-size: 0.94rem;
+  font-weight: 650;
+}
+
+.spreadsheet-saved-views-empty p {
+  margin: 6px 0 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+}
+
+@media (max-width: 820px) {
+  .spreadsheet-saved-views-create,
+  .spreadsheet-saved-view-card {
+    grid-template-columns: 1fr;
+  }
+
+  .spreadsheet-saved-view-actions {
+    justify-content: flex-start;
+  }
+
+  .spreadsheet-saved-views-create .primary-dashboard-button {
+    width: 100%;
+  }
+}
+
+
+
+
+
+
+
+/* =========================================================
+   Spreadsheet Settings: Schema Tab
+========================================================= */
+
+.spreadsheet-settings-tabs {
+  overflow-x: auto;
+}
+
+.spreadsheet-settings-tabs button {
+  flex: 0 0 auto;
+}
+
+.spreadsheet-schema-intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 14px;
+  border: 1px solid #edf0f4;
+  border-radius: 10px;
+  background: #fbfcfd;
+}
+
+.spreadsheet-schema-intro h4,
+.spreadsheet-schema-mapping-card h4 {
+  margin: 0;
+  color: #252936;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.spreadsheet-schema-intro p,
+.spreadsheet-schema-mapping-card p {
+  margin: 5px 0 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.spreadsheet-schema-intro > span {
+  flex: 0 0 auto;
+  min-height: 28px;
+
+  display: inline-flex;
+  align-items: center;
+
+  padding: 0 10px;
+  border: 1px solid #d7d1f0;
+  border-radius: 999px;
+  background: #f0edfa;
+  color: #443a9c;
+
+  font-size: 0.74rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.spreadsheet-schema-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.spreadsheet-schema-card,
+.spreadsheet-schema-mapping-card {
+  min-width: 0;
+  padding: 14px;
+
+  border: 1px solid #edf0f4;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.spreadsheet-schema-card-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #edf0f4;
+  margin-bottom: 12px;
+}
+
+.spreadsheet-schema-card-header span {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+
+  padding: 0 8px;
+  border: 1px solid #dfe4ec;
+  border-radius: 999px;
+  background: #f6f7f9;
+  color: #687083;
+
+  font-size: 0.68rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+
+.spreadsheet-schema-card-header h4 {
+  margin: 9px 0 0;
+  color: #252936;
+  font-size: 0.98rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.spreadsheet-schema-card-header p {
+  margin: 5px 0 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.spreadsheet-schema-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+
+  margin: 0 0 12px;
+}
+
+.spreadsheet-schema-meta div {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #edf0f4;
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.spreadsheet-schema-meta dt,
+.spreadsheet-schema-field-block h5,
+.spreadsheet-schema-notes h5 {
+  margin: 0;
+  color: #7b8290;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.065em;
+  text-transform: uppercase;
+}
+
+.spreadsheet-schema-meta dd {
+  margin: 4px 0 0;
+  color: #303442;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.spreadsheet-schema-field-block {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.spreadsheet-schema-field-block p {
+  margin: 0;
+  color: #858c9b;
+  font-size: 0.82rem;
+}
+
+.spreadsheet-schema-chip-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+
+  max-height: 178px;
+  overflow: auto;
+
+  padding: 10px;
+  border: 1px solid #edf0f4;
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.spreadsheet-schema-chip-list span,
+.spreadsheet-schema-mapping-row span {
+  min-height: 25px;
+  display: inline-flex;
+  align-items: center;
+
+  padding: 0 8px;
+  border: 1px solid #dfe4ec;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #3f4351;
+
+  font-size: 0.74rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.spreadsheet-schema-notes {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.spreadsheet-schema-notes ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.spreadsheet-schema-notes li {
+  color: #4f5564;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.spreadsheet-schema-mapping-card {
+  display: grid;
+  gap: 14px;
+  background: #fbfcfd;
+}
+
+.spreadsheet-schema-mapping-list {
+  display: grid;
+  gap: 8px;
+}
+
+.spreadsheet-schema-mapping-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+
+  padding: 10px 12px;
+  border: 1px solid #edf0f4;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.spreadsheet-schema-mapping-row strong {
+  color: #303442;
+  font-size: 0.84rem;
+  font-weight: 650;
+}
+
+.spreadsheet-schema-mapping-row div {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+@media (max-width: 980px) {
+  .spreadsheet-schema-grid,
+  .spreadsheet-schema-meta,
+  .spreadsheet-schema-mapping-row {
+    grid-template-columns: 1fr;
+  }
+
+  .spreadsheet-schema-intro {
+    flex-direction: column;
+  }
+
+  .spreadsheet-schema-intro > span {
+    align-self: flex-start;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.spreadsheet-background-rendering-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #dbe3ef;
+  background: #f8fafc;
+  color: #64748b;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.spreadsheet-background-rendering-pill::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 999px;
+  background: #94a3b8;
+  animation: spreadsheet-rendering-pulse 1s ease-in-out infinite;
+}
+
+@keyframes spreadsheet-rendering-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+.spreadsheet-view-page {
+  position: relative;
+}
+
+.spreadsheet-view-page-first-chunk-loading {
+  min-height: 520px;
+}
+
+.spreadsheet-first-chunk-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  align-items: start;
+  padding: 0;
+  background: var(--dashboard-page-background, #f6f8fb);
+}
+
+.spreadsheet-first-chunk-loading-overlay .spreadsheet-loading-card {
+  width: 100%;
+  min-height: 420px;
+}
+
+.spreadsheet-view-page-first-chunk-loading > .spreadsheet-view-card {
+  pointer-events: none;
+}
+
+
+
+
+
+/* Retreat Type badges */
+
+.spreadsheet-retreat-type-pill {
+  --retreat-type-rgb: 100 116 139;
+
+  max-width: 100%;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 28px;
+  padding: 0 11px;
+
+  border-radius: 8px;
+  border: 1px solid rgb(var(--retreat-type-rgb) / 0.24);
+  background: rgb(var(--retreat-type-rgb) / 0.1);
+  color: rgb(var(--retreat-type-rgb) / 1);
+
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.spreadsheet-retreat-type-pill::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 999px;
+  background: rgb(var(--retreat-type-rgb) / 1);
+}
+
+/* Same colors as the dashboard retreat type legend */
+
+.spreadsheet-retreat-type-pill.retreat-type-pr {
+  --retreat-type-rgb: 92 107 192;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-day-use {
+  --retreat-type-rgb: 99 102 113;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-men {
+  --retreat-type-rgb: 37 99 235;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-women {
+  --retreat-type-rgb: 190 80 145;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-students-youth {
+  --retreat-type-rgb: 217 119 6;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-families {
+  --retreat-type-rgb: 13 148 136;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-adults {
+  --retreat-type-rgb: 79 70 229;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-staff-leaders {
+  --retreat-type-rgb: 22 101 52;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-pastors-elders {
+  --retreat-type-rgb: 126 87 194;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-friends-hosts {
+  --retreat-type-rgb: 8 145 178;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-events {
+  --retreat-type-rgb: 194 65 12;
+}
+
+.spreadsheet-retreat-type-pill.retreat-type-other {
+  --retreat-type-rgb: 100 116 139;
+}
+

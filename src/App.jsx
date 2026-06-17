@@ -3,6 +3,7 @@ import "./styles/shared.css";
 import "./styles/Dashboard.css";
 import "./styles/CalendarView.css";
 import "./styles/InquiryPipeline.css";
+import "./styles/SpreadsheetView.css";
 import Dashboard from "./pages/Dashboard";
 import StaffAuthGate from "./auth/StaffAuthGate";
 
