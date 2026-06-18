@@ -9,6 +9,7 @@ import "./styles/BookingDetail.css";
 import "./styles/ReportsView.css";
 import "./styles/AdminJobsView.css";
 import "./styles/BackupView.css";
+import "./styles/Auth.css";
 import Dashboard from "./pages/Dashboard";
 import StaffAuthGate from "./auth/StaffAuthGate";
 
