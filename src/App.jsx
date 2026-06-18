@@ -10,6 +10,7 @@ import "./styles/ReportsView.css";
 import "./styles/AdminJobsView.css";
 import "./styles/BackupView.css";
 import "./styles/Auth.css";
+import "./styles/PortalAdminView.css";
 import Dashboard from "./pages/Dashboard";
 import StaffAuthGate from "./auth/StaffAuthGate";
 
