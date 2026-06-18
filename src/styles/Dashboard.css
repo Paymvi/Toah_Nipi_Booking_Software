@@ -2314,3 +2314,330 @@
   display: block;
 }
 
+
+
+
+
+
+
+
+
+/* =========================================================
+   FIX: Extend sidebar background rail full page height
+   Keeps the left sidebar area white even when the sidebar content ends.
+========================================================= */
+
+@media (min-width: 761px) {
+  .dashboard-shell {
+    background:
+      linear-gradient(
+        to right,
+        #ffffff 0,
+        #ffffff 270px,
+        #dfe4ec 270px,
+        #dfe4ec 271px,
+        #f5f6f8 271px,
+        #f5f6f8 100%
+      );
+  }
+
+  .dashboard-shell-sidebar-collapsed {
+    background:
+      linear-gradient(
+        to right,
+        #ffffff 0,
+        #ffffff 88px,
+        #dfe4ec 88px,
+        #dfe4ec 89px,
+        #f5f6f8 89px,
+        #f5f6f8 100%
+      );
+  }
+
+  .dashboard-sidebar {
+    border-right: 0;
+  }
+}
+
+
+
+
+
+
+
+/* =========================================================
+   FIX: Sidebar visual polish
+========================================================= */
+
+/* Keep the sidebar scrollable, but make the scrollbar calmer */
+.dashboard-sidebar {
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(111, 118, 135, 0.45) transparent;
+}
+
+.dashboard-sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-sidebar::-webkit-scrollbar-thumb {
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: rgba(111, 118, 135, 0.42);
+}
+
+.dashboard-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(111, 118, 135, 0.62);
+}
+
+/* Make collapsed sidebar feel like an icon rail instead of a chopped-off menu */
+.dashboard-sidebar-collapsed {
+  padding: 14px 10px;
+  background: #ffffff;
+  border-right: 1px solid #dfe4ec;
+}
+
+/* Center the logo area in collapsed mode */
+.dashboard-sidebar-collapsed .dashboard-logo {
+  justify-content: center;
+  padding: 0 0 22px;
+  margin-bottom: 12px;
+}
+
+.dashboard-sidebar-collapsed .dashboard-logo > span {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+}
+
+/* Make every collapsed nav item a neat square icon button */
+.dashboard-sidebar-collapsed .sidebar-link,
+.dashboard-sidebar-collapsed .sidebar-active-button {
+  width: 54px;
+  height: 54px;
+  min-height: 54px;
+
+  justify-content: center;
+
+  margin: 0 auto 8px;
+  padding: 0;
+
+  border-radius: 16px;
+
+  color: #373b4a;
+}
+
+.dashboard-sidebar-collapsed .sidebar-link:hover {
+  background: #f5f4fb;
+  color: #443a9c;
+}
+
+/* Active collapsed item should be a clean rounded square, not a huge strip */
+.dashboard-sidebar-collapsed .sidebar-link-active,
+.dashboard-sidebar-collapsed .sidebar-active-button {
+  background: #443a9c;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(68, 58, 156, 0.18);
+}
+
+.dashboard-sidebar-collapsed .sidebar-link-active:hover,
+.dashboard-sidebar-collapsed .sidebar-active-button:hover {
+  background: #382f86;
+  color: #ffffff;
+}
+
+/* Icon sizing in collapsed mode */
+.dashboard-sidebar-collapsed .sidebar-link svg,
+.dashboard-sidebar-collapsed .sidebar-active-button svg {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+/* Section spacing in collapsed mode */
+.dashboard-sidebar-collapsed .sidebar-section {
+  padding-top: 10px;
+  margin-top: 8px;
+}
+
+.dashboard-sidebar-collapsed .sidebar-main-section {
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+/* Hide section labels in collapsed mode */
+.dashboard-sidebar-collapsed .sidebar-section > p {
+  display: none;
+}
+
+/* Keep the inquiry badge attached to the icon instead of floating weirdly */
+.dashboard-sidebar-collapsed .sidebar-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+
+  background: #8b83c9;
+  color: #ffffff;
+
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Make the collapse button cleaner in collapsed mode */
+.dashboard-sidebar-collapsed .sidebar-collapse-button {
+  right: -7px;
+  bottom: -18px;
+
+  width: 28px;
+  height: 28px;
+
+  border-color: #dfe4ec;
+  background: #ffffff;
+  color: #687083;
+
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+.dashboard-sidebar-collapsed .sidebar-collapse-button:hover {
+  background: #f7f5ff;
+  color: #443a9c;
+  border-color: #c9c4e8;
+}
+
+
+
+
+
+
+/* =========================================================
+   FIX: Make sidebar fit without needing to scroll
+   Tightens sidebar spacing so all sections fit on normal screens.
+========================================================= */
+
+@media (min-width: 761px) {
+  .dashboard-sidebar {
+    height: 100vh;
+    min-height: 100vh;
+    padding: 12px 0;
+    overflow-y: hidden;
+  }
+
+  .dashboard-logo {
+    padding: 0 18px 14px;
+    margin-bottom: 8px;
+  }
+
+  .dashboard-logo > span {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+  }
+
+  .dashboard-logo strong {
+    font-size: 0.88rem;
+  }
+
+  .dashboard-logo small {
+    font-size: 0.68rem;
+  }
+
+  .dashboard-sidebar-signout {
+    padding: 0 12px 8px;
+    margin-bottom: 2px;
+  }
+
+  .dashboard-sidebar-signout .secondary-dashboard-button {
+    min-height: 32px;
+    font-size: 0.78rem;
+  }
+
+  .sidebar-main-section {
+    padding-bottom: 8px;
+    margin-bottom: 2px;
+  }
+
+  .sidebar-section {
+    padding-top: 10px;
+  }
+
+  .sidebar-section p {
+    margin-bottom: 4px;
+    padding: 0 18px;
+    font-size: 0.64rem;
+    letter-spacing: 0.075em;
+  }
+
+  .sidebar-link,
+  .sidebar-active-button {
+    min-height: 36px;
+    padding: 0 18px;
+    gap: 10px;
+    font-size: 0.84rem;
+  }
+
+  .sidebar-link svg,
+  .sidebar-active-button svg {
+    font-size: 0.88rem;
+  }
+
+  .sidebar-badge {
+    min-width: 22px;
+    height: 22px;
+    font-size: 0.72rem;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   FIX: Add sidebar separators between section groups
+========================================================= */
+
+/* Adds lines before Reporting and Administration,
+   without duplicating the existing line after Main */
+.dashboard-sidebar
+  .sidebar-main-section
+  + .sidebar-section
+  ~ .sidebar-section {
+  margin-top: 14px;
+  padding-top: 16px;
+  border-top: 1px solid #edf0f4;
+}
+
+/* Keep the section label nicely spaced after the line */
+.dashboard-sidebar
+  .sidebar-main-section
+  + .sidebar-section
+  ~ .sidebar-section
+  > p {
+  margin-top: 0;
+}
+
+/* Collapsed sidebar should stay clean and not show random divider lines */
+.dashboard-sidebar-collapsed
+  .sidebar-main-section
+  + .sidebar-section
+  ~ .sidebar-section {
+  border-top: 0;
+  margin-top: 8px;
+  padding-top: 10px;
+}
