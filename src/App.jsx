@@ -5,6 +5,7 @@ import "./styles/CalendarView.css";
 import "./styles/InquiryPipeline.css";
 import "./styles/SpreadsheetView.css";
 import "./styles/ContactsView.css";
+import "./styles/BookingDetail.css";
 import Dashboard from "./pages/Dashboard";
 import StaffAuthGate from "./auth/StaffAuthGate";
 
