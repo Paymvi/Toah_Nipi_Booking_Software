@@ -193,3 +193,16 @@
     padding: 22px;
   }
 }
+
+
+
+
+
+
+/* =========================================================
+   Collapsed Sidebar: Hide Sign Out
+========================================================= */
+
+.dashboard-sidebar-collapsed .dashboard-sidebar-signout {
+  display: none !important;
+}
