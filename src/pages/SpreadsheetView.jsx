@@ -679,6 +679,156 @@ const bookingSpreadsheetColumns = [
   },
 ];
 
+const SPREADSHEET_YEAR_COLUMN_LABELS = {
+  "2025": new Set([
+    "Organization",
+    "Start Date",
+    "End Date",
+    "Retreat Type",
+    "Returning Status",
+    "Contact Name",
+    "Phone",
+    "Guest Count",
+    "Buildings / Rooms",
+    "Meals",
+    "Food Allergies",
+    "Need To Know",
+    "Linen Sets",
+    "Activities",
+    "# Persons",
+    "# Nights",
+    "# Meals",
+    "Camper Days",
+    "Usage Fee",
+    "$ Lodging",
+    "$ Food",
+    "$ Misc.",
+  ]),
+
+  "2026": new Set([
+    "Organization",
+    "Start Date",
+    "End Date",
+    "Retreat Type",
+    "Returning Status",
+    "Contact Name",
+    "Email",
+    "Phone",
+    "Guest Count",
+    "Buildings / Rooms",
+    "Meals",
+    "Food Allergies",
+    "Need To Know",
+    "Linen Sets",
+    "Activities",
+
+    "Stage of Group",
+    "Min Paying Guests",
+    "Max Paying Guests",
+    "Guest Rate",
+    "Expected Minimum Revenue",
+    "Invoice Lodging / Meals",
+    "Deposit",
+    "Deposit Received",
+    "Date of Cancellation",
+    "Reason for Cancellation",
+    "Vacancy Filled",
+
+    "# Persons",
+    "# Nights",
+    "# Meals",
+    "Camper Days",
+    "Usage Fee",
+    "$ Lodging",
+    "$ Food",
+    "$ Misc.",
+    "Monthly Projected Income",
+
+    "Notes",
+  ]),
+
+  "2027": new Set([
+    "Organization",
+    "Status",
+    "Start Date",
+    "End Date",
+    "Retreat Type",
+    "Returning Status",
+    "Contact Name",
+    "Email",
+    "Phone",
+    "Guest Count",
+    "Buildings / Rooms",
+
+    "# Nights",
+    "Meals",
+    "Stage of Group",
+    "Deposit",
+    "Deposit Received",
+    "Food Allergies",
+    "Need To Know",
+    "Linen Sets",
+    "Activities",
+
+    "Min Paying Guests",
+    "Max Paying Guests",
+    "Guest Rate",
+    "Expected Minimum Revenue",
+    "Schedule",
+
+    "Date of Cancellation",
+    "Reason for Cancellation",
+    "Vacancy Filled",
+
+    "# Persons",
+    "# Meals",
+    "Camper Days",
+    "Usage Fee",
+    "$ Lodging",
+    "$ Food",
+    "$ Misc.",
+  ]),
+};
+
+function getSpreadsheetBookingYear(booking) {
+  const sourceType = String(booking.sourceType || "").toLowerCase();
+  const detectedImportType = String(
+    booking.detectedImportType || ""
+  ).toLowerCase();
+  const sourceSheet = String(booking.sourceSheet || "").toLowerCase();
+
+  const searchableSource = [
+    sourceType,
+    detectedImportType,
+    sourceSheet,
+  ].join(" ");
+
+  if (searchableSource.includes("2027")) {
+    return "2027";
+  }
+
+  if (searchableSource.includes("2026")) {
+    return "2026";
+  }
+
+  if (searchableSource.includes("2025")) {
+    return "2025";
+  }
+
+  /*
+    Older 2025 imports used sourceType "Master"
+    before we renamed it "Master 2025".
+  */
+  if (
+    sourceType === "master" ||
+    detectedImportType === "master"
+  ) {
+    return "2025";
+  }
+
+  return "";
+}
+
 function getDefaultSpreadsheetSettings() {
   return {
     searchText: "",
@@ -2818,6 +2968,14 @@ function BookingSpreadsheetView({
 }) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  /*
+    Simple staff-facing spreadsheet mode.
+
+    "all" shows all Master data.
+    Individual years behave more like opening that year's Excel sheet.
+  */
+  const [spreadsheetYearView, setSpreadsheetYearView] = useState("all");
+
   const [spreadsheetSettings, setSpreadsheetSettings] = useState(() =>
     getSavedSpreadsheetSettings()
   );
@@ -2904,16 +3062,78 @@ function BookingSpreadsheetView({
   );
 
   const visibleSpreadsheetColumns = useMemo(() => {
-    if (!spreadsheetSettings.visibleColumnIds) {
+    /*
+      ALL
+      Show every available standard/raw column.
+    */
+    if (spreadsheetYearView === "all") {
       return orderedSpreadsheetColumns;
     }
 
-    const visibleColumnIdSet = new Set(spreadsheetSettings.visibleColumnIds);
+    const allowedStandardLabels =
+      SPREADSHEET_YEAR_COLUMN_LABELS[spreadsheetYearView];
 
-    return orderedSpreadsheetColumns.filter((column) =>
-      visibleColumnIdSet.has(column.id)
-    );
-  }, [orderedSpreadsheetColumns, spreadsheetSettings.visibleColumnIds]);
+    if (!allowedStandardLabels) {
+      return orderedSpreadsheetColumns;
+    }
+
+    /*
+      Find any unmapped/original Excel columns that actually occur
+      on bookings from the selected year.
+
+      That means things such as a weird old 2026-only source column
+      can still appear when viewing 2026 without polluting 2025/2027.
+    */
+    const rawColumnsForSelectedYear = new Set();
+
+    processedInquiryBookings.forEach((booking) => {
+      if (getSpreadsheetBookingYear(booking) !== spreadsheetYearView) {
+        return;
+      }
+
+      const rawData = booking.rawSpreadsheetData;
+
+      if (!rawData || typeof rawData !== "object") {
+        return;
+      }
+
+      Object.keys(rawData).forEach((columnName) => {
+        if (
+          columnName === "sourceSheet" ||
+          columnName === "sourceRowNumber" ||
+          columnName === "detectedImportType"
+        ) {
+          return;
+        }
+
+        /*
+          Mapped fields already have a clean standardized column,
+          so don't show the duplicated "Original:" version.
+        */
+        if (MAPPED_MASTER_RAW_COLUMNS.has(columnName)) {
+          return;
+        }
+
+        rawColumnsForSelectedYear.add(columnName);
+      });
+    });
+
+    return orderedSpreadsheetColumns.filter((column) => {
+      if (column.type === "standard") {
+        return allowedStandardLabels.has(column.label);
+      }
+
+      if (column.type === "raw") {
+        return rawColumnsForSelectedYear.has(column.rawColumnName);
+      }
+
+      return false;
+    });
+  }, [
+    orderedSpreadsheetColumns,
+    processedInquiryBookings,
+    spreadsheetYearView,
+  ]);
 
   const sourceTypeOptions = useMemo(
     () =>
@@ -2971,97 +3191,33 @@ function BookingSpreadsheetView({
     [processedInquiryBookings]
   );
 
-    const filteredAndSortedBookings = useMemo(() => {
-    const searchText = spreadsheetSettings.searchText.trim().toLowerCase();
-    const minGuests = getSpreadsheetNumber(spreadsheetSettings.minGuests);
-    const maxGuests = getSpreadsheetNumber(spreadsheetSettings.maxGuests);
+  const filteredAndSortedBookings = useMemo(() => {
+    const searchText = String(
+      spreadsheetSettings.searchText || ""
+    )
+      .trim()
+      .toLowerCase();
 
     const filteredBookings = processedInquiryBookings.filter((booking) => {
+      /*
+        YEAR FILTER
+      */
+      if (
+        spreadsheetYearView !== "all" &&
+        getSpreadsheetBookingYear(booking) !== spreadsheetYearView
+      ) {
+        return false;
+      }
+
+      /*
+        SEARCH
+        Search stays because it is still directly available
+        in the spreadsheet header.
+      */
       if (
         searchText &&
         !getSpreadsheetSearchText(booking).includes(searchText)
       ) {
-        return false;
-      }
-
-      if (spreadsheetSettings.sourceFilterMode === "inputMethod") {
-        if (
-          spreadsheetSettings.sourceTypes.length > 0 &&
-          !spreadsheetSettings.sourceTypes.includes(
-            getBookingInputMethod(booking)
-          )
-        ) {
-          return false;
-        }
-      } else {
-        if (
-          spreadsheetSettings.sourceSheets.length > 0 &&
-          !spreadsheetSettings.sourceSheets.includes(
-            getBookingSourceSheetLabel(booking)
-          )
-        ) {
-          return false;
-        }
-      }
-
-      if (
-        spreadsheetSettings.statuses.length > 0 &&
-        !spreadsheetSettings.statuses.includes(booking.status)
-      ) {
-        return false;
-      }
-
-      if (spreadsheetSettings.waitlist !== "all") {
-        const isWaitlisted =
-          String(booking.waitlist || "").toLowerCase() === "yes";
-
-        if (spreadsheetSettings.waitlist === "yes" && !isWaitlisted) {
-          return false;
-        }
-
-        if (spreadsheetSettings.waitlist === "no" && isWaitlisted) {
-          return false;
-        }
-      }
-
-      if (
-        !bookingTouchesSpreadsheetDateRange(
-          booking,
-          spreadsheetSettings.startDate,
-          spreadsheetSettings.endDate
-        )
-      ) {
-        return false;
-      }
-
-      const guestCount = getSpreadsheetNumber(
-        booking.attendeeCount || booking.persons || booking.groupSize
-      );
-
-      if (minGuests !== null && (guestCount === null || guestCount < minGuests)) {
-        return false;
-      }
-
-      if (maxGuests !== null && (guestCount === null || guestCount > maxGuests)) {
-        return false;
-      }
-
-      const hasEmail = isSpreadsheetUsableValue(booking.email);
-      const hasPhone = isSpreadsheetUsableValue(booking.phone);
-
-      if (spreadsheetSettings.hasEmail === "yes" && !hasEmail) {
-        return false;
-      }
-
-      if (spreadsheetSettings.hasEmail === "no" && hasEmail) {
-        return false;
-      }
-
-      if (spreadsheetSettings.hasPhone === "yes" && !hasPhone) {
-        return false;
-      }
-
-      if (spreadsheetSettings.hasPhone === "no" && hasPhone) {
         return false;
       }
 
@@ -3076,10 +3232,15 @@ function BookingSpreadsheetView({
       const aIsStarred = starredSpreadsheetBookingIdSet.has(
         getSpreadsheetBookingStarId(a)
       );
+
       const bIsStarred = starredSpreadsheetBookingIdSet.has(
         getSpreadsheetBookingStarId(b)
       );
 
+      /*
+        Keep the existing "Starred first" feature because its
+        toggle is still directly visible.
+      */
       if (
         spreadsheetSettings.showStarredRowsFirst &&
         aIsStarred !== bIsStarred
@@ -3096,15 +3257,34 @@ function BookingSpreadsheetView({
         getSpreadsheetComparableValue(sortColumn, b)
       );
 
-      return spreadsheetSettings.sortDirection === "desc" ? -result : result;
+      return spreadsheetSettings.sortDirection === "desc"
+        ? -result
+        : result;
     });
   }, [
     processedInquiryBookings,
-    spreadsheetSettings,
+    spreadsheetYearView,
+    spreadsheetSettings.searchText,
+    spreadsheetSettings.sortColumnId,
+    spreadsheetSettings.sortDirection,
+    spreadsheetSettings.showStarredRowsFirst,
     allSpreadsheetColumns,
     starredSpreadsheetBookingIdSet,
   ]);
 
+  const selectSpreadsheetYearView = (nextYearView) => {
+    setSpreadsheetYearView(nextYearView);
+
+    /*
+      Always return to a predictable spreadsheet-style ordering
+      when switching between years.
+    */
+    setSpreadsheetSettings((currentSettings) => ({
+      ...currentSettings,
+      sortColumnId: "standard:Start Date",
+      sortDirection: "asc",
+    }));
+  };
 
   const updateSpreadsheetSettings = (updates) => {
     setSpreadsheetSettings((currentSettings) => ({
@@ -3329,14 +3509,52 @@ function BookingSpreadsheetView({
           </div>
 
           <div className="spreadsheet-settings-stack">
-            <button
+            {/* <button
               className="primary-dashboard-button spreadsheet-settings-button"
               type="button"
               onClick={() => setIsSettingsOpen(true)}
             >
               <FaCog />
               Settings
-            </button>
+            </button> */}
+
+            <div
+              className="spreadsheet-year-view-toggle"
+              aria-label="Spreadsheet year view"
+            >
+              <button
+                className={spreadsheetYearView === "all" ? "active" : ""}
+                type="button"
+                onClick={() => selectSpreadsheetYearView("all")}
+              >
+                All
+              </button>
+
+              <button
+                className={spreadsheetYearView === "2025" ? "active" : ""}
+                type="button"
+                onClick={() => selectSpreadsheetYearView("2025")}
+              >
+                2025
+              </button>
+
+              <button
+                className={spreadsheetYearView === "2026" ? "active" : ""}
+                type="button"
+                onClick={() => selectSpreadsheetYearView("2026")}
+              >
+                2026
+              </button>
+
+              <button
+                className={spreadsheetYearView === "2027" ? "active" : ""}
+                type="button"
+                onClick={() => selectSpreadsheetYearView("2027")}
+              >
+                2027
+              </button>
+            </div>
+
 
             <label className="spreadsheet-row-preview-toggle">
               <input
@@ -3437,33 +3655,34 @@ function BookingSpreadsheetView({
               </span>
 
               <span>
-                Source Mode:{" "}
+                View:{" "}
                 <strong>
-                  {spreadsheetSettings.sourceFilterMode === "inputMethod"
-                    ? "Input Method"
-                    : "Source Sheet"}
+                  {spreadsheetYearView === "all"
+                    ? "All Years"
+                    : `Master ${spreadsheetYearView}`}
                 </strong>
               </span>
 
-              <div className="spreadsheet-active-settings-actions">
+              {/* <div className="spreadsheet-active-settings-actions">
               
-              <button
-                type="button"
-                onClick={() => setIsSettingsOpen(true)}
-              >
-                Edit View
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setIsSettingsOpen(true)}
+                >
+                  Edit View
+                </button>
 
-              <button
-                className="spreadsheet-reset-view-button"
-                type="button"
-                onClick={resetSpreadsheetSettings}
-              >
-                Reset View
-              </button>
+                <button
+                  className="spreadsheet-reset-view-button"
+                  type="button"
+                  onClick={resetSpreadsheetSettings}
+                >
+                  Reset View
+                </button>
 
-              
-            </div>
+              </div> */}
+
+
             </div>
 
             <div className="spreadsheet-table-wrap">
