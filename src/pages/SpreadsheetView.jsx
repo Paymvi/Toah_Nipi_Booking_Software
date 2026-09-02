@@ -412,12 +412,23 @@ function getRawSpreadsheetColumns(bookings) {
 
     Object.keys(booking.rawSpreadsheetData).forEach((key) => {
       if (
-        key !== "sourceSheet" &&
-        key !== "sourceRowNumber" &&
-        key !== "detectedImportType"
+        key === "sourceSheet" ||
+        key === "sourceRowNumber" ||
+        key === "detectedImportType"
       ) {
-        columns.add(key);
+        return;
       }
+
+      /*
+        Don't create an "Original:" column when that Excel field
+        has already been normalized into one of our standard
+        booking columns.
+      */
+      if (MAPPED_MASTER_RAW_COLUMNS.has(key)) {
+        return;
+      }
+
+      columns.add(key);
     });
   });
 
