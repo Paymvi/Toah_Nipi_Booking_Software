@@ -952,11 +952,13 @@ function normalizeMaster2026SpreadsheetRow(row, index) {
     "Phone",
     "Phone Number",
     "Contact Person Cell #",
+    "Group Leader #",
   ]);
 
   const estimatedGuests = readSpreadsheetCell(row, [
     "Estimated Number of Guests",
     "Actual Number of Guests",
+    "# of Guests",
     "Size",
   ]);
 
@@ -970,7 +972,11 @@ function normalizeMaster2026SpreadsheetRow(row, index) {
   const allergies = readSpreadsheetCell(row, ["Allergies", "Food Allergies"]);
   const needToKnow = readSpreadsheetCell(row, ["Need to know", "Need To Know"]);
   const linenSets = readSpreadsheetCell(row, ["Linen Sets"]);
-  const activities = readSpreadsheetCell(row, ["Activities"]);
+
+  const activities = readSpreadsheetCell(row, [
+    "Activities",
+    "Schedule/Activities",
+  ]);
 
   const contactPersonEmail = readSpreadsheetCell(row, [
     "Contact Person Email",
@@ -990,10 +996,15 @@ function normalizeMaster2026SpreadsheetRow(row, index) {
     "Maximum Number of Paying Guests",
   ]);
 
-  const guestRate = readSpreadsheetCell(row, ["Guest Rate"]);
+  const guestRate = readSpreadsheetCell(row, [
+    "Guest Rate",
+    "Adult Guest Rate",
+  ]);
 
   const expectedMinimumRevenue = readSpreadsheetCell(row, [
+    "Exp. Minimum Revenue",
     "Exp. Minimum Revenue for Lodging/Meals",
+    "Expected Minimum Revenue",
     "Expected Minimum Revenue for Lodging/Meals",
   ]);
 
@@ -1134,6 +1145,345 @@ function normalizeMaster2026SpreadsheetRow(row, index) {
 }
 
 
+function normalizeMaster2027SpreadsheetRow(row, index) {
+  const arrivalDate = readSpreadsheetCell(row, [
+    "Arrival Date",
+    "Start Date",
+    "Check In",
+    "Check-in",
+  ]);
+
+  const departureDate = readSpreadsheetCell(row, [
+    "Departure Date",
+    "End Date",
+    "Check Out",
+    "Check-out",
+  ]);
+
+  const confirmedStatus = readSpreadsheetCell(row, [
+    "Confirmed or Unconfirmed",
+    "Confirmed/Unconfirmed",
+  ]);
+
+  const guestGroupName = readSpreadsheetCell(row, [
+    "Guest Group Name",
+    "Group Name",
+    "Organization",
+  ]);
+
+  const guestGroupType = readSpreadsheetCell(row, [
+    "Guest Group Type",
+    "Retreat Type",
+    "Type",
+  ]);
+
+  const returningStatus = readSpreadsheetCell(row, [
+    "Returning (R) or New (N)",
+    "Returning or New",
+  ]);
+
+  const contactPerson = readSpreadsheetCell(row, [
+    "Contact Person",
+    "Group Leader/Contact Person",
+    "Group Leader",
+  ]);
+
+  const contactPhone = readSpreadsheetCell(row, [
+    "Contact Person Cell #",
+    "Phone",
+    "Phone Number",
+  ]);
+
+  const contactPersonEmail = readSpreadsheetCell(row, [
+    "Contact Person Email",
+    "Email",
+    "Email Address",
+  ]);
+
+  const estimatedGuests = readSpreadsheetCell(row, [
+    "Estimated # of Guests",
+    "Estimated Number of Guests",
+    "Actual Number of Guests",
+    "# of Guests",
+    "Size",
+    "Group Size",
+  ]);
+
+  const buildingsRooms = readSpreadsheetCell(row, [
+    "Buildings/Rooms",
+    "Buildings",
+    "Rooms",
+  ]);
+
+  const meals = readSpreadsheetCell(row, ["Meals"]);
+
+  const stageOfGroup = readSpreadsheetCell(row, [
+    "Stage of Group",
+  ]);
+
+  const depositReceived = readSpreadsheetCell(row, [
+    "$250 Deposit for 2027 Rec'd?",
+    "$250 Deposit for 2027 Received?",
+    "Deposit Received",
+  ]);
+
+  const foodAllergies = readSpreadsheetCell(row, [
+    "Food Allergies",
+    "Allergies",
+  ]);
+
+  const needToKnow = readSpreadsheetCell(row, [
+    "Need to know",
+    "Need To Know",
+  ]);
+
+  const linenSets = readSpreadsheetCell(row, ["Linen Sets"]);
+
+  const activities = readSpreadsheetCell(row, [
+    "Activities",
+  ]);
+
+  const minPayingGuests = readSpreadsheetCell(row, [
+    "Min. Number of Paying Guests",
+    "Minimum Number of Paying Guests",
+  ]);
+
+  const maxPayingGuests = readSpreadsheetCell(row, [
+    "Max. Number of Paying Guests",
+    "Maximum Number of Paying Guests",
+  ]);
+
+  const guestRate = readSpreadsheetCell(row, [
+    "Guest Rate",
+  ]);
+
+  const expectedMinimumRevenue = readSpreadsheetCell(row, [
+    "Exp. Minimum Revenue",
+    "Exp. Minimum Revenue for Lodging/Meals",
+    "Expected Minimum Revenue",
+    "Expected Minimum Revenue for Lodging/Meals",
+  ]);
+
+  const schedule = readSpreadsheetCell(row, [
+    "Schedule",
+  ]);
+
+  const dateOfCancellation = readSpreadsheetCell(row, [
+    "Date of Cancellation",
+  ]);
+
+  const reasonForCancellation = readSpreadsheetCell(row, [
+    "Reason for Cancellation",
+  ]);
+
+  const vacancyFilled = readSpreadsheetCell(row, [
+    "Vacancy filled by another group?",
+    "Vacancy Filled By Another Group?",
+  ]);
+
+  const persons = readSpreadsheetCell(row, [
+    "#Persons",
+    "Persons",
+  ]);
+
+  /*
+    Your sheet has BOTH:
+      "# of Nights"
+      "#Nights"
+
+    Prefer #Nights when it contains a value because that is grouped
+    with the calculated financial columns, then fall back to # of Nights.
+  */
+  const nights = readSpreadsheetCell(row, [
+    "#Nights",
+    "# of Nights",
+    "Nights",
+  ]);
+
+  const mealCount = readSpreadsheetCell(row, [
+    "#Meals",
+    "Meals Count",
+  ]);
+
+  const camperDays = readSpreadsheetCell(row, [
+    "Camper Days (nightsX0.4 + mealsX0.2)",
+    "Camper Days",
+  ]);
+
+  const usageFee = readSpreadsheetCell(row, [
+    "Usage Fee",
+  ]);
+
+  const lodgingCost = readSpreadsheetCell(row, [
+    "$ Lodging",
+    "Lodging",
+  ]);
+
+  const foodCost = readSpreadsheetCell(row, [
+    "$ Food",
+    "Food",
+  ]);
+
+  const miscCost = readSpreadsheetCell(row, [
+    "$ Misc",
+    "$ Misc.",
+    "Misc",
+  ]);
+
+  const rowHasData =
+    arrivalDate ||
+    departureDate ||
+    guestGroupName ||
+    guestGroupType ||
+    contactPerson ||
+    contactPhone ||
+    contactPersonEmail ||
+    estimatedGuests ||
+    buildingsRooms ||
+    confirmedStatus ||
+    stageOfGroup;
+
+  if (!rowHasData) {
+    return null;
+  }
+
+  const startDate = formatExcelDateValue(arrivalDate);
+  const endDate = formatExcelDateValue(departureDate);
+
+  const confirmedText = String(confirmedStatus || "")
+    .trim()
+    .toLowerCase();
+
+  let status = "Confirmed";
+
+  if (confirmedText.includes("unconfirmed")) {
+    status = "Inquiry";
+  } else if (confirmedText.includes("confirmed")) {
+    status = "Confirmed";
+  } else if (stageOfGroup) {
+    status = getStatusFromStage(stageOfGroup);
+  }
+
+  const notes = [
+    stageOfGroup ? `Stage of Group: ${stageOfGroup}` : "",
+    schedule ? `Schedule: ${schedule}` : "",
+    needToKnow ? `Need to know: ${needToKnow}` : "",
+    foodAllergies ? `Food allergies: ${foodAllergies}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return {
+    id: `master-2027-import-${Date.now()}-${
+      row.sourceSheet || "sheet"
+    }-${index}`,
+
+    sourceType: "Master 2027",
+    detectedImportType: "Master 2027",
+
+    sourceSheet: row.sourceSheet || "",
+    sourceRowNumber: row.sourceRowNumber || "",
+    rawSpreadsheetData: row,
+
+    submittedAt: new Date().toISOString(),
+
+    organizationName:
+      String(guestGroupName || "").trim() || "Unnamed Group",
+
+    name: String(contactPerson || "").trim(),
+
+    contactName:
+      String(contactPerson || "").trim() || "No contact name",
+
+    email: String(contactPersonEmail || "").trim(),
+    phone: String(contactPhone || "").trim(),
+
+    startDate,
+    endDate,
+
+    desiredDatesText:
+      startDate && endDate
+        ? `${startDate} - ${endDate}`
+        : startDate || "",
+
+    attendeeCount: String(estimatedGuests || "").trim(),
+    groupSize: String(estimatedGuests || "").trim(),
+
+    retreatType: String(guestGroupType || "").trim(),
+
+    roomName:
+      String(buildingsRooms || "Unassigned").trim(),
+
+    buildingsRooms:
+      String(buildingsRooms || "").trim(),
+
+    meals: String(meals || "").trim(),
+    foodAllergies: String(foodAllergies || "").trim(),
+    needToKnow: String(needToKnow || "").trim(),
+    linenSets: String(linenSets || "").trim(),
+    activities: String(activities || "").trim(),
+
+    schedule: String(schedule || "").trim(),
+
+    notes,
+    message: notes,
+
+    status,
+    waitlist: "No",
+    promoCode: "",
+
+    returningStatus:
+      String(returningStatus || "").trim(),
+
+    stageOfGroup:
+      String(stageOfGroup || "").trim(),
+
+    minPayingGuests:
+      String(minPayingGuests || "").trim(),
+
+    maxPayingGuests:
+      String(maxPayingGuests || "").trim(),
+
+    guestRate:
+      String(guestRate || "").trim(),
+
+    expectedMinimumRevenue:
+      String(expectedMinimumRevenue || "").trim(),
+
+    /*
+      This Master 2027 sheet specifically says the deposit is $250.
+      depositReceived stores yes/no or whatever the spreadsheet contains.
+    */
+    deposit: "$250",
+
+    depositReceived:
+      String(depositReceived || "").trim(),
+
+    dateOfCancellation:
+      formatExcelDateValue(dateOfCancellation),
+
+    reasonForCancellation:
+      String(reasonForCancellation || "").trim(),
+
+    vacancyFilled:
+      String(vacancyFilled || "").trim(),
+
+    persons: String(persons || "").trim(),
+    nights: String(nights || "").trim(),
+    mealCount: String(mealCount || "").trim(),
+    camperDays: String(camperDays || "").trim(),
+
+    usageFee: String(usageFee || "").trim(),
+    lodgingCost: String(lodgingCost || "").trim(),
+    foodCost: String(foodCost || "").trim(),
+    miscCost: String(miscCost || "").trim(),
+  };
+}
+
+
+
+
+
 function normalize2027InquirySpreadsheetRow(row, index) {
   const arrivalDate = readSpreadsheetCell(row, [
     "Arrival Date",
@@ -1206,7 +1556,10 @@ function normalize2027InquirySpreadsheetRow(row, index) {
   ]);
 
   const linenSets = readSpreadsheetCell(row, ["Linen Sets"]);
-  const activities = readSpreadsheetCell(row, ["Activities"]);
+  const activities = readSpreadsheetCell(row, [
+    "Activities",
+    "Schedule/Activities",
+  ]);
 
   const contactPersonEmail = readSpreadsheetCell(row, [
     "Contact Person Email",
@@ -1226,7 +1579,6 @@ function normalize2027InquirySpreadsheetRow(row, index) {
     "Maximum Number of Paying Guests",
   ]);
 
-  const guestRate = readSpreadsheetCell(row, ["Guest Rate"]);
 
   const expectedMinimumRevenue = readSpreadsheetCell(row, [
     "Exp. Minimum Revenue",
@@ -4981,6 +5333,7 @@ export default function Dashboard() {
   const archiveFileInputRef = useRef(null);
 
   const master2026FileInputRef = useRef(null);
+  const master2027FileInputRef = useRef(null);
   const inquiry2027FileInputRef = useRef(null);
   const importEverythingFileInputRef = useRef(null);
   const importDropdownRef = useRef(null);
@@ -5393,6 +5746,53 @@ export default function Dashboard() {
     });
   };
 
+
+  const handleImportMaster2027Spreadsheet = (event) => {
+    importSpreadsheet({
+      event,
+      importTypeLabel: "master 2027 booking",
+      normalizeRow: normalizeMaster2027SpreadsheetRow,
+
+      expectedColumns: [
+        "Arrival Date",
+        "Departure Date",
+        "Confirmed or Unconfirmed",
+        "Guest Group Name",
+        "Guest Group Type",
+        "Returning (R) or New (N)",
+        "Contact Person",
+        "Contact Person Cell #",
+        "Contact Person Email",
+        "Estimated # of Guests",
+        "Buildings/Rooms",
+        "# of Nights",
+        "Meals",
+        "Stage of Group",
+        "$250 Deposit for 2027 Rec'd?",
+        "Food Allergies",
+        "Need to know",
+        "Linen Sets",
+        "Activities",
+        "Min. Number of Paying Guests",
+        "Max. Number of Paying Guests",
+        "Guest Rate",
+        "Exp. Minimum Revenue",
+        "Schedule",
+        "Date of Cancellation",
+        "Reason for Cancellation",
+        "Vacancy filled by another group?",
+        "#Persons",
+        "#Nights",
+        "#Meals",
+        "Camper Days (nightsX0.4 + mealsX0.2)",
+        "Usage Fee",
+        "$ Lodging",
+        "$ Food",
+        "$ Misc",
+      ],
+    });
+  };
+
   const handleImport2027InquirySpreadsheet = (event) => {
     importSpreadsheet({
       event,
@@ -5709,6 +6109,11 @@ export default function Dashboard() {
   const openMaster2026ImportPicker = () => {
     setIsImportMenuOpen(false);
     master2026FileInputRef.current?.click();
+  };
+
+  const openMaster2027ImportPicker = () => {
+    setIsImportMenuOpen(false);
+    master2027FileInputRef.current?.click();
   };
 
   const open2027InquiryImportPicker = () => {
@@ -6210,6 +6615,7 @@ const getCalendarEventColor = (status) => {
               masterFileInputRef={masterFileInputRef}
               staffContactsFileInputRef={staffContactsFileInputRef}
               master2026FileInputRef={master2026FileInputRef}
+              master2027FileInputRef={master2027FileInputRef}
               inquiry2027FileInputRef={inquiry2027FileInputRef}
               importEverythingFileInputRef={importEverythingFileInputRef}
               importDropdownRef={importDropdownRef}
@@ -6218,11 +6624,13 @@ const getCalendarEventColor = (status) => {
               handleImportWaitlistSpreadsheet={handleImportWaitlistSpreadsheet}
               handleImportMasterSpreadsheet={handleImportMasterSpreadsheet}
               handleImportMaster2026Spreadsheet={handleImportMaster2026Spreadsheet}
+              handleImportMaster2027Spreadsheet={handleImportMaster2027Spreadsheet}
               handleImport2027InquirySpreadsheet={handleImport2027InquirySpreadsheet}
               handleImportEverythingSpreadsheet={handleImportEverythingSpreadsheet}
               openWaitlistImportPicker={openWaitlistImportPicker}
               openMasterImportPicker={openMasterImportPicker}
               openMaster2026ImportPicker={openMaster2026ImportPicker}
+              openMaster2027ImportPicker={openMaster2027ImportPicker}
               open2027InquiryImportPicker={open2027InquiryImportPicker}
               openEverythingImportPicker={openEverythingImportPicker}
               exportInquiriesToSpreadsheet={exportInquiriesToSpreadsheet}

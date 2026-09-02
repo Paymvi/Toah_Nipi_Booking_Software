@@ -63,6 +63,9 @@ export default function DashboardTopbar({
   open2027InquiryImportPicker,
   handleImportArchiveSpreadsheet,
   openArchiveImportPicker,
+  master2027FileInputRef,
+  handleImportMaster2027Spreadsheet,
+  openMaster2027ImportPicker,
 }) {
   return (
     <header className="dashboard-topbar">
@@ -117,6 +120,14 @@ export default function DashboardTopbar({
           type="file"
           accept=".xlsx"
           onChange={handleImportMaster2026Spreadsheet}
+        />
+
+        <input
+          ref={master2027FileInputRef}
+          type="file"
+          accept=".xlsx"
+          hidden
+          onChange={handleImportMaster2027Spreadsheet}
         />
 
         <input
@@ -190,6 +201,13 @@ export default function DashboardTopbar({
                   <strong>Import Master 2026</strong>
                   <small>Upload 2026 master booking spreadsheet</small>
                 </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={openMaster2027ImportPicker}
+              >
+                Master 2027
               </button>
 
               <button
