@@ -104,7 +104,6 @@ import {
   getDaysInMonth,
   getLocalDate,
   formatExcelDateValue,
-  formatExcelSubmittedAt,
   parseDesiredDateRange,
 } from "../utils/dateUtils";
 
@@ -112,7 +111,6 @@ import {
 import {
   readSpreadsheetCell,
   cleanExcelCellValue,
-  normalizeWaitlistValue,
   rowHasAnyData,
   getRowsFromWorksheetFlexible,
   detectSpreadsheetRowType,
@@ -725,66 +723,6 @@ function normalizeInquiry(inquiry, index) {
   };
 }
 
-function normalizeWaitlistSpreadsheetRow(row, index) {
-  const submittedDate = readSpreadsheetCell(row, ["Date"]);
-  const contactName = readSpreadsheetCell(row, ["Contact Name"]);
-  const email = readSpreadsheetCell(row, ["Email Address", "Email"]);
-  const phone = readSpreadsheetCell(row, ["Phone Number", "Phone"]);
-  const guestGroupName = readSpreadsheetCell(row, [
-    "Guest Group Name",
-    "Group Name",
-    "Organization",
-  ]);
-  const size = readSpreadsheetCell(row, ["Size", "Group Size"]);
-  const desiredDates = readSpreadsheetCell(row, ["Desired Dates"]);
-  const additionalNotes = readSpreadsheetCell(row, [
-    "Additional Notes",
-    "Notes",
-    "Message",
-  ]);
-  const waitlist = readSpreadsheetCell(row, ["Waitlist or No", "Waitlist"]);
-
-  const rowHasData =
-    submittedDate ||
-    contactName ||
-    email ||
-    phone ||
-    guestGroupName ||
-    size ||
-    desiredDates ||
-    additionalNotes ||
-    waitlist;
-
-  if (!rowHasData) {
-    return null;
-  }
-
-  const parsedDates = parseDesiredDateRange(desiredDates);
-
-  return {
-    id: `waitlist-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
-    sourceType: "Waitlist",
-    sourceSheet: row.sourceSheet || "",
-    sourceRowNumber: row.sourceRowNumber || "",
-    rawSpreadsheetData: row,
-    submittedAt: formatExcelSubmittedAt(submittedDate),
-    name: String(contactName || "").trim(),
-    contactName: String(contactName || "").trim(),
-    organizationName: String(guestGroupName || "").trim() || "Unnamed Group",
-    email: String(email || "").trim(),
-    phone: String(phone || "").trim(),
-    attendeeCount: String(size || "").trim(),
-    groupSize: String(size || "").trim(),
-    startDate: parsedDates.startDate,
-    endDate: parsedDates.endDate,
-    desiredDatesText: parsedDates.desiredDatesText,
-    notes: String(additionalNotes || "").trim(),
-    waitlist: normalizeWaitlistValue(waitlist),
-    status: "Inquiry",
-    retreatType: "",
-    promoCode: "",
-  };
-}
 
 function normalizeMasterSpreadsheetRow(row, index) {
   const arrivalDate = readSpreadsheetCell(row, ["Arrival Date"]);
@@ -1515,240 +1453,6 @@ function normalizeMaster2027SpreadsheetRow(row, index) {
 }
 
 
-
-
-
-function normalize2027InquirySpreadsheetRow(row, index) {
-  const arrivalDate = readSpreadsheetCell(row, [
-    "Arrival Date",
-    "Start Date",
-    "Check In",
-    "Check-in",
-  ]);
-
-  const departureDate = readSpreadsheetCell(row, [
-    "Departure Date",
-    "End Date",
-    "Check Out",
-    "Check-out",
-  ]);
-
-  const guestGroupName = readSpreadsheetCell(row, [
-    "Guest Group Name",
-    "Group Name",
-    "Organization",
-    "name",
-    "Name",
-  ]);
-
-  const guestGroupType = readSpreadsheetCell(row, [
-    "Guest Group Type",
-    "Retreat Type",
-    "Type",
-  ]);
-
-  const returningStatus = readSpreadsheetCell(row, [
-    "Returning (R) or New (N)",
-    "Returning or New",
-  ]);
-
-  const contactPerson = readSpreadsheetCell(row, [
-    "Contact Person",
-    "Group Leader/Contact Person",
-    "Group Leader",
-  ]);
-
-  const contactPhone = readSpreadsheetCell(row, [
-    "Contact Person Cell #",
-    "Phone",
-    "Phone Number",
-  ]);
-
-  const estimatedGuests = readSpreadsheetCell(row, [
-    "Estimated Number of Guests",
-    "Actual Number of Guests",
-    "Size",
-    "Group Size",
-  ]);
-
-  const buildingsRooms = readSpreadsheetCell(row, [
-    "Buildings/Rooms",
-    "Buildings",
-    "Rooms",
-  ]);
-
-  const meals = readSpreadsheetCell(row, ["Meals"]);
-
-  const foodAllergies = readSpreadsheetCell(row, [
-    "Food Allergies",
-    "Allergies",
-  ]);
-
-  const needToKnow = readSpreadsheetCell(row, [
-    "Need to know",
-    "Need To Know",
-  ]);
-
-  const linenSets = readSpreadsheetCell(row, ["Linen Sets"]);
-  const activities = readSpreadsheetCell(row, [
-    "Activities",
-    "Schedule/Activities",
-  ]);
-
-  const contactPersonEmail = readSpreadsheetCell(row, [
-    "Contact Person Email",
-    "Email",
-    "Email Address",
-  ]);
-
-  const stageOfGroup = readSpreadsheetCell(row, ["Stage of Group"]);
-
-  const minPayingGuests = readSpreadsheetCell(row, [
-    "Min. Number of Paying Guests",
-    "Minimum Number of Paying Guests",
-  ]);
-
-  const maxPayingGuests = readSpreadsheetCell(row, [
-    "Max. Number of Paying Guests",
-    "Maximum Number of Paying Guests",
-  ]);
-
-
-  const expectedMinimumRevenue = readSpreadsheetCell(row, [
-    "Exp. Minimum Revenue",
-    "Exp. Minimum Revenue for Lodging/Meals",
-    "Expected Minimum Revenue",
-    "Expected Minimum Revenue for Lodging/Meals",
-  ]);
-
-  const schedule = readSpreadsheetCell(row, ["Schedule"]);
-
-  const deposit = readSpreadsheetCell(row, ["Deposit"]);
-  const depositReceived = readSpreadsheetCell(row, ["Deposit Received"]);
-
-  const dateOfCancellation = readSpreadsheetCell(row, [
-    "Date of Cancellation",
-  ]);
-
-  const reasonForCancellation = readSpreadsheetCell(row, [
-    "Reason for Cancellation",
-  ]);
-
-  const vacancyFilled = readSpreadsheetCell(row, [
-    "Vacancy filled by another group?",
-    "Vacancy Filled By Another Group?",
-  ]);
-
-  const persons = readSpreadsheetCell(row, ["#Persons", "Persons"]);
-  const nights = readSpreadsheetCell(row, ["#Nights", "Nights"]);
-  const mealCount = readSpreadsheetCell(row, ["#Meals", "Meals Count"]);
-
-  const camperDays = readSpreadsheetCell(row, [
-    "Camper Days (nightsX0.4 + mealsX0.2)",
-    "Camper Days",
-  ]);
-
-  const usageFee = readSpreadsheetCell(row, ["Usage Fee"]);
-  const lodgingCost = readSpreadsheetCell(row, ["$ Lodging", "Lodging"]);
-  const foodCost = readSpreadsheetCell(row, ["$ Food", "Food"]);
-  const miscCost = readSpreadsheetCell(row, ["$ Misc", "$ Misc.", "Misc"]);
-
-  const rowHasData =
-    arrivalDate ||
-    departureDate ||
-    guestGroupName ||
-    guestGroupType ||
-    contactPerson ||
-    contactPhone ||
-    estimatedGuests ||
-    buildingsRooms ||
-    contactPersonEmail ||
-    stageOfGroup ||
-    schedule;
-
-  if (!rowHasData) {
-    return null;
-  }
-
-  const startDate = formatExcelDateValue(arrivalDate);
-  const endDate = formatExcelDateValue(departureDate);
-
-  const notes = [
-    schedule ? `Schedule: ${schedule}` : "",
-    needToKnow ? `Need to know: ${needToKnow}` : "",
-    foodAllergies ? `Food allergies: ${foodAllergies}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  return {
-    id: `inquiry-2027-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
-    sourceType: "2027 Inquiry",
-    detectedImportType: "2027 Inquiry",
-    sourceSheet: row.sourceSheet || "",
-    sourceRowNumber: row.sourceRowNumber || "",
-    rawSpreadsheetData: row,
-    submittedAt: new Date().toISOString(),
-
-    organizationName: String(guestGroupName || "").trim() || "Unnamed Group",
-    name: String(contactPerson || "").trim(),
-    contactName: String(contactPerson || "").trim() || "No contact name",
-    email: String(contactPersonEmail || "").trim(),
-    phone: String(contactPhone || "").trim(),
-
-    startDate,
-    endDate,
-    desiredDatesText:
-      startDate && endDate ? `${startDate} - ${endDate}` : startDate || "",
-
-    attendeeCount: String(estimatedGuests || "").trim(),
-    groupSize: String(estimatedGuests || "").trim(),
-    retreatType: String(guestGroupType || "").trim(),
-
-    roomName: String(buildingsRooms || "Unassigned").trim(),
-    buildingsRooms: String(buildingsRooms || "").trim(),
-
-    meals: String(meals || "").trim(),
-    foodAllergies: String(foodAllergies || "").trim(),
-    needToKnow: String(needToKnow || "").trim(),
-    linenSets: String(linenSets || "").trim(),
-    activities: String(activities || "").trim(),
-
-    schedule: String(schedule || "").trim(),
-    notes,
-    message: notes,
-
-    waitlist: "No",
-    status: stageOfGroup ? getStatusFromStage(stageOfGroup) : "Inquiry",
-    promoCode: "",
-
-    returningStatus: String(returningStatus || "").trim(),
-
-    stageOfGroup: String(stageOfGroup || "").trim(),
-    minPayingGuests: String(minPayingGuests || "").trim(),
-    maxPayingGuests: String(maxPayingGuests || "").trim(),
-    guestRate: String(guestRate || "").trim(),
-    expectedMinimumRevenue: String(expectedMinimumRevenue || "").trim(),
-    invoiceLodgingMeals: "",
-
-    deposit: String(deposit || "").trim(),
-    depositReceived: String(depositReceived || "").trim(),
-    dateOfCancellation: formatExcelDateValue(dateOfCancellation),
-    reasonForCancellation: String(reasonForCancellation || "").trim(),
-    vacancyFilled: String(vacancyFilled || "").trim(),
-
-    persons: String(persons || "").trim(),
-    nights: String(nights || "").trim(),
-    mealCount: String(mealCount || "").trim(),
-    camperDays: String(camperDays || "").trim(),
-
-    usageFee: String(usageFee || "").trim(),
-    lodgingCost: String(lodgingCost || "").trim(),
-    foodCost: String(foodCost || "").trim(),
-    miscCost: String(miscCost || "").trim(),
-  };
-}
-
 const ARCHIVE_PRIOR_VISIT_LINK_COLUMNS = Array.from(
   { length: 11 },
   (_, index) => `Prior_Visit_${index + 1}_Link`
@@ -2088,16 +1792,21 @@ function normalizeGenericSpreadsheetRow(row, index) {
 function normalizeEverythingSpreadsheetRow(row, index) {
   const detectedType = detectSpreadsheetRowType(row);
 
-  if (detectedType === "Waitlist") {
-    return normalizeWaitlistSpreadsheetRow(row, index);
+  /*
+    Inquiry / waitlist spreadsheet imports are temporarily disabled.
+
+    We are replacing the old formats with dedicated 2025, 2026,
+    and 2027 Guest Group Inquiry / No's importers.
+  */
+  if (
+    detectedType === "Waitlist" ||
+    detectedType === "2027 Inquiry"
+  ) {
+    return null;
   }
 
   if (detectedType === "Archive") {
     return normalizeArchiveSpreadsheetRow(row, index);
-  }
-
-  if (detectedType === "2027 Inquiry") {
-    return normalize2027InquirySpreadsheetRow(row, index);
   }
 
   if (detectedType === "Master 2026") {
@@ -5361,14 +5070,12 @@ function PortalAdminView({ inquiryBookings, openBookingDetail }) {
 export default function Dashboard() {
   const today = new Date();
 
-  const waitlistFileInputRef = useRef(null);
   const masterFileInputRef = useRef(null);
   const staffContactsFileInputRef = useRef(null);
   const archiveFileInputRef = useRef(null);
 
   const master2026FileInputRef = useRef(null);
   const master2027FileInputRef = useRef(null);
-  const inquiry2027FileInputRef = useRef(null);
   const importEverythingFileInputRef = useRef(null);
   const importDropdownRef = useRef(null);
 
@@ -5675,24 +5382,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleImportWaitlistSpreadsheet = (event) => {
-    importSpreadsheet({
-      event,
-      importTypeLabel: "waitlist",
-      normalizeRow: normalizeWaitlistSpreadsheetRow,
-      expectedColumns: [
-        "Date",
-        "Contact Name",
-        "Email Address",
-        "Phone Number",
-        "Guest Group Name",
-        "Size",
-        "Desired Dates",
-        "Additional Notes",
-        "Waitlist or No",
-      ],
-    });
-  };
 
   const handleImportArchiveSpreadsheet = (event) => {
     importSpreadsheet({
@@ -5843,18 +5532,6 @@ export default function Dashboard() {
     });
   };
 
-  const handleImport2027InquirySpreadsheet = (event) => {
-    importSpreadsheet({
-      event,
-      importTypeLabel: "2027 inquiry",
-      normalizeRow: normalize2027InquirySpreadsheetRow,
-      expectedColumns: [
-        "Exp. Minimum Revenue",
-        "Schedule",
-        "Contact Person Cell #",
-      ],
-    });
-  };
 
   const handleImportEverythingSpreadsheet = async (event) => {
     const file = event.target.files?.[0];
@@ -5916,11 +5593,9 @@ export default function Dashboard() {
         }
 
         const sheetCounts = {
-          Waitlist: 0,
           Archive: 0,
           Master: 0,
           "Master 2026": 0,
-          "2027 Inquiry": 0,
           Generic: 0,
           skipped: 0,
         };
@@ -5948,7 +5623,13 @@ export default function Dashboard() {
         });
 
         sheetSummaries.push(
-          `${worksheet.name}: ${spreadsheetRows.length} row(s) found, ${sheetCounts.Waitlist} waitlist, ${sheetCounts.Archive} archive, ${sheetCounts.Master} master, ${sheetCounts["Master 2026"]} master 2026, ${sheetCounts["2027 Inquiry"]} 2027 inquiries, ${sheetCounts.Generic} generic`
+          `${worksheet.name}: ` +
+            `${spreadsheetRows.length} row(s) found, ` +
+            `${sheetCounts.Archive} archive, ` +
+            `${sheetCounts.Master} master, ` +
+            `${sheetCounts["Master 2026"]} master 2026, ` +
+            `${sheetCounts.Generic} generic, ` +
+            `${sheetCounts.skipped} skipped`
         );
 
       });
@@ -6141,10 +5822,6 @@ export default function Dashboard() {
     }
   };
 
-  const openWaitlistImportPicker = () => {
-    setIsImportMenuOpen(false);
-    waitlistFileInputRef.current?.click();
-  };
 
   const openArchiveImportPicker = () => {
     setIsImportMenuOpen(false);
@@ -6166,10 +5843,6 @@ export default function Dashboard() {
     master2027FileInputRef.current?.click();
   };
 
-  const open2027InquiryImportPicker = () => {
-    inquiry2027FileInputRef.current?.click();
-    setIsImportMenuOpen(false);
-  };
 
   const openEverythingImportPicker = () => {
     setIsImportMenuOpen(false);
@@ -6661,27 +6334,21 @@ const getCalendarEventColor = (status) => {
           <>
             <DashboardTopbar
               activeView={activeView}
-              waitlistFileInputRef={waitlistFileInputRef}
               masterFileInputRef={masterFileInputRef}
               staffContactsFileInputRef={staffContactsFileInputRef}
               master2026FileInputRef={master2026FileInputRef}
               master2027FileInputRef={master2027FileInputRef}
-              inquiry2027FileInputRef={inquiry2027FileInputRef}
               importEverythingFileInputRef={importEverythingFileInputRef}
               importDropdownRef={importDropdownRef}
               isImportMenuOpen={isImportMenuOpen}
               setIsImportMenuOpen={setIsImportMenuOpen}
-              handleImportWaitlistSpreadsheet={handleImportWaitlistSpreadsheet}
               handleImportMasterSpreadsheet={handleImportMasterSpreadsheet}
               handleImportMaster2026Spreadsheet={handleImportMaster2026Spreadsheet}
               handleImportMaster2027Spreadsheet={handleImportMaster2027Spreadsheet}
-              handleImport2027InquirySpreadsheet={handleImport2027InquirySpreadsheet}
               handleImportEverythingSpreadsheet={handleImportEverythingSpreadsheet}
-              openWaitlistImportPicker={openWaitlistImportPicker}
               openMasterImportPicker={openMasterImportPicker}
               openMaster2026ImportPicker={openMaster2026ImportPicker}
               openMaster2027ImportPicker={openMaster2027ImportPicker}
-              open2027InquiryImportPicker={open2027InquiryImportPicker}
               openEverythingImportPicker={openEverythingImportPicker}
               exportInquiriesToSpreadsheet={exportInquiriesToSpreadsheet}
               refreshInquiries={refreshInquiries}
