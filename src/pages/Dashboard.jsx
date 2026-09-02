@@ -801,8 +801,27 @@ function normalizeMasterSpreadsheetRow(row, index) {
     "Contact Person Cell",
     "Phone Number",
   ]);
+  const actualAdults = readSpreadsheetCell(row, [
+    "Actual # of Adults",
+  ]);
+
+  const actualMinors3To17 = readSpreadsheetCell(row, [
+    "Actual # of Minors 3 to 17",
+  ]);
+
+  const actualMinorsUnder3 = readSpreadsheetCell(row, [
+    "Actual # of Minors under 3",
+  ]);
+
+  const actualDayUseGuests = readSpreadsheetCell(row, [
+    "Actual # of Day Use Guests",
+  ]);
+
   const actualNumberOfGuests = readSpreadsheetCell(row, [
+    "Total # of Guests",
     "Actual Number of Guests",
+    "Actual # of Guests",
+    "# of Guests",
     "Size",
   ]);
   const buildingsRooms = readSpreadsheetCell(row, [
@@ -815,6 +834,9 @@ function normalizeMasterSpreadsheetRow(row, index) {
   const needToKnow = readSpreadsheetCell(row, ["Need to know", "Need To Know"]);
   const linenSets = readSpreadsheetCell(row, ["Linen Sets"]);
   const activities = readSpreadsheetCell(row, ["Activities"]);
+
+
+  
   const persons = readSpreadsheetCell(row, ["#Persons", "Persons"]);
   const nights = readSpreadsheetCell(row, ["#Nights", "Nights"]);
   const mealCount = readSpreadsheetCell(row, ["#Meals", "Meals Count"]);
@@ -845,6 +867,17 @@ function normalizeMasterSpreadsheetRow(row, index) {
   const endDate = formatExcelDateValue(departureDate);
 
   const notes = [
+    actualAdults ? `Adults: ${actualAdults}` : "",
+    actualMinors3To17
+      ? `Minors age 3-17: ${actualMinors3To17}`
+      : "",
+    actualMinorsUnder3
+      ? `Minors under 3: ${actualMinorsUnder3}`
+      : "",
+    actualDayUseGuests
+      ? `Day-use guests: ${actualDayUseGuests}`
+      : "",
+
     needToKnow ? `Need to know: ${needToKnow}` : "",
     foodAllergies ? `Food allergies: ${foodAllergies}` : "",
     activities ? `Activities: ${activities}` : "",
@@ -856,7 +889,8 @@ function normalizeMasterSpreadsheetRow(row, index) {
 
   return {
     id: `master-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
-    sourceType: "Master",
+    sourceType: "Master 2025",
+    detectedImportType: "Master 2025",
     sourceSheet: row.sourceSheet || "",
     sourceRowNumber: row.sourceRowNumber || "",
     rawSpreadsheetData: row,
@@ -5672,31 +5706,47 @@ export default function Dashboard() {
   const handleImportMasterSpreadsheet = (event) => {
     importSpreadsheet({
       event,
-      importTypeLabel: "master booking",
+      importTypeLabel: "master 2025 booking",
       normalizeRow: normalizeMasterSpreadsheetRow,
       expectedColumns: [
         "Arrival Date",
         "Departure Date",
+
         "Guest Group Name",
         "Guest Group Type",
         "Returning (R) or New (N)",
+
         "Contact Person",
         "Contact Person Cell #",
+
+        "Actual # of Adults",
+        "Actual # of Minors 3 to 17",
+        "Actual # of Minors under 3",
+        "Actual # of Day Use Guests",
+        "Total # of Guests",
+
+        // Older aliases kept for compatibility.
         "Actual Number of Guests",
+        "Actual # of Guests",
+
         "Buildings/Rooms",
+
         "Meals",
         "Food Allergies",
         "Need to know",
         "Linen Sets",
         "Activities",
+
         "#Persons",
         "#Nights",
         "#Meals",
         "Camper Days (nightsX0.4 + mealsX0.2)",
+
         "Usage Fee",
         "$ Lodging",
         "$ Food",
         "$ Misc.",
+        "$ Misc",
       ],
     });
   };
