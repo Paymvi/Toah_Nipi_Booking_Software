@@ -252,6 +252,153 @@ function getSpreadsheetRetreatTypeClass(retreatType) {
   return "retreat-type-other";
 }
 
+const MAPPED_MASTER_RAW_COLUMNS = new Set([
+  // =========================================================
+  // DATES
+  // =========================================================
+  "Arrival Date",
+  "Departure Date",
+  "Start Date",
+  "End Date",
+  "Check In",
+  "Check-in",
+  "Check Out",
+  "Check-out",
+
+  // =========================================================
+  // GROUP
+  // =========================================================
+  "Guest Group Name",
+  "Group Name",
+  "Organization",
+  "name",
+  "Name",
+
+  "Guest Group Type",
+  "Retreat Type",
+  "Type",
+
+  "Returning (R) or New (N)",
+  "Returning or New",
+
+  // =========================================================
+  // CONTACT
+  // =========================================================
+  "Contact Person",
+  "Group Leader/Contact Person",
+  "Group Leader",
+
+  "Contact Person Cell #",
+  "Contact Person Cell",
+  "Phone",
+  "Phone Number",
+  "Group Leader #",
+
+  "Contact Person Email",
+  "Email",
+  "Email Address",
+
+  // =========================================================
+  // GUEST COUNTS
+  // =========================================================
+  "Total # of Guests",
+  "Actual Number of Guests",
+  "Actual # of Guests",
+  "Estimated # of Guests",
+  "Estimated Number of Guests",
+  "# of Guests",
+  "Size",
+  "Group Size",
+
+  // =========================================================
+  // HOUSING / PROGRAM
+  // =========================================================
+  "Buildings/Rooms",
+  "Buildings",
+  "Rooms",
+
+  "Meals",
+
+  "Food Allergies",
+  "Allergies",
+
+  "Need to know",
+  "Need To Know",
+
+  "Linen Sets",
+
+  "Activities",
+  "Schedule/Activities",
+  "Schedule",
+
+  // =========================================================
+  // BOOKING WORKFLOW
+  // =========================================================
+  "Confirmed or Unconfirmed",
+  "Confirmed/Unconfirmed",
+
+  "Stage of Group",
+
+  "Min. Number of Paying Guests",
+  "Minimum Number of Paying Guests",
+
+  "Max. Number of Paying Guests",
+  "Maximum Number of Paying Guests",
+
+  "Guest Rate",
+  "Adult Guest Rate",
+
+  "Exp. Minimum Revenue",
+  "Exp. Minimum Revenue for Lodging/Meals",
+  "Expected Minimum Revenue",
+  "Expected Minimum Revenue for Lodging/Meals",
+
+  "Invoice for Lodging/Meals",
+  "Invoice for Lodging/Meals (does not include linens's fees or other service fees)",
+
+  "Deposit",
+  "Deposit Received",
+
+  "$250 Deposit for 2027 Rec'd?",
+  "$250 Deposit for 2027 Received?",
+
+  "Date of Cancellation",
+  "Reason for Cancellation",
+
+  "Vacancy filled by another group?",
+  "Vacancy Filled By Another Group?",
+
+  // =========================================================
+  // CALCULATED / FINANCIAL
+  // =========================================================
+  "#Persons",
+  "Persons",
+
+  "#Nights",
+  "# of Nights",
+  "Nights",
+
+  "#Meals",
+  "Meals Count",
+
+  "Camper Days (nightsX0.4 + mealsX0.2)",
+  "Camper Days",
+
+  "Usage Fee",
+
+  "$ Lodging",
+  "Lodging",
+
+  "$ Food",
+  "Food",
+
+  "$ Misc",
+  "$ Misc.",
+  "Misc",
+
+  "Monthly Sum of Projected Income",
+]);
+
 function getRawSpreadsheetColumns(bookings) {
   const columns = new Set();
 

@@ -113,7 +113,6 @@ import {
   cleanExcelCellValue,
   rowHasAnyData,
   getRowsFromWorksheetFlexible,
-  detectSpreadsheetRowType,
   getRawRowNotes,
 } from "../utils/spreadsheetUtils";
 
@@ -1789,35 +1788,171 @@ function normalizeGenericSpreadsheetRow(row, index) {
   };
 }
 
-function normalizeEverythingSpreadsheetRow(row, index) {
-  const detectedType = detectSpreadsheetRowType(row);
+function normalizeSpreadsheetHeaderName(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase();
+}
+
+function spreadsheetRowHasHeader(row, possibleHeaders) {
+  const rowHeaders = new Set(
+    Object.keys(row || {}).map(normalizeSpreadsheetHeaderName)
+  );
+
+  return possibleHeaders.some((header) =>
+    rowHeaders.has(normalizeSpreadsheetHeaderName(header))
+  );
+}
+
+function detectMasterSpreadsheetType(worksheetName, spreadsheetRows = []) {
+  const normalizedSheetName = String(worksheetName || "")
+    .trim()
+    .toLowerCase();
 
   /*
-    Inquiry / waitlist spreadsheet imports are temporarily disabled.
+    FIRST: explicitly reject sheets that we know are NOT Master sheets.
 
-    We are replacing the old formats with dedicated 2025, 2026,
-    and 2027 Guest Group Inquiry / No's importers.
+    This is especially important because inquiry sheets may share
+    several columns with Master sheets.
   */
   if (
-    detectedType === "Waitlist" ||
-    detectedType === "2027 Inquiry"
+    normalizedSheetName.includes("inquir") ||
+    normalizedSheetName.includes("waitlist") ||
+    normalizedSheetName.includes("no's") ||
+    normalizedSheetName.includes("nos") ||
+    normalizedSheetName.includes("counts") ||
+    normalizedSheetName.includes("risk management") ||
+    normalizedSheetName.includes("staff_contacts")
   ) {
-    return null;
+    return "";
   }
 
-  if (detectedType === "Archive") {
-    return normalizeArchiveSpreadsheetRow(row, index);
+  /*
+    BEST CASE:
+    Detect by the actual worksheet name.
+  */
+  if (
+    normalizedSheetName.includes("master") &&
+    normalizedSheetName.includes("2027")
+  ) {
+    return "Master 2027";
+  }
+
+  if (
+    normalizedSheetName.includes("master") &&
+    normalizedSheetName.includes("2026")
+  ) {
+    return "Master 2026";
+  }
+
+  if (
+    normalizedSheetName.includes("master") &&
+    normalizedSheetName.includes("2025")
+  ) {
+    return "Master 2025";
+  }
+
+  /*
+    FALLBACK:
+    Only use headers if the sheet was renamed.
+
+    Require MULTIPLE distinctive columns instead of matching
+    just one shared column.
+  */
+  const sampleRow =
+    spreadsheetRows.find((row) => rowHasAnyData(row)) || {};
+
+  const hasHeader = (header) =>
+    spreadsheetRowHasHeader(sampleRow, [header]);
+
+  /*
+    Master 2027
+  */
+  const looksLikeMaster2027 =
+    hasHeader("Confirmed or Unconfirmed") &&
+    (
+      hasHeader("$250 Deposit for 2027 Rec'd?") ||
+      hasHeader("$250 Deposit for 2027 Received?")
+    ) &&
+    hasHeader("Estimated # of Guests");
+
+  if (looksLikeMaster2027) {
+    return "Master 2027";
+  }
+
+  /*
+    Master 2026
+  */
+  const looksLikeMaster2026 =
+    hasHeader("Adult Guest Rate") &&
+    hasHeader("Group Leader #") &&
+    (
+      hasHeader("Schedule/Activities") ||
+      hasHeader("Monthly Sum of Projected Income")
+    );
+
+  if (looksLikeMaster2026) {
+    return "Master 2026";
+  }
+
+  /*
+    Master 2025
+  */
+  const looksLikeMaster2025 =
+    hasHeader("Total # of Guests") &&
+    hasHeader("Actual # of Adults") &&
+    (
+      hasHeader("Actual # of Minors 3 to 17") ||
+      hasHeader("Actual # of Day Use Guests")
+    );
+
+  if (looksLikeMaster2025) {
+    return "Master 2025";
+  }
+
+  return "";
+}
+
+function normalizeEverythingSpreadsheetRow(row, index, detectedType) {
+  if (detectedType === "Master 2025") {
+    return normalizeMasterSpreadsheetRow(row, index);
   }
 
   if (detectedType === "Master 2026") {
     return normalizeMaster2026SpreadsheetRow(row, index);
   }
 
-  if (detectedType === "Master") {
-    return normalizeMasterSpreadsheetRow(row, index);
+  if (detectedType === "Master 2027") {
+    return normalizeMaster2027SpreadsheetRow(row, index);
   }
 
-  return normalizeGenericSpreadsheetRow(row, index);
+  return null;
+}
+
+
+function createMasterBulkImportId({
+  detectedType,
+  sourceSheet,
+  sourceRowNumber,
+}) {
+  const safeType = String(detectedType || "master")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  const safeSheet = String(sourceSheet || "sheet")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  const safeRow = String(sourceRowNumber || "row")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-");
+
+  return `bulk-${safeType}-${safeSheet}-${safeRow}`;
 }
 
 
@@ -5532,7 +5667,6 @@ export default function Dashboard() {
     });
   };
 
-
   const handleImportEverythingSpreadsheet = async (event) => {
     const file = event.target.files?.[0];
 
@@ -5544,8 +5678,9 @@ export default function Dashboard() {
 
     if (!fileName.endsWith(".xlsx")) {
       alert(
-        "Please upload a .xlsx file. Older .xls files, PDFs, Word documents, and CSV files cannot be imported here yet."
+        "Please upload a .xlsx workbook. Import Everything currently supports the Master 2025, Master 2026, and Master 2027 sheets."
       );
+
       event.target.value = "";
       return;
     }
@@ -5557,87 +5692,115 @@ export default function Dashboard() {
       await workbook.xlsx.load(fileData);
 
       const allImportedRows = [];
-      const allImportedStaffContacts = [];
       const sheetSummaries = [];
+
+      const masterCounts = {
+        "Master 2025": 0,
+        "Master 2026": 0,
+        "Master 2027": 0,
+      };
 
       workbook.worksheets.forEach((worksheet) => {
         const spreadsheetRows = getRowsFromWorksheetFlexible(worksheet);
 
-        const isStaffContactsSheet =
-          String(worksheet.name || "").trim().toLowerCase() === "staff_contacts";
+        const detectedType = detectMasterSpreadsheetType(
+          worksheet.name,
+          spreadsheetRows
+        );
 
-        if (isStaffContactsSheet) {
-          let staffContactCount = 0;
+        /*
+          For now, Import Everything ONLY handles Master sheets.
 
-          worksheet.eachRow((row, rowNumber) => {
-            const nameCell = cleanExcelCellValue(row.getCell(2).value);
-            const emailCell = cleanExcelCellValue(row.getCell(3).value);
-
-            const normalizedStaffContact = normalizeStaffContactSpreadsheetRow({
-              nameCell,
-              emailCell,
-              index: rowNumber,
-            });
-
-            if (normalizedStaffContact) {
-              allImportedStaffContacts.push(normalizedStaffContact);
-              staffContactCount += 1;
-            }
-          });
-
+          Staff Contacts already has its own importer.
+          Inquiry sheets will be added when we build the new
+          Inquiry Spreadsheet system.
+        */
+        if (!detectedType) {
           sheetSummaries.push(
-            `${worksheet.name}: ${staffContactCount} staff contact(s)`
+            `${worksheet.name}: skipped — not a recognized Master 2025, 2026, or 2027 sheet`
           );
 
           return;
         }
 
-        const sheetCounts = {
-          Archive: 0,
-          Master: 0,
-          "Master 2026": 0,
-          Generic: 0,
-          skipped: 0,
-        };
+        let importedCount = 0;
+        let skippedRowCount = 0;
 
         spreadsheetRows.forEach((row, index) => {
-          const detectedType = detectSpreadsheetRowType(row);
-          const normalizedRow = normalizeEverythingSpreadsheetRow(row, index);
+          const normalizedRow = normalizeEverythingSpreadsheetRow(
+            row,
+            index,
+            detectedType
+          );
 
           if (!normalizedRow) {
-            sheetCounts.skipped += 1;
+            skippedRowCount += 1;
             return;
           }
 
+          const sourceRowNumber =
+            normalizedRow.sourceRowNumber ||
+            row.sourceRowNumber ||
+            index + 1;
+
+          const sourceSheet =
+            normalizedRow.sourceSheet ||
+            row.sourceSheet ||
+            worksheet.name;
+
           allImportedRows.push({
             ...normalizedRow,
-            sourceSheet: normalizedRow.sourceSheet || worksheet.name,
+
+            /*
+              Override the temporary Date.now() ID created by the
+              individual normalizer.
+
+              This gives Import Everything repeatable IDs.
+            */
+            id: createMasterBulkImportId({
+              detectedType,
+              sourceSheet,
+              sourceRowNumber,
+            }),
+
+            sourceType: detectedType,
             detectedImportType: detectedType,
+
+            sourceSheet,
+            sourceRowNumber,
           });
 
-          if (sheetCounts[detectedType] !== undefined) {
-            sheetCounts[detectedType] += 1;
-          } else {
-            sheetCounts.Generic += 1;
-          }
+          importedCount += 1;
+          masterCounts[detectedType] += 1;
         });
 
         sheetSummaries.push(
-          `${worksheet.name}: ` +
-            `${spreadsheetRows.length} row(s) found, ` +
-            `${sheetCounts.Archive} archive, ` +
-            `${sheetCounts.Master} master, ` +
-            `${sheetCounts["Master 2026"]} master 2026, ` +
-            `${sheetCounts.Generic} generic, ` +
-            `${sheetCounts.skipped} skipped`
+          `${worksheet.name}: ${importedCount} ${detectedType} row(s) ready, ${skippedRowCount} empty/invalid row(s) skipped`
         );
-
       });
 
       if (allImportedRows.length === 0) {
         alert(
-          "No importable rows were found. Make sure the workbook has header rows and at least one row of data."
+          "No Master 2025, Master 2026, or Master 2027 booking rows were found in this workbook."
         );
+
+        return;
+      }
+
+      /*
+        Give the admin one final sanity check BEFORE writing
+        potentially hundreds of rows to Supabase.
+      */
+      const confirmed = window.confirm(
+        `Import Master workbook?\n\n` +
+          `Master 2025: ${masterCounts["Master 2025"]} row(s)\n` +
+          `Master 2026: ${masterCounts["Master 2026"]} row(s)\n` +
+          `Master 2027: ${masterCounts["Master 2027"]} row(s)\n\n` +
+          `Total: ${allImportedRows.length} booking row(s)\n\n` +
+          `Other worksheet types will be skipped.`
+      );
+
+      if (!confirmed) {
         return;
       }
 
@@ -5657,61 +5820,26 @@ export default function Dashboard() {
         return Array.from(byId.values());
       });
 
-      if (allImportedStaffContacts.length > 0) {
-        const nextUsers = [...staffUsers];
-
-        allImportedStaffContacts.forEach((importedUser) => {
-          const importedNameKey = normalizeStaffName(importedUser.name);
-          const importedEmailKey = normalizeStaffEmail(importedUser.email);
-
-          const existingUserIndex = nextUsers.findIndex((user) => {
-            const existingEmailKey = normalizeStaffEmail(user.email);
-            const existingNameKey = normalizeStaffName(user.name);
-
-            return (
-              (importedEmailKey && existingEmailKey === importedEmailKey) ||
-              (importedNameKey && existingNameKey === importedNameKey)
-            );
-          });
-
-          if (existingUserIndex >= 0) {
-            const existingUser = nextUsers[existingUserIndex];
-
-            nextUsers[existingUserIndex] = {
-              ...existingUser,
-              name: importedUser.name || existingUser.name,
-              email: importedUser.email || existingUser.email,
-              active: true,
-              updatedAt: new Date().toISOString(),
-            };
-
-            return;
-          }
-
-          nextUsers.push(importedUser);
-        });
-
-        saveStaffUsers(nextUsers);
-        setStaffUsers(nextUsers);
-
-        if (!currentStaffUserId && nextUsers.length > 0) {
-          setCurrentStaffUserId(nextUsers[0].id);
-          saveCurrentStaffUserId(nextUsers[0].id);
-        }
-      }
-
       alert(
-        `Imported ${allImportedRows.length} booking row(s) and ${allImportedStaffContacts.length} staff contact(s) from ${workbook.worksheets.length} sheet(s).\n\n${sheetSummaries.join(
-          "\n"
-        )}`
+        `Master workbook import complete.\n\n` +
+          `Master 2025: ${masterCounts["Master 2025"]}\n` +
+          `Master 2026: ${masterCounts["Master 2026"]}\n` +
+          `Master 2027: ${masterCounts["Master 2027"]}\n\n` +
+          `Total imported: ${savedRows.length}\n\n` +
+          `${sheetSummaries.join("\n")}`
       );
     } catch (error) {
-      console.error("Could not import full workbook:", error);
-      alert("Sorry, that workbook could not be imported.");
+      console.error("Could not import Master workbook:", error);
+
+      alert(
+        `Sorry, that Master workbook could not be imported.\n\n` +
+          `Error: ${error?.message || String(error)}`
+      );
     } finally {
       event.target.value = "";
     }
   };
+
 
   const handleImportStaffContactsSpreadsheet = async (event) => {
     const file = event.target.files?.[0];
