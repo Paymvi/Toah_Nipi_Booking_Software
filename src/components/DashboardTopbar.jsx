@@ -183,7 +183,7 @@ export default function DashboardTopbar({
                 role="menuitem"
                 onClick={openMasterImportPicker}
               >
-                <FaTable />
+                <FaRegCalendarCheck />
                 <span>
                   <strong>Import Master 2025</strong>
                   <small>Upload master booking spreadsheet</small>
@@ -205,9 +205,14 @@ export default function DashboardTopbar({
 
               <button
                 type="button"
+                role="menuitem"
                 onClick={openMaster2027ImportPicker}
               >
-                Master 2027
+                <FaRegCalendarCheck />
+                <span>
+                  <strong>Import Master 2027</strong>
+                  <small>Upload 2027 master booking spreadsheet</small>
+                </span>
               </button>
 
               <button

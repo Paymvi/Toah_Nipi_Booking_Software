@@ -78,44 +78,28 @@ export const sidebarSections = [
 // Aliases help match imported booking text even when spreadsheets use slightly different names.
 export const activityLocations = [
   {
-    name: "Auditorium",
+    name: "Hebron: Dining Hall",
     aliases: ["Auditorium", "Spencer Auditorium"],
   },
   {
-    name: "Dining Hall",
+    name: "Hebron: Meeting Space",
     aliases: ["Dining Hall", "Dining"],
   },
   {
-    name: "Great Room",
+    name: "Hebron: OverFlow",
     aliases: ["Great Room"],
   },
   {
-    name: "Main Lodge",
+    name: "Bethel: Meeting Space",
     aliases: ["Main Lodge", "Lodge"],
   },
   {
-    name: "Nature Center",
+    name: "Field: Front of Hebron",
     aliases: ["Nature Center"],
   },
   {
-    name: "Play Fields",
+    name: "Field: Back of Hebron",
     aliases: ["Play Fields", "Field", "Fields"],
-  },
-  {
-    name: "Pool",
-    aliases: ["Pool"],
-  },
-  {
-    name: "Sledding Hill",
-    aliases: ["Sledding Hill"],
-  },
-  {
-    name: "Soccer Fields",
-    aliases: ["Soccer Fields", "Soccer Field"],
-  },
-  {
-    name: "Waterfront",
-    aliases: ["Waterfront", "Pond", "Lake"],
   },
 ];
 
