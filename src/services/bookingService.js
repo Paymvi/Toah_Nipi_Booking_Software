@@ -241,3 +241,14 @@ export async function deleteAllBookings() {
     throw error;
   }
 }
+
+export async function deleteBooking(bookingId) {
+  const { error } = await supabase
+    .from("bookings")
+    .delete()
+    .eq("id", bookingId);
+
+  if (error) {
+    throw error;
+  }
+}

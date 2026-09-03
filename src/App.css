@@ -1962,3 +1962,65 @@
     min-height: 0;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   BOOKING DETAIL — DELETE BUTTON
+========================================================= */
+
+.booking-profile-delete-button {
+  min-height: 38px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  padding: 0 13px;
+
+  border: 1px solid #e2bcbc;
+  border-radius: 8px;
+
+  background: #fffafa;
+  color: #a64242;
+
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.booking-profile-delete-button:hover {
+  border-color: #cb8f8f;
+
+  background: #fff0f0;
+  color: #8d3232;
+}
+
+.booking-profile-delete-button:active {
+  background: #fbe6e6;
+}

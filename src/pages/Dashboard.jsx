@@ -47,6 +47,7 @@ import {
   upsertBooking,
   upsertBookings,
   deleteAllBookings,
+  deleteBooking,
 } from "../services/bookingService";
 
 import ExcelJS from "exceljs";
@@ -4079,6 +4080,7 @@ function BookingDetailView({
   setActiveTab,
   onBack,
   onSaveBooking,
+  onDeleteBooking,
   staffUsers,
   currentStaffUserId,
 }) {
@@ -4169,6 +4171,15 @@ function BookingDetailView({
         </div>
 
         <div className="booking-profile-header-actions">
+          <button
+            className="booking-profile-delete-button"
+            type="button"
+            onClick={() => onDeleteBooking(booking)}
+          >
+            <FaTrashAlt />
+            Delete
+          </button>
+
           <button
             className="secondary-dashboard-button booking-date-settings-button"
             type="button"
@@ -5997,6 +6008,44 @@ export default function Dashboard() {
     }
   };
 
+  const deleteSingleBooking = async (booking) => {
+    if (!booking?.id) {
+      return;
+    }
+
+    const bookingName =
+      booking.organizationName || "this booking";
+
+    const confirmed = window.confirm(
+      `Delete "${bookingName}"?\n\nThis will permanently remove this booking. This cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteBooking(booking.id);
+
+      setPublicInquiries((currentInquiries) =>
+        currentInquiries.filter(
+          (inquiry) => inquiry.id !== booking.id
+        )
+      );
+
+      setSelectedBooking(null);
+      setBookingDetailTab("Overview");
+
+      setActiveView(SPREADSHEET_VIEW_NAME);
+    } catch (error) {
+      console.error("Could not delete booking:", error);
+
+      alert(
+        "Could not delete this booking. Check the console for more information."
+      );
+    }
+  };
+
 
   const saveBookingEdits = async (updatedBooking) => {
     try {
@@ -7205,6 +7254,7 @@ const getCalendarEventColor = (status) => {
               activeTab={bookingDetailTab}
               setActiveTab={setBookingDetailTab}
               onSaveBooking={saveBookingEdits}
+              onDeleteBooking={deleteSingleBooking}
               staffUsers={staffUsers}
               currentStaffUserId={currentStaffUserId}
               onBack={() => {
