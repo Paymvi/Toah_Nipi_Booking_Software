@@ -364,9 +364,9 @@
 
   padding: 15px 18px;
 
-  border-bottom: 1px solid #e8ebef;
+  border-bottom: 1px solid #dce5dc;
 
-  background: #fafbfc;
+  background: #f4f7f3;
 }
 
 .rental-section-icon {
@@ -378,11 +378,11 @@
   display: grid;
   place-items: center;
 
-  border: 1px solid #dbe2dc;
+  border: 1px solid #d2dfd0;
   border-radius: 8px;
 
-  background: #f1f5f1;
-  color: #647666;
+  background: #ffffff;
+  color: #5f735f;
 
   font-size: 0.85rem;
 }
@@ -471,10 +471,10 @@
   align-items: center;
   gap: 6px;
 
-  color: var(--label, #59616e);
+  color: #4c5562;
 
   font-size: 0.93rem;
-  font-weight: 400;
+  font-weight: 550;
 }
 
 .rental-field > span small {
@@ -523,7 +523,8 @@
 
 .rental-field input::placeholder,
 .rental-field textarea::placeholder {
-  color: #9ca3af;
+  color: #b8bec8;
+  opacity: 1;
 }
 
 .rental-field select {
@@ -563,7 +564,7 @@
 .rental-subsection + .rental-subsection {
   padding-top: 22px;
 
-  border-top: 1px solid #eceff2;
+  border-top: 1px solid #e3e9e2;
 }
 
 .rental-subsection h3 {
@@ -2154,7 +2155,10 @@
 }
 
 .rental-allergy-notes > span {
-  font-size: 0.95rem;
+  color: #4c5562;
+
+  font-size: 0.93rem;
+  font-weight: 550;
 }
 
 
@@ -2222,7 +2226,7 @@
 
 
 .rental-stay-schedule-title {
-  font-weight: 600;
+  font-weight: 650;
   color: #343b49;
 }
 
@@ -2777,4 +2781,67 @@
   .rental-meal-table td {
     padding: 10px;
   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   MEALS — SECTION SPACING
+========================================================= */
+
+/* More room between meal times and allergies */
+.rental-field-grid-3 + .rental-allergies-field {
+  margin-top: 12px;
+}
+
+
+/* More room before Additional Allergy Notes */
+.rental-allergy-notes {
+  margin-top: 14px;
+}
+
+
+/* More room between allergy area and Other Meal Notes */
+.rental-allergies-field + .rental-field {
+  margin-top: 12px;
+}
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   FIELD LABEL ICONS
+========================================================= */
+
+.rental-field-label-icon {
+  flex: 0 0 auto;
+
+  color: #718b76;
+
+  font-size: 0.78rem;
+
+  opacity: 0.9;
 }

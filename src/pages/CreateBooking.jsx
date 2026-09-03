@@ -4,7 +4,6 @@ import {
   FaUsers,
   FaCalendarAlt,
   FaDollarSign,
-  FaClock,
   FaUtensils,
   FaBed,
   FaFileContract,
@@ -13,6 +12,15 @@ import {
 } from "react-icons/fa";
 
 import { upsertBooking } from "../services/bookingService";
+
+import {
+  FaUser,
+  FaChild,
+  FaUserMinus,
+  FaUserPlus,
+  FaGlobeAmericas,
+  FaMoon,
+} from "react-icons/fa";
 
 
 /* =========================================================
@@ -1009,10 +1017,10 @@ export default function CreateBooking() {
 
         <header className="rental-header">
           <p className="rental-eyebrow">
-            Toah Nipi Christian Retreat Center
+            {/* Toah Nipi Christian Retreat Center */}
           </p>
 
-          <h1>Guest Group Booking Form</h1>
+          <h1>Staff Facing: Group Booking Form</h1>
 
             <button
               className="rental-test-data-button"
@@ -1283,7 +1291,10 @@ export default function CreateBooking() {
                 <div className="rental-field-grid rental-approx-guests-grid">
 
                   <label className="rental-field">
-                    <span>Adults</span>
+                    <span>
+                      <FaUser className="rental-field-label-icon" />
+                      Adults
+                    </span>
 
                     <input
                       type="number"
@@ -1296,7 +1307,10 @@ export default function CreateBooking() {
 
 
                   <label className="rental-field">
-                    <span>Children</span>
+                    <span>
+                      <FaChild className="rental-field-label-icon" />
+                      Children
+                    </span>
 
                     <input
                       type="number"
@@ -1309,7 +1323,10 @@ export default function CreateBooking() {
 
 
                   <label className="rental-field">
-                    <span>Minimum Guarantee</span>
+                    <span>
+                      <FaUserMinus className="rental-field-label-icon" />
+                      Min Guarantee
+                    </span>
 
                     <input
                       type="number"
@@ -1321,7 +1338,10 @@ export default function CreateBooking() {
                   </label>
 
                   <label className="rental-field">
-                    <span>Maximum Guarantee</span>
+                    <span>
+                      <FaUserPlus className="rental-field-label-icon" />
+                      Max Guarantee
+                    </span>
 
                     <input
                       type="number"
@@ -1342,7 +1362,10 @@ export default function CreateBooking() {
                 <div className="rental-field-grid rental-field-grid-3">
 
                   <label className="rental-field">
-                    <span>Adults</span>
+                    <span>
+                      <FaUser className="rental-field-label-icon" />
+                      Adults
+                    </span>
 
                     <input
                       type="number"
@@ -1355,7 +1378,10 @@ export default function CreateBooking() {
 
 
                   <label className="rental-field">
-                    <span>Children</span>
+                    <span>
+                      <FaChild className="rental-field-label-icon" />
+                      Children
+                    </span>
 
                     <input
                       type="number"
@@ -1369,7 +1395,10 @@ export default function CreateBooking() {
 
                   <label className="rental-field">
                     <span>
+                      <FaGlobeAmericas className="rental-field-label-icon" />
+
                       Ethnic Breakdown
+
                       <small>Optional</small>
                     </span>
 
@@ -1391,7 +1420,10 @@ export default function CreateBooking() {
                 <div className="rental-field-grid rental-field-grid-4">
 
                   <label className="rental-field">
-                    <span>Adult Rate Quoted</span>
+                    <span>
+                      {/* <FaDollarSign className="rental-field-label-icon" /> */}
+                      Adult Rate Quoted
+                    </span>
 
                     <div className="rental-currency-input">
                       <span className="rental-currency-symbol">
@@ -1411,7 +1443,10 @@ export default function CreateBooking() {
 
 
                   <label className="rental-field">
-                    <span>Child Rate Quoted</span>
+                    <span>
+                      {/* <FaDollarSign className="rental-field-label-icon" /> */}
+                      Child Rate Quoted
+                    </span>
 
                     <div className="rental-currency-input">
                       <span className="rental-currency-symbol">
@@ -1431,7 +1466,10 @@ export default function CreateBooking() {
 
 
                   <label className="rental-field">
-                    <span># of Nights</span>
+                    <span>
+                      <FaMoon className="rental-field-label-icon" />
+                      # of Nights
+                    </span>
 
                     <input
                       type="number"
@@ -1445,7 +1483,10 @@ export default function CreateBooking() {
 
                   <label className="rental-field">
                     <span>
+                      <FaUtensils className="rental-field-label-icon" />
+
                       # of Meals
+
                       <small>
                         Auto-calculated
                       </small>
