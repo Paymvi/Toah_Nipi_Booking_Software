@@ -186,3 +186,337 @@
   }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   INQUIRY SPREADSHEET
+========================================================= */
+
+.inquiry-spreadsheet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+
+  padding: 20px 22px;
+  border-bottom: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+.inquiry-spreadsheet-title {
+  min-width: 0;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.inquiry-spreadsheet-title h2 {
+  margin: 0;
+  color: #252936;
+
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.inquiry-spreadsheet-title p:last-child {
+  max-width: 760px;
+
+  margin: 6px 0 0;
+
+  color: #858c9b;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   Search
+========================================================= */
+
+.inquiry-spreadsheet-search {
+  flex: 0 0 285px;
+
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 0 12px;
+
+  border: 1px solid #d8dee8;
+  border-radius: 9px;
+
+  background: #ffffff;
+  color: #7b8290;
+}
+
+.inquiry-spreadsheet-search:focus-within {
+  border-color: #9f98d4;
+  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.1);
+}
+
+.inquiry-spreadsheet-search svg {
+  flex: 0 0 auto;
+  font-size: 0.9rem;
+}
+
+.inquiry-spreadsheet-search input {
+  width: 100%;
+  min-width: 0;
+
+  border: 0;
+  outline: 0;
+  background: transparent;
+
+  color: #303442;
+  font: inherit;
+  font-size: 0.86rem;
+}
+
+.inquiry-spreadsheet-search input::placeholder {
+  color: #98a2b3;
+}
+
+
+/* =========================================================
+   Toolbar
+========================================================= */
+
+.inquiry-spreadsheet-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+
+  padding: 14px 22px;
+
+  border-bottom: 1px solid #edf0f4;
+  background: #fbfcfd;
+}
+
+
+/* =========================================================
+   Year Toggle
+========================================================= */
+
+.inquiry-spreadsheet-year-toggle {
+  flex: 0 0 auto;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 4px;
+
+  border: 1px solid #dfe4ea;
+  border-radius: 9px;
+  background: #f3f5f7;
+}
+
+.inquiry-spreadsheet-year-toggle button {
+  min-height: 36px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 0 12px;
+
+  border: 0;
+  border-radius: 6px;
+
+  background: transparent;
+  color: #667085;
+
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+.inquiry-spreadsheet-year-toggle button:hover {
+  background: #ffffff;
+  color: #303442;
+}
+
+.inquiry-spreadsheet-year-toggle button.active {
+  background: #ffffff;
+  color: #303442;
+
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.08),
+    0 0 0 1px rgba(16, 24, 40, 0.04);
+}
+
+.inquiry-spreadsheet-year-toggle button em {
+  min-width: 20px;
+  height: 20px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 6px;
+
+  border-radius: 999px;
+  background: #e9ecf1;
+
+  color: #6f7687;
+
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.inquiry-spreadsheet-year-toggle button.active em {
+  background: #f0edfa;
+  color: #443a9c;
+}
+
+
+/* =========================================================
+   Summary
+========================================================= */
+
+.inquiry-spreadsheet-summary {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.inquiry-spreadsheet-summary > span {
+  min-width: 125px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+
+  padding: 9px 12px;
+
+  border: 1px solid #dfe4ec;
+  border-left: 3px solid #443a9c;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #7b8290;
+
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.inquiry-spreadsheet-summary > span:nth-child(2) {
+  border-left-color: #2f6f5f;
+}
+
+.inquiry-spreadsheet-summary > span:nth-child(3) {
+  border-left-color: #4c65a9;
+}
+
+.inquiry-spreadsheet-summary strong {
+  color: #252936;
+
+  font-size: 1rem;
+  font-weight: 700;
+
+  line-height: 1.1;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+
+/* =========================================================
+   Table
+========================================================= */
+
+.inquiry-spreadsheet-table {
+  min-width: 1700px;
+}
+
+.inquiry-spreadsheet-table th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.inquiry-spreadsheet-table td {
+  height: auto;
+  min-height: 48px;
+  vertical-align: top;
+}
+
+.inquiry-spreadsheet-long-cell {
+  min-width: 260px;
+  max-width: 420px !important;
+
+  white-space: normal !important;
+  line-height: 1.45;
+  vertical-align: top;
+}
+
+
+/* =========================================================
+   Responsive
+========================================================= */
+
+@media (max-width: 1000px) {
+  .inquiry-spreadsheet-header {
+    flex-direction: column;
+  }
+
+  .inquiry-spreadsheet-search {
+    width: 100%;
+    flex-basis: auto;
+  }
+
+  .inquiry-spreadsheet-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .inquiry-spreadsheet-summary {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 650px) {
+  .inquiry-spreadsheet-year-toggle {
+    width: 100%;
+  }
+
+  .inquiry-spreadsheet-year-toggle button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .inquiry-spreadsheet-summary {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .inquiry-spreadsheet-summary > span {
+    min-width: 0;
+  }
+}

@@ -237,7 +237,7 @@ export default function DashboardTopbar({
 
                 <span>
                   <strong>Import Everything</strong>
-                  <small>Import all Master sheets in workbook</small>
+                  <small>Import all Master and Inquiry sheets in workbook</small>
                 </span>
               </button>
 

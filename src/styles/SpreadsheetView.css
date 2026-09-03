@@ -3104,3 +3104,25 @@
     min-width: 0;
   }
 }
+
+
+
+
+
+
+/* =========================================================
+   INQUIRY SPREADSHEET
+========================================================= */
+
+.inquiry-spreadsheet-table {
+  min-width: 1700px;
+}
+
+.inquiry-spreadsheet-long-cell {
+  min-width: 260px;
+  max-width: 420px !important;
+
+  white-space: normal !important;
+  line-height: 1.45;
+  vertical-align: top;
+}

@@ -124,6 +124,7 @@ import BookingChecklists, {
 
 import CalendarView from "../pages/CalendarView";
 import SpreadsheetView, { SpreadsheetViewLoadingScreen } from "../pages/SpreadsheetView";
+import InquirySpreadsheetView from "../pages/InquirySpreadsheetView";
 import ContactsView from "../pages/ContactsView";
 import InquiryPipelineView, {
   getInquiryPipelineColumnKey,
@@ -131,6 +132,8 @@ import InquiryPipelineView, {
 import ReportsView from "../pages/ReportsView";
 
 const SPREADSHEET_VIEW_NAME = "Spreadsheet View";
+const INQUIRY_SPREADSHEET_VIEW_NAME = "Inquiry Spreadsheet";
+
 const SPREADSHEET_REVEAL_LOADING_MS = 160;
 
 
@@ -660,6 +663,9 @@ function normalizeInquiry(inquiry, index) {
     waitlist: inquiry.waitlist || "No",
     status: inquiry.status || "Inquiry",
     submittedAt: inquiry.submittedAt || "",
+
+    inquiryAddress: inquiry.inquiryAddress || "",
+    inquiryDisposition: inquiry.inquiryDisposition || inquiry.stageOfGroup || "",
 
     roomName:
       inquiry.roomName ||
@@ -1926,16 +1932,266 @@ function normalizeEverythingSpreadsheetRow(row, index, detectedType) {
     return normalizeMaster2027SpreadsheetRow(row, index);
   }
 
+  if (
+    detectedType === "Guest Group Inquiry 2025" ||
+    detectedType === "Guest Group Inquiry 2026" ||
+    detectedType === "Guest Group Inquiry 2027"
+  ) {
+    return normalizeGuestGroupInquirySpreadsheetRow(
+      row,
+      index,
+      detectedType
+    );
+  }
+
   return null;
 }
 
 
-function createMasterBulkImportId({
+/* =========================================================
+   GUEST GROUP INQUIRY / NO'S IMPORT
+   Handles the 2025, 2026, and 2027 inquiry sheets.
+========================================================= */
+
+function cleanGuestGroupInquiryText(value) {
+  return String(value || "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .trim();
+}
+
+function detectGuestGroupInquirySpreadsheetType(worksheetName) {
+  const normalizedSheetName = String(worksheetName || "")
+    .trim()
+    .toLowerCase();
+
+  /*
+    These sheets currently have names such as:
+
+    2025 Guest Group Inquiries and 'No's
+    2026 Guest Group Inquiries and 'No's
+    2027 Guest Group Inquiries and No's
+  */
+  const isGuestGroupInquirySheet =
+    normalizedSheetName.includes("guest group") &&
+    normalizedSheetName.includes("inquir");
+
+  if (!isGuestGroupInquirySheet) {
+    return "";
+  }
+
+  if (normalizedSheetName.includes("2025")) {
+    return "Guest Group Inquiry 2025";
+  }
+
+  if (normalizedSheetName.includes("2026")) {
+    return "Guest Group Inquiry 2026";
+  }
+
+  if (normalizedSheetName.includes("2027")) {
+    return "Guest Group Inquiry 2027";
+  }
+
+  return "";
+}
+
+function getGuestGroupInquiryStatus(disposition) {
+  const text = cleanGuestGroupInquiryText(disposition).toLowerCase();
+
+  if (text.includes("waitlist")) {
+    return "Waitlist";
+  }
+
+  /*
+    These are essentially closed / unsuccessful inquiries.
+  */
+  if (
+    text === "no" ||
+    text.startsWith("no ") ||
+    text.includes("did not hear") ||
+    text.includes("didn't hear") ||
+    text.includes("never heard")
+  ) {
+    return "Cancelled";
+  }
+
+  /*
+    "Considering" is still an active inquiry.
+  */
+  return "Inquiry";
+}
+
+function normalizeGuestGroupInquirySpreadsheetRow(
+  row,
+  index,
+  detectedType
+) {
+  const inquiryDate = readSpreadsheetCell(row, ["Date"]);
+
+  const contactName = readSpreadsheetCell(row, [
+    "Contact Name",
+  ]);
+
+  const email = readSpreadsheetCell(row, [
+    "Email Address",
+    "Email",
+  ]);
+
+  const phone = readSpreadsheetCell(row, [
+    "Phone Number",
+    "Phone",
+  ]);
+
+  const guestGroupName = readSpreadsheetCell(row, [
+    "Guest Group Name",
+  ]);
+
+  /*
+    2027 calls this "Mailing address".
+    2026 calls it "Address".
+    2025 does not have the column.
+  */
+  const inquiryAddress = readSpreadsheetCell(row, [
+    "Mailing address",
+    "Mailing Address",
+    "Address",
+  ]);
+
+  const size = readSpreadsheetCell(row, [
+    "Size",
+  ]);
+
+  const desiredDates = readSpreadsheetCell(row, [
+    "Desired Dates",
+  ]);
+
+  const additionalNotes = readSpreadsheetCell(row, [
+    "Additional Notes",
+  ]);
+
+  /*
+    2026 / 2027:
+      Waitlist, Considering or No
+
+    2025:
+      Waitlist or No
+  */
+  const disposition = readSpreadsheetCell(row, [
+    "Waitlist, Considering or No",
+    "Waitlist or No",
+  ]);
+
+  const rowHasData =
+    inquiryDate ||
+    contactName ||
+    email ||
+    phone ||
+    guestGroupName ||
+    inquiryAddress ||
+    size ||
+    desiredDates ||
+    additionalNotes ||
+    disposition;
+
+  if (!rowHasData) {
+    return null;
+  }
+
+  const cleanContactName = cleanGuestGroupInquiryText(contactName);
+  const cleanGroupName = cleanGuestGroupInquiryText(guestGroupName);
+  const cleanAddress = cleanGuestGroupInquiryText(inquiryAddress);
+  const cleanSize = cleanGuestGroupInquiryText(size);
+  const cleanDesiredDates = cleanGuestGroupInquiryText(desiredDates);
+  const cleanNotes = cleanGuestGroupInquiryText(additionalNotes);
+  const cleanDisposition = cleanGuestGroupInquiryText(disposition);
+
+  const formattedInquiryDate = formatExcelDateValue(inquiryDate);
+
+  const status = getGuestGroupInquiryStatus(cleanDisposition);
+
+  return {
+    id: `guest-group-inquiry-import-${Date.now()}-${
+      row.sourceSheet || "sheet"
+    }-${index}`,
+
+    sourceType: detectedType,
+    detectedImportType: detectedType,
+
+    sourceSheet: row.sourceSheet || "",
+    sourceRowNumber: row.sourceRowNumber || "",
+    rawSpreadsheetData: row,
+
+    /*
+      "Date" on these sheets means when the inquiry/contact happened,
+      NOT when the retreat occurs.
+    */
+    submittedAt: formattedInquiryDate
+      ? `${formattedInquiryDate}T12:00:00.000Z`
+      : "",
+
+    organizationName: cleanGroupName || "Unnamed Inquiry",
+
+    name: cleanContactName,
+    contactName: cleanContactName || "No contact name",
+
+    email: cleanGuestGroupInquiryText(email),
+    phone: cleanGuestGroupInquiryText(phone),
+
+    /*
+      IMPORTANT:
+
+      Do not convert tentative Desired Dates into real booking dates.
+
+      Some rows contain several possible date ranges and some represent
+      groups that were denied or waitlisted.
+    */
+    startDate: "",
+    endDate: "",
+    desiredDatesText: cleanDesiredDates,
+
+    attendeeCount: cleanSize,
+    groupSize: cleanSize,
+
+    retreatType: "",
+
+    roomName: "Unassigned",
+    buildingsRooms: "",
+
+    notes: cleanNotes,
+    message: cleanNotes,
+
+    /*
+      Preserve inquiry-only fields separately.
+    */
+    inquiryAddress: cleanAddress,
+    inquiryDisposition: cleanDisposition,
+
+    /*
+      Also use the normal workflow fields where they make sense.
+    */
+    waitlist:
+      status === "Waitlist"
+        ? "Yes"
+        : "No",
+
+    status,
+
+    /*
+      This gives us another semantic home for the original
+      Waitlist / Considering / No value.
+    */
+    stageOfGroup: cleanDisposition,
+
+    promoCode: "",
+  };
+}
+
+
+function createWorkbookBulkImportId({
   detectedType,
   sourceSheet,
   sourceRowNumber,
 }) {
-  const safeType = String(detectedType || "master")
+  const safeType = String(detectedType || "record")
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -5677,9 +5933,7 @@ export default function Dashboard() {
     const fileName = String(file.name || "").toLowerCase();
 
     if (!fileName.endsWith(".xlsx")) {
-      alert(
-        "Please upload a .xlsx workbook. Import Everything currently supports the Master 2025, Master 2026, and Master 2027 sheets."
-      );
+      alert("Please upload a .xlsx workbook.");
 
       event.target.value = "";
       return;
@@ -5694,30 +5948,53 @@ export default function Dashboard() {
       const allImportedRows = [];
       const sheetSummaries = [];
 
-      const masterCounts = {
+      const importCounts = {
         "Master 2025": 0,
         "Master 2026": 0,
         "Master 2027": 0,
+
+        "Guest Group Inquiry 2025": 0,
+        "Guest Group Inquiry 2026": 0,
+        "Guest Group Inquiry 2027": 0,
       };
 
       workbook.worksheets.forEach((worksheet) => {
-        const spreadsheetRows = getRowsFromWorksheetFlexible(worksheet);
-
-        const detectedType = detectMasterSpreadsheetType(
-          worksheet.name,
-          spreadsheetRows
-        );
+        const spreadsheetRows =
+          getRowsFromWorksheetFlexible(worksheet);
 
         /*
-          For now, Import Everything ONLY handles Master sheets.
+          First see whether this is one of the Master sheets.
+        */
+        const detectedMasterType =
+          detectMasterSpreadsheetType(
+            worksheet.name,
+            spreadsheetRows
+          );
 
-          Staff Contacts already has its own importer.
-          Inquiry sheets will be added when we build the new
-          Inquiry Spreadsheet system.
+        /*
+          If it is not Master data, see whether it is one of
+          the Guest Group Inquiry / No's sheets.
+        */
+        const detectedInquiryType =
+          detectGuestGroupInquirySpreadsheetType(
+            worksheet.name
+          );
+
+        const detectedType =
+          detectedMasterType ||
+          detectedInquiryType;
+
+        /*
+          Stuff such as:
+          - Staff_Contacts
+          - Counts by Group Type
+          - Risk Management
+
+          stays untouched.
         */
         if (!detectedType) {
           sheetSummaries.push(
-            `${worksheet.name}: skipped — not a recognized Master 2025, 2026, or 2027 sheet`
+            `${worksheet.name}: skipped — not a recognized Master or Guest Group Inquiry sheet`
           );
 
           return;
@@ -5727,11 +6004,12 @@ export default function Dashboard() {
         let skippedRowCount = 0;
 
         spreadsheetRows.forEach((row, index) => {
-          const normalizedRow = normalizeEverythingSpreadsheetRow(
-            row,
-            index,
-            detectedType
-          );
+          const normalizedRow =
+            normalizeEverythingSpreadsheetRow(
+              row,
+              index,
+              detectedType
+            );
 
           if (!normalizedRow) {
             skippedRowCount += 1;
@@ -5752,12 +6030,11 @@ export default function Dashboard() {
             ...normalizedRow,
 
             /*
-              Override the temporary Date.now() ID created by the
-              individual normalizer.
-
-              This gives Import Everything repeatable IDs.
+              Stable/repeatable ID so importing the same workbook
+              again updates the same records instead of duplicating
+              everything.
             */
-            id: createMasterBulkImportId({
+            id: createWorkbookBulkImportId({
               detectedType,
               sourceSheet,
               sourceRowNumber,
@@ -5771,7 +6048,7 @@ export default function Dashboard() {
           });
 
           importedCount += 1;
-          masterCounts[detectedType] += 1;
+          importCounts[detectedType] += 1;
         });
 
         sheetSummaries.push(
@@ -5781,22 +6058,28 @@ export default function Dashboard() {
 
       if (allImportedRows.length === 0) {
         alert(
-          "No Master 2025, Master 2026, or Master 2027 booking rows were found in this workbook."
+          "No recognized Master or Guest Group Inquiry booking rows were found in this workbook."
         );
 
         return;
       }
 
-      /*
-        Give the admin one final sanity check BEFORE writing
-        potentially hundreds of rows to Supabase.
-      */
       const confirmed = window.confirm(
-        `Import Master workbook?\n\n` +
-          `Master 2025: ${masterCounts["Master 2025"]} row(s)\n` +
-          `Master 2026: ${masterCounts["Master 2026"]} row(s)\n` +
-          `Master 2027: ${masterCounts["Master 2027"]} row(s)\n\n` +
-          `Total: ${allImportedRows.length} booking row(s)\n\n` +
+        `Import booking workbook?\n\n` +
+
+          `MASTER SHEETS\n` +
+          `2025 Master: ${importCounts["Master 2025"]} row(s)\n` +
+          `2026 Master: ${importCounts["Master 2026"]} row(s)\n` +
+          `2027 Master: ${importCounts["Master 2027"]} row(s)\n\n` +
+
+          `GUEST GROUP INQUIRIES / NO'S\n` +
+          `2025: ${importCounts["Guest Group Inquiry 2025"]} row(s)\n` +
+          `2026: ${importCounts["Guest Group Inquiry 2026"]} row(s)\n` +
+          `2027: ${importCounts["Guest Group Inquiry 2027"]} row(s)\n\n` +
+
+          `TOTAL\n` +
+          `${allImportedRows.length} row(s)\n\n` +
+
           `Other worksheet types will be skipped.`
       );
 
@@ -5804,7 +6087,8 @@ export default function Dashboard() {
         return;
       }
 
-      const savedRows = await upsertBookings(allImportedRows);
+      const savedRows =
+        await upsertBookings(allImportedRows);
 
       setPublicInquiries((currentInquiries) => {
         const byId = new Map();
@@ -5821,18 +6105,27 @@ export default function Dashboard() {
       });
 
       alert(
-        `Master workbook import complete.\n\n` +
-          `Master 2025: ${masterCounts["Master 2025"]}\n` +
-          `Master 2026: ${masterCounts["Master 2026"]}\n` +
-          `Master 2027: ${masterCounts["Master 2027"]}\n\n` +
+        `Workbook import complete.\n\n` +
+
+          `MASTER SHEETS\n` +
+          `2025: ${importCounts["Master 2025"]}\n` +
+          `2026: ${importCounts["Master 2026"]}\n` +
+          `2027: ${importCounts["Master 2027"]}\n\n` +
+
+          `GUEST GROUP INQUIRIES / NO'S\n` +
+          `2025: ${importCounts["Guest Group Inquiry 2025"]}\n` +
+          `2026: ${importCounts["Guest Group Inquiry 2026"]}\n` +
+          `2027: ${importCounts["Guest Group Inquiry 2027"]}\n\n` +
+
           `Total imported: ${savedRows.length}\n\n` +
+
           `${sheetSummaries.join("\n")}`
       );
     } catch (error) {
-      console.error("Could not import Master workbook:", error);
+      console.error("Could not import booking workbook:", error);
 
       alert(
-        `Sorry, that Master workbook could not be imported.\n\n` +
+        `Sorry, that booking workbook could not be imported.\n\n` +
           `Error: ${error?.message || String(error)}`
       );
     } finally {
@@ -6555,8 +6848,13 @@ const getCalendarEventColor = (status) => {
             goToNextMonth={goToNextMonth}
             getCalendarEventColor={getCalendarEventColor}
           />
-        ) : activeView === SPREADSHEET_VIEW_NAME ? null : activeView === "Contacts View" ? (
-          <ContactsView
+        ) : activeView === SPREADSHEET_VIEW_NAME ? null : activeView === INQUIRY_SPREADSHEET_VIEW_NAME ? (
+                <InquirySpreadsheetView
+                  inquiryBookings={inquiryBookings}
+                  openBookingDetail={openBookingDetail}
+                />
+              ) : activeView === "Contacts View" ? (
+                <ContactsView
             inquiryBookings={inquiryBookings}
             openBookingDetail={openBookingDetail}
           />

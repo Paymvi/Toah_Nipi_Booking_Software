@@ -57,6 +57,10 @@ export const sidebarSections = [
     items: [
       { label: "Calendar View", icon: FaCalendarAlt },
       { label: "Spreadsheet View", icon: FaTable },
+      {
+        label: "Inquiry Spreadsheet",
+        icon: FaClipboardList,
+      },
       { label: "Contacts View", icon: FaUsers },
       { label: "Inquiry Pipeline", icon: FaClipboardList, hasBadge: true },
     ],
@@ -482,7 +486,6 @@ export const SPREADSHEET_2026_STANDARD_LABELS = new Set([
   "Max Paying Guests",
   "Guest Rate",
   "Expected Minimum Revenue",
-  "Invoice Lodging / Meals",
   "Deposit",
   "Deposit Received",
   "Date of Cancellation",
