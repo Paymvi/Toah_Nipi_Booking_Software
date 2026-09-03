@@ -86,8 +86,8 @@ const lodgingFields = [
     capacity: "21",
   },
   {
-    name: "lodgingAijalon",
-    label: "Aijalon",
+    name: "lodgingAjalon",
+    label: "Ajalon",
     capacity: "5–8",
   },
   {
@@ -176,6 +176,9 @@ const TEST_BOOKING_DATA = {
   lunchTime: "12:00",
   dinnerTime: "18:00",
 
+  allergies:
+    "2 gluten-free guests, 1 peanut allergy, 1 dairy-free guest.",
+
   mealNotes:
     "Saturday dinner should be served at 5:30 PM instead of 6:00 PM.",
 
@@ -184,7 +187,7 @@ const TEST_BOOKING_DATA = {
   lodgingHebronThird: "10",
   lodgingHebronBunks: "17",
   lodgingDothan: "",
-  lodgingAijalon: "",
+  lodgingAjalon: "",
   lodgingCapernaum: "",
   lodgingGuestHouse: "",
 
@@ -252,6 +255,7 @@ function createInitialFormState() {
     breakfastTime: "",
     lunchTime: "",
     dinnerTime: "",
+    allergies: "",
     mealNotes: "",
 
     /* Lodging */
@@ -259,7 +263,7 @@ function createInitialFormState() {
     lodgingHebronThird: "",
     lodgingHebronBunks: "",
     lodgingDothan: "",
-    lodgingAijalon: "",
+    lodgingAjalon: "",
     lodgingCapernaum: "",
     lodgingGuestHouse: "",
 
@@ -536,6 +540,9 @@ export default function CreateBooking() {
 
         inquiryAddress:
           formData.mailingAddress.trim(),
+
+        foodAllergies:
+          formData.allergies.trim(),
 
         needToKnow:
           formData.mealNotes.trim(),
@@ -1291,6 +1298,18 @@ export default function CreateBooking() {
 
                 </div>
 
+
+                <label className="rental-field">
+                  <span>Allergies / Dietary Restrictions</span>
+
+                  <textarea
+                    name="allergies"
+                    rows="3"
+                    value={formData.allergies}
+                    onChange={handleChange}
+                    placeholder="Food allergies, dietary restrictions, and number of affected guests."
+                  />
+                </label>
 
                 <label className="rental-field">
                   <span>Meal Notes</span>

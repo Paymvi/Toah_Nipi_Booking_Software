@@ -4043,8 +4043,8 @@ function StaffBookingFormDetails({
           />
 
           <StaffBookingDetailField
-            label="Aijalon"
-            value={details.lodgingAijalon}
+            label="Ajalon"
+            value={details.lodgingAjalon}
           />
 
           <StaffBookingDetailField
