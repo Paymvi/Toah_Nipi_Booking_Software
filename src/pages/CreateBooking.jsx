@@ -176,8 +176,23 @@ const TEST_BOOKING_DATA = {
   lunchTime: "12:00",
   dinnerTime: "18:00",
 
-  allergies:
-    "2 gluten-free guests, 1 peanut allergy, 1 dairy-free guest.",
+  allergies: [
+    {
+      name: "Gluten free",
+      count: "2",
+    },
+    {
+      name: "Peanut allergy",
+      count: "1",
+    },
+    {
+      name: "Dairy free",
+      count: "1",
+    },
+  ],
+
+  allergyNotes:
+    "Peanut allergy is severe. Please avoid cross-contamination.",
 
   mealNotes:
     "Saturday dinner should be served at 5:30 PM instead of 6:00 PM.",
@@ -255,7 +270,15 @@ function createInitialFormState() {
     breakfastTime: "",
     lunchTime: "",
     dinnerTime: "",
-    allergies: "",
+    allergies: [
+      {
+        name: "",
+        count: "",
+      },
+    ],
+
+    allergyNotes: "",
+
     mealNotes: "",
 
     /* Lodging */
@@ -311,6 +334,47 @@ function buildLodgingSummary(formData) {
     })
     .filter(Boolean)
     .join("; ");
+}
+
+function buildAllergiesSummary(formData) {
+  const allergyEntries = (
+    formData.allergies || []
+  )
+    .map((allergy) => {
+      const name = String(
+        allergy.name || ""
+      ).trim();
+
+      const count = String(
+        allergy.count || ""
+      ).trim();
+
+      if (!name) {
+        return "";
+      }
+
+      if (count) {
+        return `${count} - ${name}`;
+      }
+
+      return name;
+    })
+    .filter(Boolean);
+
+
+  const additionalNotes = String(
+    formData.allergyNotes || ""
+  ).trim();
+
+
+  if (additionalNotes) {
+    allergyEntries.push(
+      `Additional notes: ${additionalNotes}`
+    );
+  }
+
+
+  return allergyEntries.join("; ");
 }
 
 
@@ -389,7 +453,6 @@ export default function CreateBooking() {
   const [submitError, setSubmitError] =
     useState("");
 
-
   const handleChange = (event) => {
     const {
       name,
@@ -400,6 +463,69 @@ export default function CreateBooking() {
       ...current,
       [name]: value,
     }));
+  };
+
+
+  const handleAllergyChange = (
+    index,
+    field,
+    value
+  ) => {
+    setFormData((current) => {
+      const updatedAllergies = [
+        ...current.allergies,
+      ];
+
+      updatedAllergies[index] = {
+        ...updatedAllergies[index],
+        [field]: value,
+      };
+
+      return {
+        ...current,
+        allergies: updatedAllergies,
+      };
+    });
+  };
+
+
+  const handleAddAllergy = () => {
+    setFormData((current) => ({
+      ...current,
+
+      allergies: [
+        ...current.allergies,
+        {
+          name: "",
+          count: "",
+        },
+      ],
+    }));
+  };
+
+
+  const handleRemoveAllergy = (index) => {
+    setFormData((current) => {
+      const updatedAllergies =
+        current.allergies.filter(
+          (_, allergyIndex) =>
+            allergyIndex !== index
+        );
+
+      return {
+        ...current,
+
+        allergies:
+          updatedAllergies.length > 0
+            ? updatedAllergies
+            : [
+                {
+                  name: "",
+                  count: "",
+                },
+              ],
+      };
+    });
   };
 
   const handleFillTestData = () => {
@@ -440,6 +566,9 @@ export default function CreateBooking() {
 
       const mealsSummary =
         buildMealsSummary(formData);
+
+      const allergiesSummary =
+        buildAllergiesSummary(formData);
 
       const scheduleSummary =
         buildScheduleSummary(formData);
@@ -542,7 +671,7 @@ export default function CreateBooking() {
           formData.mailingAddress.trim(),
 
         foodAllergies:
-          formData.allergies.trim(),
+          allergiesSummary,
 
         needToKnow:
           formData.mealNotes.trim(),
@@ -1299,20 +1428,90 @@ export default function CreateBooking() {
                 </div>
 
 
-                <label className="rental-field">
+                <div className="rental-field rental-allergies-field">
                   <span>Allergies / Dietary Restrictions</span>
 
-                  <textarea
-                    name="allergies"
-                    rows="3"
-                    value={formData.allergies}
-                    onChange={handleChange}
-                    placeholder="Food allergies, dietary restrictions, and number of affected guests."
-                  />
-                </label>
+                  <div className="rental-allergy-headings">
+                    <span># Guests</span>
+                    <span>Allergy or dietary restriction</span>
+                    <span></span>
+                  </div>
+
+                  <div className="rental-allergy-list">
+                    {formData.allergies.map((allergy, index) => (
+                      <div
+                        className="rental-allergy-row"
+                        key={index}
+                      >
+                        <input
+                          type="number"
+                          min="1"
+                          value={allergy.count}
+                          onChange={(event) =>
+                            handleAllergyChange(
+                              index,
+                              "count",
+                              event.target.value
+                            )
+                          }
+                          placeholder="1"
+                        />
+
+                        <input
+                          type="text"
+                          value={allergy.name}
+                          onChange={(event) =>
+                            handleAllergyChange(
+                              index,
+                              "name",
+                              event.target.value
+                            )
+                          }
+                          placeholder="Example: Peanuts / tree nuts"
+                        />
+
+                        <div className="rental-allergy-actions">
+                          {formData.allergies.length > 1 && (
+                            <button
+                              type="button"
+                              className="rental-allergy-remove"
+                              onClick={() =>
+                                handleRemoveAllergy(index)
+                              }
+                              aria-label="Remove allergy"
+                              title="Remove allergy"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="rental-allergy-add-below"
+                    onClick={handleAddAllergy}
+                  >
+                    + Add another allergy
+                  </button>
+
+                  <label className="rental-allergy-notes">
+                    <span>Additional Allergy Notes</span>
+
+                    <textarea
+                      name="allergyNotes"
+                      rows="3"
+                      value={formData.allergyNotes}
+                      onChange={handleChange}
+                      placeholder="Severity, exceptions, cross-contamination concerns, or other details."
+                    />
+                  </label>
+                </div>
 
                 <label className="rental-field">
-                  <span>Meal Notes</span>
+                  <span>Other Meal Notes</span>
 
                   <textarea
                     name="mealNotes"

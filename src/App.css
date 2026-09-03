@@ -2024,3 +2024,135 @@
 .booking-profile-delete-button:active {
   background: #fbe6e6;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   ALLERGIES
+========================================================= */
+
+.rental-allergies-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rental-allergy-headings {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 52px;
+  gap: 10px;
+  padding: 0 2px;
+  font-size: 0.82rem;
+  color: #7b8496;
+}
+
+.rental-allergy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rental-allergy-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 52px;
+  gap: 10px;
+  align-items: center;
+}
+
+.rental-allergy-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.rental-allergy-remove {
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+  border: 1px solid #dfe4ea;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #465064;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.rental-allergy-remove:hover {
+  background: #f5f7f9;
+  border-color: #cbd2da;
+}
+
+.rental-allergy-add-below {
+  align-self: flex-start;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 42px;
+  padding: 0 14px;
+
+  border: 1px solid #b8d3c1;
+  border-radius: 8px;
+
+  background: #edf7f0;
+  color: #2f6b45;
+
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.rental-allergy-add-below:hover {
+  background: #e3f2e8;
+  border-color: #9fc8ad;
+  transform: translateY(-1px);
+}
+
+.rental-allergy-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.rental-allergy-notes > span {
+  font-size: 0.95rem;
+}
