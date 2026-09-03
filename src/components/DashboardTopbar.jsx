@@ -237,7 +237,7 @@ export default function DashboardTopbar({
 
                 <span>
                   <strong>Import Everything</strong>
-                  <small>Auto-detect every sheet in workbook</small>
+                  <small>Import all Master sheets in workbook</small>
                 </span>
               </button>
 

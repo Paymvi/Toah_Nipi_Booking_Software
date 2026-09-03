@@ -642,10 +642,6 @@ const bookingSpreadsheetColumns = [
     value: (booking) => booking.expectedMinimumRevenue,
   },
   {
-    label: "Invoice Lodging / Meals",
-    value: (booking) => booking.invoiceLodgingMeals,
-  },
-  {
     label: "Deposit",
     value: (booking) => booking.deposit,
   },
@@ -702,7 +698,6 @@ const SPREADSHEET_YEAR_COLUMN_LABELS = {
     "Usage Fee",
     "$ Lodging",
     "$ Food",
-    "$ Misc.",
   ]),
 
   "2026": new Set([
@@ -727,7 +722,6 @@ const SPREADSHEET_YEAR_COLUMN_LABELS = {
     "Max Paying Guests",
     "Guest Rate",
     "Expected Minimum Revenue",
-    "Invoice Lodging / Meals",
     "Deposit",
     "Deposit Received",
     "Date of Cancellation",
@@ -790,34 +784,57 @@ const SPREADSHEET_YEAR_COLUMN_LABELS = {
   ]),
 };
 
+const SPREADSHEET_ALL_MASTER_COLUMN_LABELS = new Set(
+  Object.values(SPREADSHEET_YEAR_COLUMN_LABELS).flatMap((columnSet) =>
+    Array.from(columnSet)
+  )
+);
+
 function getSpreadsheetBookingYear(booking) {
-  const sourceType = String(booking.sourceType || "").toLowerCase();
+  const sourceType = String(booking.sourceType || "")
+    .trim()
+    .toLowerCase();
+
   const detectedImportType = String(
     booking.detectedImportType || ""
-  ).toLowerCase();
-  const sourceSheet = String(booking.sourceSheet || "").toLowerCase();
+  )
+    .trim()
+    .toLowerCase();
 
-  const searchableSource = [
-    sourceType,
-    detectedImportType,
-    sourceSheet,
-  ].join(" ");
+  const sourceSheet = String(booking.sourceSheet || "")
+    .trim()
+    .toLowerCase();
 
-  if (searchableSource.includes("2027")) {
+  /*
+    Prefer the actual import metadata.
+
+    IMPORTANT:
+    "2027 Inquiry" should NOT count as Master 2027.
+  */
+  if (
+    sourceType === "master 2027" ||
+    detectedImportType === "master 2027"
+  ) {
     return "2027";
   }
 
-  if (searchableSource.includes("2026")) {
+  if (
+    sourceType === "master 2026" ||
+    detectedImportType === "master 2026"
+  ) {
     return "2026";
   }
 
-  if (searchableSource.includes("2025")) {
+  if (
+    sourceType === "master 2025" ||
+    detectedImportType === "master 2025"
+  ) {
     return "2025";
   }
 
   /*
-    Older 2025 imports used sourceType "Master"
-    before we renamed it "Master 2025".
+    Backwards compatibility with older 2025 imports
+    that were simply called "Master".
   */
   if (
     sourceType === "master" ||
@@ -826,6 +843,35 @@ function getSpreadsheetBookingYear(booking) {
     return "2025";
   }
 
+  /*
+    Last-resort fallback for older imports where the metadata
+    wasn't saved correctly but the worksheet itself clearly
+    identifies a Master sheet.
+  */
+  if (
+    sourceSheet.includes("master") &&
+    sourceSheet.includes("2027")
+  ) {
+    return "2027";
+  }
+
+  if (
+    sourceSheet.includes("master") &&
+    sourceSheet.includes("2026")
+  ) {
+    return "2026";
+  }
+
+  if (
+    sourceSheet.includes("master") &&
+    sourceSheet.includes("2025")
+  ) {
+    return "2025";
+  }
+
+  /*
+    Anything else belongs somewhere other than Spreadsheet 1.
+  */
   return "";
 }
 
@@ -3013,7 +3059,13 @@ function BookingSpreadsheetView({
     return Array.isArray(inquiryBookings) ? inquiryBookings : [];
   }, [inquiryBookings]);
 
-  const totalBookingCount = processedInquiryBookings.length;
+  const masterSpreadsheetBookings = useMemo(() => {
+    return processedInquiryBookings.filter((booking) =>
+      Boolean(getSpreadsheetBookingYear(booking))
+    );
+  }, [processedInquiryBookings]);
+
+  const totalBookingCount = masterSpreadsheetBookings.length;
 
   const toggleSpreadsheetBookingStar = (booking) => {
     const bookingStarId = getSpreadsheetBookingStarId(booking);
@@ -3028,8 +3080,8 @@ function BookingSpreadsheetView({
   };
 
   const rawSpreadsheetColumns = useMemo(
-    () => getRawSpreadsheetColumns(processedInquiryBookings),
-    [processedInquiryBookings]
+    () => getRawSpreadsheetColumns(masterSpreadsheetBookings),
+    [masterSpreadsheetBookings]
   );
 
   const allSpreadsheetColumns = useMemo(() => {
@@ -3067,7 +3119,17 @@ function BookingSpreadsheetView({
       Show every available standard/raw column.
     */
     if (spreadsheetYearView === "all") {
-      return orderedSpreadsheetColumns;
+      return orderedSpreadsheetColumns.filter((column) => {
+        if (column.type === "standard") {
+          return SPREADSHEET_ALL_MASTER_COLUMN_LABELS.has(column.label);
+        }
+
+        if (column.type === "raw") {
+          return true;
+        }
+
+        return false;
+      });
     }
 
     const allowedStandardLabels =
@@ -3086,7 +3148,7 @@ function BookingSpreadsheetView({
     */
     const rawColumnsForSelectedYear = new Set();
 
-    processedInquiryBookings.forEach((booking) => {
+    masterSpreadsheetBookings.forEach((booking) => {
       if (getSpreadsheetBookingYear(booking) !== spreadsheetYearView) {
         return;
       }
@@ -3131,7 +3193,7 @@ function BookingSpreadsheetView({
     });
   }, [
     orderedSpreadsheetColumns,
-    processedInquiryBookings,
+    masterSpreadsheetBookings,
     spreadsheetYearView,
   ]);
 
@@ -3199,12 +3261,21 @@ function BookingSpreadsheetView({
       .toLowerCase();
 
     const filteredBookings = processedInquiryBookings.filter((booking) => {
+      const bookingYear = getSpreadsheetBookingYear(booking);
+
       /*
-        YEAR FILTER
+        Spreadsheet 1 is MASTER DATA ONLY.
+
+        Forms, inquiries, archives, waitlists, etc. belong in
+        their own views and should never appear here.
       */
+      if (!bookingYear) {
+        return false;
+      }
+
       if (
         spreadsheetYearView !== "all" &&
-        getSpreadsheetBookingYear(booking) !== spreadsheetYearView
+        bookingYear !== spreadsheetYearView
       ) {
         return false;
       }
@@ -3408,7 +3479,7 @@ function BookingSpreadsheetView({
 
   const importedCount = processedInquiryBookings.length - formCount;
 
-  const starredSpreadsheetCount = processedInquiryBookings.filter((booking) =>
+  const starredSpreadsheetCount = masterSpreadsheetBookings.filter((booking) =>
     starredSpreadsheetBookingIdSet.has(getSpreadsheetBookingStarId(booking))
   ).length;
 
@@ -3627,7 +3698,7 @@ function BookingSpreadsheetView({
           </div>
         </div>
 
-        {inquiryBookings.length > 0 ? (
+        {masterSpreadsheetBookings.length > 0 ? (
           <>
             <div className="spreadsheet-active-settings-bar">
               <span>
@@ -3806,9 +3877,9 @@ function BookingSpreadsheetView({
 
             {filteredAndSortedBookings.length === 0 && (
               <div className="empty-state">
-                <strong>No rows match these settings</strong>
+                <strong>No Master bookings match this view</strong>
                 <p>
-                  Open Settings and loosen the search, filters, or date range.
+                  Try clearing the search or selecting a different year.
                 </p>
               </div>
             )}
