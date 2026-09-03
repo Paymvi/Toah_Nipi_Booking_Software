@@ -113,6 +113,88 @@ function getTodayInputValue() {
   return `${year}-${month}-${day}`;
 }
 
+
+/* =========================================================
+   TEST DATA
+   Used by the Fill Test Data button.
+========================================================= */
+
+const TEST_BOOKING_DATA = {
+  /* Group */
+  organizationName: "Test Community Church",
+  retreatType: "Church - Youth",
+  startDate: "2027-06-18",
+  endDate: "2027-06-20",
+  mailingAddress: "123 Test Street, Nashua, NH 03060",
+
+  /* Contact */
+  contactName: "Jordan Test",
+  phone: "603-555-0142",
+  email: "jordan.test@example.com",
+
+  /* Guest Information */
+  approxAdultGuests: "12",
+  approxChildrenGuests: "38",
+  minimumGuarantee: "45",
+
+  actualAdultGuests: "10",
+  actualChildrenGuests: "37",
+
+  ethnicBreakdown: "Optional test information",
+
+  adultRateQuoted: "115",
+  childRateQuoted: "85",
+
+  numberOfNights: "2",
+  numberOfMeals: "5",
+
+  /* Booking Timeline */
+  inquiryDate: "2026-09-03",
+  contractSentDate: "2026-09-05",
+  returnContractByDate: "2026-09-19",
+  contractReturnedDate: "2026-09-15",
+
+  /* Payments / Documents */
+  depositReceivedDate: "2026-09-16",
+  depositAmount: "250",
+  insuranceCertificateDate: "2027-06-01",
+  notificationDate: "2027-06-05",
+  paymentMethod: "Check",
+
+  /* Arrival / Departure */
+  arrivalTime: "16:00",
+  departureTime: "13:00",
+
+  /* Meals */
+  firstMeal: "Dinner",
+  lastMeal: "Lunch",
+  breakfastTime: "08:00",
+  lunchTime: "12:00",
+  dinnerTime: "18:00",
+
+  mealNotes:
+    "Saturday dinner should be served at 5:30 PM instead of 6:00 PM.",
+
+  /* Lodging */
+  lodgingBethel: "20",
+  lodgingHebronThird: "10",
+  lodgingHebronBunks: "17",
+  lodgingDothan: "",
+  lodgingAijalon: "",
+  lodgingCapernaum: "",
+  lodgingGuestHouse: "",
+
+  /* Linens */
+  linenOption: "Some",
+  linenSets: "12",
+
+  /* Notes */
+  notes:
+    "TEST BOOKING: youth retreat. Group would like an early check-in if possible. This record is only for software testing.",
+};
+
+
+
 function createInitialFormState() {
   return {
     /* Group */
@@ -312,6 +394,16 @@ export default function CreateBooking() {
     }));
   };
 
+  const handleFillTestData = () => {
+    setFormData({
+      ...createInitialFormState(),
+      ...TEST_BOOKING_DATA,
+    });
+
+    setWasSubmitted(false);
+    setSubmitError("");
+  };
+
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -499,6 +591,14 @@ export default function CreateBooking() {
           </p>
 
           <h1>Guest Group Booking Form</h1>
+
+            <button
+              className="rental-test-data-button"
+              type="button"
+              onClick={handleFillTestData}
+            >
+              Fill Test Data
+            </button>
 
         </header>
 

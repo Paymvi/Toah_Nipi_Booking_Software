@@ -1629,3 +1629,336 @@
     width: 100%;
   }
 }
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   TEST DATA BUTTON
+========================================================= */
+
+.rental-header-with-actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 24px;
+}
+
+.rental-header-with-actions > div {
+  min-width: 0;
+}
+
+.rental-test-data-button {
+  flex: 0 0 auto;
+
+  margin-top: 4px;
+
+  border: 1px solid #d8d4f0;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #4f46a5;
+
+  padding: 10px 15px;
+
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+
+.rental-test-data-button:hover {
+  border-color: #bdb6e5;
+
+  background: #f8f7fd;
+
+  transform: translateY(-1px);
+}
+
+.rental-test-data-button:active {
+  transform: translateY(0);
+}
+
+
+@media (max-width: 780px) {
+  .rental-header-with-actions {
+    flex-direction: column;
+  }
+
+  .rental-test-data-button {
+    margin-top: 0;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   STAFF BOOKING — ORIGINAL FORM DETAILS
+========================================================= */
+
+.staff-booking-form-section {
+  grid-column: 1 / -1;
+
+  overflow: hidden;
+
+  border: 1px solid #e1e6eb;
+  border-radius: 12px;
+
+  background: #ffffff;
+}
+
+
+/* =========================================================
+   Main header
+========================================================= */
+
+.staff-booking-form-section > .booking-work-section-header {
+  padding: 18px 20px;
+
+  border-bottom: 1px solid #e7eaee;
+
+  background: #fafbfc;
+}
+
+.staff-booking-form-section
+  > .booking-work-section-header
+  .booking-work-section-icon {
+  background: #eef3ed;
+  border-color: #dfe7dc;
+  color: #60725c;
+}
+
+.staff-booking-form-section
+  > .booking-work-section-header
+  p {
+  margin-bottom: 3px;
+
+  color: #818a98;
+
+  font-size: 0.68rem;
+  font-weight: 700;
+
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.staff-booking-form-section
+  > .booking-work-section-header
+  h3 {
+  margin: 0;
+
+  color: #292e3a;
+
+  font-size: 1.05rem;
+  font-weight: 700;
+
+  letter-spacing: -0.015em;
+}
+
+
+/* =========================================================
+   Detail groups
+========================================================= */
+
+.staff-booking-detail-group {
+  padding: 22px 20px 24px;
+}
+
+.staff-booking-detail-group + .staff-booking-detail-group {
+  border-top: 1px solid #edf0f3;
+}
+
+.staff-booking-detail-group h4 {
+  margin: 0 0 15px;
+
+  color: #353b48;
+
+  font-size: 0.78rem;
+  font-weight: 700;
+
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+
+/* =========================================================
+   Fields grid
+========================================================= */
+
+.staff-booking-detail-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 10px;
+}
+
+
+/* =========================================================
+   Individual fields
+========================================================= */
+
+.staff-booking-detail-field {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  gap: 5px;
+
+  min-height: 72px;
+
+  padding: 12px 14px;
+
+  border: 1px solid #e5e9ee;
+  border-radius: 8px;
+
+  background: #fbfcfd;
+}
+
+.staff-booking-detail-field small {
+  display: block;
+
+  color: #8b93a1;
+
+  font-size: 0.7rem;
+  font-weight: 600;
+
+  line-height: 1.25;
+}
+
+.staff-booking-detail-field strong {
+  display: block;
+
+  min-width: 0;
+
+  color: #303541;
+
+  font-size: 0.94rem;
+  font-weight: 650;
+
+  line-height: 1.35;
+
+  overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   Subtle hover
+========================================================= */
+
+.staff-booking-detail-field {
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.staff-booking-detail-field:hover {
+  border-color: #d9dfe5;
+
+  background: #f8faf9;
+}
+
+
+/* =========================================================
+   Meal notes
+========================================================= */
+
+.staff-booking-detail-notes {
+  margin-top: 12px;
+
+  padding: 14px 16px;
+
+  border-left: 3px solid #72866f;
+  border-radius: 0 8px 8px 0;
+
+  background: #f7f9f6;
+}
+
+.staff-booking-detail-notes small {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #7d877b;
+
+  font-size: 0.68rem;
+  font-weight: 700;
+
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.staff-booking-detail-notes p {
+  margin: 0;
+
+  color: #40464f;
+
+  font-size: 0.88rem;
+  line-height: 1.55;
+
+  white-space: pre-wrap;
+}
+
+
+/* =========================================================
+   Make important numeric values slightly cleaner
+========================================================= */
+
+.staff-booking-detail-group:first-of-type
+  .staff-booking-detail-field strong,
+.staff-booking-detail-group:nth-of-type(2)
+  .staff-booking-detail-field strong {
+  font-size: 1rem;
+}
+
+
+/* =========================================================
+   Responsive
+========================================================= */
+
+@media (max-width: 1050px) {
+  .staff-booking-detail-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+@media (max-width: 650px) {
+  .staff-booking-detail-group {
+    padding: 18px;
+  }
+
+  .staff-booking-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-booking-detail-field {
+    min-height: 0;
+  }
+}
