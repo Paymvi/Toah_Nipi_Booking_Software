@@ -58,9 +58,14 @@ function getBookingInputMethod(booking) {
 
 function getBookingSourceSheetLabel(booking) {
   const sourceSheet = String(booking.sourceSheet || "").trim();
+  const sourceType = String(booking.sourceType || "").trim();
 
   if (sourceSheet) {
     return sourceSheet;
+  }
+
+  if (sourceType === "Staff Booking") {
+    return "Staff Booking Form / No Sheet";
   }
 
   return "Public Form / No Sheet";
@@ -115,7 +120,10 @@ function getSpreadsheetDateRangeDisplay(startDate, endDate) {
 function getSpreadsheetSourceClass(booking) {
   const sourceType = String(booking.sourceType || "Form").toLowerCase();
 
-  if (sourceType.includes("form")) {
+  if (
+    sourceType.includes("form") ||
+    sourceType.includes("staff booking")
+  ) {
     return "source-form";
   }
 
@@ -790,6 +798,7 @@ const SPREADSHEET_ALL_MASTER_COLUMN_LABELS = new Set(
   )
 );
 
+
 function getSpreadsheetBookingYear(booking) {
   const sourceType = String(booking.sourceType || "")
     .trim()
@@ -806,11 +815,44 @@ function getSpreadsheetBookingYear(booking) {
     .toLowerCase();
 
   /*
-    Prefer the actual import metadata.
+    =========================================================
+    STAFF-CREATED BOOKINGS
+
+    Staff Booking records belong in Spreadsheet 1.
+
+    If they have an arrival date, use that year so they also
+    appear under the matching 2025 / 2026 / 2027 button.
+
+    If they do not have an arrival date yet, return "staff"
+    so they still appear in the All view.
+    =========================================================
+  */
+  if (
+    sourceType === "staff booking" ||
+    detectedImportType === "staff booking"
+  ) {
+    const startDateText = String(booking.startDate || "").trim();
+
+    const yearMatch = startDateText.match(/^(\d{4})-/);
+
+    if (yearMatch) {
+      return yearMatch[1];
+    }
+
+    return "staff";
+  }
+
+  /*
+    =========================================================
+    MASTER IMPORTS
+
+    Prefer the actual saved import metadata.
 
     IMPORTANT:
-    "2027 Inquiry" should NOT count as Master 2027.
+    Guest Group Inquiry records should NOT count as Master data.
+    =========================================================
   */
+
   if (
     sourceType === "master 2027" ||
     detectedImportType === "master 2027"
@@ -845,7 +887,7 @@ function getSpreadsheetBookingYear(booking) {
 
   /*
     Last-resort fallback for older imports where the metadata
-    wasn't saved correctly but the worksheet itself clearly
+    wasn't saved correctly but the worksheet name clearly
     identifies a Master sheet.
   */
   if (
@@ -870,10 +912,12 @@ function getSpreadsheetBookingYear(booking) {
   }
 
   /*
-    Anything else belongs somewhere other than Spreadsheet 1.
+    Historical inquiry/no's sheets, archives, etc.
+    do NOT belong in Spreadsheet 1.
   */
   return "";
 }
+
 
 function getDefaultSpreadsheetSettings() {
   return {
@@ -3264,10 +3308,15 @@ function BookingSpreadsheetView({
       const bookingYear = getSpreadsheetBookingYear(booking);
 
       /*
-        Spreadsheet 1 is MASTER DATA ONLY.
+        Spreadsheet 1 contains:
 
-        Forms, inquiries, archives, waitlists, etc. belong in
-        their own views and should never appear here.
+        - Imported Master 2025 bookings
+        - Imported Master 2026 bookings
+        - Imported Master 2027 bookings
+        - Staff-created bookings
+
+        Historical Guest Group Inquiry / No's records,
+        archives, and unrelated imports stay out.
       */
       if (!bookingYear) {
         return false;
@@ -3474,7 +3523,9 @@ function BookingSpreadsheetView({
   };
 
   const formCount = processedInquiryBookings.filter(
-    (booking) => booking.sourceType === "Form"
+    (booking) =>
+      booking.sourceType === "Form" ||
+      booking.sourceType === "Staff Booking"
   ).length;
 
   const importedCount = processedInquiryBookings.length - formCount;

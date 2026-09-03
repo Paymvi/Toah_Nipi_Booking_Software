@@ -191,10 +191,616 @@
 
 
 
+/* =========================================================
+   GUEST GROUP BOOKING FORM
+   Styled after the original rental form UI
+========================================================= */
+
+.rental-page {
+  min-height: 100vh;
+
+  padding: 44px 20px;
+
+  background: var(--page-bg, #f6f7f9);
+}
 
 
+/* =========================================================
+   Main Card
+========================================================= */
+
+.rental-card {
+  width: 100%;
+  max-width: 1180px;
+
+  margin: 0 auto;
+
+  padding: 36px 40px 38px;
+
+  background: var(--card-bg, #ffffff);
+
+  border: 1px solid var(--border, #dde2e8);
+  border-radius: 14px;
+
+  box-shadow:
+    0 18px 45px rgba(15, 23, 42, 0.06);
+}
 
 
+/* =========================================================
+   Header
+========================================================= */
+
+.rental-header {
+  margin-bottom: 30px;
+}
+
+.rental-eyebrow {
+  margin: 0 0 7px;
+
+  color: #6c7b70;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.rental-header h1 {
+  margin: 0;
+
+  color: var(--text-main, #252936);
+
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  line-height: 1.1;
+
+  letter-spacing: -0.04em;
+
+  font-weight: 600;
+}
+
+.rental-header > p:last-child {
+  max-width: 680px;
+
+  margin: 10px 0 0;
+
+  color: var(--text-muted, #7c8492);
+
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   Messages
+========================================================= */
+
+.success-message,
+.rental-error-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  margin-bottom: 26px;
+
+  padding: 14px 16px;
+
+  border-radius: 10px;
+}
+
+.success-message {
+  border: 1px solid var(--success-border, #c6dfcd);
+  background: var(--success-bg, #edf7f0);
+  color: var(--success-text, #306342);
+}
+
+.rental-error-message {
+  border: 1px solid #e6c7c7;
+  background: #fff2f2;
+  color: #913737;
+}
+
+.success-message svg,
+.rental-error-message svg {
+  flex: 0 0 auto;
+
+  margin-top: 2px;
+}
+
+.success-message > div,
+.rental-error-message > div {
+  display: grid;
+  gap: 3px;
+}
+
+.success-message strong,
+.rental-error-message strong {
+  font-weight: 600;
+}
+
+.success-message span,
+.rental-error-message span {
+  font-size: 0.88rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   Form Layout
+========================================================= */
+
+.rental-form {
+  width: 100%;
+
+  display: grid;
+  gap: 24px;
+}
+
+
+/* =========================================================
+   Sections
+========================================================= */
+
+.rental-form-section {
+  overflow: hidden;
+
+  border: 1px solid var(--border, #dde2e8);
+  border-radius: 10px;
+
+  background: #ffffff;
+}
+
+
+/* =========================================================
+   Section Header
+========================================================= */
+
+.rental-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 15px 18px;
+
+  border-bottom: 1px solid #e8ebef;
+
+  background: #fafbfc;
+}
+
+.rental-section-icon {
+  width: 34px;
+  height: 34px;
+
+  flex: 0 0 34px;
+
+  display: grid;
+  place-items: center;
+
+  border: 1px solid #dbe2dc;
+  border-radius: 8px;
+
+  background: #f1f5f1;
+  color: #647666;
+
+  font-size: 0.85rem;
+}
+
+.rental-section-header h2 {
+  margin: 0;
+
+  color: var(--text-main, #252936);
+
+  font-size: 0.98rem;
+  font-weight: 600;
+
+  letter-spacing: -0.01em;
+}
+
+.rental-section-header p {
+  margin: 3px 0 0;
+
+  color: var(--text-muted, #858c9b);
+
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   Section Body
+========================================================= */
+
+.rental-section-body {
+  display: grid;
+  gap: 24px;
+
+  padding: 22px;
+}
+
+
+/* =========================================================
+   Field Grids
+========================================================= */
+
+.rental-field-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  column-gap: 34px;
+  row-gap: 24px;
+}
+
+.rental-field-grid-3 {
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  column-gap: 24px;
+}
+
+.rental-field-grid-4 {
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  column-gap: 20px;
+}
+
+.rental-field-full {
+  grid-column: 1 / -1;
+}
+
+
+/* =========================================================
+   Fields
+========================================================= */
+
+.rental-field {
+  display: flex;
+  flex-direction: column;
+
+  gap: 9px;
+
+  min-width: 0;
+}
+
+.rental-field > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  color: var(--label, #59616e);
+
+  font-size: 0.93rem;
+  font-weight: 400;
+}
+
+.rental-field > span small {
+  color: #9ca3af;
+
+  font-size: 0.74rem;
+  font-weight: 400;
+}
+
+.rental-field input,
+.rental-field select,
+.rental-field textarea {
+  width: 100%;
+
+  border: 1px solid var(--border, #d6dbe2);
+  border-radius: 6px;
+
+  background: #ffffff;
+  color: var(--text-main, #252936);
+
+  padding: 13px 15px;
+
+  font: inherit;
+  font-size: 1rem;
+
+  outline: none;
+
+  transition:
+    border-color 170ms ease,
+    box-shadow 170ms ease,
+    background-color 170ms ease;
+}
+
+.rental-field input,
+.rental-field select {
+  min-height: 48px;
+}
+
+.rental-field textarea {
+  min-height: 120px;
+
+  line-height: 1.5;
+
+  resize: vertical;
+}
+
+.rental-field input::placeholder,
+.rental-field textarea::placeholder {
+  color: #9ca3af;
+}
+
+.rental-field select {
+  cursor: pointer;
+}
+
+.rental-field input:focus,
+.rental-field select:focus,
+.rental-field textarea:focus {
+  border-color: var(--focus, #718b76);
+
+  box-shadow:
+    0 0 0 4px
+    var(--focus-soft, rgba(91, 119, 98, 0.11));
+
+  background: #ffffff;
+}
+
+.rental-field input:disabled {
+  background: #f4f5f6;
+
+  color: #9ca3af;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   Subsections
+========================================================= */
+
+.rental-subsection {
+  display: grid;
+  gap: 18px;
+}
+
+.rental-subsection + .rental-subsection {
+  padding-top: 22px;
+
+  border-top: 1px solid #eceff2;
+}
+
+.rental-subsection h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  margin: 0;
+
+  color: #4d5561;
+
+  font-size: 0.84rem;
+  font-weight: 600;
+
+  letter-spacing: 0.02em;
+}
+
+.rental-subsection h3 svg {
+  color: #6b7e6e;
+}
+
+
+/* =========================================================
+   Timeline + Payments Columns
+========================================================= */
+
+.rental-form-two-column {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 24px;
+
+  align-items: start;
+}
+
+
+/* =========================================================
+   Lodging
+========================================================= */
+
+.rental-lodging-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+.rental-lodging-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  min-height: 72px;
+
+  padding: 12px;
+
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
+
+  background: #fafbfc;
+}
+
+.rental-lodging-field > span {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.rental-lodging-field strong {
+  color: #3f4651;
+
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.rental-lodging-field small {
+  color: #8c94a1;
+
+  font-size: 0.72rem;
+}
+
+.rental-lodging-field input {
+  width: 65px;
+  height: 42px;
+
+  flex: 0 0 65px;
+
+  border: 1px solid var(--border, #d6dbe2);
+  border-radius: 6px;
+
+  background: #ffffff;
+
+  padding: 0 8px;
+
+  color: var(--text-main, #252936);
+
+  font: inherit;
+  font-size: 0.9rem;
+
+  text-align: center;
+
+  outline: none;
+}
+
+.rental-lodging-field input:focus {
+  border-color: var(--focus, #718b76);
+
+  box-shadow:
+    0 0 0 4px
+    var(--focus-soft, rgba(91, 119, 98, 0.11));
+}
+
+
+/* =========================================================
+   Save Button
+   Matches original form
+========================================================= */
+
+.form-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  margin-top: 2px;
+}
+
+.form-actions button {
+  min-width: 185px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: var(--button, #4f46c7);
+  color: #ffffff;
+
+  padding: 14px 28px;
+
+  font-size: 1rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 170ms ease,
+    transform 170ms ease,
+    box-shadow 170ms ease;
+}
+
+.form-actions button:hover:not(:disabled) {
+  background: var(--button-hover, #4338b3);
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 12px 22px rgba(79, 70, 199, 0.22);
+}
+
+.form-actions button:active:not(:disabled) {
+  transform: translateY(0);
+
+  box-shadow: none;
+}
+
+.form-actions button:disabled {
+  opacity: 0.55;
+
+  cursor: wait;
+}
+
+
+/* =========================================================
+   Responsive
+========================================================= */
+
+@media (max-width: 1000px) {
+  .rental-form-two-column {
+    grid-template-columns: 1fr;
+  }
+
+  .rental-field-grid-4,
+  .rental-lodging-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+@media (max-width: 780px) {
+  .rental-page {
+    padding: 24px 14px;
+  }
+
+  .rental-card {
+    padding: 26px 18px 28px;
+
+    border-radius: 12px;
+  }
+
+  .rental-form {
+    gap: 20px;
+  }
+
+  .rental-section-body {
+    padding: 18px;
+  }
+
+  .rental-field-grid,
+  .rental-field-grid-3,
+  .rental-field-grid-4,
+  .rental-lodging-grid {
+    grid-template-columns: 1fr;
+
+    row-gap: 20px;
+  }
+
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+
+  .success-message,
+  .rental-error-message {
+    align-items: flex-start;
+  }
+}
 
 
 

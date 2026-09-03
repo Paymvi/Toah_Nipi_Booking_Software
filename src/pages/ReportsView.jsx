@@ -57,6 +57,10 @@ function getBookingInputMethod(booking) {
     return "Public Form";
   }
 
+  if (sourceType === "Staff Booking") {
+    return "Staff Booking Form";
+  }
+
   if (sourceType === "2027 Inquiry") {
     return "Imported - 2027 Inquiry";
   }

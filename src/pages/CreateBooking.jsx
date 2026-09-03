@@ -1,45 +1,310 @@
 import { useState } from "react";
 
+import {
+  FaUsers,
+  FaCalendarAlt,
+  FaDollarSign,
+  FaClock,
+  FaUtensils,
+  FaBed,
+  FaFileContract,
+  FaCheckCircle,
+  FaExclamationTriangle,
+} from "react-icons/fa";
+
+import { upsertBooking } from "../services/bookingService";
+
+
+/* =========================================================
+   OPTIONS
+========================================================= */
+
 const retreatTypes = [
-  "Church Retreat",
-  "Student Retreat",
-  "Family Retreat",
+  "Church - Men",
+  "Church - Women",
+  "Church - Youth",
+  "Church - Children",
+  "Christian Organization",
+  "Ministry",
   "Personal Retreat",
-  "Leadership Retreat",
-  "Day Visit",
-  "Conference",
+  "Personal Retreat - Family",
+  "Personal Retreat - Women",
+  "Personal Retreat - Men",
+  "High School Students",
+  "College Students",
+  "Elementary Students",
+  "InterVarsity Staff",
+  "InterVarsity College Students",
+  "InterVarsity Graduate Students",
+  "InterVarsity Alumni",
+  "Family Reunion",
+  "Local Organization",
+  "Family Camp",
   "Other",
 ];
 
-const attendeeCounts = [
-  "1-25",
-  "26-50",
-  "51-100",
-  "101-150",
-  "151-200",
-  "200+",
+const mealOptions = [
+  "",
+  "Breakfast",
+  "Lunch",
+  "Dinner",
+  "None",
 ];
 
-const initialFormState = {
-  organizationName: "",
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  startDate: "",
-  endDate: "",
-  attendeeCount: "",
-  retreatType: "",
-  promoCode: "",
-  notes: "",
-};
+const paymentMethods = [
+  "",
+  "Check",
+  "Credit Card",
+  "Debit Card",
+  "ACH",
+  "Other",
+];
+
+const lodgingFields = [
+  {
+    name: "lodgingBethel",
+    label: "Bethel",
+    capacity: "70",
+  },
+  {
+    name: "lodgingHebronThird",
+    label: "Hebron 3rd Floor",
+    capacity: "14",
+  },
+  {
+    name: "lodgingHebronBunks",
+    label: "Hebron Bunks",
+    capacity: "52",
+  },
+  {
+    name: "lodgingDothan",
+    label: "Dothan",
+    capacity: "21",
+  },
+  {
+    name: "lodgingAijalon",
+    label: "Aijalon",
+    capacity: "5–8",
+  },
+  {
+    name: "lodgingCapernaum",
+    label: "Capernaum",
+    capacity: "5",
+  },
+  {
+    name: "lodgingGuestHouse",
+    label: "Guest House",
+    capacity: "9–12",
+  },
+];
+
+
+/* =========================================================
+   DEFAULT FORM
+========================================================= */
+
+function getTodayInputValue() {
+  const date = new Date();
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function createInitialFormState() {
+  return {
+    /* Group */
+    organizationName: "",
+    retreatType: "",
+    startDate: "",
+    endDate: "",
+    mailingAddress: "",
+
+    /* Contact */
+    contactName: "",
+    phone: "",
+    email: "",
+
+    /* Guest Information */
+    approxAdultGuests: "",
+    approxChildrenGuests: "",
+    minimumGuarantee: "",
+
+    actualAdultGuests: "",
+    actualChildrenGuests: "",
+
+    ethnicBreakdown: "",
+
+    adultRateQuoted: "",
+    childRateQuoted: "",
+
+    numberOfNights: "",
+    numberOfMeals: "",
+
+    /* Booking Timeline */
+    inquiryDate: getTodayInputValue(),
+    contractSentDate: "",
+    returnContractByDate: "",
+    contractReturnedDate: "",
+
+    /* Payments / Documents */
+    depositReceivedDate: "",
+    depositAmount: "",
+    insuranceCertificateDate: "",
+    notificationDate: "",
+    paymentMethod: "",
+
+    /* Arrival / Departure */
+    arrivalTime: "",
+    departureTime: "",
+
+    /* Meals */
+    firstMeal: "",
+    lastMeal: "",
+    breakfastTime: "",
+    lunchTime: "",
+    dinnerTime: "",
+    mealNotes: "",
+
+    /* Lodging */
+    lodgingBethel: "",
+    lodgingHebronThird: "",
+    lodgingHebronBunks: "",
+    lodgingDothan: "",
+    lodgingAijalon: "",
+    lodgingCapernaum: "",
+    lodgingGuestHouse: "",
+
+    /* Linens */
+    linenOption: "No",
+    linenSets: "",
+
+    /* Notes */
+    notes: "",
+  };
+}
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function getGuestTotal(adults, children) {
+  const hasAdults = String(adults || "").trim() !== "";
+  const hasChildren = String(children || "").trim() !== "";
+
+  if (!hasAdults && !hasChildren) {
+    return "";
+  }
+
+  return String(
+    Number(adults || 0) +
+    Number(children || 0)
+  );
+}
+
+
+function buildLodgingSummary(formData) {
+  return lodgingFields
+    .map((building) => {
+      const value = String(
+        formData[building.name] || ""
+      ).trim();
+
+      if (!value) {
+        return "";
+      }
+
+      return `${building.label}: ${value}`;
+    })
+    .filter(Boolean)
+    .join("; ");
+}
+
+
+function buildMealsSummary(formData) {
+  return [
+    formData.firstMeal
+      ? `First meal: ${formData.firstMeal}`
+      : "",
+
+    formData.lastMeal
+      ? `Last meal: ${formData.lastMeal}`
+      : "",
+
+    formData.breakfastTime
+      ? `Breakfast: ${formData.breakfastTime}`
+      : "",
+
+    formData.lunchTime
+      ? `Lunch: ${formData.lunchTime}`
+      : "",
+
+    formData.dinnerTime
+      ? `Dinner: ${formData.dinnerTime}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("; ");
+}
+
+
+function buildScheduleSummary(formData) {
+  return [
+    formData.arrivalTime
+      ? `Arrival: ${formData.arrivalTime}`
+      : "",
+
+    formData.departureTime
+      ? `Departure: ${formData.departureTime}`
+      : "",
+
+    buildMealsSummary(formData),
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+
+function getInitialBookingStatus(formData) {
+  if (formData.contractReturnedDate) {
+    return "Confirmed";
+  }
+
+  if (formData.contractSentDate) {
+    return "Contract Sent";
+  }
+
+  return "Inquiry";
+}
+
+
+/* =========================================================
+   COMPONENT
+========================================================= */
 
 export default function CreateBooking() {
-  const [formData, setFormData] = useState(initialFormState);
-  const [wasSubmitted, setWasSubmitted] = useState(false);
+  const [formData, setFormData] = useState(() =>
+    createInitialFormState()
+  );
+
+  const [wasSubmitted, setWasSubmitted] =
+    useState(false);
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
+  const [submitError, setSubmitError] =
+    useState("");
+
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
+    const {
+      name,
+      value,
+    } = event.target;
 
     setFormData((current) => ({
       ...current,
@@ -47,201 +312,1055 @@ export default function CreateBooking() {
     }));
   };
 
-  const handleSubmit = (event) => {
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const newInquiry = {
-      id: window.crypto?.randomUUID?.() || String(Date.now()),
-      submittedAt: new Date().toISOString(),
+    try {
+      setIsSubmitting(true);
+      setSubmitError("");
+      setWasSubmitted(false);
 
-      organizationName: formData.organizationName,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone: formData.phone,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      attendeeCount: formData.attendeeCount,
-      retreatType: formData.retreatType,
-      promoCode: formData.promoCode,
-      notes: formData.notes,
-    };
+      const approxGuestTotal = getGuestTotal(
+        formData.approxAdultGuests,
+        formData.approxChildrenGuests
+      );
 
-    const existingInquiries =
-      JSON.parse(localStorage.getItem("toahNipiPublicInquiries")) || [];
+      const actualGuestTotal = getGuestTotal(
+        formData.actualAdultGuests,
+        formData.actualChildrenGuests
+      );
 
-    const updatedInquiries = [newInquiry, ...existingInquiries];
+      const attendeeCount =
+        actualGuestTotal ||
+        approxGuestTotal;
 
-    localStorage.setItem(
-      "toahNipiPublicInquiries",
-      JSON.stringify(updatedInquiries)
-    );
+      const lodgingSummary =
+        buildLodgingSummary(formData);
 
-    console.log("Saved inquiry:", newInquiry);
+      const mealsSummary =
+        buildMealsSummary(formData);
 
-    setWasSubmitted(true);
-    setFormData(initialFormState);
+      const scheduleSummary =
+        buildScheduleSummary(formData);
+
+      const linenSummary =
+        formData.linenOption === "No"
+          ? "No"
+          : formData.linenSets
+            ? `${formData.linenOption} - ${formData.linenSets} full set(s)`
+            : formData.linenOption;
+
+      /*
+        Noon UTC keeps a date from accidentally
+        displaying one day earlier due to timezone conversion.
+      */
+      const submittedAt =
+        formData.inquiryDate
+          ? `${formData.inquiryDate}T12:00:00.000Z`
+          : new Date().toISOString();
+
+      const newBooking = {
+        id:
+          window.crypto?.randomUUID?.() ||
+          String(Date.now()),
+
+        sourceType: "Staff Booking",
+        detectedImportType: "Staff Booking",
+
+        submittedAt,
+
+        organizationName:
+          formData.organizationName.trim(),
+
+        contactName:
+          formData.contactName.trim(),
+
+        name:
+          formData.contactName.trim(),
+
+        email:
+          formData.email.trim(),
+
+        phone:
+          formData.phone.trim(),
+
+        startDate:
+          formData.startDate,
+
+        endDate:
+          formData.endDate,
+
+        desiredDatesText:
+          formData.startDate && formData.endDate
+            ? `${formData.startDate} - ${formData.endDate}`
+            : formData.startDate || "",
+
+        attendeeCount,
+        groupSize: attendeeCount,
+
+        retreatType:
+          formData.retreatType,
+
+        status:
+          getInitialBookingStatus(formData),
+
+        waitlist: "No",
+
+        roomName: "Unassigned",
+
+        buildingsRooms:
+          lodgingSummary,
+
+        meals:
+          mealsSummary,
+
+        activities: "",
+
+        linenSets:
+          linenSummary,
+
+        nights:
+          formData.numberOfNights,
+
+        mealCount:
+          formData.numberOfMeals,
+
+        minPayingGuests:
+          formData.minimumGuarantee,
+
+        deposit:
+          formData.depositAmount,
+
+        depositReceived:
+          formData.depositReceivedDate,
+
+        schedule:
+          scheduleSummary,
+
+        inquiryAddress:
+          formData.mailingAddress.trim(),
+
+        needToKnow:
+          formData.mealNotes.trim(),
+
+        notes:
+          formData.notes.trim(),
+
+        /*
+          Preserve every field from this detailed
+          staff form inside raw_data.
+        */
+        rentalFormDetails: {
+          ...formData,
+        },
+      };
+
+
+      const savedBooking =
+        await upsertBooking(newBooking);
+
+      console.log(
+        "Saved guest group:",
+        savedBooking
+      );
+
+      setWasSubmitted(true);
+
+      setFormData(
+        createInitialFormState()
+      );
+    } catch (error) {
+      console.error(
+        "Could not save guest group:",
+        error
+      );
+
+      setSubmitError(
+        "The guest group could not be saved. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
 
   return (
     <main className="rental-page">
       <section className="rental-card">
+
+        {/* =====================================================
+            HEADER
+        ===================================================== */}
+
         <header className="rental-header">
-          <h1>Rental Inquiry</h1>
-          <p>
-            Submit your group details below and the Toah Nipi team will follow
-            up with next steps.
+          <p className="rental-eyebrow">
+            Toah Nipi Christian Retreat Center
           </p>
+
+          <h1>Guest Group Booking Form</h1>
+
         </header>
+
+
+        {/* =====================================================
+            MESSAGES
+        ===================================================== */}
 
         {wasSubmitted && (
           <div className="success-message">
-            <strong>Thank you!</strong>
-            <span>Your inquiry has been submitted successfully.</span>
+            <FaCheckCircle />
+
+            <div>
+              <strong>Guest group saved.</strong>
+
+              <span>
+                The booking has been added to the
+                staff dashboard.
+              </span>
+            </div>
           </div>
         )}
 
-        <form className="rental-form" onSubmit={handleSubmit}>
-          <div className="form-grid">
-            <label className="form-full">
-              <span>Organization Name</span>
-              <input
-                type="text"
-                name="organizationName"
-                placeholder="Your-Group-Name"
-                value={formData.organizationName}
-                onChange={handleChange}
-                required
-              />
-            </label>
 
-            <label>
-              <span>First Name</span>
-              <input
-                type="text"
-                name="firstName"
-                placeholder="John"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-              />
-            </label>
+        {submitError && (
+          <div className="rental-error-message">
+            <FaExclamationTriangle />
 
-            <label>
-              <span>Last Name</span>
-              <input
-                type="text"
-                name="lastName"
-                placeholder="Smith"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-              />
-            </label>
-
-            <label>
-              <span>Email *</span>
-              <input
-                type="email"
-                name="email"
-                placeholder="your-email@email.com"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-            </label>
-
-            <label>
-              <span>Phone</span>
-              <input
-                type="tel"
-                name="phone"
-                placeholder="123-456-7890"
-                value={formData.phone}
-                onChange={handleChange}
-              />
-            </label>
-
-            <label>
-              <span>Start Date</span>
-              <input
-                type="date"
-                name="startDate"
-                value={formData.startDate}
-                onChange={handleChange}
-              />
-            </label>
-
-            <label>
-              <span>End Date</span>
-              <input
-                type="date"
-                name="endDate"
-                value={formData.endDate}
-                onChange={handleChange}
-              />
-            </label>
-
-            <label>
-              <span>Attendee Count Estimate</span>
-              <select
-                name="attendeeCount"
-                value={formData.attendeeCount}
-                onChange={handleChange}
-              >
-                <option value="">Select attendee count</option>
-
-                {attendeeCounts.map((count) => (
-                  <option value={count} key={count}>
-                    {count}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Type of Retreat</span>
-              <select
-                name="retreatType"
-                value={formData.retreatType}
-                onChange={handleChange}
-              >
-                <option value="">Select retreat type</option>
-
-                {retreatTypes.map((type) => (
-                  <option value={type} key={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Promo Code</span>
-              <input
-                type="text"
-                name="promoCode"
-                placeholder="If applicable"
-                value={formData.promoCode}
-                onChange={handleChange}
-              />
-            </label>
-
-            <label className="form-full">
-              <span>Notes/Special Instructions</span>
-              <textarea
-                name="notes"
-                rows="6"
-                placeholder="Tell us about lodging needs, meals, meeting spaces, schedule details, accessibility needs, or any questions you have."
-                value={formData.notes}
-                onChange={handleChange}
-              />
-            </label>
+            <div>
+              <strong>Could not save booking.</strong>
+              <span>{submitError}</span>
+            </div>
           </div>
+        )}
+
+
+        <form
+          className="rental-form"
+          onSubmit={handleSubmit}
+        >
+
+          {/* ===================================================
+              GROUP INFORMATION
+          =================================================== */}
+
+          <section className="rental-form-section">
+            <header className="rental-section-header">
+              <div className="rental-section-icon">
+                <FaUsers />
+              </div>
+
+              <div>
+                <h2>Guest Group</h2>
+
+                <p>
+                  Group and primary contact information.
+                </p>
+              </div>
+            </header>
+
+
+            <div className="rental-section-body">
+              <div className="rental-field-grid">
+
+                <label className="rental-field rental-field-full">
+                  <span>Guest Group Name *</span>
+
+                  <input
+                    type="text"
+                    name="organizationName"
+                    value={formData.organizationName}
+                    onChange={handleChange}
+                    placeholder="Example: Community Bible Church"
+                    required
+                  />
+                </label>
+
+
+                <label className="rental-field">
+                  <span>Type of Retreat</span>
+
+                  <select
+                    name="retreatType"
+                    value={formData.retreatType}
+                    onChange={handleChange}
+                  >
+                    <option value="">
+                      Select retreat type
+                    </option>
+
+                    {retreatTypes.map((type) => (
+                      <option
+                        value={type}
+                        key={type}
+                      >
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+
+                <label className="rental-field">
+                  <span>Primary Contact *</span>
+
+                  <input
+                    type="text"
+                    name="contactName"
+                    value={formData.contactName}
+                    onChange={handleChange}
+                    placeholder="Contact person's name"
+                    required
+                  />
+                </label>
+
+
+                <label className="rental-field">
+                  <span>Arrival Date</span>
+
+                  <input
+                    type="date"
+                    name="startDate"
+                    value={formData.startDate}
+                    onChange={handleChange}
+                  />
+                </label>
+
+
+                <label className="rental-field">
+                  <span>Departure Date</span>
+
+                  <input
+                    type="date"
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleChange}
+                  />
+                </label>
+
+
+                <label className="rental-field">
+                  <span>Phone</span>
+
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="XXX-XXX-XXXX"
+                  />
+                </label>
+
+
+                <label className="rental-field">
+                  <span>Email</span>
+
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="name@example.com"
+                  />
+                </label>
+
+
+                <label className="rental-field rental-field-full">
+                  <span>Mailing Address</span>
+
+                  <input
+                    type="text"
+                    name="mailingAddress"
+                    value={formData.mailingAddress}
+                    onChange={handleChange}
+                    placeholder="Street, city, state, ZIP"
+                  />
+                </label>
+
+              </div>
+            </div>
+          </section>
+
+
+          {/* ===================================================
+              GUEST INFORMATION
+          =================================================== */}
+
+          <section className="rental-form-section">
+            <header className="rental-section-header">
+              <div className="rental-section-icon">
+                <FaUsers />
+              </div>
+
+              <div>
+                <h2>Guest Information</h2>
+
+                <p>
+                  Attendance, guarantees, rates,
+                  and stay information.
+                </p>
+              </div>
+            </header>
+
+
+            <div className="rental-section-body">
+
+              <div className="rental-subsection">
+                <h3>Approximate Guests</h3>
+
+                <div className="rental-field-grid rental-field-grid-3">
+
+                  <label className="rental-field">
+                    <span>Adults</span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name="approxAdultGuests"
+                      value={formData.approxAdultGuests}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>Children</span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name="approxChildrenGuests"
+                      value={formData.approxChildrenGuests}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>Minimum Guarantee</span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name="minimumGuarantee"
+                      value={formData.minimumGuarantee}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+                </div>
+              </div>
+
+
+              <div className="rental-subsection">
+                <h3>Actual Guests</h3>
+
+                <div className="rental-field-grid rental-field-grid-3">
+
+                  <label className="rental-field">
+                    <span>Adults</span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name="actualAdultGuests"
+                      value={formData.actualAdultGuests}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>Children</span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name="actualChildrenGuests"
+                      value={formData.actualChildrenGuests}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>
+                      Ethnic Breakdown
+                      <small>Optional</small>
+                    </span>
+
+                    <input
+                      type="text"
+                      name="ethnicBreakdown"
+                      value={formData.ethnicBreakdown}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+                </div>
+              </div>
+
+
+              <div className="rental-subsection">
+                <h3>Rates & Stay</h3>
+
+                <div className="rental-field-grid rental-field-grid-4">
+
+                  <label className="rental-field">
+                    <span>Adult Rate Quoted</span>
+
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      name="adultRateQuoted"
+                      value={formData.adultRateQuoted}
+                      onChange={handleChange}
+                      placeholder="$"
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>Child Rate Quoted</span>
+
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      name="childRateQuoted"
+                      value={formData.childRateQuoted}
+                      onChange={handleChange}
+                      placeholder="$"
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span># of Nights</span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name="numberOfNights"
+                      value={formData.numberOfNights}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span># of Meals</span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name="numberOfMeals"
+                      value={formData.numberOfMeals}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+
+          {/* ===================================================
+              TIMELINE + PAYMENT
+          =================================================== */}
+
+          <div className="rental-form-two-column">
+
+            <section className="rental-form-section">
+              <header className="rental-section-header">
+                <div className="rental-section-icon">
+                  <FaCalendarAlt />
+                </div>
+
+                <div>
+                  <h2>Booking Timeline</h2>
+
+                  <p>
+                    Inquiry and contract dates.
+                  </p>
+                </div>
+              </header>
+
+
+              <div className="rental-section-body">
+                <div className="rental-field-grid">
+
+                  <label className="rental-field rental-field-full">
+                    <span>Inquiry Date</span>
+
+                    <input
+                      type="date"
+                      name="inquiryDate"
+                      value={formData.inquiryDate}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>Contract Sent</span>
+
+                    <input
+                      type="date"
+                      name="contractSentDate"
+                      value={formData.contractSentDate}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>Return Contract By</span>
+
+                    <input
+                      type="date"
+                      name="returnContractByDate"
+                      value={formData.returnContractByDate}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field rental-field-full">
+                    <span>Contract Returned</span>
+
+                    <input
+                      type="date"
+                      name="contractReturnedDate"
+                      value={formData.contractReturnedDate}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+                </div>
+              </div>
+            </section>
+
+
+            <section className="rental-form-section">
+              <header className="rental-section-header">
+                <div className="rental-section-icon">
+                  <FaDollarSign />
+                </div>
+
+                <div>
+                  <h2>Payments & Documents</h2>
+
+                  <p>
+                    Deposit, insurance, and payment details.
+                  </p>
+                </div>
+              </header>
+
+
+              <div className="rental-section-body">
+                <div className="rental-field-grid">
+
+                  <label className="rental-field">
+                    <span>Deposit Received</span>
+
+                    <input
+                      type="date"
+                      name="depositReceivedDate"
+                      value={formData.depositReceivedDate}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>Deposit Amount</span>
+
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      name="depositAmount"
+                      value={formData.depositAmount}
+                      onChange={handleChange}
+                      placeholder="$"
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>Insurance Certificate Received</span>
+
+                    <input
+                      type="date"
+                      name="insuranceCertificateDate"
+                      value={formData.insuranceCertificateDate}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>Notification Date</span>
+
+                    <input
+                      type="date"
+                      name="notificationDate"
+                      value={formData.notificationDate}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field rental-field-full">
+                    <span>Payment Method</span>
+
+                    <select
+                      name="paymentMethod"
+                      value={formData.paymentMethod}
+                      onChange={handleChange}
+                    >
+                      <option value="">
+                        Select payment method
+                      </option>
+
+                      {paymentMethods
+                        .filter(Boolean)
+                        .map((method) => (
+                          <option
+                            value={method}
+                            key={method}
+                          >
+                            {method}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+
+                </div>
+              </div>
+            </section>
+
+          </div>
+
+
+          {/* ===================================================
+              ARRIVAL + MEALS
+          =================================================== */}
+
+          <section className="rental-form-section">
+            <header className="rental-section-header">
+              <div className="rental-section-icon">
+                <FaClock />
+              </div>
+
+              <div>
+                <h2>Arrival, Departure & Meals</h2>
+
+                <p>
+                  Schedule information for hospitality
+                  and food service.
+                </p>
+              </div>
+            </header>
+
+
+            <div className="rental-section-body">
+
+              <div className="rental-field-grid">
+
+                <label className="rental-field">
+                  <span>Arrival Time</span>
+
+                  <input
+                    type="time"
+                    name="arrivalTime"
+                    value={formData.arrivalTime}
+                    onChange={handleChange}
+                  />
+                </label>
+
+
+                <label className="rental-field">
+                  <span>Departure Time</span>
+
+                  <input
+                    type="time"
+                    name="departureTime"
+                    value={formData.departureTime}
+                    onChange={handleChange}
+                  />
+                </label>
+
+              </div>
+
+
+              <div className="rental-subsection">
+                <h3>
+                  <FaUtensils />
+                  Meals
+                </h3>
+
+                <div className="rental-field-grid">
+
+                  <label className="rental-field">
+                    <span>First Meal</span>
+
+                    <select
+                      name="firstMeal"
+                      value={formData.firstMeal}
+                      onChange={handleChange}
+                    >
+                      {mealOptions.map((meal) => (
+                        <option
+                          value={meal}
+                          key={meal || "first-empty"}
+                        >
+                          {meal || "Select first meal"}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>Last Meal</span>
+
+                    <select
+                      name="lastMeal"
+                      value={formData.lastMeal}
+                      onChange={handleChange}
+                    >
+                      {mealOptions.map((meal) => (
+                        <option
+                          value={meal}
+                          key={meal || "last-empty"}
+                        >
+                          {meal || "Select last meal"}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                </div>
+
+
+                <div className="rental-field-grid rental-field-grid-3">
+
+                  <label className="rental-field">
+                    <span>Breakfast Time</span>
+
+                    <input
+                      type="time"
+                      name="breakfastTime"
+                      value={formData.breakfastTime}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>Lunch Time</span>
+
+                    <input
+                      type="time"
+                      name="lunchTime"
+                      value={formData.lunchTime}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>Dinner Time</span>
+
+                    <input
+                      type="time"
+                      name="dinnerTime"
+                      value={formData.dinnerTime}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+                </div>
+
+
+                <label className="rental-field">
+                  <span>Meal Notes</span>
+
+                  <textarea
+                    name="mealNotes"
+                    rows="3"
+                    value={formData.mealNotes}
+                    onChange={handleChange}
+                    placeholder="Skipped meals, timing notes, food service details, etc."
+                  />
+                </label>
+
+              </div>
+            </div>
+          </section>
+
+
+          {/* ===================================================
+              LODGING
+          =================================================== */}
+
+          <section className="rental-form-section">
+            <header className="rental-section-header">
+              <div className="rental-section-icon">
+                <FaBed />
+              </div>
+
+              <div>
+                <h2>Lodging & Linens</h2>
+
+                <p>
+                  Guest assignments and linen requirements.
+                </p>
+              </div>
+            </header>
+
+
+            <div className="rental-section-body">
+
+              <div className="rental-lodging-grid">
+
+                {lodgingFields.map((building) => (
+                  <label
+                    className="rental-lodging-field"
+                    key={building.name}
+                  >
+                    <span>
+                      <strong>
+                        {building.label}
+                      </strong>
+
+                      <small>
+                        Capacity {building.capacity}
+                      </small>
+                    </span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name={building.name}
+                      value={formData[building.name]}
+                      onChange={handleChange}
+                      placeholder="0"
+                    />
+                  </label>
+                ))}
+
+              </div>
+
+
+              <div className="rental-subsection">
+                <h3>Linens</h3>
+
+                <div className="rental-field-grid">
+
+                  <label className="rental-field">
+                    <span>Linen Option</span>
+
+                    <select
+                      name="linenOption"
+                      value={formData.linenOption}
+                      onChange={handleChange}
+                    >
+                      <option value="No">
+                        No linens
+                      </option>
+
+                      <option value="All">
+                        Linens for all guests
+                      </option>
+
+                      <option value="Some">
+                        Linens for some guests
+                      </option>
+                    </select>
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span># of Full Sets</span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name="linenSets"
+                      value={formData.linenSets}
+                      onChange={handleChange}
+                      disabled={
+                        formData.linenOption === "No"
+                      }
+                    />
+                  </label>
+
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+
+          {/* ===================================================
+              NOTES
+          =================================================== */}
+
+          <section className="rental-form-section">
+            <header className="rental-section-header">
+              <div className="rental-section-icon">
+                <FaFileContract />
+              </div>
+
+              <div>
+                <h2>Additional Notes</h2>
+
+                <p>
+                  Other information staff should know.
+                </p>
+              </div>
+            </header>
+
+
+            <div className="rental-section-body">
+
+              <label className="rental-field">
+                <span>Booking Notes</span>
+
+                <textarea
+                  name="notes"
+                  rows="6"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  placeholder="Special arrangements, accessibility needs, follow-up items, questions, or other information."
+                />
+              </label>
+
+            </div>
+          </section>
+
+
+          {/* ===================================================
+              SAVE
+          =================================================== */}
 
           <div className="form-actions">
-            <button type="submit">Submit</button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting
+                ? "Saving..."
+                : "Save Guest Group"}
+            </button>
           </div>
+
         </form>
       </section>
     </main>
