@@ -20,6 +20,7 @@ import { upsertBooking } from "../services/bookingService";
 ========================================================= */
 
 const retreatTypes = [
+  "Church",
   "Church - Men",
   "Church - Women",
   "Church - Youth",
@@ -57,6 +58,9 @@ const paymentMethods = [
   "Credit Card",
   "Debit Card",
   "ACH",
+  "Ramp",
+  "Cash",
+  "Stripe",
   "Other",
 ];
 
