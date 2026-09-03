@@ -44,12 +44,22 @@ const retreatTypes = [
   "Other",
 ];
 
-const mealOptions = [
-  "",
-  "Breakfast",
-  "Lunch",
-  "Dinner",
-  "None",
+const MEAL_TYPES = [
+  {
+    key: "breakfast",
+    label: "Breakfast",
+    shortLabel: "B",
+  },
+  {
+    key: "lunch",
+    label: "Lunch",
+    shortLabel: "L",
+  },
+  {
+    key: "dinner",
+    label: "Dinner",
+    shortLabel: "D",
+  },
 ];
 
 const paymentMethods = [
@@ -178,8 +188,26 @@ const TEST_BOOKING_DATA = {
   departureTime: "13:00",
 
   /* Meals */
-  firstMeal: "Dinner",
-  lastMeal: "Lunch",
+  mealSchedule: {
+    "2027-06-18": {
+      breakfast: false,
+      lunch: false,
+      dinner: true,
+    },
+
+    "2027-06-19": {
+      breakfast: true,
+      lunch: true,
+      dinner: true,
+    },
+
+    "2027-06-20": {
+      breakfast: true,
+      lunch: true,
+      dinner: false,
+    },
+  },
+
   breakfastTime: "08:00",
   lunchTime: "12:00",
   dinnerTime: "18:00",
@@ -254,7 +282,6 @@ function createInitialFormState() {
     childRateQuoted: "",
 
     numberOfNights: "",
-    numberOfMeals: "",
 
     /* Booking Timeline */
     inquiryDate: getTodayInputValue(),
@@ -274,8 +301,8 @@ function createInitialFormState() {
     departureTime: "",
 
     /* Meals */
-    firstMeal: "",
-    lastMeal: "",
+    mealSchedule: {},
+
     breakfastTime: "",
     lunchTime: "",
     dinnerTime: "",
@@ -312,6 +339,162 @@ function createInitialFormState() {
 /* =========================================================
    HELPERS
 ========================================================= */
+
+function parseDateInputAsUTC(dateString) {
+  if (!dateString) {
+    return null;
+  }
+
+  const [
+    year,
+    month,
+    day,
+  ] = dateString
+    .split("-")
+    .map(Number);
+
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return new Date(
+    Date.UTC(
+      year,
+      month - 1,
+      day
+    )
+  );
+}
+
+
+function getStayDates(
+  startDate,
+  endDate
+) {
+  const start =
+    parseDateInputAsUTC(startDate);
+
+  const end =
+    parseDateInputAsUTC(endDate);
+
+  if (
+    !start ||
+    !end ||
+    end < start
+  ) {
+    return [];
+  }
+
+  const dates = [];
+
+  const current =
+    new Date(start);
+
+  while (current <= end) {
+    dates.push(
+      current
+        .toISOString()
+        .slice(0, 10)
+    );
+
+    current.setUTCDate(
+      current.getUTCDate() + 1
+    );
+  }
+
+  return dates;
+}
+
+
+function formatMealScheduleDate(
+  dateString
+) {
+  const date =
+    parseDateInputAsUTC(dateString);
+
+  if (!date) {
+    return dateString;
+  }
+
+  return new Intl.DateTimeFormat(
+    "en-US",
+    {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC",
+    }
+  ).format(date);
+}
+
+
+function getMealTotals(formData) {
+  const stayDates =
+    getStayDates(
+      formData.startDate,
+      formData.endDate
+    );
+
+  const totals = {
+    breakfast: 0,
+    lunch: 0,
+    dinner: 0,
+    total: 0,
+  };
+
+  stayDates.forEach((date) => {
+    const dayMeals =
+      formData.mealSchedule?.[date] || {};
+
+    MEAL_TYPES.forEach((meal) => {
+      if (dayMeals[meal.key]) {
+        totals[meal.key] += 1;
+        totals.total += 1;
+      }
+    });
+  });
+
+  return totals;
+}
+
+
+function getMealScheduleBounds(
+  formData
+) {
+  const stayDates =
+    getStayDates(
+      formData.startDate,
+      formData.endDate
+    );
+
+  const selectedMeals = [];
+
+  stayDates.forEach((date) => {
+    MEAL_TYPES.forEach((meal) => {
+      if (
+        formData.mealSchedule?.[date]?.[
+          meal.key
+        ]
+      ) {
+        selectedMeals.push({
+          date,
+          meal: meal.label,
+        });
+      }
+    });
+  });
+
+  return {
+    firstMeal:
+      selectedMeals[0]?.meal || "",
+
+    lastMeal:
+      selectedMeals[
+        selectedMeals.length - 1
+      ]?.meal || "",
+  };
+}
 
 function getGuestTotal(adults, children) {
   const hasAdults = String(adults || "").trim() !== "";
@@ -388,25 +571,60 @@ function buildAllergiesSummary(formData) {
 
 
 function buildMealsSummary(formData) {
+  const stayDates =
+    getStayDates(
+      formData.startDate,
+      formData.endDate
+    );
+
+  const totals =
+    getMealTotals(formData);
+
+  const scheduleLines =
+    stayDates
+      .map((date) => {
+        const selectedMeals =
+          MEAL_TYPES
+            .filter(
+              (meal) =>
+                formData.mealSchedule?.[
+                  date
+                ]?.[meal.key]
+            )
+            .map(
+              (meal) =>
+                meal.label
+            );
+
+        if (
+          selectedMeals.length === 0
+        ) {
+          return "";
+        }
+
+        return `${formatMealScheduleDate(
+          date
+        )}: ${selectedMeals.join(", ")}`;
+      })
+      .filter(Boolean);
+
   return [
-    formData.firstMeal
-      ? `First meal: ${formData.firstMeal}`
+    totals.total > 0
+      ? `Total meals: ${totals.total} (Breakfast: ${totals.breakfast}, Lunch: ${totals.lunch}, Dinner: ${totals.dinner})`
       : "",
 
-    formData.lastMeal
-      ? `Last meal: ${formData.lastMeal}`
-      : "",
+    ...scheduleLines,
 
     formData.breakfastTime
-      ? `Breakfast: ${formData.breakfastTime}`
+      ? `Breakfast time: ${formData.breakfastTime}`
       : "",
 
     formData.lunchTime
-      ? `Lunch: ${formData.lunchTime}`
+      ? `Lunch time: ${formData.lunchTime}`
       : "",
 
     formData.dinnerTime
-      ? `Dinner: ${formData.dinnerTime}`
+      ? `Dinner time: ${formData.dinnerTime}`
       : "",
   ]
     .filter(Boolean)
@@ -461,6 +679,15 @@ export default function CreateBooking() {
 
   const [submitError, setSubmitError] =
     useState("");
+
+  const stayDates =
+    getStayDates(
+      formData.startDate,
+      formData.endDate
+    );
+
+  const mealTotals =
+    getMealTotals(formData);
 
   const handleChange = (event) => {
     const {
@@ -537,6 +764,35 @@ export default function CreateBooking() {
     });
   };
 
+  const handleMealToggle = (
+    date,
+    mealKey
+  ) => {
+    setFormData((current) => {
+      const currentDay =
+        current.mealSchedule?.[date] || {
+          breakfast: false,
+          lunch: false,
+          dinner: false,
+        };
+
+      return {
+        ...current,
+
+        mealSchedule: {
+          ...current.mealSchedule,
+
+          [date]: {
+            ...currentDay,
+
+            [mealKey]:
+              !currentDay[mealKey],
+          },
+        },
+      };
+    });
+  };
+
   const handleFillTestData = () => {
     setFormData({
       ...createInitialFormState(),
@@ -565,6 +821,12 @@ export default function CreateBooking() {
         formData.actualAdultGuests,
         formData.actualChildrenGuests
       );
+
+      const calculatedMealTotals =
+        getMealTotals(formData);
+
+      const mealScheduleBounds =
+        getMealScheduleBounds(formData);
 
       const attendeeCount =
         actualGuestTotal ||
@@ -662,7 +924,7 @@ export default function CreateBooking() {
           formData.numberOfNights,
 
         mealCount:
-          formData.numberOfMeals,
+          String(calculatedMealTotals.total),
 
         minPayingGuests:
           formData.minimumGuarantee,
@@ -694,6 +956,17 @@ export default function CreateBooking() {
         */
         rentalFormDetails: {
           ...formData,
+
+          numberOfMeals:
+            String(
+              calculatedMealTotals.total
+            ),
+
+          firstMeal:
+            mealScheduleBounds.firstMeal,
+
+          lastMeal:
+            mealScheduleBounds.lastMeal,
         },
       };
 
@@ -802,9 +1075,9 @@ export default function CreateBooking() {
               <div>
                 <h2>Guest Group</h2>
 
-                <p>
+                {/* <p>
                   Group and primary contact information.
-                </p>
+                </p> */}
               </div>
             </header>
 
@@ -994,10 +1267,10 @@ export default function CreateBooking() {
               <div>
                 <h2>Guest Information</h2>
 
-                <p>
+                {/* <p>
                   Attendance, guarantees, rates,
                   and stay information.
-                </p>
+                </p> */}
               </div>
             </header>
 
@@ -1171,14 +1444,18 @@ export default function CreateBooking() {
 
 
                   <label className="rental-field">
-                    <span># of Meals</span>
+                    <span>
+                      # of Meals
+                      <small>
+                        Auto-calculated
+                      </small>
+                    </span>
 
                     <input
                       type="number"
                       min="0"
-                      name="numberOfMeals"
-                      value={formData.numberOfMeals}
-                      onChange={handleChange}
+                      value={mealTotals.total}
+                      readOnly
                     />
                   </label>
 
@@ -1204,9 +1481,9 @@ export default function CreateBooking() {
                 <div>
                   <h2>Booking Timeline</h2>
 
-                  <p>
+                  {/* <p>
                     Inquiry and contract dates.
-                  </p>
+                  </p> */}
                 </div>
               </header>
 
@@ -1275,9 +1552,9 @@ export default function CreateBooking() {
                 <div>
                   <h2>Payments & Documents</h2>
 
-                  <p>
+                  {/* <p>
                     Deposit, insurance, and payment details.
-                  </p>
+                  </p> */}
                 </div>
               </header>
 
@@ -1380,10 +1657,10 @@ export default function CreateBooking() {
 
               <div>
                 <h2>Meals</h2>
-                <p>
+                {/* <p>
                   Meal schedule, dietary needs,
                   and food service information.
-                </p>
+                </p> */}
               </div>
             </header>
 
@@ -1391,51 +1668,146 @@ export default function CreateBooking() {
             <div className="rental-section-body">
 
               <div className="rental-subsection">
-                <h3>
+                {/* <h3>
                   <FaUtensils />
                   Meals
-                </h3>
+                </h3> */}
 
-                <div className="rental-field-grid">
+                <div className="rental-meal-schedule">
 
-                  <label className="rental-field">
-                    <span>First Meal</span>
+                  <div className="rental-meal-schedule-header">
+                    <div>
+                      <h4>Meals by Day</h4>
 
-                    <select
-                      name="firstMeal"
-                      value={formData.firstMeal}
-                      onChange={handleChange}
-                    >
-                      {mealOptions.map((meal) => (
-                        <option
-                          value={meal}
-                          key={meal || "first-empty"}
-                        >
-                          {meal || "Select first meal"}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                    </div>
+
+                    <div className="rental-meal-total-badge">
+                      <strong>
+                        {mealTotals.total}
+                      </strong>
+
+                      <span>
+                        {mealTotals.total === 1
+                          ? "meal"
+                          : "meals"}
+                      </span>
+                    </div>
+                  </div>
 
 
-                  <label className="rental-field">
-                    <span>Last Meal</span>
+                  {!formData.startDate ||
+                  !formData.endDate ? (
+                    <div className="rental-meal-schedule-empty">
+                      Choose an arrival and departure
+                      date above to build the meal
+                      schedule.
+                    </div>
+                  ) : stayDates.length === 0 ? (
+                    <div className="rental-meal-schedule-empty">
+                      The departure date must be on or
+                      after the arrival date.
+                    </div>
+                  ) : (
+                    <div className="rental-meal-table-wrap">
+                      <table className="rental-meal-table">
 
-                    <select
-                      name="lastMeal"
-                      value={formData.lastMeal}
-                      onChange={handleChange}
-                    >
-                      {mealOptions.map((meal) => (
-                        <option
-                          value={meal}
-                          key={meal || "last-empty"}
-                        >
-                          {meal || "Select last meal"}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+
+                            {MEAL_TYPES.map((meal) => (
+                              <th key={meal.key}>
+                                <strong>
+                                  {meal.shortLabel}
+                                </strong>
+
+                                <span>
+                                  {meal.label}
+                                </span>
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+
+
+                        <tbody>
+                          {stayDates.map((date) => (
+                            <tr key={date}>
+
+                              <td className="rental-meal-date">
+                                <strong>
+                                  {formatMealScheduleDate(
+                                    date
+                                  )}
+                                </strong>
+                              </td>
+
+
+                              {MEAL_TYPES.map((meal) => {
+                                const checked =
+                                  Boolean(
+                                    formData
+                                      .mealSchedule?.[
+                                        date
+                                      ]?.[meal.key]
+                                  );
+
+                                return (
+                                  <td key={meal.key}>
+                                    <label
+                                      className="rental-meal-checkbox"
+                                      title={`${meal.label} - ${formatMealScheduleDate(
+                                        date
+                                      )}`}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={() =>
+                                          handleMealToggle(
+                                            date,
+                                            meal.key
+                                          )
+                                        }
+                                        aria-label={`${meal.label} on ${formatMealScheduleDate(
+                                          date
+                                        )}`}
+                                      />
+
+                                      <span
+                                        aria-hidden="true"
+                                      />
+                                    </label>
+                                  </td>
+                                );
+                              })}
+
+                            </tr>
+                          ))}
+                        </tbody>
+
+
+                        <tfoot>
+                          <tr>
+                            <th>Totals</th>
+
+                            <td>
+                              {mealTotals.breakfast}
+                            </td>
+
+                            <td>
+                              {mealTotals.lunch}
+                            </td>
+
+                            <td>
+                              {mealTotals.dinner}
+                            </td>
+                          </tr>
+                        </tfoot>
+
+                      </table>
+                    </div>
+                  )}
 
                 </div>
 
