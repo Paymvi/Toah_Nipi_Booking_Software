@@ -7193,6 +7193,7 @@ const getCalendarEventColor = (status) => {
           isGuestGroupInquiryRecord(selectedBooking) ? (
             <InquiryRecordDetailView
               booking={selectedBooking}
+              onSaveBooking={saveBookingEdits}
               onBack={() => {
                 setSelectedBooking(null);
                 setActiveView(INQUIRY_SPREADSHEET_VIEW_NAME);

@@ -1429,3 +1429,203 @@
     border-bottom: 0;
   }
 }
+
+
+/* =========================================================
+   SIMPLE INQUIRY — HEADER ACTIONS
+========================================================= */
+
+.simple-inquiry-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 10px;
+}
+
+
+/* =========================================================
+   EDIT GRID
+========================================================= */
+
+.simple-inquiry-edit-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  border-bottom: 1px solid #e7eaee;
+}
+
+.simple-inquiry-edit-field {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+
+  padding: 18px;
+
+  border-right: 1px solid #e7eaee;
+  border-bottom: 1px solid #e7eaee;
+}
+
+.simple-inquiry-edit-field:nth-child(3n) {
+  border-right: 0;
+}
+
+.simple-inquiry-edit-field > span {
+  color: #8b93a1;
+
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   EDIT INPUTS
+========================================================= */
+
+.simple-inquiry-edit-field input,
+.simple-inquiry-edit-section input,
+.simple-inquiry-edit-section textarea {
+  width: 100%;
+
+  border: 1px solid #d7dde5;
+  border-radius: 7px;
+
+  background: #ffffff;
+  color: #303541;
+
+  padding: 10px 11px;
+
+  font: inherit;
+  font-size: 0.9rem;
+
+  outline: none;
+
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+
+.simple-inquiry-edit-field input {
+  min-height: 40px;
+}
+
+
+.simple-inquiry-edit-field input:focus,
+.simple-inquiry-edit-section input:focus,
+.simple-inquiry-edit-section textarea:focus {
+  border-color: #8378c2;
+
+  box-shadow:
+    0 0 0 3px rgba(68, 58, 156, 0.09);
+}
+
+
+/* =========================================================
+   DESIRED DATES / NOTES EDITING
+========================================================= */
+
+.simple-inquiry-edit-section {
+  padding: 20px 22px;
+
+  border-bottom: 1px solid #e7eaee;
+}
+
+.simple-inquiry-edit-section label {
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+.simple-inquiry-edit-section label > span {
+  color: #8b93a1;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.simple-inquiry-edit-section textarea {
+  min-height: 120px;
+
+  line-height: 1.55;
+
+  resize: vertical;
+}
+
+
+/* =========================================================
+   BOTTOM SAVE ACTIONS
+========================================================= */
+
+.simple-inquiry-bottom-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  padding: 14px 22px;
+
+  border-bottom: 1px solid #e7eaee;
+
+  background: #fafbfc;
+}
+
+
+/* =========================================================
+   RESPONSIVE EDITING
+========================================================= */
+
+@media (max-width: 950px) {
+  .simple-inquiry-header-actions {
+    flex-wrap: wrap;
+  }
+
+  .simple-inquiry-edit-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .simple-inquiry-edit-field:nth-child(3n) {
+    border-right: 1px solid #e7eaee;
+  }
+
+  .simple-inquiry-edit-field:nth-child(2n) {
+    border-right: 0;
+  }
+}
+
+
+@media (max-width: 650px) {
+  .simple-inquiry-header-actions {
+    justify-content: flex-start;
+  }
+
+  .simple-inquiry-edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .simple-inquiry-edit-field,
+  .simple-inquiry-edit-field:nth-child(2n),
+  .simple-inquiry-edit-field:nth-child(3n) {
+    border-right: 0;
+  }
+
+  .simple-inquiry-bottom-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .simple-inquiry-bottom-actions button {
+    width: 100%;
+  }
+}
