@@ -137,7 +137,7 @@ const INQUIRY_SPREADSHEET_VIEW_NAME = "Inquiry Spreadsheet";
 const SPREADSHEET_REVEAL_LOADING_MS = 160;
 
 
-
+import InquiryRecordDetailView from "../pages/InquiryRecordDetailView";
 
 
 
@@ -646,6 +646,7 @@ function normalizeInquiry(inquiry, index) {
     sourceSheet: inquiry.sourceSheet || "",
     sourceRowNumber: inquiry.sourceRowNumber || "",
     rawSpreadsheetData: inquiry.rawSpreadsheetData || null,
+    rentalFormDetails: inquiry.rentalFormDetails || null,
 
     organizationName,
     contactName,
@@ -3712,6 +3713,366 @@ function BookingProgramLogisticsTab({ booking, onSaveBooking, staffUsers = [] })
   );
 }
 
+/* =========================================================
+   BOOKING DETAIL RECORD TYPES
+========================================================= */
+
+function isGuestGroupInquiryRecord(booking) {
+  const sourceType = String(booking?.sourceType || "")
+    .trim()
+    .toLowerCase();
+
+  const detectedImportType = String(
+    booking?.detectedImportType || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  return (
+    sourceType.startsWith("guest group inquiry") ||
+    detectedImportType.startsWith("guest group inquiry")
+  );
+}
+
+
+function isStaffBookingRecord(booking) {
+  const sourceType = String(booking?.sourceType || "")
+    .trim()
+    .toLowerCase();
+
+  const detectedImportType = String(
+    booking?.detectedImportType || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  return (
+    sourceType === "staff booking" ||
+    detectedImportType === "staff booking"
+  );
+}
+
+
+function StaffBookingDetailField({
+  label,
+  value,
+}) {
+  return (
+    <div className="staff-booking-detail-field">
+      <small>{label}</small>
+      <strong>{value || "—"}</strong>
+    </div>
+  );
+}
+
+function StaffBookingFormDetails({
+  booking,
+  dateSettings,
+}) {
+  const details =
+    booking.rentalFormDetails || {};
+
+  return (
+    <article className="booking-work-section staff-booking-form-section">
+
+      <div className="booking-work-section-header">
+        <div>
+          <span className="booking-work-section-icon">
+            <FaClipboardList />
+          </span>
+
+          <div>
+            <p>Staff Booking</p>
+            <h3>Original Staff Form Details</h3>
+          </div>
+        </div>
+      </div>
+
+
+      {/* GUEST BREAKDOWN */}
+
+      <section className="staff-booking-detail-group">
+        <h4>Guest Information</h4>
+
+        <div className="staff-booking-detail-grid">
+
+          <StaffBookingDetailField
+            label="Approx. Adults"
+            value={details.approxAdultGuests}
+          />
+
+          <StaffBookingDetailField
+            label="Approx. Children"
+            value={details.approxChildrenGuests}
+          />
+
+          <StaffBookingDetailField
+            label="Actual Adults"
+            value={details.actualAdultGuests}
+          />
+
+          <StaffBookingDetailField
+            label="Actual Children"
+            value={details.actualChildrenGuests}
+          />
+
+          <StaffBookingDetailField
+            label="Minimum Guarantee"
+            value={
+              details.minimumGuarantee ||
+              booking.minPayingGuests
+            }
+          />
+
+          <StaffBookingDetailField
+            label="Ethnic Breakdown"
+            value={details.ethnicBreakdown}
+          />
+
+        </div>
+      </section>
+
+
+      {/* RATES */}
+
+      <section className="staff-booking-detail-group">
+        <h4>Quoted Rates</h4>
+
+        <div className="staff-booking-detail-grid">
+
+          <StaffBookingDetailField
+            label="Adult Rate"
+            value={details.adultRateQuoted}
+          />
+
+          <StaffBookingDetailField
+            label="Child Rate"
+            value={details.childRateQuoted}
+          />
+
+          <StaffBookingDetailField
+            label="# Nights"
+            value={
+              details.numberOfNights ||
+              booking.nights
+            }
+          />
+
+          <StaffBookingDetailField
+            label="# Meals"
+            value={
+              details.numberOfMeals ||
+              booking.mealCount
+            }
+          />
+
+        </div>
+      </section>
+
+
+      {/* BOOKING TIMELINE */}
+
+      <section className="staff-booking-detail-group">
+        <h4>Booking Timeline</h4>
+
+        <div className="staff-booking-detail-grid">
+
+          <StaffBookingDetailField
+            label="Inquiry Date"
+            value={formatBookingDetailDate(
+              details.inquiryDate,
+              dateSettings
+            )}
+          />
+
+          <StaffBookingDetailField
+            label="Contract Sent"
+            value={formatBookingDetailDate(
+              details.contractSentDate,
+              dateSettings
+            )}
+          />
+
+          <StaffBookingDetailField
+            label="Return Contract By"
+            value={formatBookingDetailDate(
+              details.returnContractByDate,
+              dateSettings
+            )}
+          />
+
+          <StaffBookingDetailField
+            label="Contract Returned"
+            value={formatBookingDetailDate(
+              details.contractReturnedDate,
+              dateSettings
+            )}
+          />
+
+        </div>
+      </section>
+
+
+      {/* PAYMENT / DOCUMENTS */}
+
+      <section className="staff-booking-detail-group">
+        <h4>Payments & Documents</h4>
+
+        <div className="staff-booking-detail-grid">
+
+          <StaffBookingDetailField
+            label="Deposit Received"
+            value={formatBookingDetailDate(
+              details.depositReceivedDate,
+              dateSettings
+            )}
+          />
+
+          <StaffBookingDetailField
+            label="Deposit Amount"
+            value={
+              details.depositAmount ||
+              booking.deposit
+            }
+          />
+
+          <StaffBookingDetailField
+            label="Insurance Certificate"
+            value={formatBookingDetailDate(
+              details.insuranceCertificateDate,
+              dateSettings
+            )}
+          />
+
+          <StaffBookingDetailField
+            label="Notification Date"
+            value={formatBookingDetailDate(
+              details.notificationDate,
+              dateSettings
+            )}
+          />
+
+          <StaffBookingDetailField
+            label="Payment Method"
+            value={details.paymentMethod}
+          />
+
+        </div>
+      </section>
+
+
+      {/* TIMES */}
+
+      <section className="staff-booking-detail-group">
+        <h4>Arrival, Departure & Meals</h4>
+
+        <div className="staff-booking-detail-grid">
+
+          <StaffBookingDetailField
+            label="Arrival Time"
+            value={details.arrivalTime}
+          />
+
+          <StaffBookingDetailField
+            label="Departure Time"
+            value={details.departureTime}
+          />
+
+          <StaffBookingDetailField
+            label="First Meal"
+            value={details.firstMeal}
+          />
+
+          <StaffBookingDetailField
+            label="Last Meal"
+            value={details.lastMeal}
+          />
+
+          <StaffBookingDetailField
+            label="Breakfast"
+            value={details.breakfastTime}
+          />
+
+          <StaffBookingDetailField
+            label="Lunch"
+            value={details.lunchTime}
+          />
+
+          <StaffBookingDetailField
+            label="Dinner"
+            value={details.dinnerTime}
+          />
+
+        </div>
+
+        {details.mealNotes && (
+          <div className="staff-booking-detail-notes">
+            <small>Meal Notes</small>
+            <p>{details.mealNotes}</p>
+          </div>
+        )}
+      </section>
+
+
+      {/* LODGING BREAKDOWN */}
+
+      <section className="staff-booking-detail-group">
+        <h4>Lodging Breakdown</h4>
+
+        <div className="staff-booking-detail-grid">
+
+          <StaffBookingDetailField
+            label="Bethel"
+            value={details.lodgingBethel}
+          />
+
+          <StaffBookingDetailField
+            label="Hebron 3rd Floor"
+            value={details.lodgingHebronThird}
+          />
+
+          <StaffBookingDetailField
+            label="Hebron Bunks"
+            value={details.lodgingHebronBunks}
+          />
+
+          <StaffBookingDetailField
+            label="Dothan"
+            value={details.lodgingDothan}
+          />
+
+          <StaffBookingDetailField
+            label="Aijalon"
+            value={details.lodgingAijalon}
+          />
+
+          <StaffBookingDetailField
+            label="Capernaum"
+            value={details.lodgingCapernaum}
+          />
+
+          <StaffBookingDetailField
+            label="Guest House"
+            value={details.lodgingGuestHouse}
+          />
+
+          <StaffBookingDetailField
+            label="Linen Option"
+            value={details.linenOption}
+          />
+
+          <StaffBookingDetailField
+            label="Linen Sets"
+            value={details.linenSets}
+          />
+
+        </div>
+      </section>
+
+    </article>
+  );
+}
+
 function BookingDetailView({
   booking,
   activeTab,
@@ -4122,6 +4483,13 @@ function BookingDetailView({
                   </div>
                 </div>
               </BookingSection>
+
+              {isStaffBookingRecord(booking) && (
+                <StaffBookingFormDetails
+                  booking={booking}
+                  dateSettings={dateSettings}
+                />
+              )}
             </div>
           </section>
         </div>
@@ -6822,18 +7190,28 @@ const getCalendarEventColor = (status) => {
             <CreateBooking />
           </section>
         ) : activeView === "Booking Detail" ? (
-          <BookingDetailView
-            booking={selectedBooking}
-            activeTab={bookingDetailTab}
-            setActiveTab={setBookingDetailTab}
-            onSaveBooking={saveBookingEdits}
-            staffUsers={staffUsers}
-            currentStaffUserId={currentStaffUserId}
-            onBack={() => {
-              setSelectedBooking(null);
-              setActiveView("Dashboard");
-            }}
-          />
+          isGuestGroupInquiryRecord(selectedBooking) ? (
+            <InquiryRecordDetailView
+              booking={selectedBooking}
+              onBack={() => {
+                setSelectedBooking(null);
+                setActiveView(INQUIRY_SPREADSHEET_VIEW_NAME);
+              }}
+            />
+          ) : (
+            <BookingDetailView
+              booking={selectedBooking}
+              activeTab={bookingDetailTab}
+              setActiveTab={setBookingDetailTab}
+              onSaveBooking={saveBookingEdits}
+              staffUsers={staffUsers}
+              currentStaffUserId={currentStaffUserId}
+              onBack={() => {
+                setSelectedBooking(null);
+                setActiveView(SPREADSHEET_VIEW_NAME);
+              }}
+            />
+          )
         ) : activeView === "Calendar View" ? (
           <CalendarView
             calendarCells={calendarCells}

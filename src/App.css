@@ -1126,3 +1126,306 @@
     min-width: 0;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   SIMPLE GUEST GROUP INQUIRY DETAIL
+========================================================= */
+
+.simple-inquiry-page {
+  padding: 18px;
+
+  display: grid;
+  gap: 16px;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.simple-inquiry-header {
+  display: grid;
+
+  grid-template-columns:
+    auto minmax(0, 1fr) auto;
+
+  align-items: center;
+
+  gap: 18px;
+
+  padding: 16px 18px;
+
+  border: 1px solid #e1e6eb;
+  border-radius: 12px;
+
+  background: #ffffff;
+}
+
+.simple-inquiry-title p {
+  margin: 0 0 2px;
+
+  color: #8b93a1;
+
+  font-size: 0.7rem;
+  font-weight: 700;
+
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.simple-inquiry-title h2 {
+  margin: 0;
+
+  color: #252a35;
+
+  font-size: 1.45rem;
+  font-weight: 650;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.simple-inquiry-status {
+  padding: 7px 12px;
+
+  border-radius: 999px;
+
+  font-size: 0.76rem;
+  font-weight: 650;
+
+  white-space: nowrap;
+}
+
+.simple-inquiry-status-waitlist {
+  background: #e7f4f2;
+  color: #34766e;
+}
+
+.simple-inquiry-status-considering {
+  background: #fff4d9;
+  color: #806522;
+}
+
+.simple-inquiry-status-closed {
+  background: #f8eaea;
+  color: #8b5050;
+}
+
+.simple-inquiry-status-inquiry {
+  background: #eceffa;
+  color: #4e5f9d;
+}
+
+
+/* =========================================================
+   MAIN CARD
+========================================================= */
+
+.simple-inquiry-card {
+  overflow: hidden;
+
+  border: 1px solid #e1e6eb;
+  border-radius: 12px;
+
+  background: #ffffff;
+}
+
+
+/* =========================================================
+   BASIC INFO GRID
+========================================================= */
+
+.simple-inquiry-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  border-bottom: 1px solid #e7eaee;
+}
+
+.simple-inquiry-field {
+  min-width: 0;
+
+  padding: 18px;
+
+  border-right: 1px solid #e7eaee;
+  border-bottom: 1px solid #e7eaee;
+}
+
+.simple-inquiry-field:nth-child(3n) {
+  border-right: 0;
+}
+
+.simple-inquiry-field:nth-last-child(-n + 3) {
+  border-bottom: 0;
+}
+
+.simple-inquiry-label {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  margin-bottom: 7px;
+
+  color: #8b93a1;
+
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.simple-inquiry-label svg {
+  color: #72805f;
+
+  font-size: 0.72rem;
+}
+
+.simple-inquiry-field > strong {
+  display: block;
+
+  color: #303541;
+
+  font-size: 0.92rem;
+  font-weight: 550;
+
+  overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   LARGE TEXT SECTIONS
+========================================================= */
+
+.simple-inquiry-section {
+  padding: 20px 22px;
+
+  border-bottom: 1px solid #e7eaee;
+}
+
+.simple-inquiry-section > span {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #8b93a1;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.simple-inquiry-dates {
+  display: block;
+
+  color: #30362d;
+
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
+.simple-inquiry-notes {
+  max-width: 1100px;
+
+  margin: 0;
+
+  color: #3d434e;
+
+  font-size: 0.92rem;
+  line-height: 1.65;
+
+  white-space: pre-wrap;
+}
+
+
+/* =========================================================
+   SOURCE
+========================================================= */
+
+.simple-inquiry-source {
+  padding: 12px 22px;
+
+  background: #fafbfc;
+
+  color: #969daa;
+
+  font-size: 0.72rem;
+}
+
+.simple-inquiry-source strong {
+  color: #717986;
+
+  font-weight: 550;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+  .simple-inquiry-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .simple-inquiry-field,
+  .simple-inquiry-field:nth-child(3n) {
+    border-right: 1px solid #e7eaee;
+    border-bottom: 1px solid #e7eaee;
+  }
+
+  .simple-inquiry-field:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .simple-inquiry-field:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+}
+
+
+@media (max-width: 650px) {
+  .simple-inquiry-header {
+    grid-template-columns: 1fr;
+  }
+
+  .simple-inquiry-status {
+    justify-self: start;
+  }
+
+  .simple-inquiry-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .simple-inquiry-field,
+  .simple-inquiry-field:nth-child(2n),
+  .simple-inquiry-field:nth-child(3n) {
+    border-right: 0;
+    border-bottom: 1px solid #e7eaee;
+  }
+
+  .simple-inquiry-field:last-child {
+    border-bottom: 0;
+  }
+}
