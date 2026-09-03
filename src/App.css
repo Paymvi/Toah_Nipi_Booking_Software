@@ -2156,3 +2156,191 @@
 .rental-allergy-notes > span {
   font-size: 0.95rem;
 }
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   APPROXIMATE GUESTS
+========================================================= */
+
+.rental-approx-guests-grid {
+  grid-template-columns: 2fr 2fr 1fr 1fr;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   ARRIVAL + DEPARTURE SCHEDULE
+========================================================= */
+
+.rental-stay-schedule {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+
+  padding-top: 4px;
+}
+
+
+.rental-stay-schedule-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
+.rental-stay-schedule-title {
+  font-weight: 600;
+  color: #343b49;
+}
+
+
+.rental-stay-schedule-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   LODGING IMAGES
+========================================================= */
+
+.rental-lodging-info {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+
+.rental-lodging-image {
+  width: 72px;
+  height: 58px;
+
+  flex-shrink: 0;
+
+  object-fit: cover;
+
+  border-radius: 8px;
+  border: 1px solid #e1e5e9;
+}
+
+
+.rental-lodging-text {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+
+.rental-lodging-text strong {
+  display: block;
+}
+
+
+.rental-lodging-text small {
+  display: block;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   CURRENCY INPUTS
+========================================================= */
+
+.rental-currency-input {
+  position: relative;
+  width: 100%;
+}
+
+.rental-currency-input input {
+  width: 100%;
+  padding-left: 38px;
+}
+
+.rental-currency-symbol {
+  position: absolute;
+  z-index: 1;
+
+  left: 16px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  color: #9ca6b8;
+  font-size: 1rem;
+
+  pointer-events: none;
+}

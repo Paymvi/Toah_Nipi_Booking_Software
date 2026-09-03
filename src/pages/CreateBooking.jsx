@@ -69,36 +69,43 @@ const lodgingFields = [
     name: "lodgingBethel",
     label: "Bethel",
     capacity: "70",
+    image: "/lodges/Bethel.webp",
   },
   {
     name: "lodgingHebronThird",
     label: "Hebron 3rd Floor",
     capacity: "14",
+    image: "/lodges/May-2025-Hebron.jpg",
   },
   {
     name: "lodgingHebronBunks",
     label: "Hebron Bunks",
     capacity: "52",
+    image: "/lodges/May-2025-Hebron.jpg",
   },
   {
     name: "lodgingDothan",
     label: "Dothan",
     capacity: "21",
+    image: "/lodges/Dothan.webp",
   },
   {
     name: "lodgingAjalon",
     label: "Ajalon",
     capacity: "5–8",
+    image: "/lodges/Ajalon.png",
   },
   {
     name: "lodgingCapernaum",
     label: "Capernaum",
     capacity: "5",
+    image: null,
   },
   {
     name: "lodgingGuestHouse",
     label: "Guest House",
     capacity: "9–12",
+    image: "/lodges/Guest-House.webp",
   },
 ];
 
@@ -140,6 +147,7 @@ const TEST_BOOKING_DATA = {
   approxAdultGuests: "12",
   approxChildrenGuests: "38",
   minimumGuarantee: "45",
+  maximumGuarantee: "55",
 
   actualAdultGuests: "10",
   actualChildrenGuests: "37",
@@ -235,6 +243,7 @@ function createInitialFormState() {
     approxAdultGuests: "",
     approxChildrenGuests: "",
     minimumGuarantee: "",
+    maximumGuarantee: "",
 
     actualAdultGuests: "",
     actualChildrenGuests: "",
@@ -855,28 +864,78 @@ export default function CreateBooking() {
                 </label>
 
 
-                <label className="rental-field">
-                  <span>Arrival Date</span>
+                <div className="rental-stay-schedule rental-field-full">
 
-                  <input
-                    type="date"
-                    name="startDate"
-                    value={formData.startDate}
-                    onChange={handleChange}
-                  />
-                </label>
+                  {/* ARRIVAL */}
+                  <div className="rental-stay-schedule-group">
+                    <span className="rental-stay-schedule-title">
+                      Arrival
+                    </span>
+
+                    <div className="rental-stay-schedule-fields">
+
+                      <label className="rental-field">
+                        <span>Date</span>
+
+                        <input
+                          type="date"
+                          name="startDate"
+                          value={formData.startDate}
+                          onChange={handleChange}
+                        />
+                      </label>
 
 
-                <label className="rental-field">
-                  <span>Departure Date</span>
+                      <label className="rental-field">
+                        <span>Time</span>
 
-                  <input
-                    type="date"
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleChange}
-                  />
-                </label>
+                        <input
+                          type="time"
+                          name="arrivalTime"
+                          value={formData.arrivalTime}
+                          onChange={handleChange}
+                        />
+                      </label>
+
+                    </div>
+                  </div>
+
+
+                  {/* DEPARTURE */}
+                  <div className="rental-stay-schedule-group">
+                    <span className="rental-stay-schedule-title">
+                      Departure
+                    </span>
+
+                    <div className="rental-stay-schedule-fields">
+
+                      <label className="rental-field">
+                        <span>Date</span>
+
+                        <input
+                          type="date"
+                          name="endDate"
+                          value={formData.endDate}
+                          onChange={handleChange}
+                        />
+                      </label>
+
+
+                      <label className="rental-field">
+                        <span>Time</span>
+
+                        <input
+                          type="time"
+                          name="departureTime"
+                          value={formData.departureTime}
+                          onChange={handleChange}
+                        />
+                      </label>
+
+                    </div>
+                  </div>
+
+                </div>
 
 
                 <label className="rental-field">
@@ -948,7 +1007,7 @@ export default function CreateBooking() {
               <div className="rental-subsection">
                 <h3>Approximate Guests</h3>
 
-                <div className="rental-field-grid rental-field-grid-3">
+                <div className="rental-field-grid rental-approx-guests-grid">
 
                   <label className="rental-field">
                     <span>Adults</span>
@@ -984,6 +1043,18 @@ export default function CreateBooking() {
                       min="0"
                       name="minimumGuarantee"
                       value={formData.minimumGuarantee}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+                  <label className="rental-field">
+                    <span>Maximum Guarantee</span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name="maximumGuarantee"
+                      value={formData.maximumGuarantee}
                       onChange={handleChange}
                     />
                   </label>
@@ -1049,30 +1120,40 @@ export default function CreateBooking() {
                   <label className="rental-field">
                     <span>Adult Rate Quoted</span>
 
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      name="adultRateQuoted"
-                      value={formData.adultRateQuoted}
-                      onChange={handleChange}
-                      placeholder="$"
-                    />
+                    <div className="rental-currency-input">
+                      <span className="rental-currency-symbol">
+                        $
+                      </span>
+
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="adultRateQuoted"
+                        value={formData.adultRateQuoted}
+                        onChange={handleChange}
+                      />
+                    </div>
                   </label>
 
 
                   <label className="rental-field">
                     <span>Child Rate Quoted</span>
 
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      name="childRateQuoted"
-                      value={formData.childRateQuoted}
-                      onChange={handleChange}
-                      placeholder="$"
-                    />
+                    <div className="rental-currency-input">
+                      <span className="rental-currency-symbol">
+                        $
+                      </span>
+
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="childRateQuoted"
+                        value={formData.childRateQuoted}
+                        onChange={handleChange}
+                      />
+                    </div>
                   </label>
 
 
@@ -1294,49 +1375,20 @@ export default function CreateBooking() {
           <section className="rental-form-section">
             <header className="rental-section-header">
               <div className="rental-section-icon">
-                <FaClock />
+                <FaUtensils />
               </div>
 
               <div>
-                <h2>Arrival, Departure & Meals</h2>
-
+                <h2>Meals</h2>
                 <p>
-                  Schedule information for hospitality
-                  and food service.
+                  Meal schedule, dietary needs,
+                  and food service information.
                 </p>
               </div>
             </header>
 
 
             <div className="rental-section-body">
-
-              <div className="rental-field-grid">
-
-                <label className="rental-field">
-                  <span>Arrival Time</span>
-
-                  <input
-                    type="time"
-                    name="arrivalTime"
-                    value={formData.arrivalTime}
-                    onChange={handleChange}
-                  />
-                </label>
-
-
-                <label className="rental-field">
-                  <span>Departure Time</span>
-
-                  <input
-                    type="time"
-                    name="departureTime"
-                    value={formData.departureTime}
-                    onChange={handleChange}
-                  />
-                </label>
-
-              </div>
-
 
               <div className="rental-subsection">
                 <h3>
@@ -1556,15 +1608,27 @@ export default function CreateBooking() {
                     className="rental-lodging-field"
                     key={building.name}
                   >
-                    <span>
-                      <strong>
-                        {building.label}
-                      </strong>
+                    <div className="rental-lodging-info">
 
-                      <small>
-                        Capacity {building.capacity}
-                      </small>
-                    </span>
+                      {building.image && (
+                        <img
+                          className="rental-lodging-image"
+                          src={building.image}
+                          alt=""
+                        />
+                      )}
+
+                      <span className="rental-lodging-text">
+                        <strong>
+                          {building.label}
+                        </strong>
+
+                        <small>
+                          Capacity {building.capacity}
+                        </small>
+                      </span>
+
+                    </div>
 
                     <input
                       type="number"
