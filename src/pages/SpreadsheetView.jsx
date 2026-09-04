@@ -276,8 +276,20 @@ const SPREADSHEET_QUICK_SORT_OPTIONS = [
   },
   {
     value: "standard:Submitted|asc",
-    label: "Entry added: Most recent first",
+    label: "Entry added: Oldest first",
   },
+  {
+    value: "standard:Organization|asc",
+    label: "Organization: A to Z",
+  },
+  {
+    value: "standard:Guest Count|asc",
+    label: "Guest count: Smallest first",
+  },
+  {
+    value: "standard:Guest Count|desc",
+    label: "Guest count: Largest first",
+  }
 ];
 
 const MAPPED_MASTER_RAW_COLUMNS = new Set([
