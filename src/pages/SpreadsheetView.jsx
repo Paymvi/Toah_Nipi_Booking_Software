@@ -7,6 +7,7 @@ import {
   FaStar,
   FaTable,
   FaTimes,
+  FaSortAmountDown
 } from "react-icons/fa";
 
 import {
@@ -260,6 +261,25 @@ function getSpreadsheetRetreatTypeClass(retreatType) {
   return "retreat-type-other";
 }
 
+const SPREADSHEET_QUICK_SORT_OPTIONS = [
+  {
+    value: "standard:Start Date|asc",
+    label: "Retreat date: Oldest first",
+  },
+  {
+    value: "standard:Start Date|desc",
+    label: "Retreat date: Newest first",
+  },
+  {
+    value: "standard:Submitted|desc",
+    label: "Entry added: Oldest first",
+  },
+  {
+    value: "standard:Submitted|asc",
+    label: "Entry added: Most recent first",
+  },
+];
+
 const MAPPED_MASTER_RAW_COLUMNS = new Set([
   // =========================================================
   // DATES
@@ -490,6 +510,7 @@ const bookingSpreadsheetColumns = [
   {
     label: "Submitted",
     value: (booking) => formatSubmittedDate(booking.submittedAt),
+    sortValue: (booking) => booking.submittedAt || "",
   },
   {
     label: "Contact Name",
@@ -1239,6 +1260,18 @@ function getSpreadsheetColumnCategoryClass(category) {
 function getSpreadsheetComparableValue(column, booking) {
   if (!column) {
     return "";
+  }
+
+  /*
+    Some columns need a different value for sorting
+    than what is displayed to the user.
+
+    Example:
+    Submitted displays a friendly formatted date,
+    but sorts using the full timestamp.
+  */
+  if (column.sortValue) {
+    return column.sortValue(booking);
   }
 
   if (column.value) {
@@ -3394,16 +3427,6 @@ function BookingSpreadsheetView({
 
   const selectSpreadsheetYearView = (nextYearView) => {
     setSpreadsheetYearView(nextYearView);
-
-    /*
-      Always return to a predictable spreadsheet-style ordering
-      when switching between years.
-    */
-    setSpreadsheetSettings((currentSettings) => ({
-      ...currentSettings,
-      sortColumnId: "standard:Start Date",
-      sortDirection: "asc",
-    }));
   };
 
   const updateSpreadsheetSettings = (updates) => {
@@ -3412,6 +3435,31 @@ function BookingSpreadsheetView({
       ...updates,
     }));
   };
+
+  const handleQuickSortChange = (event) => {
+    const selectedValue = event.target.value;
+
+    if (selectedValue === "custom") {
+      return;
+    }
+
+    const [sortColumnId, sortDirection] = selectedValue.split("|");
+
+    updateSpreadsheetSettings({
+      sortColumnId,
+      sortDirection,
+    });
+  };
+
+  const currentQuickSortValue = (() => {
+    const currentValue = `${spreadsheetSettings.sortColumnId}|${spreadsheetSettings.sortDirection}`;
+
+    const matchesQuickSortOption = SPREADSHEET_QUICK_SORT_OPTIONS.some(
+      (option) => option.value === currentValue
+    );
+
+    return matchesQuickSortOption ? currentValue : "custom";
+  })();
 
   const handleSortColumn = (columnId) => {
     setSpreadsheetSettings((currentSettings) => {
@@ -3711,6 +3759,42 @@ function BookingSpreadsheetView({
                 Starred first
               </span>
             </label>
+
+
+            {/* =========================================================
+                QUICK SORT
+            ========================================================= */}
+            <div className="spreadsheet-header-sort">
+              <label htmlFor="spreadsheet-header-sort-select">
+                Sort By
+              </label>
+
+              <div className="spreadsheet-header-sort-control">
+                <FaSortAmountDown />
+
+                <select
+                  id="spreadsheet-header-sort-select"
+                  value={currentQuickSortValue}
+                  onChange={handleQuickSortChange}
+                >
+                  {currentQuickSortValue === "custom" && (
+                    <option value="custom" disabled>
+                      Custom table sort
+                    </option>
+                  )}
+
+                  {SPREADSHEET_QUICK_SORT_OPTIONS.map((option) => (
+                    <option
+                      value={option.value}
+                      key={option.value}
+                    >
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
 
             <div className="spreadsheet-header-search">
               <label htmlFor="spreadsheet-header-search-input">

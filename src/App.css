@@ -2845,3 +2845,93 @@
 
   opacity: 0.9;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   SPREADSHEET QUICK SORT
+========================================================= */
+
+.spreadsheet-header-sort {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+}
+
+.spreadsheet-header-sort > label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.spreadsheet-header-sort-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.spreadsheet-header-sort-control > svg {
+  position: absolute;
+  left: 16px;
+  z-index: 1;
+
+  font-size: 0.95rem;
+  color: #5142a5;
+
+  pointer-events: none;
+}
+
+.spreadsheet-header-sort-control select {
+  width: 100%;
+  min-height: 56px;
+
+  padding: 0 44px 0 45px;
+
+  border: 1px solid #d9dfeb;
+  border-radius: 14px;
+
+  background: #ffffff;
+  color: #334155;
+
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  cursor: pointer;
+  outline: none;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.spreadsheet-header-sort-control select:hover {
+  border-color: #c8cfe0;
+  background: #fcfcfe;
+}
+
+.spreadsheet-header-sort-control select:focus {
+  border-color: #7769c7;
+  box-shadow: 0 0 0 3px rgba(119, 105, 199, 0.12);
+}
