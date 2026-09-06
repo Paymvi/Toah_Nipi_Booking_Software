@@ -2935,3 +2935,202 @@
   border-color: #7769c7;
   box-shadow: 0 0 0 3px rgba(119, 105, 199, 0.12);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   INQUIRY -> BOOKING ACTION
+========================================================= */
+
+.inquiry-booking-action-heading {
+  width: 105px;
+  min-width: 105px;
+  text-align: center;
+}
+
+.inquiry-booking-action-cell {
+  width: 105px;
+  min-width: 105px;
+  text-align: center;
+}
+
+.inquiry-create-booking-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  min-height: 36px;
+
+  padding: 0 12px;
+
+  border: 1px solid #d9dfeb;
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #5142a5;
+
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.inquiry-create-booking-button svg {
+  font-size: 0.75rem;
+}
+
+.inquiry-create-booking-button:hover {
+  background: #f5f3ff;
+  border-color: #bcb5ea;
+
+  transform: translateY(-1px);
+}
+
+.inquiry-create-booking-button:active {
+  transform: translateY(0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   BOOKING CREATED FROM INQUIRY
+========================================================= */
+
+.rental-inquiry-prefill-notice {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 14px;
+
+  margin: 0 0 24px;
+
+  padding: 18px 20px;
+
+  border: 1px solid #ddd9f5;
+  border-radius: 14px;
+
+  background: #f8f7ff;
+
+  color: #24324a;
+}
+
+.rental-inquiry-prefill-notice > svg {
+  flex: 0 0 auto;
+
+  margin-top: 2px;
+
+  font-size: 1.15rem;
+
+  color: #5142a5;
+}
+
+.rental-inquiry-prefill-notice > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.rental-inquiry-prefill-notice > div > strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.rental-inquiry-prefill-notice p {
+  margin: 0;
+
+  color: #68738a;
+
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.rental-inquiry-prefill-details {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 12px;
+
+  margin-top: 14px;
+}
+
+.rental-inquiry-prefill-details > span {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 150px;
+
+  padding: 9px 12px;
+
+  border: 1px solid #e5e3f3;
+  border-radius: 10px;
+
+  background: #ffffff;
+}
+
+.rental-inquiry-prefill-details small {
+  margin-bottom: 2px;
+
+  color: #8a94a7;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rental-inquiry-prefill-details strong {
+  color: #25324a;
+
+  font-size: 0.88rem;
+  font-weight: 700;
+}

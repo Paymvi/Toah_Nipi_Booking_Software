@@ -276,7 +276,7 @@ const SPREADSHEET_QUICK_SORT_OPTIONS = [
   },
   {
     value: "standard:Submitted|asc",
-    label: "Entry added: Oldest first",
+    label: "Entry added: Most Recent first",
   },
   {
     value: "standard:Organization|asc",

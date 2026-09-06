@@ -4,14 +4,20 @@ import {
   FaUsers,
   FaCalendarAlt,
   FaDollarSign,
+  FaClock,
   FaUtensils,
   FaBed,
   FaFileContract,
   FaCheckCircle,
   FaExclamationTriangle,
+  FaInfoCircle,
 } from "react-icons/fa";
 
 import { upsertBooking } from "../services/bookingService";
+
+import {
+  parseDesiredDateRange,
+} from "../utils/dateUtils";
 
 import {
   FaUser,
@@ -162,6 +168,7 @@ const TEST_BOOKING_DATA = {
   email: "jordan.test@example.com",
 
   /* Guest Information */
+  approxTotalGuests: "50",
   approxAdultGuests: "12",
   approxChildrenGuests: "38",
   minimumGuarantee: "45",
@@ -260,9 +267,110 @@ const TEST_BOOKING_DATA = {
 };
 
 
+function cleanInquiryPrefillValue(value) {
+  const text = String(value ?? "").trim();
 
-function createInitialFormState() {
-  return {
+  if (
+    !text ||
+    text === "No contact name" ||
+    text === "No email provided" ||
+    text === "No phone provided"
+  ) {
+    return "";
+  }
+
+  return text;
+}
+
+
+function getInquiryDateInputValue(value) {
+  const text = String(value || "").trim();
+
+  const match = text.match(
+    /^(\d{4}-\d{2}-\d{2})/
+  );
+
+  return match ? match[1] : "";
+}
+
+function getInquiryPrefillAddress(inquiry) {
+  if (!inquiry) {
+    return "";
+  }
+
+  /*
+    First use the normalized inquiry field.
+  */
+  const normalizedAddress =
+    cleanInquiryPrefillValue(
+      inquiry.inquiryAddress
+    );
+
+  if (normalizedAddress) {
+    return normalizedAddress;
+  }
+
+  /*
+    Fall back to the original spreadsheet row.
+
+    This matches the same fallback behavior used
+    by InquirySpreadsheetView.
+  */
+  const rawData =
+    inquiry.rawSpreadsheetData;
+
+  if (
+    !rawData ||
+    typeof rawData !== "object"
+  ) {
+    return "";
+  }
+
+  return cleanInquiryPrefillValue(
+    rawData["Mailing address"] ||
+    rawData["Mailing Address"] ||
+    rawData["Address"] ||
+    ""
+  );
+}
+
+function getNumberOfNightsBetweenDates(
+  startDate,
+  endDate
+) {
+  if (!startDate || !endDate) {
+    return "";
+  }
+
+  const start =
+    new Date(`${startDate}T00:00:00Z`);
+
+  const end =
+    new Date(`${endDate}T00:00:00Z`);
+
+  if (
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(end.getTime()) ||
+    end < start
+  ) {
+    return "";
+  }
+
+  const millisecondsPerDay =
+    1000 * 60 * 60 * 24;
+
+  return String(
+    Math.round(
+      (end - start) /
+      millisecondsPerDay
+    )
+  );
+}
+
+function createInitialFormState(
+  initialInquiry = null
+) {
+  const baseState = {
     /* Group */
     organizationName: "",
     retreatType: "",
@@ -276,8 +384,11 @@ function createInitialFormState() {
     email: "",
 
     /* Guest Information */
+    approxTotalGuests: "",
+
     approxAdultGuests: "",
     approxChildrenGuests: "",
+
     minimumGuarantee: "",
     maximumGuarantee: "",
 
@@ -290,6 +401,7 @@ function createInitialFormState() {
     childRateQuoted: "",
 
     numberOfNights: "",
+    numberOfMeals: "",
 
     /* Booking Timeline */
     inquiryDate: getTodayInputValue(),
@@ -311,9 +423,12 @@ function createInitialFormState() {
     /* Meals */
     mealSchedule: {},
 
+    firstMeal: "",
+    lastMeal: "",
     breakfastTime: "",
     lunchTime: "",
     dinnerTime: "",
+
     allergies: [
       {
         name: "",
@@ -340,6 +455,194 @@ function createInitialFormState() {
 
     /* Notes */
     notes: "",
+
+
+    /*
+      Inquiry conversion metadata.
+
+      These are preserved inside
+      rentalFormDetails when the booking
+      is eventually saved.
+    */
+    sourceInquiryId: "",
+    sourceInquirySheet: "",
+    sourceInquiryRowNumber: "",
+    sourceInquiryDesiredDatesText: "",
+    sourceInquiryEstimatedSize: "",
+    sourceInquiryDisposition: "",
+  };
+
+
+  if (!initialInquiry) {
+    return baseState;
+  }
+
+
+  const desiredDatesText =
+    cleanInquiryPrefillValue(
+      initialInquiry.desiredDatesText
+    );
+
+  const estimatedSize =
+    cleanInquiryPrefillValue(
+      initialInquiry.attendeeCount
+    );
+
+  const disposition =
+    cleanInquiryPrefillValue(
+      initialInquiry.inquiryDisposition
+    );
+
+  /*
+    Try to turn the original Desired Dates text
+    into actual form dates.
+
+    If the parser cannot understand the text,
+    these simply remain blank.
+  */
+  const parsedDesiredDates =
+    parseDesiredDateRange(
+      desiredDatesText
+    );
+
+
+  const prefillStartDate =
+    cleanInquiryPrefillValue(
+      initialInquiry.startDate
+    ) ||
+    parsedDesiredDates.startDate ||
+    "";
+
+
+  const prefillEndDate =
+    cleanInquiryPrefillValue(
+      initialInquiry.endDate
+    ) ||
+    parsedDesiredDates.endDate ||
+    "";
+
+
+  const prefillNumberOfNights =
+    getNumberOfNightsBetweenDates(
+      prefillStartDate,
+      prefillEndDate
+    );
+
+  const originalNotes =
+    cleanInquiryPrefillValue(
+      initialInquiry.notes
+    );
+
+
+  const inquiryContext = [
+    disposition
+      ? `Original inquiry disposition: ${disposition}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+
+  return {
+    ...baseState,
+
+    organizationName:
+      cleanInquiryPrefillValue(
+        initialInquiry.organizationName
+      ),
+
+    retreatType:
+      cleanInquiryPrefillValue(
+        initialInquiry.retreatType
+      ),
+
+    contactName:
+      cleanInquiryPrefillValue(
+        initialInquiry.contactName
+      ),
+
+    phone:
+      cleanInquiryPrefillValue(
+        initialInquiry.phone
+      ),
+
+    email:
+      cleanInquiryPrefillValue(
+        initialInquiry.email
+      ),
+
+    mailingAddress:
+      getInquiryPrefillAddress(
+        initialInquiry
+      ),
+
+
+    /*
+      Use actual booking dates if they already exist.
+
+      Otherwise try to parse the inquiry's
+      Desired Dates column.
+    */
+    startDate:
+      prefillStartDate,
+
+    endDate:
+      prefillEndDate,
+
+
+    /*
+      Preserve the inquiry's total estimated size.
+
+      Do NOT pretend that the entire number
+      represents adults or children.
+    */
+    approxTotalGuests:
+      estimatedSize,
+
+
+    /*
+      If we successfully got a date range,
+      we can safely calculate # of nights too.
+    */
+    numberOfNights:
+      prefillNumberOfNights,
+
+
+    inquiryDate:
+      getInquiryDateInputValue(
+        initialInquiry.submittedAt
+      ) ||
+      baseState.inquiryDate,
+
+
+    notes: [
+      originalNotes,
+      inquiryContext,
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
+
+
+    /*
+      Preserve where this booking came from.
+    */
+    sourceInquiryId:
+      initialInquiry.id || "",
+
+    sourceInquirySheet:
+      initialInquiry.sourceSheet || "",
+
+    sourceInquiryRowNumber:
+      initialInquiry.sourceRowNumber || "",
+
+    sourceInquiryDesiredDatesText:
+      desiredDatesText,
+
+    sourceInquiryEstimatedSize:
+      estimatedSize,
+
+    sourceInquiryDisposition:
+      disposition,
   };
 }
 
@@ -674,9 +977,12 @@ function getInitialBookingStatus(formData) {
    COMPONENT
 ========================================================= */
 
-export default function CreateBooking() {
+export default function CreateBooking({
+  initialInquiry = null,
+  onBookingCreated,
+}) {
   const [formData, setFormData] = useState(() =>
-    createInitialFormState()
+    createInitialFormState(initialInquiry)
   );
 
   const [wasSubmitted, setWasSubmitted] =
@@ -820,15 +1126,32 @@ export default function CreateBooking() {
       setSubmitError("");
       setWasSubmitted(false);
 
-      const approxGuestTotal = getGuestTotal(
-        formData.approxAdultGuests,
-        formData.approxChildrenGuests
-      );
+      const approxGuestBreakdownTotal =
+        getGuestTotal(
+          formData.approxAdultGuests,
+          formData.approxChildrenGuests
+        );
 
-      const actualGuestTotal = getGuestTotal(
-        formData.actualAdultGuests,
-        formData.actualChildrenGuests
-      );
+
+      /*
+        Prefer a real adult + child breakdown.
+
+        If staff has not entered that yet,
+        keep the original estimated total
+        from the inquiry spreadsheet.
+      */
+      const approxGuestTotal =
+        approxGuestBreakdownTotal ||
+        String(
+          formData.approxTotalGuests || ""
+        ).trim();
+
+
+      const actualGuestTotal =
+        getGuestTotal(
+          formData.actualAdultGuests,
+          formData.actualChildrenGuests
+        );
 
       const calculatedMealTotals =
         getMealTotals(formData);
@@ -987,6 +1310,17 @@ export default function CreateBooking() {
         savedBooking
       );
 
+
+      /*
+        Tell Dashboard that the inquiry-based
+        booking was successfully created.
+
+        This clears the prefill source so opening
+        the normal Form later stays blank.
+      */
+      onBookingCreated?.(savedBooking);
+
+
       setWasSubmitted(true);
 
       setFormData(
@@ -1031,6 +1365,57 @@ export default function CreateBooking() {
             </button>
 
         </header>
+
+        {initialInquiry && (
+          <div className="rental-inquiry-prefill-notice">
+            <FaInfoCircle />
+
+            <div>
+              <strong>
+                Booking started from an existing inquiry
+              </strong>
+
+              <p>
+                Information from{" "}
+                <b>
+                  {initialInquiry.organizationName}
+                </b>{" "}
+                has been copied into this form.
+                Review the requested dates and estimated
+                guest count before saving.
+              </p>
+
+              <div className="rental-inquiry-prefill-details">
+                {initialInquiry.desiredDatesText && (
+                  <span>
+                    <small>Requested Dates</small>
+                    <strong>
+                      {initialInquiry.desiredDatesText}
+                    </strong>
+                  </span>
+                )}
+
+                {initialInquiry.attendeeCount && (
+                  <span>
+                    <small>Estimated Size</small>
+                    <strong>
+                      {initialInquiry.attendeeCount}
+                    </strong>
+                  </span>
+                )}
+
+                {initialInquiry.inquiryDisposition && (
+                  <span>
+                    <small>Inquiry Status</small>
+                    <strong>
+                      {initialInquiry.inquiryDisposition}
+                    </strong>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
 
         {/* =====================================================
@@ -1289,6 +1674,24 @@ export default function CreateBooking() {
                 <h3>Approximate Guests</h3>
 
                 <div className="rental-field-grid rental-approx-guests-grid">
+
+                  <label className="rental-field rental-field-full">
+                    <span>
+                      <FaUsers className="rental-field-label-icon" />
+                      Estimated Total Guests
+                    </span>
+
+                    <input
+                      type="text"
+                      min="0"
+                      name="approxTotalGuests"
+                      value={
+                        formData.approxTotalGuests
+                      }
+                      onChange={handleChange}
+                      placeholder="Total estimated group size"
+                    />
+                  </label>
 
                   <label className="rental-field">
                     <span>

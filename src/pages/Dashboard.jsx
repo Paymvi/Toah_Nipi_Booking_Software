@@ -5868,6 +5868,7 @@ export default function Dashboard() {
   
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [bookingDetailTab, setBookingDetailTab] = useState("Overview");
+  const [bookingFormSeed, setBookingFormSeed] = useState(null);
 
   const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
   const [isDatedInquirySettingsOpen, setIsDatedInquirySettingsOpen] =
@@ -7040,6 +7041,20 @@ const getCalendarEventColor = (status) => {
     setActiveView("Booking Detail");
   };
 
+  const startBookingFromInquiry = (booking) => {
+    setBookingFormSeed(booking);
+
+    setSelectedBooking(null);
+    setBookingDetailTab("Overview");
+
+    setActiveView("Form");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
 
   return (
     <main
@@ -7102,6 +7117,7 @@ const getCalendarEventColor = (status) => {
             title="Form"
             onClick={() => {
               setSelectedBooking(null);
+              setBookingFormSeed(null);
               setBookingDetailTab("Overview");
               handleActiveViewChange("Form");
             }}
@@ -7236,7 +7252,16 @@ const getCalendarEventColor = (status) => {
 
         {activeView === "Form" ? (
           <section className="dashboard-form-view">
-            <CreateBooking />
+            <CreateBooking
+              key={
+                bookingFormSeed?.id ||
+                "blank-booking-form"
+              }
+              initialInquiry={bookingFormSeed}
+              onBookingCreated={() => {
+                setBookingFormSeed(null);
+              }}
+            />
           </section>
         ) : activeView === "Booking Detail" ? (
           isGuestGroupInquiryRecord(selectedBooking) ? (
@@ -7281,6 +7306,9 @@ const getCalendarEventColor = (status) => {
                 <InquirySpreadsheetView
                   inquiryBookings={inquiryBookings}
                   openBookingDetail={openBookingDetail}
+                  startBookingFromInquiry={
+                    startBookingFromInquiry
+                  }
                 />
               ) : activeView === "Contacts View" ? (
                 <ContactsView

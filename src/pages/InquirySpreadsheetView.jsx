@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import {
+  FaPlus,
   FaSearch,
   FaTable,
 } from "react-icons/fa";
@@ -275,6 +276,7 @@ const ALL_INQUIRY_COLUMNS = [
 export default function InquirySpreadsheetView({
   inquiryBookings,
   openBookingDetail,
+  startBookingFromInquiry,
 }) {
   const [yearView, setYearView] =
     useState("all");
@@ -457,6 +459,10 @@ export default function InquirySpreadsheetView({
               <table className="spreadsheet-table inquiry-spreadsheet-table">
                 <thead>
                   <tr>
+                    <th className="inquiry-booking-action-heading">
+                      Booking
+                    </th>
+
                     {visibleColumns.map(
                       (column, index) => (
                         <th
@@ -472,6 +478,21 @@ export default function InquirySpreadsheetView({
                 <tbody>
                   {visibleBookings.map((booking) => (
                     <tr key={booking.id}>
+
+                      <td className="inquiry-booking-action-cell">
+                        <button
+                          className="inquiry-create-booking-button"
+                          type="button"
+                          onClick={() =>
+                            startBookingFromInquiry(booking)
+                          }
+                          title={`Create booking from ${booking.organizationName}`}
+                        >
+                          <FaPlus />
+                          <span>Book</span>
+                        </button>
+                      </td>
+
                       {visibleColumns.map(
                         (column, index) => {
                           const rawValue =
