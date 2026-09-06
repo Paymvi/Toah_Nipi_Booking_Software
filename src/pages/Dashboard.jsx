@@ -4507,10 +4507,23 @@ function BookingDetailView({
       )}
 
 {activeTab === "Details" && (
-  <BookingDetailsEditForm
-    booking={booking}
-    onSaveBooking={onSaveBooking}
-  />
+  isStaffBookingRecord(booking) ? (
+    <CreateBooking
+      key={`edit-booking-${booking.id}`}
+      existingBooking={booking}
+      onBookingUpdated={
+        onSaveBooking
+      }
+      embedded
+    />
+  ) : (
+    <BookingDetailsEditForm
+      booking={booking}
+      onSaveBooking={
+        onSaveBooking
+      }
+    />
+  )
 )}
 
 {activeTab === "Housing" && <BookingHousingTab booking={booking} />}
@@ -6071,10 +6084,15 @@ export default function Dashboard() {
         );
       });
 
-      setSelectedBooking(savedBooking);
+      setSelectedBooking(
+        savedBooking
+      );
+
+      return savedBooking;
     } catch (error) {
       console.error("Could not save booking to Supabase:", error);
       alert("Could not save booking to Supabase. Check the console.");
+      throw error;
     }
   };
 

@@ -646,6 +646,367 @@ function createInitialFormState(
   };
 }
 
+function createExistingBookingFormState(booking) {
+  const baseState =
+    createInitialFormState();
+
+  if (!booking) {
+    return baseState;
+  }
+
+  const details =
+    booking.rentalFormDetails &&
+    typeof booking.rentalFormDetails === "object"
+      ? booking.rentalFormDetails
+      : {};
+
+  const savedAllergies =
+    Array.isArray(details.allergies) &&
+    details.allergies.length > 0
+      ? details.allergies
+      : [
+          {
+            name: "",
+            count: "",
+          },
+        ];
+
+  const savedMealSchedule =
+    details.mealSchedule &&
+    typeof details.mealSchedule === "object" &&
+    !Array.isArray(details.mealSchedule)
+      ? details.mealSchedule
+      : {};
+
+  return {
+    ...baseState,
+    ...details,
+
+    /* =====================================================
+       GROUP
+    ===================================================== */
+
+    organizationName:
+      details.organizationName ||
+      booking.organizationName ||
+      "",
+
+    retreatType:
+      details.retreatType ||
+      booking.retreatType ||
+      "",
+
+    startDate:
+      details.startDate ||
+      booking.startDate ||
+      "",
+
+    endDate:
+      details.endDate ||
+      booking.endDate ||
+      "",
+
+    mailingAddress:
+      details.mailingAddress ||
+      booking.inquiryAddress ||
+      "",
+
+
+    /* =====================================================
+       CONTACT
+    ===================================================== */
+
+    contactName:
+      details.contactName ||
+      (
+        booking.contactName === "No contact name"
+          ? ""
+          : booking.contactName
+      ) ||
+      "",
+
+    phone:
+      details.phone ||
+      (
+        booking.phone === "No phone provided"
+          ? ""
+          : booking.phone
+      ) ||
+      "",
+
+    email:
+      details.email ||
+      (
+        booking.email === "No email provided"
+          ? ""
+          : booking.email
+      ) ||
+      "",
+
+
+    /* =====================================================
+       GUEST INFORMATION
+    ===================================================== */
+
+    approxTotalGuests:
+      details.approxTotalGuests ||
+      booking.attendeeCount ||
+      "",
+
+    approxAdultGuests:
+      details.approxAdultGuests ||
+      "",
+
+    approxChildrenGuests:
+      details.approxChildrenGuests ||
+      "",
+
+    minimumGuarantee:
+      details.minimumGuarantee ||
+      booking.minPayingGuests ||
+      "",
+
+    maximumGuarantee:
+      details.maximumGuarantee ||
+      booking.maxPayingGuests ||
+      "",
+
+    actualAdultGuests:
+      details.actualAdultGuests ||
+      "",
+
+    actualChildrenGuests:
+      details.actualChildrenGuests ||
+      "",
+
+    ethnicBreakdown:
+      details.ethnicBreakdown ||
+      "",
+
+    adultRateQuoted:
+      details.adultRateQuoted ||
+      booking.guestRate ||
+      "",
+
+    childRateQuoted:
+      details.childRateQuoted ||
+      "",
+
+    numberOfNights:
+      details.numberOfNights ||
+      booking.nights ||
+      "",
+
+    numberOfMeals:
+      details.numberOfMeals ||
+      booking.mealCount ||
+      "",
+
+
+    /* =====================================================
+       BOOKING TIMELINE
+    ===================================================== */
+
+    inquiryDate:
+      details.inquiryDate ||
+      getInquiryDateInputValue(
+        booking.submittedAt
+      ) ||
+      getTodayInputValue(),
+
+    contractSentDate:
+      details.contractSentDate ||
+      "",
+
+    returnContractByDate:
+      details.returnContractByDate ||
+      "",
+
+    contractReturnedDate:
+      details.contractReturnedDate ||
+      "",
+
+
+    /* =====================================================
+       PAYMENTS / DOCUMENTS
+    ===================================================== */
+
+    depositReceivedDate:
+      details.depositReceivedDate ||
+      booking.depositReceived ||
+      "",
+
+    depositAmount:
+      details.depositAmount ||
+      booking.deposit ||
+      "",
+
+    insuranceCertificateDate:
+      details.insuranceCertificateDate ||
+      "",
+
+    notificationDate:
+      details.notificationDate ||
+      "",
+
+    paymentMethod:
+      details.paymentMethod ||
+      "",
+
+
+    /* =====================================================
+       ARRIVAL / DEPARTURE
+    ===================================================== */
+
+    arrivalTime:
+      details.arrivalTime ||
+      "",
+
+    departureTime:
+      details.departureTime ||
+      "",
+
+
+    /* =====================================================
+       MEALS
+    ===================================================== */
+
+    mealSchedule:
+      savedMealSchedule,
+
+    firstMeal:
+      details.firstMeal ||
+      "",
+
+    lastMeal:
+      details.lastMeal ||
+      "",
+
+    breakfastTime:
+      details.breakfastTime ||
+      "",
+
+    lunchTime:
+      details.lunchTime ||
+      "",
+
+    dinnerTime:
+      details.dinnerTime ||
+      "",
+
+    allergies:
+      savedAllergies,
+
+    allergyNotes:
+      details.allergyNotes ||
+      "",
+
+    mealNotes:
+      details.mealNotes ||
+      booking.needToKnow ||
+      "",
+
+
+    /* =====================================================
+       LODGING
+    ===================================================== */
+
+    lodgingBethel:
+      details.lodgingBethel ||
+      "",
+
+    lodgingHebronThird:
+      details.lodgingHebronThird ||
+      "",
+
+    lodgingHebronBunks:
+      details.lodgingHebronBunks ||
+      "",
+
+    lodgingDothan:
+      details.lodgingDothan ||
+      "",
+
+    lodgingAjalon:
+      details.lodgingAjalon ||
+      "",
+
+    lodgingCapernaum:
+      details.lodgingCapernaum ||
+      "",
+
+    lodgingGuestHouse:
+      details.lodgingGuestHouse ||
+      "",
+
+
+    /* =====================================================
+       LINENS
+    ===================================================== */
+
+    linenOption:
+      details.linenOption ||
+      "No",
+
+    linenSets:
+      details.linenSets ||
+      "",
+
+
+    /* =====================================================
+       NOTES
+    ===================================================== */
+
+    notes:
+      details.notes ||
+      booking.notes ||
+      "",
+
+
+    /* =====================================================
+       EXISTING RECORD WORKFLOW
+    ===================================================== */
+
+    status:
+      booking.status ||
+      "Inquiry",
+
+    waitlist:
+      booking.waitlist ||
+      "No",
+
+
+    /* =====================================================
+       INQUIRY-CONVERSION METADATA
+       Do not lose these when editing.
+    ===================================================== */
+
+    sourceInquiryId:
+      details.sourceInquiryId ||
+      "",
+
+    sourceInquirySheet:
+      details.sourceInquirySheet ||
+      "",
+
+    sourceInquiryRowNumber:
+      details.sourceInquiryRowNumber ||
+      "",
+
+    sourceInquiryDesiredDatesText:
+      details.sourceInquiryDesiredDatesText ||
+      "",
+
+    sourceInquiryEstimatedSize:
+      details.sourceInquiryEstimatedSize ||
+      "",
+
+    sourceInquiryDisposition:
+      details.sourceInquiryDisposition ||
+      "",
+  };
+}
+
 
 /* =========================================================
    HELPERS
@@ -979,11 +1340,28 @@ function getInitialBookingStatus(formData) {
 
 export default function CreateBooking({
   initialInquiry = null,
+
+  existingBooking = null,
+
   onBookingCreated,
+  onBookingUpdated,
+
+  embedded = false,
 }) {
-  const [formData, setFormData] = useState(() =>
-    createInitialFormState(initialInquiry)
-  );
+
+  const isEditMode = Boolean(existingBooking);
+
+  const [formData, setFormData] = useState(() => {
+    if (existingBooking) {
+      return createExistingBookingFormState(
+        existingBooking
+      );
+    }
+
+    return createInitialFormState(
+      initialInquiry
+    );
+  });
 
   const [wasSubmitted, setWasSubmitted] =
     useState(false);
@@ -1009,10 +1387,29 @@ export default function CreateBooking({
       value,
     } = event.target;
 
-    setFormData((current) => ({
-      ...current,
-      [name]: value,
-    }));
+    setFormData((current) => {
+      const updatedForm = {
+        ...current,
+        [name]: value,
+      };
+
+      /*
+        Keep the nights field synchronized with
+        arrival/departure dates.
+      */
+      if (
+        name === "startDate" ||
+        name === "endDate"
+      ) {
+        updatedForm.numberOfNights =
+          getNumberOfNightsBetweenDates(
+            updatedForm.startDate,
+            updatedForm.endDate
+          );
+      }
+
+      return updatedForm;
+    });
   };
 
 
@@ -1189,15 +1586,33 @@ export default function CreateBooking({
       const submittedAt =
         formData.inquiryDate
           ? `${formData.inquiryDate}T12:00:00.000Z`
-          : new Date().toISOString();
+          : existingBooking?.submittedAt ||
+            new Date().toISOString();
 
-      const newBooking = {
+      const bookingToSave = {
+        /*
+          In edit mode preserve everything already
+          attached to this booking, such as:
+            - portal data
+            - checklist data
+            - assignments
+            - imported metadata
+            - existing ID
+        */
+        ...(existingBooking || {}),
+
         id:
+          existingBooking?.id ||
           window.crypto?.randomUUID?.() ||
           String(Date.now()),
 
-        sourceType: "Staff Booking",
-        detectedImportType: "Staff Booking",
+        sourceType:
+          existingBooking?.sourceType ||
+          "Staff Booking",
+
+        detectedImportType:
+          existingBooking?.detectedImportType ||
+          "Staff Booking",
 
         submittedAt,
 
@@ -1234,11 +1649,20 @@ export default function CreateBooking({
           formData.retreatType,
 
         status:
-          getInitialBookingStatus(formData),
+          isEditMode
+            ? formData.status
+            : getInitialBookingStatus(
+                formData
+              ),
 
-        waitlist: "No",
+        waitlist:
+          isEditMode
+            ? formData.waitlist
+            : "No",
 
-        roomName: "Unassigned",
+        roomName:
+          existingBooking?.roomName ||
+          "Unassigned",
 
         buildingsRooms:
           lodgingSummary,
@@ -1246,7 +1670,9 @@ export default function CreateBooking({
         meals:
           mealsSummary,
 
-        activities: "",
+        activities:
+          existingBooking?.activities ||
+          "",
 
         linenSets:
           linenSummary,
@@ -1259,6 +1685,12 @@ export default function CreateBooking({
 
         minPayingGuests:
           formData.minimumGuarantee,
+
+        maxPayingGuests:
+          formData.maximumGuarantee,
+
+        guestRate:
+          formData.adultRateQuoted,
 
         deposit:
           formData.depositAmount,
@@ -1286,6 +1718,20 @@ export default function CreateBooking({
           staff form inside raw_data.
         */
         rentalFormDetails: {
+          /*
+            Preserve anything that may have previously
+            existed but is not currently represented
+            by the form.
+          */
+          ...(
+            existingBooking?.rentalFormDetails ||
+            {}
+          ),
+
+          /*
+            Then overwrite it with the newly edited
+            field values.
+          */
           ...formData,
 
           numberOfMeals:
@@ -1302,30 +1748,67 @@ export default function CreateBooking({
       };
 
 
-      const savedBooking =
-        await upsertBooking(newBooking);
+      let savedBooking;
+
+      if (
+        isEditMode &&
+        onBookingUpdated
+      ) {
+        savedBooking =
+          await onBookingUpdated(
+            bookingToSave
+          );
+      } else {
+        savedBooking =
+          await upsertBooking(
+            bookingToSave
+          );
+      }
 
       console.log(
-        "Saved guest group:",
+        isEditMode
+          ? "Updated guest group:"
+          : "Saved guest group:",
         savedBooking
       );
 
 
       /*
-        Tell Dashboard that the inquiry-based
-        booking was successfully created.
-
-        This clears the prefill source so opening
-        the normal Form later stays blank.
+        EDIT MODE
       */
-      onBookingCreated?.(savedBooking);
+      if (isEditMode) {
+        setWasSubmitted(true);
 
+        /*
+          Reload the state from the saved record
+          so everything reflects the canonical
+          saved values.
+        */
+        if (savedBooking) {
+          setFormData(
+            createExistingBookingFormState(
+              savedBooking
+            )
+          );
+        }
+
+        return;
+      }
+
+
+      /*
+        CREATE MODE
+      */
+      onBookingCreated?.(
+        savedBooking
+      );
 
       setWasSubmitted(true);
 
       setFormData(
         createInitialFormState()
       );
+
     } catch (error) {
       console.error(
         "Could not save guest group:",
@@ -1342,7 +1825,13 @@ export default function CreateBooking({
 
 
   return (
-    <main className="rental-page">
+    <main
+      className={`rental-page ${
+        embedded
+          ? "rental-page-embedded"
+          : ""
+      }`}
+    >
       <section className="rental-card">
 
         {/* =====================================================
@@ -1354,15 +1843,21 @@ export default function CreateBooking({
             {/* Toah Nipi Christian Retreat Center */}
           </p>
 
-          <h1>Staff Facing: Group Booking Form</h1>
+          <h1>
+            {isEditMode
+              ? "Edit Booking Details"
+              : "Staff Facing: Group Booking Form"}
+          </h1>
 
-            <button
-              className="rental-test-data-button"
-              type="button"
-              onClick={handleFillTestData}
-            >
-              Fill Test Data
-            </button>
+            {!isEditMode && (
+              <button
+                className="rental-test-data-button"
+                type="button"
+                onClick={handleFillTestData}
+              >
+                Fill Test Data
+              </button>
+            )}
 
         </header>
 
@@ -1427,12 +1922,18 @@ export default function CreateBooking({
             <FaCheckCircle />
 
             <div>
-              <strong>Guest group saved.</strong>
+              <strong>
+                {isEditMode
+                  ? "Booking updated."
+                  : "Guest group saved."}
+              </strong>
 
               <span>
-                The booking has been added to the
-                staff dashboard.
+                {isEditMode
+                  ? "Your changes have been saved."
+                  : "The booking has been added to the staff dashboard."}
               </span>
+
             </div>
           </div>
         )}
@@ -1683,7 +2184,6 @@ export default function CreateBooking({
 
                     <input
                       type="text"
-                      min="0"
                       name="approxTotalGuests"
                       value={
                         formData.approxTotalGuests
@@ -2509,6 +3009,88 @@ export default function CreateBooking({
             </div>
           </section>
 
+          {isEditMode && (
+            <section className="rental-form-section">
+              <header className="rental-section-header">
+                <div className="rental-section-icon">
+                  <FaFileContract />
+                </div>
+
+                <div>
+                  <h2>
+                    Booking Status
+                  </h2>
+
+                  <p>
+                    Internal workflow state for this booking.
+                  </p>
+                </div>
+              </header>
+
+
+              <div className="rental-section-body">
+                <div className="rental-field-grid">
+
+                  <label className="rental-field">
+                    <span>Status</span>
+
+                    <select
+                      name="status"
+                      value={
+                        formData.status ||
+                        "Inquiry"
+                      }
+                      onChange={handleChange}
+                    >
+                      <option value="Inquiry">
+                        Inquiry
+                      </option>
+
+                      <option value="Contract Sent">
+                        Contract Sent
+                      </option>
+
+                      <option value="Confirmed">
+                        Confirmed
+                      </option>
+
+                      <option value="Waitlist">
+                        Waitlist
+                      </option>
+
+                      <option value="Cancelled">
+                        Cancelled
+                      </option>
+                    </select>
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>Waitlist</span>
+
+                    <select
+                      name="waitlist"
+                      value={
+                        formData.waitlist ||
+                        "No"
+                      }
+                      onChange={handleChange}
+                    >
+                      <option value="No">
+                        No
+                      </option>
+
+                      <option value="Yes">
+                        Yes
+                      </option>
+                    </select>
+                  </label>
+
+                </div>
+              </div>
+            </section>
+          )}
+
 
           {/* ===================================================
               NOTES
@@ -2559,7 +3141,9 @@ export default function CreateBooking({
             >
               {isSubmitting
                 ? "Saving..."
-                : "Save Guest Group"}
+                : isEditMode
+                  ? "Save Changes"
+                  : "Save Guest Group"}
             </button>
           </div>
 
