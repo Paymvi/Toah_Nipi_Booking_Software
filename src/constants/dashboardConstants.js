@@ -54,26 +54,68 @@ export const monthNames = [
 export const sidebarSections = [
   {
     label: "Rentals & Events",
+
     items: [
-      { label: "Calendar View", icon: FaCalendarAlt },
-      { label: "Spreadsheet View", icon: FaTable },
+      {
+        label: "Calendar",
+        view: "Calendar View",
+        icon: FaCalendarAlt,
+      },
+
+      {
+        label: "Master Spreadsheet",
+        view: "Spreadsheet View",
+        icon: FaTable,
+      },
+
       {
         label: "Inquiry Spreadsheet",
+        view: "Inquiry Spreadsheet",
         icon: FaClipboardList,
       },
-      { label: "Contacts View", icon: FaUsers },
-      { label: "Inquiry Pipeline", icon: FaClipboardList, hasBadge: true },
+
+      {
+        label: "Contacts",
+        view: "Contacts View",
+        icon: FaUsers,
+      },
+
+      {
+        label: "Inquiry Pipeline",
+        view: "Inquiry Pipeline",
+        icon: FaClipboardList,
+        hasBadge: true,
+      },
     ],
   },
+
   {
     label: "Reporting",
-    items: [{ label: "Reports", icon: FaChartBar }],
+
+    items: [
+      {
+        label: "Reports",
+        view: "Reports",
+        icon: FaChartBar,
+      },
+    ],
   },
+
   {
     label: "Administration",
+
     items: [
-      { label: "User Admin", icon: FaUserShield },
-      { label: "Jobs", icon: FaTasks },
+      {
+        label: "User Admin",
+        view: "User Admin",
+        icon: FaUserShield,
+      },
+
+      {
+        label: "Jobs",
+        view: "Jobs",
+        icon: FaTasks,
+      },
     ],
   },
 ];

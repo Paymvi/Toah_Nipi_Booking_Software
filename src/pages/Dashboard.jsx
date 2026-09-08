@@ -2751,6 +2751,169 @@ function BookingDetailRow({ label, value, icon: Icon, tone = "default" }) {
   );
 }
 
+/* =========================================================
+   BOOKING INCIDENT NOTES
+   Stored inside rentalFormDetails.incidentNotes
+========================================================= */
+
+function BookingIncidentNotesCard({ booking, onSaveBooking }) {
+  const getSavedIncidentNotes = () =>
+    String(
+      booking?.rentalFormDetails?.incidentNotes || ""
+    );
+
+  const [incidentNotes, setIncidentNotes] = useState(
+    getSavedIncidentNotes
+  );
+
+  const [isEditingIncidentNotes, setIsEditingIncidentNotes] =
+    useState(false);
+
+  useEffect(() => {
+    setIncidentNotes(getSavedIncidentNotes());
+    setIsEditingIncidentNotes(false);
+  }, [
+    booking.id,
+    booking.rentalFormDetails?.incidentNotes,
+  ]);
+
+  const handleCancelIncidentNotes = () => {
+    setIncidentNotes(getSavedIncidentNotes());
+    setIsEditingIncidentNotes(false);
+  };
+
+  const handleSaveIncidentNotes = async () => {
+    const updatedBooking = {
+      ...booking,
+
+      rentalFormDetails: {
+        ...(booking.rentalFormDetails || {}),
+
+        incidentNotes:
+          incidentNotes.trim(),
+      },
+
+      updatedAt: new Date().toISOString(),
+    };
+
+    await onSaveBooking(updatedBooking);
+
+    setIsEditingIncidentNotes(false);
+  };
+
+  const hasIncidentNotes =
+    Boolean(
+      String(
+        booking?.rentalFormDetails?.incidentNotes || ""
+      ).trim()
+    );
+
+  return (
+    <section className="dashboard-card booking-incident-notes-card">
+      <div className="booking-incident-notes-header">
+        <div className="booking-incident-notes-title">
+          <span className="booking-incident-notes-icon">
+            <FaExclamationTriangle />
+          </span>
+
+          <div>
+            <p className="dashboard-eyebrow">
+              Internal Record
+            </p>
+
+            <h3>Incident Notes</h3>
+
+            <span>
+              Document incidents, concerns, actions taken,
+              and any staff follow-up.
+            </span>
+          </div>
+        </div>
+
+        <div className="booking-incident-notes-actions">
+          {isEditingIncidentNotes ? (
+            <>
+              <button
+                className="secondary-dashboard-button"
+                type="button"
+                onClick={
+                  handleCancelIncidentNotes
+                }
+              >
+                Cancel
+              </button>
+
+              <button
+                className="primary-dashboard-button"
+                type="button"
+                onClick={
+                  handleSaveIncidentNotes
+                }
+              >
+                Save Incident Notes
+              </button>
+            </>
+          ) : (
+            <button
+              className="secondary-dashboard-button"
+              type="button"
+              onClick={() =>
+                setIsEditingIncidentNotes(true)
+              }
+            >
+              {hasIncidentNotes
+                ? "Edit Incident Notes"
+                : "Add Incident Notes"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {isEditingIncidentNotes ? (
+        <label className="booking-incident-notes-field">
+          <span>Incident Record</span>
+
+          <textarea
+            rows="7"
+            value={incidentNotes}
+            onChange={(event) =>
+              setIncidentNotes(
+                event.target.value
+              )
+            }
+            placeholder="Example: 9/8/2026 — Guest reported an injury near the dining hall. First aid was provided. Staff followed up with the group leader."
+          />
+        </label>
+      ) : hasIncidentNotes ? (
+        <div className="booking-incident-notes-display">
+          <p>
+            {
+              booking.rentalFormDetails
+                .incidentNotes
+            }
+          </p>
+        </div>
+      ) : (
+        <div className="booking-incident-notes-empty">
+          <FaExclamationTriangle />
+
+          <div>
+            <strong>
+              No incidents recorded
+            </strong>
+
+            <p>
+              Add a note if an incident,
+              concern, or important follow-up
+              occurs during this booking.
+            </p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function createBookingEditFormState(booking) {
   return {
     organizationName: booking.organizationName || "",
@@ -4507,23 +4670,28 @@ function BookingDetailView({
       )}
 
 {activeTab === "Details" && (
-  isStaffBookingRecord(booking) ? (
-    <CreateBooking
-      key={`edit-booking-${booking.id}`}
-      existingBooking={booking}
-      onBookingUpdated={
-        onSaveBooking
-      }
-      embedded
-    />
-  ) : (
-    <BookingDetailsEditForm
+  <div className="booking-details-tab-stack">
+
+    <BookingIncidentNotesCard
       booking={booking}
-      onSaveBooking={
-        onSaveBooking
-      }
+      onSaveBooking={onSaveBooking}
     />
-  )
+
+    {isStaffBookingRecord(booking) ? (
+      <CreateBooking
+        key={`edit-booking-${booking.id}`}
+        existingBooking={booking}
+        onBookingUpdated={onSaveBooking}
+        embedded
+      />
+    ) : (
+      <BookingDetailsEditForm
+        booking={booking}
+        onSaveBooking={onSaveBooking}
+      />
+    )}
+
+  </div>
 )}
 
 {activeTab === "Housing" && <BookingHousingTab booking={booking} />}
@@ -7163,36 +7331,55 @@ const getCalendarEventColor = (status) => {
         </div>
 
         {sidebarSections.map((section) => (
-          <div className="sidebar-section" key={section.label}>
+          <div
+            className="sidebar-section"
+            key={section.label}
+          >
             <p>{section.label}</p>
 
             {section.items.map((item) => {
               const Icon = item.icon;
 
+              const targetView =
+                item.view || item.label;
+
               return (
                 <button
                   className={`sidebar-link ${
-                    activeView === item.label ? "sidebar-link-active" : ""
+                    activeView === targetView
+                      ? "sidebar-link-active"
+                      : ""
                   }`}
                   key={item.label}
                   type="button"
                   title={item.label}
                   onClick={() => {
                     setSelectedBooking(null);
-                    setBookingDetailTab("Overview");
-                    handleActiveViewChange(item.label);
+
+                    setBookingDetailTab(
+                      "Overview"
+                    );
+
+                    handleActiveViewChange(
+                      targetView
+                    );
                   }}
                 >
                   <Icon />
-                  <span>{item.label}</span>
 
-                  {item.hasBadge && inquiryPipelineNeedsReviewCount > 0 && (
-                    <strong className="sidebar-badge">
-                      {item.label === "Inquiry Pipeline"
-                        ? inquiryPipelineNeedsReviewCount
-                        : inquiryBookings.length}
-                    </strong>
-                  )}
+                  <span>
+                    {item.label}
+                  </span>
+
+                  {item.hasBadge &&
+                    inquiryPipelineNeedsReviewCount > 0 && (
+                      <strong className="sidebar-badge">
+                        {item.label ===
+                        "Inquiry Pipeline"
+                          ? inquiryPipelineNeedsReviewCount
+                          : inquiryBookings.length}
+                      </strong>
+                    )}
                 </button>
               );
             })}
