@@ -3785,6 +3785,100 @@
   font-weight: 700;
 }
 
+/* =========================================================
+   OVERVIEW SUBSECTIONS
+========================================================= */
+
+.booking-overview-subsections {
+  display: flex;
+  flex-direction: column;
+}
+
+.booking-overview-subsection {
+  min-width: 0;
+}
+
+.booking-overview-subsection + .booking-overview-subsection {
+  margin-top: 14px;
+  padding-top: 13px;
+
+  border-top: 1px solid #e8ecf1;
+}
+
+.booking-overview-subsection > h4 {
+  margin: 0 0 7px;
+
+  color: #667085;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  letter-spacing: 0.035em;
+}
+
+
+/*
+  Makes the subsection title feel like a quiet
+  organizational label instead of another large heading.
+*/
+
+.booking-overview-subsection:first-child > h4 {
+  color: #596576;
+}
+
+
+/*
+  Three-column sections need their final three rows
+  to lose the bottom separator instead of only two.
+*/
+
+.booking-overview-subsection
+.booking-overview-field-grid-3
+.booking-overview-field:nth-last-child(-n + 3) {
+  border-bottom-color: transparent;
+}
+
+/* =========================================================
+   SIDEBAR ARRIVAL / DEPARTURE TIMES
+========================================================= */
+
+.booking-overview-sidebar-times {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 12px;
+
+  margin-top: 10px;
+  padding-top: 9px;
+
+  border-top: 1px solid #edf0f4;
+}
+
+.booking-overview-sidebar-times span {
+  min-width: 0;
+}
+
+.booking-overview-sidebar-times small {
+  display: block;
+
+  margin-bottom: 2px;
+
+  color: #949dab;
+
+  font-size: 0.64rem;
+  font-weight: 600;
+}
+
+.booking-overview-sidebar-times strong {
+  display: block;
+
+  color: #394354;
+
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
 
 /* =========================================================
    FIELD GRID

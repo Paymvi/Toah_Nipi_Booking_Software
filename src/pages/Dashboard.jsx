@@ -4464,12 +4464,12 @@ function BookingOverviewFieldGrid({
   );
 }
 
-
 function BookingOverviewSection({
   icon: Icon,
   eyebrow,
   title,
   fields = [],
+  groups = [],
   columns = 2,
   wide = false,
   children,
@@ -4480,7 +4480,20 @@ function BookingOverviewSection({
       hasBookingOverviewValue(field.value)
   );
 
-  if (!hasVisibleFields && !children) {
+  const visibleGroups = groups.filter(
+    (group) =>
+      (group.fields || []).some(
+        (field) =>
+          field.showEmpty ||
+          hasBookingOverviewValue(field.value)
+      )
+  );
+
+  if (
+    !hasVisibleFields &&
+    visibleGroups.length === 0 &&
+    !children
+  ) {
     return null;
   }
 
@@ -4508,6 +4521,30 @@ function BookingOverviewSection({
           fields={fields}
           columns={columns}
         />
+      )}
+
+      {visibleGroups.length > 0 && (
+        <div className="booking-overview-subsections">
+          {visibleGroups.map(
+            (group, index) => (
+              <section
+                className="booking-overview-subsection"
+                key={`${title}-${group.title}-${index}`}
+              >
+                {group.title && (
+                  <h4>{group.title}</h4>
+                )}
+
+                <BookingOverviewFieldGrid
+                  fields={group.fields}
+                  columns={
+                    group.columns || 2
+                  }
+                />
+              </section>
+            )
+          )}
+        </div>
       )}
 
       {children}
@@ -4756,48 +4793,47 @@ function BookingOverview({
 
 
   /* =====================================================
-     FIELD GROUPS
+    CREATE-BOOKING-STYLE OVERVIEW GROUPS
   ===================================================== */
 
-  const contactFields = [
-    {
-      label: "Primary Contact",
-      value: booking.contactName,
-      showEmpty: true,
-    },
-    {
-      label: "Email",
-      value: booking.email,
-    },
-    {
-      label: "Phone",
-      value: booking.phone,
-    },
-    {
-      label: "Mailing Address",
-      value: mailingAddress,
-      multiline: true,
-    },
-  ];
 
+  /* =====================================================
+    GUEST INFORMATION
+  ===================================================== */
 
-  const guestFields = [
+  const approximateGuestFields = [
     {
-      label: "Total Guests",
-      value: summaryGuests,
-      showEmpty: true,
+      label: "Estimated Total Guests",
+      value: details.approxTotalGuests,
     },
 
     {
       label: "Approx. Adults",
-      value:
-        details.approxAdultGuests,
+      value: details.approxAdultGuests,
     },
 
     {
       label: "Approx. Children",
-      value:
-        details.approxChildrenGuests,
+      value: details.approxChildrenGuests,
+    },
+
+    {
+      label: "Minimum Guarantee",
+      value: minimumGuarantee,
+    },
+
+    {
+      label: "Maximum Guarantee",
+      value: maximumGuarantee,
+    },
+  ];
+
+
+  const actualGuestFields = [
+    {
+      label: "Total / Recorded Guests",
+      value: summaryGuests,
+      showEmpty: true,
     },
 
     {
@@ -4826,20 +4862,41 @@ function BookingOverview({
     },
 
     {
-      label: "Minimum Guarantee",
-      value: minimumGuarantee,
-    },
-
-    {
-      label: "Maximum Guarantee",
-      value: maximumGuarantee,
+      label: "# Persons",
+      value: booking.persons,
     },
 
     {
       label: "Ethnic Breakdown",
-      value:
-        details.ethnicBreakdown,
+      value: details.ethnicBreakdown,
       multiline: true,
+    },
+  ];
+
+
+  const ratesAndStayFields = [
+    {
+      label: "Adult / Guest Rate",
+      value: formatBookingOverviewMoney(
+        adultRate
+      ),
+    },
+
+    {
+      label: "Child Rate",
+      value: formatBookingOverviewMoney(
+        details.childRateQuoted
+      ),
+    },
+
+    {
+      label: "# Nights",
+      value: numberOfNights,
+    },
+
+    {
+      label: "# Meals",
+      value: numberOfMeals,
     },
 
     {
@@ -4849,65 +4906,262 @@ function BookingOverview({
   ];
 
 
-  const stayFields = [
+  /* =====================================================
+    BOOKING TIMELINE
+  ===================================================== */
+
+  const timelineFields = [
     {
-      label: "Arrival Date",
+      label: "Inquiry Date",
+      value: details.inquiryDate
+        ? formatBookingDetailDate(
+            details.inquiryDate,
+            dateSettings
+          )
+        : "",
+    },
+
+    {
+      label: "Contract Sent",
+      value: details.contractSentDate
+        ? formatBookingDetailDate(
+            details.contractSentDate,
+            dateSettings
+          )
+        : "",
+    },
+
+    {
+      label: "Return Contract By",
+      value: details.returnContractByDate
+        ? formatBookingDetailDate(
+            details.returnContractByDate,
+            dateSettings
+          )
+        : "",
+    },
+
+    {
+      label: "Contract Returned",
+      value: details.contractReturnedDate
+        ? formatBookingDetailDate(
+            details.contractReturnedDate,
+            dateSettings
+          )
+        : "",
+    },
+  ];
+
+
+  /* =====================================================
+    PAYMENTS & DOCUMENTS
+  ===================================================== */
+
+  const paymentDocumentFields = [
+    {
+      label: "Deposit Received",
+      value: depositReceived,
+    },
+
+    {
+      label: "Deposit Amount",
+      value: formatBookingOverviewMoney(
+        depositAmount
+      ),
+    },
+
+    {
+      label: "Insurance Certificate",
       value:
-        formatBookingDetailDate(
-          booking.startDate,
-          dateSettings
-        ),
-      showEmpty: true,
+        details.insuranceCertificateDate
+          ? formatBookingDetailDate(
+              details.insuranceCertificateDate,
+              dateSettings
+            )
+          : "",
     },
 
     {
-      label: "Departure Date",
+      label: "Notification Date",
+      value: details.notificationDate
+        ? formatBookingDetailDate(
+            details.notificationDate,
+            dateSettings
+          )
+        : "",
+    },
+
+    {
+      label: "Payment Method",
+      value: details.paymentMethod,
+    },
+  ];
+
+
+  const billingFields = [
+    {
+      label: "Expected Minimum Revenue",
+      value: formatBookingOverviewMoney(
+        booking.expectedMinimumRevenue
+      ),
+    },
+
+    {
+      label: "Invoice — Lodging & Meals",
+      value: formatBookingOverviewMoney(
+        booking.invoiceLodgingMeals
+      ),
+    },
+
+    {
+      label: "Usage Fee",
+      value: formatBookingOverviewMoney(
+        booking.usageFee
+      ),
+    },
+
+    {
+      label: "Lodging",
+      value: formatBookingOverviewMoney(
+        booking.lodgingCost
+      ),
+    },
+
+    {
+      label: "Food",
+      value: formatBookingOverviewMoney(
+        booking.foodCost
+      ),
+    },
+
+    {
+      label: "Misc.",
+      value: formatBookingOverviewMoney(
+        booking.miscCost
+      ),
+    },
+
+    {
+      label: "Monthly Projected Income",
+      value: formatBookingOverviewMoney(
+        booking.monthlyProjectedIncome
+      ),
+    },
+  ];
+
+
+  /* =====================================================
+    MEALS & PROGRAM
+  ===================================================== */
+
+  const mealPlanFields = [
+    {
+      label: "Meal Plan",
+      value: booking.meals,
+      multiline: true,
+    },
+
+    {
+      label: "# Meals",
+      value: numberOfMeals,
+    },
+
+    {
+      label: "First Meal",
+      value: details.firstMeal,
+    },
+
+    {
+      label: "Last Meal",
+      value: details.lastMeal,
+    },
+
+    {
+      label: "Breakfast Time",
+      value: details.breakfastTime,
+    },
+
+    {
+      label: "Lunch Time",
+      value: details.lunchTime,
+    },
+
+    {
+      label: "Dinner Time",
+      value: details.dinnerTime,
+    },
+  ];
+
+
+  const dietaryFields = [
+    {
+      label: "Food Allergies",
+      value: booking.foodAllergies,
+      multiline: true,
+      tone: "warning",
+    },
+
+    {
+      label: "Meal Notes",
+      value: details.mealNotes,
+      multiline: true,
+    },
+
+    {
+      label: "Need To Know",
       value:
-        formatBookingDetailDate(
-          booking.endDate,
-          dateSettings
-        ),
-      showEmpty: true,
+        String(
+          booking.needToKnow || ""
+        ).trim() !==
+        String(
+          details.mealNotes || ""
+        ).trim()
+          ? booking.needToKnow
+          : "",
+      multiline: true,
+      tone: "warning",
+    },
+  ];
+
+
+  const activityFields = [
+    {
+      label: "Activities",
+      value: booking.activities,
+      multiline: true,
     },
 
     {
-      label: "# Nights",
-      value: numberOfNights,
+      label: "Schedule",
+      value: booking.schedule,
+      multiline: true,
     },
+  ];
 
-    {
-      label: "Arrival Time",
-      value: details.arrivalTime,
-    },
 
-    {
-      label: "Departure Time",
-      value: details.departureTime,
-    },
+  /* =====================================================
+    LODGING & LINENS
+  ===================================================== */
 
+  const assignedRoomValue =
+    booking.roomName &&
+    booking.roomName !== "Unassigned" &&
+    booking.roomName !==
+      booking.buildingsRooms
+      ? booking.roomName
+      : "";
+
+
+  const housingAssignmentFields = [
     {
       label: "Assigned Room / Area",
-      value: booking.roomName,
+      value: assignedRoomValue,
     },
 
     {
       label: "Buildings / Rooms",
       value: booking.buildingsRooms,
       multiline: true,
-    },
-
-    {
-      label: "Linen Option",
-      value: details.linenOption,
-    },
-
-    {
-      label: "Linen Sets",
-      value:
-        firstBookingOverviewValue(
-          details.linenSets,
-          booking.linenSets
-        ),
     },
   ];
 
@@ -4942,8 +5196,7 @@ function BookingOverview({
 
     {
       label: "Capernaum",
-      value:
-        details.lodgingCapernaum,
+      value: details.lodgingCapernaum,
     },
 
     {
@@ -4954,78 +5207,27 @@ function BookingOverview({
   ];
 
 
-  const programFields = [
+  const linenFields = [
     {
-      label: "Meals",
-      value: booking.meals,
-      multiline: true,
+      label: "Linen Option",
+      value: details.linenOption,
     },
 
     {
-      label: "# Meals",
-      value: numberOfMeals,
-    },
-
-    {
-      label: "First Meal",
-      value: details.firstMeal,
-    },
-
-    {
-      label: "Last Meal",
-      value: details.lastMeal,
-    },
-
-    {
-      label: "Breakfast Time",
-      value: details.breakfastTime,
-    },
-
-    {
-      label: "Lunch Time",
-      value: details.lunchTime,
-    },
-
-    {
-      label: "Dinner Time",
-      value: details.dinnerTime,
-    },
-
-    {
-      label: "Meal Notes",
-      value: details.mealNotes,
-      multiline: true,
-    },
-
-    {
-      label: "Food Allergies",
-      value: booking.foodAllergies,
-      multiline: true,
-      tone: "warning",
-    },
-
-    {
-      label: "Activities",
-      value: booking.activities,
-      multiline: true,
-    },
-
-    {
-      label: "Schedule",
-      value: booking.schedule,
-      multiline: true,
-    },
-
-    {
-      label: "Need To Know",
-      value: booking.needToKnow,
-      multiline: true,
-      tone: "warning",
+      label: "Linen Sets",
+      value: firstBookingOverviewValue(
+        details.linenSets,
+        booking.linenSets
+      ),
     },
   ];
 
 
-  const workflowFields = [
+  /* =====================================================
+    BOOKING STATUS
+  ===================================================== */
+
+  const statusFields = [
     {
       label: "Status",
       value: booking.status,
@@ -5034,97 +5236,25 @@ function BookingOverview({
 
     {
       label: "Stage of Group",
-      value:
-        firstBookingOverviewValue(
-          booking.stageOfGroup,
-          booking.inquiryDisposition
-        ),
+      value: firstBookingOverviewValue(
+        booking.stageOfGroup,
+        booking.inquiryDisposition
+      ),
     },
 
     {
       label: "Returning / New",
-      value:
-        booking.returningStatus,
+      value: booking.returningStatus,
     },
 
     {
       label: "Waitlist",
       value: booking.waitlist,
     },
+  ];
 
-    {
-      label: "Inquiry Date",
-      value: details.inquiryDate
-        ? formatBookingDetailDate(
-            details.inquiryDate,
-            dateSettings
-          )
-        : "",
-    },
 
-    {
-      label: "Contract Sent",
-      value: details.contractSentDate
-        ? formatBookingDetailDate(
-            details.contractSentDate,
-            dateSettings
-          )
-        : "",
-    },
-
-    {
-      label: "Return Contract By",
-      value:
-        details.returnContractByDate
-          ? formatBookingDetailDate(
-              details.returnContractByDate,
-              dateSettings
-            )
-          : "",
-    },
-
-    {
-      label: "Contract Returned",
-      value:
-        details.contractReturnedDate
-          ? formatBookingDetailDate(
-              details.contractReturnedDate,
-              dateSettings
-            )
-          : "",
-    },
-
-    {
-      label: "Deposit Received",
-      value: depositReceived,
-    },
-
-    {
-      label: "Insurance Certificate",
-      value:
-        details.insuranceCertificateDate
-          ? formatBookingDetailDate(
-              details.insuranceCertificateDate,
-              dateSettings
-            )
-          : "",
-    },
-
-    {
-      label: "Notification Date",
-      value: details.notificationDate
-        ? formatBookingDetailDate(
-            details.notificationDate,
-            dateSettings
-          )
-        : "",
-    },
-
-    {
-      label: "Payment Method",
-      value: details.paymentMethod,
-    },
-
+  const cancellationFields = [
     {
       label: "Date of Cancellation",
       value: booking.dateOfCancellation
@@ -5149,132 +5279,14 @@ function BookingOverview({
   ];
 
 
-  const financialFields = [
-    {
-      label: "Adult / Guest Rate",
-      value:
-        formatBookingOverviewMoney(
-          adultRate
-        ),
-    },
-
-    {
-      label: "Child Rate",
-      value:
-        formatBookingOverviewMoney(
-          details.childRateQuoted
-        ),
-    },
-
-    {
-      label: "Expected Minimum Revenue",
-      value:
-        formatBookingOverviewMoney(
-          booking.expectedMinimumRevenue
-        ),
-    },
-
-    {
-      label: "Invoice — Lodging & Meals",
-      value:
-        formatBookingOverviewMoney(
-          booking.invoiceLodgingMeals
-        ),
-    },
-
-    {
-      label: "Deposit",
-      value:
-        formatBookingOverviewMoney(
-          depositAmount
-        ),
-    },
-
-    {
-      label: "Usage Fee",
-      value:
-        formatBookingOverviewMoney(
-          booking.usageFee
-        ),
-    },
-
-    {
-      label: "Lodging",
-      value:
-        formatBookingOverviewMoney(
-          booking.lodgingCost
-        ),
-    },
-
-    {
-      label: "Food",
-      value:
-        formatBookingOverviewMoney(
-          booking.foodCost
-        ),
-    },
-
-    {
-      label: "Misc.",
-      value:
-        formatBookingOverviewMoney(
-          booking.miscCost
-        ),
-    },
-
-    {
-      label: "Monthly Projected Income",
-      value:
-        formatBookingOverviewMoney(
-          booking.monthlyProjectedIncome
-        ),
-    },
-  ];
-
+  /* =====================================================
+    NOTES
+  ===================================================== */
 
   const notesFields = [
     {
-      label: "Staff / Booking Notes",
+      label: "Booking Notes",
       value: booking.notes,
-      multiline: true,
-    },
-  ];
-
-
-  const archiveFields = [
-    {
-      label: "Guest Group",
-      value:
-        booking.archiveGuestGroup,
-    },
-
-    {
-      label: "Visit Date",
-      value:
-        booking.archiveVisitDate
-          ? formatBookingDetailDate(
-              booking.archiveVisitDate,
-              dateSettings
-            )
-          : "",
-    },
-
-    {
-      label: "Visit Count",
-      value:
-        booking.archiveVisitCount,
-    },
-
-    {
-      label: "Prior Visit Dates",
-      value:
-        booking.archiveAllPriorVisitDates,
-      multiline: true,
-    },
-
-    {
-      label: "Address",
-      value: mailingAddress,
       multiline: true,
     },
   ];
@@ -5334,6 +5346,31 @@ function BookingOverview({
           <strong>
             {summaryDateRange}
           </strong>
+
+          {(details.arrivalTime ||
+            details.departureTime) && (
+            <div className="booking-overview-sidebar-times">
+
+              {details.arrivalTime && (
+                <span>
+                  <small>Arrival</small>
+                  <strong>
+                    {details.arrivalTime}
+                  </strong>
+                </span>
+              )}
+
+              {details.departureTime && (
+                <span>
+                  <small>Departure</small>
+                  <strong>
+                    {details.departureTime}
+                  </strong>
+                </span>
+              )}
+
+            </div>
+          )}
 
         </div>
 
@@ -5397,19 +5434,23 @@ function BookingOverview({
 
 
           <div>
-            <small>Waitlist</small>
+            <small>Nights</small>
 
             <strong>
-              {booking.waitlist || "No"}
+              {formatBookingOverviewValue(
+                numberOfNights
+              )}
             </strong>
           </div>
 
 
           <div>
-            <small>Status</small>
+            <small>Meals</small>
 
             <strong>
-              {booking.status || "—"}
+              {formatBookingOverviewValue(
+                numberOfMeals
+              )}
             </strong>
           </div>
 
@@ -5463,63 +5504,163 @@ function BookingOverview({
 
         <div className="booking-overview-grid">
 
-          <BookingOverviewSection
-            icon={FaBed}
-            eyebrow="Lodging"
-            title="Dates & Housing"
-            fields={stayFields}
-            columns={2}
-          />
-
+          {/* =====================================================
+              GUEST INFORMATION
+          ===================================================== */}
 
           <BookingOverviewSection
             icon={FaUsers}
-            eyebrow="Attendance"
+            eyebrow="Guests"
             title="Guest Information"
-            fields={guestFields}
-            columns={2}
+            wide
+            groups={[
+              {
+                title: "Approximate Guests",
+                fields: approximateGuestFields,
+                columns: 3,
+              },
+              {
+                title: "Actual Guests",
+                fields: actualGuestFields,
+                columns: 3,
+              },
+              {
+                title: "Rates & Stay",
+                fields: ratesAndStayFields,
+                columns: 3,
+              },
+            ]}
           />
 
 
-          <BookingOverviewSection
-            icon={FaUtensils}
-            eyebrow="Program Logistics"
-            title="Meals & Activities"
-            fields={programFields}
-            columns={2}
-          />
-
+          {/* =====================================================
+              TIMELINE
+          ===================================================== */}
 
           <BookingOverviewSection
-            icon={FaFileContract}
+            icon={FaCalendarAlt}
             eyebrow="Administration"
-            title="Booking Workflow"
-            fields={workflowFields}
-            columns={2}
+            title="Booking Timeline"
+            groups={[
+              {
+                title: "Contract Dates",
+                fields: timelineFields,
+                columns: 2,
+              },
+            ]}
           />
 
 
-          {isStaffRecord && (
-            <BookingOverviewSection
-              icon={FaBuilding}
-              eyebrow="Housing"
-              title="Lodging Breakdown"
-              fields={
-                lodgingBreakdownFields
-              }
-              columns={2}
-            />
-          )}
-
+          {/* =====================================================
+              PAYMENTS + DOCUMENTS
+          ===================================================== */}
 
           <BookingOverviewSection
             icon={FaDollarSign}
-            eyebrow="Billing"
-            title="Rates & Billing"
-            fields={financialFields}
-            columns={2}
+            eyebrow="Administration"
+            title="Payments & Documents"
+            groups={[
+              {
+                title: "Deposit & Documents",
+                fields: paymentDocumentFields,
+                columns: 2,
+              },
+              {
+                title: "Billing & Revenue",
+                fields: billingFields,
+                columns: 2,
+              },
+            ]}
           />
 
+
+          {/* =====================================================
+              MEALS
+          ===================================================== */}
+
+          <BookingOverviewSection
+            icon={FaUtensils}
+            eyebrow="Program"
+            title="Meals & Program"
+            wide
+            groups={[
+              {
+                title: "Meal Plan",
+                fields: mealPlanFields,
+                columns: 3,
+              },
+              {
+                title: "Dietary Information",
+                fields: dietaryFields,
+                columns: 2,
+              },
+              {
+                title: "Activities & Schedule",
+                fields: activityFields,
+                columns: 2,
+              },
+            ]}
+          />
+
+
+          {/* =====================================================
+              LODGING
+          ===================================================== */}
+
+          <BookingOverviewSection
+            icon={FaBed}
+            eyebrow="Housing"
+            title="Lodging & Linens"
+            wide
+            groups={[
+              {
+                title: "Housing Assignment",
+                fields:
+                  housingAssignmentFields,
+                columns: 2,
+              },
+              {
+                title: "Lodging Breakdown",
+                fields:
+                  lodgingBreakdownFields,
+                columns: 3,
+              },
+              {
+                title: "Linens",
+                fields: linenFields,
+                columns: 2,
+              },
+            ]}
+          />
+
+
+          {/* =====================================================
+              BOOKING STATUS
+          ===================================================== */}
+
+          <BookingOverviewSection
+            icon={FaFileContract}
+            eyebrow="Workflow"
+            title="Booking Status"
+            groups={[
+              {
+                title: "Current State",
+                fields: statusFields,
+                columns: 2,
+              },
+              {
+                title: "Cancellation",
+                fields:
+                  cancellationFields,
+                columns: 1,
+              },
+            ]}
+          />
+
+
+          {/* =====================================================
+              NOTES
+          ===================================================== */}
 
           <BookingOverviewSection
             icon={FaInfoCircle}
@@ -5527,9 +5668,12 @@ function BookingOverview({
             title="Additional Notes"
             fields={notesFields}
             columns={1}
-            wide
           />
 
+
+          {/* =====================================================
+              ARCHIVE
+          ===================================================== */}
 
           {isArchiveRecord && (
             <BookingOverviewSection
@@ -5540,7 +5684,6 @@ function BookingOverview({
               columns={2}
               wide
             >
-
               {(booking.archiveSourcePdfLink ||
                 archiveLinks.length > 0) && (
                 <div className="booking-overview-archive-links">
@@ -5575,7 +5718,6 @@ function BookingOverview({
 
                 </div>
               )}
-
             </BookingOverviewSection>
           )}
 
