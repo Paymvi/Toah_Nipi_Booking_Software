@@ -45,6 +45,7 @@ import {
   FaUserPlus,
   FaGlobeAmericas,
   FaMoon,
+  FaPen,
 } from "react-icons/fa";
 
 import {
@@ -4402,6 +4403,22 @@ function getBookingOverviewStatusClass(status) {
   return "status-neutral";
 }
 
+function parseBookingOverviewNumber(value) {
+  const text = String(value ?? "").trim();
+
+  if (!text) {
+    return null;
+  }
+
+  const numeric = Number(
+    text.replace(/[^0-9.-]/g, "")
+  );
+
+  return Number.isFinite(numeric)
+    ? numeric
+    : null;
+}
+
 
 function BookingOverviewField({
   label,
@@ -4570,6 +4587,339 @@ function BookingOverviewSection({
 
       {children}
     </article>
+  );
+}
+
+function BookingOverviewGuestCard({
+  icon: Icon,
+  title,
+  subtitle,
+  fields = [],
+  tone = "default",
+}) {
+  const visibleFields = fields.filter(
+    (field) =>
+      field.showEmpty ||
+      hasBookingOverviewValue(field.value)
+  );
+
+  if (visibleFields.length === 0) {
+    return null;
+  }
+
+  const rowFields = visibleFields.filter(
+    (field) => !field.multiline
+  );
+
+  const noteFields = visibleFields.filter(
+    (field) => field.multiline
+  );
+
+  return (
+    <section
+      className={[
+        "booking-overview-guest-card",
+        `booking-overview-guest-card-${tone}`,
+      ].join(" ")}
+    >
+      <div className="booking-overview-guest-card-header">
+        <span className="booking-overview-guest-card-icon">
+          <Icon />
+        </span>
+
+        <div>
+          <h3>{title}</h3>
+          {/* <p>{subtitle}</p> */}
+        </div>
+      </div>
+
+      <div className="booking-overview-guest-card-list">
+        {rowFields.map((field) => {
+          const FieldIcon = field.icon;
+
+          return (
+            <div
+              className="booking-overview-guest-row"
+              key={field.label}
+            >
+              <div className="booking-overview-guest-row-label">
+                {FieldIcon && (
+                  <FieldIcon className="booking-overview-guest-row-label-icon" />
+                )}
+
+                <span>{field.label}</span>
+              </div>
+
+              <strong>
+                {formatBookingOverviewValue(
+                  field.value
+                )}
+              </strong>
+            </div>
+          );
+        })}
+      </div>
+
+      {noteFields.length > 0 && (
+        <div className="booking-overview-guest-notes">
+          {noteFields.map((field) => {
+            const FieldIcon = field.icon;
+
+            return (
+              <div
+                className="booking-overview-guest-note"
+                key={field.label}
+              >
+                <div className="booking-overview-guest-note-label">
+                  {FieldIcon && (
+                    <FieldIcon className="booking-overview-guest-row-label-icon" />
+                  )}
+
+                  <span>{field.label}</span>
+                </div>
+
+                <div className="booking-overview-guest-note-value">
+                  {formatBookingOverviewValue(
+                    field.value
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+
+function BookingOverviewGuestShowcase({
+  estimatedGuests,
+  actualGuests,
+  minimumGuarantee,
+  maximumGuarantee,
+  numberOfNights,
+  numberOfMeals,
+  approximateGuestFields,
+  actualGuestFields,
+  ratesAndStayFields,
+  setActiveTab,
+}) {
+  const estimatedNumber =
+    parseBookingOverviewNumber(
+      estimatedGuests
+    );
+
+  const actualNumber =
+    parseBookingOverviewNumber(
+      actualGuests
+    );
+
+  const difference =
+    estimatedNumber !== null &&
+    actualNumber !== null
+      ? actualNumber - estimatedNumber
+      : null;
+
+  const guaranteeMinimumText =
+    hasBookingOverviewValue(
+      minimumGuarantee
+    )
+      ? formatBookingOverviewValue(
+          minimumGuarantee
+        )
+      : "";
+
+  const guaranteeMaximumText =
+    hasBookingOverviewValue(
+      maximumGuarantee
+    )
+      ? formatBookingOverviewValue(
+          maximumGuarantee
+        )
+      : "";
+
+  const guaranteeRangeText =
+    guaranteeMinimumText &&
+    guaranteeMaximumText
+      ? `${guaranteeMinimumText} – ${guaranteeMaximumText}`
+      : guaranteeMinimumText ||
+        guaranteeMaximumText ||
+        "—";
+
+  let differenceText = "";
+  let differenceClass =
+    "booking-overview-guest-summary-meta-neutral";
+
+  if (difference !== null) {
+    if (difference < 0) {
+      differenceText = `${Math.abs(
+        difference
+      )} fewer than estimated ↓`;
+      differenceClass =
+        "booking-overview-guest-summary-meta-down";
+    } else if (difference > 0) {
+      differenceText = `${difference} more than estimated ↑`;
+      differenceClass =
+        "booking-overview-guest-summary-meta-up";
+    } else {
+      differenceText =
+        "Matches estimated total";
+    }
+  }
+
+  return (
+    <section className="booking-overview-card booking-overview-card-wide booking-overview-guest-showcase">
+
+      <div className="booking-overview-guest-showcase-header">
+        <div className="booking-overview-guest-showcase-title">
+          <span className="booking-overview-guest-showcase-title-icon">
+            <FaUsers />
+          </span>
+
+          <div>
+            <p>Guests</p>
+            <h2>Guest Information</h2>
+            {/* <span>
+              Group size, attendance details, and stay preferences for this retreat.
+            </span> */}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          className="booking-overview-guest-showcase-edit"
+          onClick={() =>
+            setActiveTab("Details")
+          }
+        >
+          <FaPen />
+          <span>Edit Information</span>
+        </button>
+      </div>
+
+
+      <div className="booking-overview-guest-summary">
+        <div className="booking-overview-guest-summary-block">
+          <span className="booking-overview-guest-summary-icon">
+            <FaUsers />
+          </span>
+
+          <div className="booking-overview-guest-summary-copy">
+            <small>
+              Total Guests (Estimated)
+            </small>
+
+            <div className="booking-overview-guest-summary-main">
+              <strong>
+                {formatBookingOverviewValue(
+                  estimatedGuests
+                )}
+              </strong>
+
+              <div className="booking-overview-guest-summary-sidecopy">
+                <span>
+                  {guaranteeRangeText}
+                </span>
+                <em>guarantee range</em>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div className="booking-overview-guest-summary-block">
+          <span className="booking-overview-guest-summary-icon">
+            <FaUsers />
+          </span>
+
+          <div className="booking-overview-guest-summary-copy">
+            <small>
+              Total Guests (Actual)
+            </small>
+
+            <div className="booking-overview-guest-summary-main">
+              <strong>
+                {formatBookingOverviewValue(
+                  actualGuests
+                )}
+              </strong>
+
+              {differenceText && (
+                <div
+                  className={`booking-overview-guest-summary-meta ${differenceClass}`}
+                >
+                  {differenceText}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+
+        <div className="booking-overview-guest-summary-block">
+          <span className="booking-overview-guest-summary-icon">
+            <FaMoon />
+          </span>
+
+          <div className="booking-overview-guest-summary-copy">
+            <small>
+              Stay Details
+            </small>
+
+            <div className="booking-overview-guest-stay-values">
+              <div>
+                <FaBed />
+                <strong>
+                  {formatBookingOverviewValue(
+                    numberOfNights
+                  )}
+                </strong>
+                <span>nights</span>
+              </div>
+
+              <div>
+                <FaUtensils />
+                <strong>
+                  {formatBookingOverviewValue(
+                    numberOfMeals
+                  )}
+                </strong>
+                <span>meals</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div className="booking-overview-guest-cards">
+        <BookingOverviewGuestCard
+          icon={FaUsers}
+          title="Approximate Guests"
+          subtitle="Initial expected group size and guarantees."
+          fields={approximateGuestFields}
+          tone="green"
+        />
+
+        <BookingOverviewGuestCard
+          icon={FaUser}
+          title="Actual Guests"
+          subtitle="Recorded attendance and demographic details."
+          fields={actualGuestFields}
+          tone="blue"
+        />
+
+        <BookingOverviewGuestCard
+          icon={FaDollarSign}
+          title="Rates & Stay"
+          subtitle="Pricing and duration details for this retreat."
+          fields={ratesAndStayFields}
+          tone="sand"
+        />
+      </div>
+
+    </section>
   );
 }
 
@@ -4804,6 +5154,36 @@ function BookingOverview({
     firstBookingOverviewValue(
       booking.attendeeCount,
       booking.persons
+    );
+
+  const hasApproxAdults =
+    String(
+      details.approxAdultGuests || ""
+    ).trim() !== "";
+
+  const hasApproxChildren =
+    String(
+      details.approxChildrenGuests || ""
+    ).trim() !== "";
+
+  const calculatedApproxTotal =
+    hasApproxAdults ||
+    hasApproxChildren
+      ? String(
+          Number(
+            details.approxAdultGuests || 0
+          ) +
+          Number(
+            details.approxChildrenGuests || 0
+          )
+        )
+      : "";
+
+  const estimatedGuests =
+    firstBookingOverviewValue(
+      details.approxTotalGuests,
+      calculatedApproxTotal,
+      summaryGuests
     );
 
   const summaryProgram =
@@ -5547,31 +5927,17 @@ function BookingOverview({
               GUEST INFORMATION
           ===================================================== */}
 
-          <BookingOverviewSection
-            icon={FaUsers}
-            eyebrow="Guests"
-            title="Guest Information"
-            wide
-            className="booking-overview-card-guests"
-            groups={[
-              {
-                title: "Approximate Guests",
-                fields: approximateGuestFields,
-                columns: 5,
-              },
-
-              {
-                title: "Actual Guests",
-                fields: actualGuestFields,
-                columns: 4,
-              },
-
-              {
-                title: "Rates & Stay",
-                fields: ratesAndStayFields,
-                columns: 4,
-              },
-            ]}
+          <BookingOverviewGuestShowcase
+            estimatedGuests={estimatedGuests}
+            actualGuests={summaryGuests}
+            minimumGuarantee={minimumGuarantee}
+            maximumGuarantee={maximumGuarantee}
+            numberOfNights={numberOfNights}
+            numberOfMeals={numberOfMeals}
+            approximateGuestFields={approximateGuestFields}
+            actualGuestFields={actualGuestFields}
+            ratesAndStayFields={ratesAndStayFields}
+            setActiveTab={setActiveTab}
           />
 
 
