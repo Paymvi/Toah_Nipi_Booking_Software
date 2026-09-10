@@ -40,6 +40,11 @@ import {
   FaCopy,
   FaExternalLinkAlt,
   FaSyncAlt,
+  FaChild,
+  FaUserMinus,
+  FaUserPlus,
+  FaGlobeAmericas,
+  FaMoon,
 } from "react-icons/fa";
 
 import {
@@ -4401,6 +4406,7 @@ function getBookingOverviewStatusClass(status) {
 function BookingOverviewField({
   label,
   value,
+  icon: Icon,
   multiline = false,
   tone = "default",
   showEmpty = false,
@@ -4416,9 +4422,11 @@ function BookingOverviewField({
     <div
       className={[
         "booking-overview-field",
+
         multiline
           ? "booking-overview-field-multiline"
           : "",
+
         tone !== "default"
           ? `booking-overview-field-${tone}`
           : "",
@@ -4426,7 +4434,13 @@ function BookingOverviewField({
         .filter(Boolean)
         .join(" ")}
     >
-      <small>{label}</small>
+      <small>
+        {Icon && (
+          <Icon className="booking-overview-field-label-icon" />
+        )}
+
+        <span>{label}</span>
+      </small>
 
       <strong>
         {formatBookingOverviewValue(value)}
@@ -4472,6 +4486,7 @@ function BookingOverviewSection({
   groups = [],
   columns = 2,
   wide = false,
+  className = "",
   children,
 }) {
   const hasVisibleFields = fields.some(
@@ -4499,11 +4514,17 @@ function BookingOverviewSection({
 
   return (
     <article
-      className={`booking-overview-card ${
+      className={[
+        "booking-overview-card",
+
         wide
           ? "booking-overview-card-wide"
-          : ""
-      }`}
+          : "",
+
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       <header className="booking-overview-card-header">
         <span className="booking-overview-card-icon">
@@ -4805,26 +4826,31 @@ function BookingOverview({
     {
       label: "Estimated Total Guests",
       value: details.approxTotalGuests,
+      icon: FaUsers,
     },
 
     {
       label: "Approx. Adults",
       value: details.approxAdultGuests,
+      icon: FaUser,
     },
 
     {
       label: "Approx. Children",
       value: details.approxChildrenGuests,
+      icon: FaChild,
     },
 
     {
       label: "Minimum Guarantee",
       value: minimumGuarantee,
+      icon: FaUserMinus,
     },
 
     {
       label: "Maximum Guarantee",
       value: maximumGuarantee,
+      icon: FaUserPlus,
     },
   ];
 
@@ -4834,41 +4860,49 @@ function BookingOverview({
       label: "Total / Recorded Guests",
       value: summaryGuests,
       showEmpty: true,
+      icon: FaUsers,
     },
 
     {
       label: "Actual Adults",
       value: actualAdults,
+      icon: FaUser,
     },
 
     {
       label: "Actual Children",
       value: actualChildren,
+      icon: FaChild,
     },
 
     {
       label: "Minors Age 3–17",
       value: minors3To17,
+      icon: FaChild,
     },
 
     {
       label: "Minors Under 3",
       value: minorsUnder3,
+      icon: FaChild,
     },
 
     {
       label: "Day-use Guests",
       value: dayUseGuests,
+      icon: FaUsers,
     },
 
     {
       label: "# Persons",
       value: booking.persons,
+      icon: FaUsers,
     },
 
     {
       label: "Ethnic Breakdown",
       value: details.ethnicBreakdown,
+      icon: FaGlobeAmericas,
       multiline: true,
     },
   ];
@@ -4880,6 +4914,7 @@ function BookingOverview({
       value: formatBookingOverviewMoney(
         adultRate
       ),
+      icon: FaDollarSign,
     },
 
     {
@@ -4887,21 +4922,25 @@ function BookingOverview({
       value: formatBookingOverviewMoney(
         details.childRateQuoted
       ),
+      icon: FaDollarSign,
     },
 
     {
       label: "# Nights",
       value: numberOfNights,
+      icon: FaMoon,
     },
 
     {
       label: "# Meals",
       value: numberOfMeals,
+      icon: FaUtensils,
     },
 
     {
       label: "Camper Days",
       value: booking.camperDays,
+      icon: FaCalendarAlt,
     },
   ];
 
@@ -5513,21 +5552,24 @@ function BookingOverview({
             eyebrow="Guests"
             title="Guest Information"
             wide
+            className="booking-overview-card-guests"
             groups={[
               {
                 title: "Approximate Guests",
                 fields: approximateGuestFields,
-                columns: 3,
+                columns: 5,
               },
+
               {
                 title: "Actual Guests",
                 fields: actualGuestFields,
-                columns: 3,
+                columns: 4,
               },
+
               {
                 title: "Rates & Stay",
                 fields: ratesAndStayFields,
-                columns: 3,
+                columns: 4,
               },
             ]}
           />

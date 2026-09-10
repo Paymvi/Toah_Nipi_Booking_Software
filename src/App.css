@@ -3905,6 +3905,16 @@
     repeat(3, minmax(0, 1fr));
 }
 
+.booking-overview-field-grid-4 {
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+}
+
+.booking-overview-field-grid-5 {
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr));
+}
+
 
 /* =========================================================
    FIELDS
@@ -4311,5 +4321,288 @@
   .booking-overview-sidebar-stats > div + div {
     border-left: 0;
     border-top: 1px solid #e5e9ef;
+  }
+}
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   GUEST INFORMATION OVERVIEW
+   Compact read-only layout
+========================================================= */
+
+.booking-overview-card-guests {
+  padding: 18px 24px 20px;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.booking-overview-card-guests
+.booking-overview-card-header {
+  margin-bottom: 0;
+  padding-bottom: 14px;
+
+  border-bottom: 1px solid #e9edf2;
+}
+
+
+/* =========================================================
+   SUBSECTIONS
+========================================================= */
+
+.booking-overview-card-guests
+.booking-overview-subsections {
+  display: block;
+}
+
+
+.booking-overview-card-guests
+.booking-overview-subsection {
+  display: grid;
+
+  grid-template-columns:
+    155px minmax(0, 1fr);
+
+  align-items: start;
+
+  gap: 22px;
+
+  padding: 14px 0;
+
+  margin: 0;
+}
+
+
+.booking-overview-card-guests
+.booking-overview-subsection +
+.booking-overview-subsection {
+  margin: 0;
+  padding-top: 14px;
+
+  border-top: 1px solid #e9edf2;
+}
+
+
+/* =========================================================
+   SUBSECTION LABEL
+========================================================= */
+
+.booking-overview-card-guests
+.booking-overview-subsection > h4 {
+  margin: 2px 0 0;
+
+  color: #5d6879;
+
+  font-size: 0.76rem;
+  font-weight: 700;
+
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   FIELD GRID
+========================================================= */
+
+.booking-overview-card-guests
+.booking-overview-field-grid {
+  min-width: 0;
+
+  column-gap: 24px;
+  row-gap: 10px;
+}
+
+
+/*
+  Approximate guests:
+  give the total slightly more room.
+*/
+
+.booking-overview-card-guests
+.booking-overview-field-grid-5 {
+  grid-template-columns:
+    1.25fr
+    repeat(4, minmax(0, 1fr));
+}
+
+
+/*
+  Actual guests:
+  Ethnic Breakdown gets more room.
+*/
+
+.booking-overview-card-guests
+.booking-overview-subsection:nth-child(2)
+.booking-overview-field-grid-4 {
+  grid-template-columns:
+    0.9fr
+    0.9fr
+    0.9fr
+    1.5fr;
+}
+
+
+/*
+  Rates / stay:
+  four even scan-friendly values.
+*/
+
+.booking-overview-card-guests
+.booking-overview-subsection:nth-child(3)
+.booking-overview-field-grid-4 {
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+}
+
+
+/* =========================================================
+   INDIVIDUAL VALUES
+   No little cards and no giant underline rows.
+========================================================= */
+
+.booking-overview-card-guests
+.booking-overview-field {
+  min-width: 0;
+
+  padding: 1px 0;
+
+  border: 0;
+
+  background: transparent;
+}
+
+
+.booking-overview-card-guests
+.booking-overview-field small {
+  display: flex;
+  align-items: center;
+
+  gap: 6px;
+
+  margin-bottom: 5px;
+
+  color: #8b95a5;
+
+  font-size: 0.7rem;
+  font-weight: 600;
+
+  line-height: 1.3;
+}
+
+.booking-overview-card-guests
+.booking-overview-field-label-icon {
+  flex-shrink: 0;
+
+  color: #74845f;
+
+  font-size: 0.68rem;
+
+  opacity: 0.9;
+}
+
+
+.booking-overview-card-guests
+.booking-overview-field strong {
+  display: block;
+
+  color: #293344;
+
+  font-size: 0.93rem;
+  font-weight: 600;
+
+  line-height: 1.35;
+}
+
+
+/* =========================================================
+   MAKE IMPORTANT TOTALS SLIGHTLY EASIER TO SPOT
+========================================================= */
+
+.booking-overview-card-guests
+.booking-overview-subsection:first-child
+.booking-overview-field:first-child strong,
+
+.booking-overview-card-guests
+.booking-overview-subsection:nth-child(2)
+.booking-overview-field:first-child strong {
+  font-size: 1rem;
+  font-weight: 700;
+
+  color: #253044;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1200px) {
+  .booking-overview-card-guests
+  .booking-overview-subsection {
+    grid-template-columns: 130px minmax(0, 1fr);
+
+    gap: 18px;
+  }
+
+  .booking-overview-card-guests
+  .booking-overview-field-grid-5 {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+}
+
+
+@media (max-width: 850px) {
+  .booking-overview-card-guests
+  .booking-overview-subsection {
+    display: block;
+  }
+
+  .booking-overview-card-guests
+  .booking-overview-subsection > h4 {
+    margin-bottom: 10px;
+  }
+
+  .booking-overview-card-guests
+  .booking-overview-field-grid-4,
+  .booking-overview-card-guests
+  .booking-overview-field-grid-5,
+  .booking-overview-card-guests
+  .booking-overview-subsection:nth-child(2)
+  .booking-overview-field-grid-4,
+  .booking-overview-card-guests
+  .booking-overview-subsection:nth-child(3)
+  .booking-overview-field-grid-4 {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+@media (max-width: 520px) {
+  .booking-overview-card-guests {
+    padding: 16px;
+  }
+
+  .booking-overview-card-guests
+  .booking-overview-field-grid-4,
+  .booking-overview-card-guests
+  .booking-overview-field-grid-5,
+  .booking-overview-card-guests
+  .booking-overview-subsection:nth-child(2)
+  .booking-overview-field-grid-4,
+  .booking-overview-card-guests
+  .booking-overview-subsection:nth-child(3)
+  .booking-overview-field-grid-4 {
+    grid-template-columns: 1fr;
   }
 }
