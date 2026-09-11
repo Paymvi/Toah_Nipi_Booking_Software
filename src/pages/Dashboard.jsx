@@ -5557,90 +5557,82 @@ function BookingOverview({
     },
   ];
 
+/* =====================================================
+  LODGING & LINENS
+===================================================== */
 
-  /* =====================================================
-    LODGING & LINENS
-  ===================================================== */
+const lodgingOverviewRows = [
+  {
+    id: "bethel",
+    name: "Bethel",
+    capacity: "70",
+    image: "/lodges/Bethel.webp",
+    value: details?.lodgingBethel,
+  },
+  {
+    id: "hebron-third",
+    name: "Hebron 3rd Floor",
+    capacity: "14",
+    image: "/lodges/May-2025-Hebron.jpg",
+    value: details?.lodgingHebronThird,
+  },
+  {
+    id: "hebron-bunks",
+    name: "Hebron Bunks",
+    capacity: "52",
+    image: "/lodges/May-2025-Hebron.jpg",
+    value: details?.lodgingHebronBunks,
+  },
+  {
+    id: "dothan",
+    name: "Dothan",
+    capacity: "21",
+    image: "/lodges/Dothan.webp",
+    value: details?.lodgingDothan,
+  },
+  {
+    id: "ajalon",
+    name: "Ajalon",
+    capacity: "5–8",
+    image: "/lodges/Ajalon.png",
+    value: details?.lodgingAjalon,
+  },
+  {
+    id: "capernaum",
+    name: "Capernaum",
+    capacity: "5",
+    image: null,
+    value: details?.lodgingCapernaum,
+  },
+  {
+    id: "guest-house",
+    name: "Guest House",
+    capacity: "9–12",
+    image: "/lodges/Guest-House.webp",
+    value: details?.lodgingGuestHouse,
+  },
+];
 
-  const assignedRoomValue =
-    booking.roomName &&
-    booking.roomName !== "Unassigned" &&
-    booking.roomName !==
-      booking.buildingsRooms
-      ? booking.roomName
-      : "";
+const getLodgingOverviewValue = (value) => {
+  if (
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return 0;
+  }
 
+  return value;
+};
 
-  const housingAssignmentFields = [
-    {
-      label: "Assigned Room / Area",
-      value: assignedRoomValue,
-    },
+const overviewLinenOption =
+  details?.linenOption || "None";
 
-    {
-      label: "Buildings / Rooms",
-      value: booking.buildingsRooms,
-      multiline: true,
-    },
-  ];
-
-
-  const lodgingBreakdownFields = [
-    {
-      label: "Bethel",
-      value: details.lodgingBethel,
-    },
-
-    {
-      label: "Hebron 3rd Floor",
-      value:
-        details.lodgingHebronThird,
-    },
-
-    {
-      label: "Hebron Bunks",
-      value:
-        details.lodgingHebronBunks,
-    },
-
-    {
-      label: "Dothan",
-      value: details.lodgingDothan,
-    },
-
-    {
-      label: "Ajalon",
-      value: details.lodgingAjalon,
-    },
-
-    {
-      label: "Capernaum",
-      value: details.lodgingCapernaum,
-    },
-
-    {
-      label: "Guest House",
-      value:
-        details.lodgingGuestHouse,
-    },
-  ];
-
-
-  const linenFields = [
-    {
-      label: "Linen Option",
-      value: details.linenOption,
-    },
-
-    {
-      label: "Linen Sets",
-      value: firstBookingOverviewValue(
-        details.linenSets,
-        booking.linenSets
-      ),
-    },
-  ];
-
+const overviewLinenSets =
+  firstBookingOverviewValue(
+    details?.linenSets,
+    booking.linenSets
+  ) || 0;
 
   /* =====================================================
     BOOKING STATUS
@@ -6015,31 +6007,100 @@ function BookingOverview({
               LODGING
           ===================================================== */}
 
-          <BookingOverviewSection
-            icon={FaBed}
-            eyebrow="Housing"
-            title="Lodging & Linens"
-            wide
-            groups={[
-              {
-                title: "Housing Assignment",
-                fields:
-                  housingAssignmentFields,
-                columns: 2,
-              },
-              {
-                title: "Lodging Breakdown",
-                fields:
-                  lodgingBreakdownFields,
-                columns: 3,
-              },
-              {
-                title: "Linens",
-                fields: linenFields,
-                columns: 2,
-              },
-            ]}
-          />
+          <section className="rental-form-section booking-overview-lodging-section">
+
+            <div className="rental-section-header">
+              <span className="rental-section-icon">
+                <FaBed />
+              </span>
+
+              <div>
+                <h2>Lodging & Linens</h2>
+
+                <p>
+                  Guest assignments and linen requirements.
+                </p>
+              </div>
+            </div>
+
+
+            <div className="rental-section-body">
+
+              {/* ===============================
+                  LODGING
+              =============================== */}
+
+              <div className="rental-lodging-grid">
+                {lodgingOverviewRows.map((lodging) => (
+                  <div
+                    className="rental-lodging-field booking-overview-lodging-card"
+                    key={lodging.id}
+                  >
+                    <div className="rental-lodging-info">
+
+                      {lodging.image && (
+                        <img
+                          className="rental-lodging-image"
+                          src={lodging.image}
+                          alt=""
+                        />
+                      )}
+
+                      <span className="rental-lodging-text">
+                        <strong>{lodging.name}</strong>
+
+                        <small>
+                          Capacity {lodging.capacity}
+                        </small>
+                      </span>
+
+                    </div>
+
+
+                    <div className="booking-overview-lodging-count">
+                      {getLodgingOverviewValue(
+                        lodging.value
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+
+              {/* ===============================
+                  LINENS
+              =============================== */}
+
+              <div className="booking-overview-linens">
+
+                <h3>Linens</h3>
+
+                <div className="booking-overview-linen-grid">
+
+                  <div className="booking-overview-linen-item">
+                    <span>Linen Option</span>
+
+                    <strong>
+                      {overviewLinenOption}
+                    </strong>
+                  </div>
+
+
+                  <div className="booking-overview-linen-item">
+                    <span>Linen Sets</span>
+
+                    <strong>
+                      {overviewLinenSets}
+                    </strong>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
 
 
           {/* =====================================================
