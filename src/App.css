@@ -5297,3 +5297,538 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   BOOKING OVERVIEW — MEALS & PROGRAM
+========================================================= */
+
+.booking-overview-program-showcase {
+  padding: 20px 22px 22px;
+}
+
+.booking-overview-program-header {
+  margin-bottom: 18px;
+}
+
+.booking-overview-program-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.booking-overview-program-title-icon {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 12px;
+  background: #eef2ea;
+  color: #6f8157;
+
+  font-size: 1rem;
+}
+
+.booking-overview-program-title p {
+  margin: 0 0 3px;
+
+  color: #8b95a5;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.booking-overview-program-title h3 {
+  margin: 0 0 4px;
+
+  color: #1f2a3a;
+  font-size: 1.7rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.booking-overview-program-title > div > span {
+  display: block;
+
+  color: #6f7c8f;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   SUMMARY STRIP
+========================================================= */
+
+.booking-overview-program-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  margin-bottom: 20px;
+
+  border: 1px solid #e5eaf0;
+  border-radius: 16px;
+
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.booking-overview-program-summary-block {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  min-width: 0;
+  padding: 22px 20px;
+}
+
+.booking-overview-program-summary-block + .booking-overview-program-summary-block {
+  border-left: 1px solid #e8edf3;
+}
+
+.booking-overview-program-summary-icon {
+  width: 54px;
+  height: 54px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+  background: #f1f4ee;
+  color: #71825a;
+
+  font-size: 1.2rem;
+}
+
+.booking-overview-program-summary-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.booking-overview-program-summary-copy small {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #7b8799;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.booking-overview-program-summary-copy > strong {
+  display: block;
+
+  color: #1f2a3a;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.booking-overview-program-summary-copy > span {
+  display: block;
+
+  margin-top: 4px;
+
+  color: #7d8796;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.booking-overview-program-service-times {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.booking-overview-program-service-times > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.booking-overview-program-service-times strong {
+  color: #1f2a3a;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.booking-overview-program-service-times span {
+  color: #7d8796;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+
+/* =========================================================
+   TOP CARD ROW
+========================================================= */
+
+.booking-overview-program-cards-row {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  gap: 18px;
+
+  margin-bottom: 18px;
+}
+
+
+/* =========================================================
+   PANELS
+========================================================= */
+
+.booking-overview-program-panel {
+  min-width: 0;
+
+  padding: 16px 16px 18px;
+
+  border: 1px solid #e3e8ef;
+  border-radius: 16px;
+
+  background: #ffffff;
+
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.03);
+}
+
+.booking-overview-program-panel-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  margin-bottom: 14px;
+}
+
+.booking-overview-program-panel-icon {
+  width: 40px;
+  height: 40px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 12px;
+  background: #f1f4ee;
+  color: #6f8157;
+
+  font-size: 0.95rem;
+}
+
+.booking-overview-program-panel-header h4 {
+  margin: 0 0 3px;
+
+  color: #233045;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.booking-overview-program-panel-header p {
+  margin: 0;
+
+  color: #7f8a9c;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   MEAL TABLE
+========================================================= */
+
+.booking-overview-program-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.booking-overview-program-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.booking-overview-program-table th,
+.booking-overview-program-table td {
+  padding: 14px 14px;
+  border: 1px solid #e8edf3;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.booking-overview-program-table th {
+  background: #f8fafb;
+  color: #7a8597;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.booking-overview-program-table th:first-child,
+.booking-overview-program-table td:first-child {
+  width: 34%;
+  text-align: left;
+}
+
+.booking-overview-program-date-cell {
+  color: #2d3848;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.booking-overview-meal-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 32px;
+  padding: 0 14px;
+
+  border-radius: 999px;
+  background: #edf3e8;
+  color: #415235;
+
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.booking-overview-meal-chip-dinner {
+  background: #f6eddc;
+  color: #8a6622;
+}
+
+.booking-overview-program-dash {
+  color: #9aa3b2;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   DIETARY ALERTS
+========================================================= */
+
+.booking-overview-dietary-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.booking-overview-dietary-table-head,
+.booking-overview-dietary-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px;
+  gap: 12px;
+  align-items: center;
+}
+
+.booking-overview-dietary-table-head {
+  padding: 0 0 8px;
+  border-bottom: 1px solid #e8edf3;
+
+  color: #7a8597;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.booking-overview-dietary-row {
+  padding: 14px 0;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.booking-overview-dietary-row span {
+  color: #2d3848;
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.booking-overview-dietary-row strong {
+  justify-self: end;
+
+  color: #1f2a3a;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.booking-overview-dietary-alert-note {
+  margin-top: 14px;
+  padding: 14px 14px;
+
+  border-left: 4px solid #d5a63f;
+  border-radius: 10px;
+
+  background: #fbf8f1;
+}
+
+.booking-overview-dietary-alert-note strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #94681f;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.booking-overview-dietary-alert-note p {
+  margin: 0;
+
+  color: #66758c;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   NOTES & LOGISTICS
+========================================================= */
+
+.booking-overview-program-panel-notes {
+  padding-bottom: 20px;
+}
+
+.booking-overview-program-notes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.booking-overview-program-note-block {
+  min-width: 0;
+}
+
+.booking-overview-program-note-block + .booking-overview-program-note-block {
+  border-left: 1px solid #e8edf3;
+  padding-left: 22px;
+}
+
+.booking-overview-program-note-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-bottom: 10px;
+
+  color: #5f6d83;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.booking-overview-program-note-value {
+  margin: 0;
+
+  color: #344256;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.booking-overview-program-empty {
+  padding: 18px 16px;
+
+  border: 1px dashed #d9e0e8;
+  border-radius: 12px;
+
+  background: #fbfcfd;
+  color: #7f8a9c;
+
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1200px) {
+  .booking-overview-program-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .booking-overview-program-summary-block:nth-child(3) {
+    border-left: 0;
+    border-top: 1px solid #e8edf3;
+  }
+
+  .booking-overview-program-summary-block:nth-child(4) {
+    border-top: 1px solid #e8edf3;
+  }
+
+  .booking-overview-program-cards-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .booking-overview-program-showcase {
+    padding: 18px 16px;
+  }
+
+  .booking-overview-program-title h3 {
+    font-size: 1.35rem;
+  }
+
+  .booking-overview-program-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-overview-program-summary-block + .booking-overview-program-summary-block {
+    border-left: 0;
+    border-top: 1px solid #e8edf3;
+  }
+
+  .booking-overview-program-notes-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-overview-program-note-block + .booking-overview-program-note-block {
+    border-left: 0;
+    border-top: 1px solid #e8edf3;
+    padding-left: 0;
+    padding-top: 18px;
+  }
+}

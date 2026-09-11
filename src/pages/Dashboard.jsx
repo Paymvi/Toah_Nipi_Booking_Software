@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+
 import {
   FaHome,
   FaCalendarAlt,
@@ -46,6 +47,9 @@ import {
   FaGlobeAmericas,
   FaMoon,
   FaPen,
+  FaConciergeBell,
+  FaShieldAlt,
+  FaStickyNote,
 } from "react-icons/fa";
 
 import {
@@ -55,6 +59,7 @@ import {
   deleteAllBookings,
   deleteBooking,
 } from "../services/bookingService";
+
 
 import ExcelJS from "exceljs";
 import BookingHousingTab from "../components/BookingHousingTab";
@@ -145,6 +150,464 @@ const SPREADSHEET_REVEAL_LOADING_MS = 160;
 
 
 import InquiryRecordDetailView from "../pages/InquiryRecordDetailView";
+
+
+function hasOverviewDisplayValue(value) {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  if (typeof value === "string") {
+    return value.trim() !== "";
+  }
+
+  return true;
+}
+
+function getOverviewDisplayValue(...values) {
+  for (const value of values) {
+    if (hasOverviewDisplayValue(value)) {
+      return value;
+    }
+  }
+
+  return "";
+}
+
+function getFirstSelectedMeal(dateRows = []) {
+  for (const row of dateRows) {
+    if (row.breakfast) return "Breakfast";
+    if (row.lunch) return "Lunch";
+    if (row.dinner) return "Dinner";
+  }
+
+  return "";
+}
+
+function getLastSelectedMeal(dateRows = []) {
+  for (let index = dateRows.length - 1; index >= 0; index -= 1) {
+    const row = dateRows[index];
+
+    if (row.dinner) return "Dinner";
+    if (row.lunch) return "Lunch";
+    if (row.breakfast) return "Breakfast";
+  }
+
+  return "";
+}
+
+function parseBookingMealSummary(summary = "") {
+  const text = typeof summary === "string" ? summary : "";
+
+  const segments = text
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const dateRows = segments
+    .filter((part) =>
+      /^[A-Za-z]{3},\s[A-Za-z]{3}\s\d{1,2},\s\d{4}\s*:/i.test(part)
+    )
+    .map((part) => {
+      const [dateLabelPart, mealsPart = ""] = part.split(/:(.+)/);
+
+      const selections = mealsPart
+        .split(",")
+        .map((item) => item.trim().toLowerCase())
+        .filter(Boolean);
+
+      return {
+        dateLabel: dateLabelPart.trim(),
+        breakfast: selections.includes("breakfast"),
+        lunch: selections.includes("lunch"),
+        dinner: selections.includes("dinner"),
+      };
+    });
+
+  const totalMatch = text.match(/Total meals:\s*(\d+)/i);
+  const breakfastCountMatch = text.match(/Breakfast:\s*(\d+)/i);
+  const lunchCountMatch = text.match(/Lunch:\s*(\d+)/i);
+  const dinnerCountMatch = text.match(/Dinner:\s*(\d+)/i);
+  const breakfastTimeMatch = text.match(/Breakfast time:\s*([^;]+)/i);
+  const lunchTimeMatch = text.match(/Lunch time:\s*([^;]+)/i);
+  const dinnerTimeMatch = text.match(/Dinner time:\s*([^;]+)/i);
+
+  return {
+    totalMeals: totalMatch ? totalMatch[1] : "",
+    breakfastCount: breakfastCountMatch ? breakfastCountMatch[1] : "0",
+    lunchCount: lunchCountMatch ? lunchCountMatch[1] : "0",
+    dinnerCount: dinnerCountMatch ? dinnerCountMatch[1] : "0",
+    breakfastTime: breakfastTimeMatch ? breakfastTimeMatch[1].trim() : "",
+    lunchTime: lunchTimeMatch ? lunchTimeMatch[1].trim() : "",
+    dinnerTime: dinnerTimeMatch ? dinnerTimeMatch[1].trim() : "",
+    dateRows,
+    firstMeal: getFirstSelectedMeal(dateRows),
+    lastMeal: getLastSelectedMeal(dateRows),
+  };
+}
+
+function parseBookingDietarySummary(summary = "") {
+  const text = typeof summary === "string" ? summary : "";
+
+  const parts = text
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const items = [];
+  let additionalNotes = "";
+
+  parts.forEach((part) => {
+    const noteMatch = part.match(/^Additional notes:\s*(.+)$/i);
+
+    if (noteMatch) {
+      additionalNotes = noteMatch[1].trim();
+      return;
+    }
+
+    const quantityMatch = part.match(/^(\d+)\s*-\s*(.+)$/);
+
+    if (quantityMatch) {
+      items.push({
+        quantity: quantityMatch[1],
+        label: quantityMatch[2].trim(),
+      });
+      return;
+    }
+
+    items.push({
+      quantity: "—",
+      label: part,
+    });
+  });
+
+  return {
+    items,
+    additionalNotes,
+  };
+}
+
+function BookingMealsProgramOverview({ booking, details }) {
+  const mealPlanText = getOverviewDisplayValue(
+    details?.meals,
+    booking.meals
+  );
+
+  const dietaryText = getOverviewDisplayValue(
+    details?.foodAllergies,
+    booking.foodAllergies
+  );
+
+  const mealNotesText = getOverviewDisplayValue(
+    details?.mealNotes,
+    booking.needToKnow
+  );
+
+  const programLogisticsText = getOverviewDisplayValue(
+    booking.activities,
+    booking.schedule,
+    mealPlanText
+  );
+
+  const parsedMealSummary = parseBookingMealSummary(mealPlanText);
+  const parsedDietarySummary = parseBookingDietarySummary(dietaryText);
+
+  const totalMeals =
+    getOverviewDisplayValue(
+      details?.numberOfMeals,
+      parsedMealSummary.totalMeals
+    ) || "—";
+
+  const firstMeal =
+    getOverviewDisplayValue(
+      details?.firstMeal,
+      parsedMealSummary.firstMeal
+    ) || "—";
+
+  const lastMeal =
+    getOverviewDisplayValue(
+      details?.lastMeal,
+      parsedMealSummary.lastMeal
+    ) || "—";
+
+  const breakfastTime =
+    getOverviewDisplayValue(
+      details?.breakfastTime,
+      parsedMealSummary.breakfastTime
+    ) || "—";
+
+  const lunchTime =
+    getOverviewDisplayValue(
+      details?.lunchTime,
+      parsedMealSummary.lunchTime
+    ) || "—";
+
+  const dinnerTime =
+    getOverviewDisplayValue(
+      details?.dinnerTime,
+      parsedMealSummary.dinnerTime
+    ) || "—";
+
+  const breakfastCount =
+    getOverviewDisplayValue(parsedMealSummary.breakfastCount) || "0";
+
+  const lunchCount =
+    getOverviewDisplayValue(parsedMealSummary.lunchCount) || "0";
+
+  const dinnerCount =
+    getOverviewDisplayValue(parsedMealSummary.dinnerCount) || "0";
+
+  const hasAnyContent =
+    hasOverviewDisplayValue(mealPlanText) ||
+    hasOverviewDisplayValue(dietaryText) ||
+    hasOverviewDisplayValue(mealNotesText) ||
+    hasOverviewDisplayValue(programLogisticsText);
+
+  if (!hasAnyContent) {
+    return null;
+  }
+
+  return (
+    <section className="booking-overview-card booking-overview-card-wide booking-overview-program-showcase">
+      <div className="booking-overview-program-header">
+        <div className="booking-overview-program-title">
+          <span className="booking-overview-program-title-icon">
+            <FaUtensils />
+          </span>
+
+          <div>
+            <p>Program</p>
+            <h3>Meals & Program</h3>
+            <span>
+              Manage meal service details, schedule, dietary requirements,
+              and program logistics.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="booking-overview-program-summary">
+        <div className="booking-overview-program-summary-block">
+          <span className="booking-overview-program-summary-icon">
+            <FaUtensils />
+          </span>
+
+          <div className="booking-overview-program-summary-copy">
+            <small>Total Meals</small>
+            <strong>{totalMeals}</strong>
+            <span>
+              (Breakfast: {breakfastCount}, Lunch: {lunchCount}, Dinner:{" "}
+              {dinnerCount})
+            </span>
+          </div>
+        </div>
+
+        <div className="booking-overview-program-summary-block">
+          <span className="booking-overview-program-summary-icon">
+            <FaConciergeBell />
+          </span>
+
+          <div className="booking-overview-program-summary-copy">
+            <small>First Meal</small>
+            <strong>{firstMeal}</strong>
+          </div>
+        </div>
+
+        <div className="booking-overview-program-summary-block">
+          <span className="booking-overview-program-summary-icon">
+            <FaClipboardList />
+          </span>
+
+          <div className="booking-overview-program-summary-copy">
+            <small>Last Meal</small>
+            <strong>{lastMeal}</strong>
+          </div>
+        </div>
+
+        <div className="booking-overview-program-summary-block">
+          <span className="booking-overview-program-summary-icon">
+            <FaClock />
+          </span>
+
+          <div className="booking-overview-program-summary-copy">
+            <small>Service Times</small>
+
+            <div className="booking-overview-program-service-times">
+              <div>
+                <strong>{breakfastTime}</strong>
+                <span>Breakfast</span>
+              </div>
+
+              <div>
+                <strong>{lunchTime}</strong>
+                <span>Lunch</span>
+              </div>
+
+              <div>
+                <strong>{dinnerTime}</strong>
+                <span>Dinner</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="booking-overview-program-cards-row">
+        <div className="booking-overview-program-panel booking-overview-program-panel-meals">
+          <div className="booking-overview-program-panel-header">
+            <span className="booking-overview-program-panel-icon">
+              <FaCalendarAlt />
+            </span>
+
+            <div>
+              <h4>Meal Service Plan</h4>
+              <p>Detailed meal plan for your retreat.</p>
+            </div>
+          </div>
+
+          {parsedMealSummary.dateRows.length > 0 ? (
+            <div className="booking-overview-program-table-wrap">
+              <table className="booking-overview-program-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Breakfast</th>
+                    <th>Lunch</th>
+                    <th>Dinner</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {parsedMealSummary.dateRows.map((row) => (
+                    <tr key={row.dateLabel}>
+                      <td className="booking-overview-program-date-cell">
+                        {row.dateLabel}
+                      </td>
+
+                      <td>
+                        {row.breakfast ? (
+                          <span className="booking-overview-meal-chip">
+                            Breakfast
+                          </span>
+                        ) : (
+                          <span className="booking-overview-program-dash">—</span>
+                        )}
+                      </td>
+
+                      <td>
+                        {row.lunch ? (
+                          <span className="booking-overview-meal-chip">
+                            Lunch
+                          </span>
+                        ) : (
+                          <span className="booking-overview-program-dash">—</span>
+                        )}
+                      </td>
+
+                      <td>
+                        {row.dinner ? (
+                          <span className="booking-overview-meal-chip booking-overview-meal-chip-dinner">
+                            Dinner
+                          </span>
+                        ) : (
+                          <span className="booking-overview-program-dash">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="booking-overview-program-empty">
+              No detailed meal schedule has been added yet.
+            </div>
+          )}
+        </div>
+
+        <div className="booking-overview-program-panel booking-overview-program-panel-diet">
+          <div className="booking-overview-program-panel-header">
+            <span className="booking-overview-program-panel-icon">
+              <FaShieldAlt />
+            </span>
+
+            <div>
+              <h4>Dietary Alerts</h4>
+              <p>Allergen and dietary information for this group.</p>
+            </div>
+          </div>
+
+          {parsedDietarySummary.items.length > 0 ? (
+            <div className="booking-overview-dietary-table">
+              <div className="booking-overview-dietary-table-head">
+                <span>Dietary Item</span>
+                <span>Quantity</span>
+              </div>
+
+              {parsedDietarySummary.items.map((item, index) => (
+                <div
+                  className="booking-overview-dietary-row"
+                  key={`${item.label}-${index}`}
+                >
+                  <span>{item.label}</span>
+                  <strong>{item.quantity}</strong>
+                </div>
+              ))}
+
+              {parsedDietarySummary.additionalNotes && (
+                <div className="booking-overview-dietary-alert-note">
+                  <strong>Additional Dietary Note</strong>
+                  <p>{parsedDietarySummary.additionalNotes}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="booking-overview-program-empty">
+              No dietary alerts were added for this booking.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="booking-overview-program-panel booking-overview-program-panel-notes">
+        <div className="booking-overview-program-panel-header">
+          <span className="booking-overview-program-panel-icon">
+            <FaStickyNote />
+          </span>
+
+          <div>
+            <h4>Notes & Logistics</h4>
+            <p>Important details for meal service and program coordination.</p>
+          </div>
+        </div>
+
+        <div className="booking-overview-program-notes-grid">
+          <div className="booking-overview-program-note-block">
+            <div className="booking-overview-program-note-heading">
+              <FaStickyNote />
+              <span>Meal Notes</span>
+            </div>
+
+            <p className="booking-overview-program-note-value">
+              {mealNotesText || "No meal notes added."}
+            </p>
+          </div>
+
+          <div className="booking-overview-program-note-block">
+            <div className="booking-overview-program-note-heading">
+              <FaClipboardList />
+              <span>Program Logistics</span>
+            </div>
+
+            <p className="booking-overview-program-note-value">
+              {programLogisticsText || "No program logistics added."}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 
 
@@ -5978,28 +6441,9 @@ const overviewLinenSets =
               MEALS
           ===================================================== */}
 
-          <BookingOverviewSection
-            icon={FaUtensils}
-            eyebrow="Program"
-            title="Meals & Program"
-            wide
-            groups={[
-              {
-                title: "Meal Plan",
-                fields: mealPlanFields,
-                columns: 3,
-              },
-              {
-                title: "Dietary Information",
-                fields: dietaryFields,
-                columns: 2,
-              },
-              {
-                title: "Activities & Schedule",
-                fields: activityFields,
-                columns: 2,
-              },
-            ]}
+          <BookingMealsProgramOverview
+            booking={booking}
+            details={details}
           />
 
 
