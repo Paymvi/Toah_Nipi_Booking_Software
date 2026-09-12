@@ -6234,3 +6234,155 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   HOUSING — KNOWN USE
+========================================================= */
+
+.booking-housing-use-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  min-height: 30px;
+
+  padding: 5px 10px;
+
+  border-radius: 999px;
+
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.booking-housing-use-pill-active {
+  background: #edf7f0;
+
+  color: #34704a;
+}
+
+.booking-housing-use-pill-active svg {
+  font-size: 0.72rem;
+}
+
+.booking-housing-use-pill-empty {
+  padding-left: 4px;
+
+  background: transparent;
+
+  color: #a1a7b3;
+}
+
+
+/* =========================================================
+   EDIT CHECKBOX
+========================================================= */
+
+.booking-housing-use-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  cursor: pointer;
+
+  color: #4e5666;
+
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.booking-housing-use-toggle input {
+  width: 17px;
+  height: 17px;
+
+  accent-color: #5142a5;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   UNKNOWN COUNT
+========================================================= */
+
+.booking-housing-count-unknown {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 30px;
+
+  padding: 5px 10px;
+
+  border-radius: 8px;
+
+  background: #f3f1fa;
+
+  color: #675b9e;
+
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.booking-housing-assigned-count-zero {
+  color: #a0a6b1;
+}
+
+
+/* =========================================================
+   IMPORT WARNING
+========================================================= */
+
+.booking-housing-import-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  margin: 18px 24px 0;
+  padding: 13px 15px;
+
+  border: 1px solid #e4dfc8;
+  border-radius: 10px;
+
+  background: #fcfaf1;
+
+  color: #665f45;
+
+  margin-bottom: 20px;
+}
+
+.booking-housing-import-warning > svg {
+  flex: 0 0 auto;
+
+  margin-top: 2px;
+
+  color: #8c7d3d;
+}
+
+.booking-housing-import-warning div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.booking-housing-import-warning strong {
+  font-size: 0.87rem;
+  font-weight: 700;
+}
+
+.booking-housing-import-warning span {
+  color: #817960;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}

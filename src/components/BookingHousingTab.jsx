@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   FaBed,
+  FaCheck,
   FaPen,
   FaSave,
   FaTimes,
@@ -22,8 +23,8 @@ const housingRows = [
     roomName: "Bethel",
     housingArea: "Bethel Lodge",
     roomCategory: "Family Style Rooms",
-    capacity: "70",
     image: "/lodges/Bethel.webp",
+    aliases: ["bethel"],
   },
 
   {
@@ -32,8 +33,12 @@ const housingRows = [
     roomName: "Hebron 3rd Floor",
     housingArea: "Main Lodge",
     roomCategory: "Private Rooms",
-    capacity: "14",
     image: "/lodges/May-2025-Hebron.jpg",
+    aliases: [
+      "hebron 3rd floor",
+      "hebron third floor",
+      "hebron 3rd",
+    ],
   },
 
   {
@@ -42,8 +47,11 @@ const housingRows = [
     roomName: "Hebron Bunks",
     housingArea: "Main Lodge",
     roomCategory: "Dormitory / Bunks",
-    capacity: "52",
     image: "/lodges/May-2025-Hebron.jpg",
+    aliases: [
+      "hebron bunks",
+      "hebron bunk",
+    ],
   },
 
   {
@@ -52,8 +60,8 @@ const housingRows = [
     roomName: "Dothan",
     housingArea: "Dothan Lodge",
     roomCategory: "Small Group Lodge",
-    capacity: "21",
     image: "/lodges/Dothan.webp",
+    aliases: ["dothan"],
   },
 
   {
@@ -62,8 +70,12 @@ const housingRows = [
     roomName: "Ajalon",
     housingArea: "Rustic Cottages",
     roomCategory: "Rustic Cottage",
-    capacity: "5–8",
     image: "/lodges/Ajalon.png",
+    aliases: [
+      "ajalon",
+      "rustic: ajalon",
+      "rustic ajalon",
+    ],
   },
 
   {
@@ -72,8 +84,12 @@ const housingRows = [
     roomName: "Capernaum",
     housingArea: "Rustic Cottages",
     roomCategory: "Rustic Cottage",
-    capacity: "5",
     image: null,
+    aliases: [
+      "capernaum",
+      "rustic: capernaum",
+      "rustic capernaum",
+    ],
   },
 
   {
@@ -82,8 +98,11 @@ const housingRows = [
     roomName: "Guest House",
     housingArea: "Guest House",
     roomCategory: "House Style Lodging",
-    capacity: "9–12",
     image: "/lodges/Guest-House.webp",
+    aliases: [
+      "guest house",
+      "guesthouse",
+    ],
   },
 ];
 
@@ -137,6 +156,106 @@ function getValueFromLodgingSummary(summary, roomName) {
     .trim();
 
   return cleanNumberValue(value);
+}
+
+function getBookingHousingText(booking) {
+  return [
+    booking?.roomName,
+    booking?.buildingsRooms,
+  ]
+    .filter(Boolean)
+    .join("; ")
+    .toLowerCase();
+}
+
+
+function importedBookingUsesHousingRow(
+  booking,
+  row
+) {
+  const housingText =
+    getBookingHousingText(booking);
+
+  if (!housingText) {
+    return false;
+  }
+
+  return row.aliases.some((alias) =>
+    housingText.includes(
+      alias.toLowerCase()
+    )
+  );
+}
+
+
+function getInitialKnownUsage(booking) {
+  const details =
+    booking?.rentalFormDetails || {};
+
+  const housingValues =
+    getInitialHousingState(booking);
+
+  const savedUsage =
+    details.housingUsage || {};
+
+  const result = {};
+
+  housingRows.forEach((row) => {
+    const numericValue =
+      Number(
+        housingValues[row.field] || 0
+      );
+
+    const hasKnownCount =
+      Number.isFinite(numericValue) &&
+      numericValue > 0;
+
+    const explicitlyMarkedUsed =
+      savedUsage[row.field] === true;
+
+    const detectedFromImport =
+      importedBookingUsesHousingRow(
+        booking,
+        row
+      );
+
+    result[row.field] =
+      hasKnownCount ||
+      explicitlyMarkedUsed ||
+      detectedFromImport;
+  });
+
+  return result;
+}
+
+
+function hasGenericHebronAssignment(booking) {
+  const text =
+    getBookingHousingText(booking);
+
+  if (!text) {
+    return false;
+  }
+
+  const mentionsHebron =
+    /\bhebron\b/i.test(text);
+
+  if (!mentionsHebron) {
+    return false;
+  }
+
+  const identifiesThirdFloor =
+    /hebron\s+(3rd|third)/i.test(
+      text
+    );
+
+  const identifiesBunks =
+    /hebron\s+bunks?/i.test(text);
+
+  return (
+    !identifiesThirdFloor &&
+    !identifiesBunks
+  );
 }
 
 
@@ -206,17 +325,33 @@ function getInitialLinenSets(booking) {
 }
 
 
-function buildLodgingSummary(values) {
+function buildLodgingSummary(
+  values,
+  knownUsage
+) {
   return housingRows
     .map((row) => {
       const value =
-        String(values[row.field] || "").trim();
+        String(
+          values[row.field] || ""
+        ).trim();
 
-      if (!value || Number(value) === 0) {
-        return "";
+      const numberValue =
+        Number(value);
+
+      if (
+        value &&
+        Number.isFinite(numberValue) &&
+        numberValue > 0
+      ) {
+        return `${row.roomName}: ${value}`;
       }
 
-      return `${row.roomName}: ${value}`;
+      if (knownUsage[row.field]) {
+        return `${row.roomName}: count unknown`;
+      }
+
+      return "";
     })
     .filter(Boolean)
     .join("; ");
@@ -255,6 +390,11 @@ export default function BookingHousingTab({
       getInitialHousingState(booking)
     );
 
+  const [knownUsage, setKnownUsage] =
+    useState(() =>
+      getInitialKnownUsage(booking)
+    );
+
   const [linenOption, setLinenOption] =
     useState(() =>
       getInitialLinenOption(booking)
@@ -273,6 +413,10 @@ export default function BookingHousingTab({
   useEffect(() => {
     setHousingValues(
       getInitialHousingState(booking)
+    );
+
+    setKnownUsage(
+      getInitialKnownUsage(booking)
     );
 
     setLinenOption(
@@ -310,6 +454,37 @@ export default function BookingHousingTab({
     );
   }, [housingValues]);
 
+  const unknownAssignmentCount =
+    useMemo(() => {
+      return housingRows.filter(
+        (row) => {
+          const isUsed =
+            knownUsage[row.field];
+
+          const numberValue =
+            Number(
+              housingValues[
+                row.field
+              ] || 0
+            );
+
+          const hasKnownCount =
+            Number.isFinite(
+              numberValue
+            ) &&
+            numberValue > 0;
+
+          return (
+            isUsed &&
+            !hasKnownCount
+          );
+        }
+      ).length;
+    }, [
+      housingValues,
+      knownUsage,
+    ]);
+
 
   const bookingGuestCount = useMemo(() => {
     const value =
@@ -327,13 +502,15 @@ export default function BookingHousingTab({
 
 
   const unassignedGuests =
-    bookingGuestCount > 0
-      ? Math.max(
-          bookingGuestCount -
-            totalAssigned,
-          0
-        )
-      : 0;
+    bookingGuestCount <= 0
+      ? "—"
+      : unknownAssignmentCount > 0
+        ? "Unknown"
+        : Math.max(
+            bookingGuestCount -
+              totalAssigned,
+            0
+          );
 
 
   /* =======================================================
@@ -357,12 +534,55 @@ export default function BookingHousingTab({
         [field]: value,
       })
     );
+
+    const numericValue =
+      Number(value);
+
+    if (
+      value !== "" &&
+      Number.isFinite(numericValue) &&
+      numericValue > 0
+    ) {
+      setKnownUsage(
+        (currentUsage) => ({
+          ...currentUsage,
+          [field]: true,
+        })
+      );
+    }
   };
+
+
+  const toggleHousingUsage = (
+    field,
+    isUsed
+  ) => {
+    setKnownUsage(
+      (currentUsage) => ({
+        ...currentUsage,
+        [field]: isUsed,
+      })
+    );
+
+    if (!isUsed) {
+      setHousingValues(
+        (currentValues) => ({
+          ...currentValues,
+          [field]: "",
+        })
+      );
+    }
+  };
+
 
 
   const handleCancel = () => {
     setHousingValues(
       getInitialHousingState(booking)
+    );
+
+    setKnownUsage(
+      getInitialKnownUsage(booking)
     );
 
     setLinenOption(
@@ -382,10 +602,11 @@ export default function BookingHousingTab({
       return;
     }
 
-    const buildingsRooms =
-      buildLodgingSummary(
-        housingValues
-      );
+  const buildingsRooms =
+    buildLodgingSummary(
+      housingValues,
+      knownUsage
+    );
 
     const linenSummary =
       buildLinenSummary(
@@ -396,6 +617,10 @@ export default function BookingHousingTab({
 
     const updatedRentalFormDetails = {
       ...(booking.rentalFormDetails || {}),
+
+      housingUsage: {
+        ...knownUsage,
+      },
 
       lodgingBethel:
         housingValues.lodgingBethel || "",
@@ -565,7 +790,7 @@ export default function BookingHousingTab({
 
             <div>
               <small>
-                Assigned to Lodging
+                Known Assigned
               </small>
 
               <strong>
@@ -595,6 +820,29 @@ export default function BookingHousingTab({
 
 
         {/* =================================================
+            IMPORTED HEBRON WARNING
+        ================================================= */}
+
+        {hasGenericHebronAssignment(booking) && (
+          <div className="booking-housing-import-warning">
+            <FaBed />
+
+            <div>
+              <strong>
+                Imported housing lists Hebron
+              </strong>
+
+              <span>
+                The source record does not identify whether
+                this means Hebron 3rd Floor, Hebron Bunks,
+                or both.
+              </span>
+            </div>
+          </div>
+        )}
+
+
+        {/* =================================================
             LODGING TABLE
         ================================================= */}
 
@@ -615,12 +863,13 @@ export default function BookingHousingTab({
                 </th>
 
                 <th>
-                  Capacity
+                  Known Use
                 </th>
 
                 <th>
                   Assigned Guests
                 </th>
+
               </tr>
             </thead>
 
@@ -690,7 +939,37 @@ export default function BookingHousingTab({
 
 
                       <td>
-                        {row.capacity}
+                        {isEditing ? (
+                          <label className="booking-housing-use-toggle">
+                            <input
+                              type="checkbox"
+                              checked={
+                                Boolean(
+                                  knownUsage[row.field]
+                                )
+                              }
+                              onChange={(event) =>
+                                toggleHousingUsage(
+                                  row.field,
+                                  event.target.checked
+                                )
+                              }
+                            />
+
+                            <span>
+                              Used
+                            </span>
+                          </label>
+                        ) : knownUsage[row.field] ? (
+                          <span className="booking-housing-use-pill booking-housing-use-pill-active">
+                            <FaCheck />
+                            Used
+                          </span>
+                        ) : (
+                          <span className="booking-housing-use-pill booking-housing-use-pill-empty">
+                            —
+                          </span>
+                        )}
                       </td>
 
 
@@ -700,25 +979,30 @@ export default function BookingHousingTab({
                             className="booking-housing-count-input"
                             type="number"
                             min="0"
-                            value={
-                              assignedValue
+                            value={assignedValue}
+                            placeholder={
+                              knownUsage[row.field]
+                                ? "Unknown"
+                                : "0"
                             }
-                            placeholder="0"
-                            onChange={(
-                              event
-                            ) =>
+                            onChange={(event) =>
                               updateHousingValue(
                                 row.field,
-                                event
-                                  .target
-                                  .value
+                                event.target.value
                               )
                             }
                           />
-                        ) : (
+                        ) : assignedNumber > 0 ? (
                           <strong className="booking-housing-assigned-count">
-                            {assignedValue ||
-                              0}
+                            {assignedNumber}
+                          </strong>
+                        ) : knownUsage[row.field] ? (
+                          <span className="booking-housing-count-unknown">
+                            Unknown
+                          </span>
+                        ) : (
+                          <strong className="booking-housing-assigned-count booking-housing-assigned-count-zero">
+                            0
                           </strong>
                         )}
                       </td>
