@@ -130,6 +130,8 @@ export default function BookingCalendar({
   selectedYear,
   selectedMonth,
   getCalendarEventColor,
+  getEventLabel,
+  getRoomText,
   isLarge = false,
 }) {
   const calendarWeeks = getCalendarWeeks(calendarCells);
@@ -186,6 +188,16 @@ export default function BookingCalendar({
             {weekSegments.map((segment) => {
               const colorClass = getCalendarEventColor(segment.inquiry.status);
 
+              const eventLabel =
+                typeof getEventLabel === "function"
+                  ? getEventLabel(segment.inquiry)
+                  : segment.inquiry.organizationName;
+
+              const roomText =
+                typeof getRoomText === "function"
+                  ? getRoomText(segment.inquiry)
+                  : segment.inquiry.roomName || "Unassigned";
+
               return (
                 <div
                   className={`calendar-span-event ${
@@ -203,7 +215,7 @@ export default function BookingCalendar({
                   }`}
                   key={`${segment.inquiry.id}-week-${weekIndex}`}
                   tabIndex={0}
-                  aria-label={`${segment.inquiry.organizationName}, ${
+                  aria-label={`${eventLabel}, ${
                     segment.inquiry.status
                   }, ${formatDateRange(
                     segment.inquiry.startDate,
@@ -215,7 +227,7 @@ export default function BookingCalendar({
                     "--event-lane": segment.lane,
                   }}
                 >
-                  <span>{segment.inquiry.organizationName}</span>
+                  <span>{eventLabel}</span>
                   <i />
 
                   <div
@@ -263,7 +275,7 @@ export default function BookingCalendar({
 
                       <div>
                         <dt>Room</dt>
-                        <dd>{segment.inquiry.roomName || "Unassigned"}</dd>
+                        <dd>{roomText}</dd>
                       </div>
                     </dl>
                   </div>

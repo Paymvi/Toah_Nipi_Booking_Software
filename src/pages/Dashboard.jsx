@@ -135,6 +135,7 @@ import BookingChecklists, {
 
 
 import CalendarView from "../pages/CalendarView";
+import LodgingCalendarView from "../pages/LodgingCalendarView";
 import SpreadsheetView, { SpreadsheetViewLoadingScreen } from "../pages/SpreadsheetView";
 import InquirySpreadsheetView from "../pages/InquirySpreadsheetView";
 import ContactsView from "../pages/ContactsView";
@@ -9605,6 +9606,20 @@ const getCalendarEventColor = (status) => {
           />
         ) : activeView === "Calendar View" ? (
           <CalendarView
+            calendarCells={calendarCells}
+            datedInquiries={datedInquiries}
+            selectedMonthInquiries={selectedMonthInquiries}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            setSelectedMonth={setSelectedMonth}
+            setSelectedYear={setSelectedYear}
+            goToCurrentMonth={goToCurrentMonth}
+            goToPreviousMonth={goToPreviousMonth}
+            goToNextMonth={goToNextMonth}
+            getCalendarEventColor={getCalendarEventColor}
+          />
+        ) : activeView === "Lodging Calendar" ? (
+          <LodgingCalendarView
             calendarCells={calendarCells}
             datedInquiries={datedInquiries}
             selectedMonthInquiries={selectedMonthInquiries}

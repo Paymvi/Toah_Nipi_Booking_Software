@@ -6386,3 +6386,174 @@
   font-size: 0.82rem;
   line-height: 1.45;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Lodging Calendar
+========================================================= */
+
+.lodging-calendar-card {
+  min-width: 0;
+}
+
+
+/* =========================================================
+   Building Switcher
+========================================================= */
+
+.lodging-calendar-building-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  width: 100%;
+
+  padding: 14px 20px 10px;
+
+  overflow-x: auto;
+  scrollbar-width: thin;
+
+  background: #ffffff;
+}
+
+
+/* Individual building button */
+
+.lodging-calendar-building-switcher button {
+  flex: 0 0 auto;
+
+  min-height: 38px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  padding: 0 12px;
+
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #5f6676;
+
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+
+.lodging-calendar-building-switcher button:hover {
+  border-color: #c9c4e8;
+  background: #f8f7fc;
+  color: #443a9c;
+}
+
+
+/* Number of bookings in that building */
+
+.lodging-calendar-building-switcher button strong {
+  min-width: 23px;
+  height: 21px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 6px;
+
+  border-radius: 999px;
+
+  background: #f0f2f6;
+  color: #6b7280;
+
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+
+/* Selected building */
+
+.lodging-calendar-building-switcher button.active {
+  border-color: #443a9c;
+  background: #443a9c;
+  color: #ffffff;
+
+  box-shadow:
+    0 6px 14px rgba(68, 58, 156, 0.15);
+}
+
+
+.lodging-calendar-building-switcher button.active strong {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+}
+
+
+.lodging-calendar-building-switcher button:focus-visible {
+  outline: 3px solid rgba(68, 58, 156, 0.14);
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   Agenda
+========================================================= */
+
+.lodging-calendar-agenda-card small {
+  display: block;
+
+  margin-top: 5px;
+
+  color: #737b8c;
+
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   Responsive
+========================================================= */
+
+@media (max-width: 900px) {
+  .lodging-calendar-building-switcher {
+    padding:
+      12px 16px
+      8px;
+  }
+}

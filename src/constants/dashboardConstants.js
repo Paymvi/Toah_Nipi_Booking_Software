@@ -31,6 +31,7 @@ import {
   FaClock,
   FaTimes,
   FaTasks,
+  FaBed,
 } from "react-icons/fa";
 
 // Month labels used by calendar dropdowns, headings, and availability views.
@@ -60,6 +61,12 @@ export const sidebarSections = [
         label: "Calendar",
         view: "Calendar View",
         icon: FaCalendarAlt,
+      },
+
+      {
+        label: "Lodging Calendar",
+        view: "Lodging Calendar",
+        icon: FaBed,
       },
 
       {
