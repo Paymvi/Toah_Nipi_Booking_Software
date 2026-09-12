@@ -5832,3 +5832,405 @@
     padding-top: 18px;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   BOOKING HOUSING TAB — CURRENT SYSTEM
+========================================================= */
+
+.booking-housing-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.booking-housing-tab-card {
+  overflow: hidden;
+}
+
+.booking-housing-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+
+  padding: 24px 26px;
+
+  border-bottom: 1px solid #e7eaf0;
+}
+
+.booking-housing-tab-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.booking-housing-tab-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 auto;
+
+  font-size: 1.1rem;
+  color: #5142a5;
+}
+
+.booking-housing-tab-title h3,
+.booking-housing-linens-header h3 {
+  margin: 0;
+
+  color: #2f3442;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.booking-housing-tab-title p,
+.booking-housing-linens-header p {
+  margin: 5px 0 0;
+
+  color: #8790a2;
+  font-size: 0.93rem;
+}
+
+.booking-housing-tab-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+.booking-housing-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  border-bottom: 1px solid #e7eaf0;
+}
+
+.booking-housing-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+
+  min-height: 92px;
+
+  padding: 18px 26px;
+
+  border-right: 1px solid #e7eaf0;
+}
+
+.booking-housing-summary-item:last-child {
+  border-right: 0;
+}
+
+.booking-housing-summary-item > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #5142a5;
+  font-size: 1rem;
+}
+
+.booking-housing-summary-item small {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #828b9c;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.booking-housing-summary-item strong {
+  color: #2f3442;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.booking-housing-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.booking-housing-table {
+  width: 100%;
+
+  border-collapse: collapse;
+}
+
+.booking-housing-table thead th {
+  padding: 16px 18px;
+
+  background: #f7f8fa;
+
+  border-bottom: 1px solid #e1e5eb;
+
+  color: #626a79;
+
+  font-size: 0.77rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.booking-housing-table tbody td {
+  padding: 16px 18px;
+
+  border-bottom: 1px solid #edf0f4;
+
+  color: #535b6b;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.booking-housing-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.booking-housing-row-assigned {
+  background: #fbfdfb;
+}
+
+.housing-room-cell {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.housing-room-cell strong {
+  color: #313746;
+  font-weight: 700;
+}
+
+.housing-room-thumb,
+.housing-room-thumb-placeholder {
+  width: 54px;
+  height: 54px;
+
+  flex: 0 0 54px;
+
+  border-radius: 10px;
+}
+
+.housing-room-thumb {
+  object-fit: cover;
+}
+
+.housing-room-thumb-placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #f0f1f7;
+
+  color: #8278bd;
+}
+
+.booking-housing-assigned-count {
+  color: #313746;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.booking-housing-count-input {
+  width: 92px;
+  min-height: 42px;
+
+  padding: 8px 12px;
+
+  border: 1px solid #d9dee8;
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #303746;
+  font: inherit;
+}
+
+.booking-housing-count-input:focus {
+  border-color: #786ac1;
+  outline: 3px solid rgba(81, 66, 165, 0.09);
+}
+
+
+/* =========================================================
+   LINENS
+========================================================= */
+
+.booking-housing-linens-card {
+  overflow: hidden;
+}
+
+.booking-housing-linens-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 22px 26px;
+
+  border-bottom: 1px solid #e7eaf0;
+}
+
+.booking-housing-linens-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  padding: 24px 26px;
+  gap: 18px;
+}
+
+.booking-housing-linen-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.booking-housing-linen-field > span {
+  color: #697181;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.booking-housing-linen-field > strong {
+  min-height: 46px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 14px;
+
+  border: 1px solid #e1e5eb;
+  border-radius: 10px;
+
+  background: #fafbfc;
+
+  color: #343a49;
+  font-weight: 600;
+}
+
+.booking-housing-linen-field input,
+.booking-housing-linen-field select {
+  min-height: 46px;
+
+  padding: 0 13px;
+
+  border: 1px solid #d9dee8;
+  border-radius: 10px;
+
+  background: #ffffff;
+
+  color: #343a49;
+  font: inherit;
+}
+
+.booking-housing-linen-field input:focus,
+.booking-housing-linen-field select:focus {
+  border-color: #786ac1;
+  outline: 3px solid rgba(81, 66, 165, 0.09);
+}
+
+.booking-housing-linen-field input:disabled {
+  background: #f4f5f7;
+  color: #a1a7b2;
+}
+
+
+/* =========================================================
+   IMPORTED / LEGACY HOUSING
+========================================================= */
+
+.booking-housing-legacy-card {
+  padding: 22px 26px;
+}
+
+.booking-housing-legacy-card small {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #7d8594;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.booking-housing-legacy-card strong {
+  display: block;
+
+  color: #343a49;
+  font-weight: 650;
+}
+
+.booking-housing-legacy-card p {
+  margin: 8px 0 0;
+
+  color: #8a92a1;
+  font-size: 0.88rem;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+  .booking-housing-tab-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .booking-housing-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-housing-summary-item {
+    border-right: 0;
+    border-bottom: 1px solid #e7eaf0;
+  }
+
+  .booking-housing-summary-item:last-child {
+    border-bottom: 0;
+  }
+
+  .booking-housing-linens-grid {
+    grid-template-columns: 1fr;
+  }
+}

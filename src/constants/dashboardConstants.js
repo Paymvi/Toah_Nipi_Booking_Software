@@ -195,7 +195,6 @@ export const defaultRoomRows = [
 export const bookingDetailTabs = [
   "Overview",
   "Details",
-  "Rates",
   "Housing",
   "Meals & Activities",
   "Checklists",
