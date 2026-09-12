@@ -130,6 +130,7 @@ export default function BookingCalendar({
   selectedYear,
   selectedMonth,
   getCalendarEventColor,
+  getEventColor,
   getEventLabel,
   getRoomText,
   isLarge = false,
@@ -186,7 +187,10 @@ export default function BookingCalendar({
             ))}
 
             {weekSegments.map((segment) => {
-              const colorClass = getCalendarEventColor(segment.inquiry.status);
+              const colorClass =
+                typeof getEventColor === "function"
+                  ? getEventColor(segment.inquiry)
+                  : getCalendarEventColor(segment.inquiry.status);
 
               const eventLabel =
                 typeof getEventLabel === "function"

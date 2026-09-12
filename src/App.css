@@ -6413,7 +6413,6 @@
 
 
 
-
 /* =========================================================
    Lodging Calendar
 ========================================================= */
@@ -6424,110 +6423,380 @@
 
 
 /* =========================================================
-   Building Switcher
+   Building Selector
 ========================================================= */
 
 .lodging-calendar-building-switcher {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 10px;
 
   width: 100%;
+  min-width: 0;
 
-  padding: 14px 20px 10px;
+  padding: 18px 20px 14px;
 
-  overflow-x: auto;
-  scrollbar-width: thin;
-
+  border-bottom: 1px solid #edf0f4;
   background: #ffffff;
 }
 
 
-/* Individual building button */
+/* ---------------------------------------------------------
+   Base building button
+--------------------------------------------------------- */
 
-.lodging-calendar-building-switcher button {
+.lodging-calendar-building-option {
+  --lodging-color: #687083;
+  --lodging-soft: #f4f5f7;
+
+  position: relative;
+
   flex: 0 0 auto;
 
-  min-height: 38px;
+  min-width: 155px;
+  min-height: 62px;
 
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 9px;
+  gap: 10px;
 
-  padding: 0 12px;
+  padding: 7px 11px 7px 7px;
 
   border: 1px solid #dfe4ec;
-  border-radius: 8px;
+  border-radius: 11px;
 
   background: #ffffff;
-  color: #5f6676;
+  color: #3f4351;
 
   font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
 
   cursor: pointer;
 
+  overflow: hidden;
+
   transition:
-    background-color 140ms ease,
     border-color 140ms ease,
-    color 140ms ease,
-    box-shadow 140ms ease;
+    background-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
 }
 
 
-.lodging-calendar-building-switcher button:hover {
-  border-color: #c9c4e8;
-  background: #f8f7fc;
-  color: #443a9c;
+.lodging-calendar-building-option:hover {
+  border-color: var(--lodging-color);
+  background: var(--lodging-soft);
 }
 
 
-/* Number of bookings in that building */
+.lodging-calendar-building-option:focus-visible {
+  outline: 3px solid rgba(68, 58, 156, 0.13);
+  outline-offset: 2px;
+}
 
-.lodging-calendar-building-switcher button strong {
-  min-width: 23px;
-  height: 21px;
+
+/* ---------------------------------------------------------
+   Lodge image
+--------------------------------------------------------- */
+
+.lodging-calendar-building-image {
+  width: 52px;
+  height: 46px;
+
+  flex: 0 0 52px;
+
+  display: block;
+
+  border: 2px solid var(--lodging-color);
+  border-radius: 8px;
+
+  overflow: hidden;
+
+  background: var(--lodging-soft);
+}
+
+
+.lodging-calendar-building-image img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+
+/* ---------------------------------------------------------
+   Text + count
+--------------------------------------------------------- */
+
+.lodging-calendar-building-copy {
+  min-width: 0;
+  flex: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+
+.lodging-calendar-building-copy > span {
+  min-width: 0;
+
+  color: #4e5565;
+
+  font-size: 0.82rem;
+  font-weight: 650;
+
+  white-space: nowrap;
+}
+
+
+.lodging-calendar-building-copy > strong {
+  min-width: 27px;
+  height: 27px;
+
+  flex: 0 0 auto;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  padding: 0 6px;
+  padding: 0 7px;
 
   border-radius: 999px;
 
-  background: #f0f2f6;
-  color: #6b7280;
+  background: var(--lodging-soft);
+  color: var(--lodging-color);
 
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  line-height: 1;
 }
 
 
-/* Selected building */
+/* ---------------------------------------------------------
+   Selected building
+--------------------------------------------------------- */
 
-.lodging-calendar-building-switcher button.active {
-  border-color: #443a9c;
-  background: #443a9c;
-  color: #ffffff;
+.lodging-calendar-building-option.active {
+  border-color: var(--lodging-color);
+
+  background: var(--lodging-soft);
 
   box-shadow:
-    0 6px 14px rgba(68, 58, 156, 0.15);
+    inset 0 0 0 1px var(--lodging-color),
+    0 5px 14px rgba(28, 35, 52, 0.07);
 }
 
 
-.lodging-calendar-building-switcher button.active strong {
-  background: rgba(255, 255, 255, 0.16);
+.lodging-calendar-building-option.active
+.lodging-calendar-building-copy > span {
+  color: var(--lodging-color);
+}
+
+
+.lodging-calendar-building-option.active
+.lodging-calendar-building-copy > strong {
+  background: var(--lodging-color);
   color: #ffffff;
 }
 
 
-.lodging-calendar-building-switcher button:focus-visible {
-  outline: 3px solid rgba(68, 58, 156, 0.14);
-  outline-offset: 2px;
+/* =========================================================
+   All Lodging Marker
+========================================================= */
+
+.lodging-calendar-building-marker {
+  width: 52px;
+  height: 46px;
+
+  flex: 0 0 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  border-radius: 8px;
+
+  background: #f3f4f7;
+}
+
+
+.lodging-calendar-building-marker i {
+  width: 8px;
+  height: 22px;
+
+  display: block;
+
+  border-radius: 999px;
+}
+
+
+.lodging-calendar-building-marker i:nth-child(1) {
+  background: #2f6f5f;
+}
+
+.lodging-calendar-building-marker i:nth-child(2) {
+  background: #4c65a9;
+}
+
+.lodging-calendar-building-marker i:nth-child(3) {
+  background: #b47632;
+}
+
+
+/* =========================================================
+   Building Color Variables
+========================================================= */
+
+.lodging-all {
+  --lodging-color: #4f46a5;
+  --lodging-soft: #f1effa;
+}
+
+
+/* Bethel — Forest green */
+
+.lodging-bethel {
+  --lodging-color: #2f6f5f;
+  --lodging-soft: #edf5f1;
+}
+
+
+/* Hebron — Blue */
+
+.lodging-hebron {
+  --lodging-color: #4c65a9;
+  --lodging-soft: #eef2fa;
+}
+
+
+/* Dothan — Warm amber */
+
+.lodging-dothan {
+  --lodging-color: #b47632;
+  --lodging-soft: #fbf3e8;
+}
+
+
+/* Ajalon — Plum */
+
+.lodging-ajalon {
+  --lodging-color: #76588f;
+  --lodging-soft: #f3eef7;
+}
+
+
+/* Capernaum — Teal */
+
+.lodging-capernaum {
+  --lodging-color: #367d79;
+  --lodging-soft: #ebf5f4;
+}
+
+
+/* Guest House — Rose */
+
+.lodging-guest-house {
+  --lodging-color: #a85f72;
+  --lodging-soft: #faeef1;
+}
+
+
+/* Unassigned — Slate gray */
+
+.lodging-unassigned {
+  --lodging-color: #707887;
+  --lodging-soft: #f1f3f5;
+}
+
+
+/* =========================================================
+   Lodging Calendar Event Bars
+   IMPORTANT:
+   These replace status-based colors ONLY on lodging calendar.
+========================================================= */
+
+.lodging-calendar-card
+.calendar-span-event.calendar-lodging-bethel {
+  background: #e5f1ec;
+  border-left-color: #2f6f5f;
+  color: #245648;
+}
+
+
+.lodging-calendar-card
+.calendar-span-event.calendar-lodging-hebron {
+  background: #e8edf8;
+  border-left-color: #4c65a9;
+  color: #344b87;
+}
+
+
+.lodging-calendar-card
+.calendar-span-event.calendar-lodging-dothan {
+  background: #f8ead8;
+  border-left-color: #b47632;
+  color: #805020;
+}
+
+
+.lodging-calendar-card
+.calendar-span-event.calendar-lodging-ajalon {
+  background: #efe8f4;
+  border-left-color: #76588f;
+  color: #59406e;
+}
+
+
+.lodging-calendar-card
+.calendar-span-event.calendar-lodging-capernaum {
+  background: #e4f1f0;
+  border-left-color: #367d79;
+  color: #285e5b;
+}
+
+
+.lodging-calendar-card
+.calendar-span-event.calendar-lodging-guest-house {
+  background: #f7e6eb;
+  border-left-color: #a85f72;
+  color: #7e4656;
+}
+
+
+.lodging-calendar-card
+.calendar-span-event.calendar-lodging-unassigned {
+  background: #eef0f3;
+  border-left-color: #707887;
+  color: #555d69;
+}
+
+
+/* Event's small end dot should inherit lodge color */
+
+.lodging-calendar-card .calendar-span-event > i {
+  background: currentColor;
+}
+
+
+/* =========================================================
+   Neutral Booking Status
+   Status exists as information, NOT as a color system.
+========================================================= */
+
+.lodging-calendar-card .calendar-tooltip-status {
+  background: #f0f2f5 !important;
+  color: #646c7a !important;
+  border: 1px solid #e0e4e9;
+}
+
+
+.lodging-calendar-status {
+  background: #f0f2f5 !important;
+  color: #646c7a !important;
+  border: 1px solid #e0e4e9;
 }
 
 
@@ -6552,8 +6821,10 @@
 
 @media (max-width: 900px) {
   .lodging-calendar-building-switcher {
-    padding:
-      12px 16px
-      8px;
+    padding: 14px 16px 12px;
+  }
+
+  .lodging-calendar-building-option {
+    min-width: 150px;
   }
 }

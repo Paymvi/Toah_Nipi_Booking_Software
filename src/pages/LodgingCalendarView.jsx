@@ -12,7 +12,11 @@ const LODGING_BUILDINGS = [
     id: "bethel",
     label: "Bethel",
     aliases: ["bethel"],
+    image: "/lodges/Bethel.webp",
+    colorClass: "lodging-bethel",
+    eventClass: "calendar-lodging-bethel",
   },
+
   {
     id: "hebron",
     label: "Hebron",
@@ -23,26 +27,45 @@ const LODGING_BUILDINGS = [
       "hebron bunks",
       "main lodge",
     ],
+    image: "/lodges/May-2025-Hebron.jpg",
+    colorClass: "lodging-hebron",
+    eventClass: "calendar-lodging-hebron",
   },
+
   {
     id: "dothan",
     label: "Dothan",
     aliases: ["dothan"],
+    image: "/lodges/Dothan.webp",
+    colorClass: "lodging-dothan",
+    eventClass: "calendar-lodging-dothan",
   },
+
   {
     id: "ajalon",
     label: "Ajalon",
     aliases: ["ajalon"],
+    image: "/lodges/Ajalon.webp",
+    colorClass: "lodging-ajalon",
+    eventClass: "calendar-lodging-ajalon",
   },
+
   {
     id: "capernaum",
     label: "Capernaum",
     aliases: ["capernaum"],
+    image: "/lodges/Capernaum.webp",
+    colorClass: "lodging-capernaum",
+    eventClass: "calendar-lodging-capernaum",
   },
+
   {
     id: "guest-house",
     label: "Guest House",
     aliases: ["guest house", "guesthouse"],
+    image: "/lodges/Guest-House.webp",
+    colorClass: "lodging-guest-house",
+    eventClass: "calendar-lodging-guest-house",
   },
 ];
 
@@ -186,6 +209,12 @@ function getBuildingLabel(buildingId) {
   );
 }
 
+function getBuildingConfig(buildingId) {
+  return LODGING_BUILDINGS.find(
+    (building) => building.id === buildingId
+  );
+}
+
 
 function getBookingBuildingSummary(booking) {
   const assignedBuildingIds = getAssignedBuildingIds(booking);
@@ -312,15 +341,20 @@ export default function LodgingCalendarView({
   The counts change as the selected month changes.
   */
   const buildingOptions = useMemo(() => {
+      
     const options = [
       {
         id: "all",
         label: "All Lodging",
+        colorClass: "lodging-all",
       },
+
       ...LODGING_BUILDINGS,
+
       {
         id: "unassigned",
         label: "Unassigned",
+        colorClass: "lodging-unassigned",
       },
     ];
 
@@ -363,6 +397,53 @@ export default function LodgingCalendarView({
     return organizationName;
   }
 
+  function getLodgingCalendarEventColor(booking) {
+    /*
+      When staff are looking at one specific building,
+      every bar uses that building's color.
+    */
+    if (
+      selectedBuilding !== "all" &&
+      selectedBuilding !== "unassigned"
+    ) {
+      const selectedBuildingConfig =
+        getBuildingConfig(selectedBuilding);
+
+      return (
+        selectedBuildingConfig?.eventClass ||
+        "calendar-lodging-unassigned"
+      );
+    }
+
+    /*
+      Explicit Unassigned view gets the neutral gray color.
+    */
+    if (selectedBuilding === "unassigned") {
+      return "calendar-lodging-unassigned";
+    }
+
+    /*
+      In All Lodging mode, use the first assigned building
+      as the booking's primary display color.
+
+      The event text still lists all assigned buildings.
+    */
+    const assignedBuildingIds =
+      getAssignedBuildingIds(booking);
+
+    if (!assignedBuildingIds.length) {
+      return "calendar-lodging-unassigned";
+    }
+
+    const primaryBuilding =
+      getBuildingConfig(assignedBuildingIds[0]);
+
+    return (
+      primaryBuilding?.eventClass ||
+      "calendar-lodging-unassigned"
+    );
+  }
+
 
   return (
     <section className="calendar-view-page lodging-calendar-page">
@@ -400,24 +481,53 @@ export default function LodgingCalendarView({
           className="lodging-calendar-building-switcher"
           aria-label="Lodging building filters"
         >
-          {buildingOptions.map((building) => (
-            <button
-              className={
-                selectedBuilding === building.id
-                  ? "active"
-                  : ""
-              }
-              type="button"
-              key={building.id}
-              onClick={() =>
-                setSelectedBuilding(building.id)
-              }
-            >
-              <span>{building.label}</span>
+          {buildingOptions.map((building) => {
+            const isActive =
+              selectedBuilding === building.id;
 
-              <strong>{building.count}</strong>
-            </button>
-          ))}
+            return (
+              <button
+                className={[
+                  "lodging-calendar-building-option",
+                  building.colorClass || "",
+                  isActive ? "active" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                type="button"
+                key={building.id}
+                onClick={() =>
+                  setSelectedBuilding(building.id)
+                }
+              >
+                {building.image ? (
+                  <span className="lodging-calendar-building-image">
+                    <img
+                      src={building.image}
+                      alt=""
+                      aria-hidden="true"
+                      onError={(event) => {
+                        event.currentTarget.style.display =
+                          "none";
+                      }}
+                    />
+                  </span>
+                ) : (
+                  <span className="lodging-calendar-building-marker">
+                    <i />
+                    <i />
+                    <i />
+                  </span>
+                )}
+
+                <span className="lodging-calendar-building-copy">
+                  <span>{building.label}</span>
+
+                  <strong>{building.count}</strong>
+                </span>
+              </button>
+            );
+          })}
         </div>
 
 
@@ -478,40 +588,16 @@ export default function LodgingCalendarView({
 
         <BookingCalendar
           calendarCells={calendarCells}
-          datedInquiries={
-            filteredDatedInquiries
-          }
+          datedInquiries={filteredDatedInquiries}
           selectedYear={selectedYear}
           selectedMonth={selectedMonth}
-          getCalendarEventColor={
-            getCalendarEventColor
-          }
-          getEventLabel={
-            getLodgingCalendarEventLabel
-          }
-          getRoomText={
-            getBookingLodgingDisplayText
-          }
+          getCalendarEventColor={getCalendarEventColor}
+          getEventColor={getLodgingCalendarEventColor}
+          getEventLabel={getLodgingCalendarEventLabel}
+          getRoomText={getBookingLodgingDisplayText}
           isLarge
         />
 
-
-        <div className="calendar-legend">
-          <span>
-            <i className="legend-dot legend-confirmed"></i>
-            Confirmed
-          </span>
-
-          <span>
-            <i className="legend-dot legend-contract"></i>
-            Contract Sent
-          </span>
-
-          <span>
-            <i className="legend-dot legend-inquiry"></i>
-            Inquiry
-          </span>
-        </div>
       </article>
 
 
@@ -548,13 +634,10 @@ export default function LodgingCalendarView({
                       {booking.organizationName}
                     </strong>
 
-                    <span
-                      className={`calendar-agenda-status ${getCalendarEventColor(
-                        booking.status
-                      )}`}
-                    >
+                    <span className="calendar-agenda-status lodging-calendar-status">
                       {booking.status}
                     </span>
+
                   </div>
 
                   <p>
