@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  FaBed,
   FaChartBar,
   FaClipboardList,
+  FaClock,
   FaDollarSign,
   FaExclamationTriangle,
+  FaMoon,
+  FaQuestionCircle,
   FaRegCalendarCheck,
   FaTable,
   FaUsers,
-  FaClock,
-  FaQuestionCircle,
+  FaUtensils,
 } from "react-icons/fa";
 
 import {
@@ -19,79 +22,123 @@ import {
 
 import { getLocalDate } from "../utils/dateUtils";
 
-function formatDateForInput(date) {
-  if (!date) {
-    return "";
-  }
+/* =========================================================
+   GENERAL HELPERS
+========================================================= */
 
+function formatDateForInput(date) {
+  if (!date) return "";
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-
   return `${year}-${month}-${day}`;
 }
 
 function isBlankBookingValue(value) {
-  const text = String(value || "").trim().toLowerCase();
+  if (value === 0 || value === false) return false;
+  if (value === null || value === undefined) return true;
 
-  return (
-    !text ||
-    text === "n/a" ||
-    text === "na" ||
-    text === "—" ||
-    text === "no email provided" ||
-    text === "no phone provided" ||
-    text === "no contact name" ||
-    text === "unnamed organization" ||
-    text === "unnamed group" ||
-    text === "unassigned"
-  );
+  const text = String(value).trim().toLowerCase();
+
+  return [
+    "",
+    "n/a",
+    "na",
+    "—",
+    "no email provided",
+    "no phone provided",
+    "no contact name",
+    "unnamed organization",
+    "unnamed group",
+    "unassigned",
+  ].includes(text);
 }
 
+function getRentalFormDetails(booking) {
+  const details = booking?.rentalFormDetails;
+  return details && typeof details === "object" && !Array.isArray(details)
+    ? details
+    : {};
+}
+
+function firstReportsValue(...values) {
+  return values.find((value) => !isBlankBookingValue(value)) ?? "";
+}
+
+function getReportsNumber(value) {
+  const text = String(value ?? "").replace(/[$,]/g, "").trim();
+  const match = text.match(/-?\d+(\.\d+)?/);
+  if (!match) return 0;
+
+  const number = Number(match[0]);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function formatReportsCurrency(value) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value || 0);
+}
+
+function formatReportsNumber(value) {
+  return new Intl.NumberFormat("en-US").format(value || 0);
+}
+
+function getReportsPercent(value, total) {
+  return total ? Math.round((value / total) * 100) : 0;
+}
+
+/* =========================================================
+   RECORD / SOURCE HELPERS
+========================================================= */
+
+function isReportsArchiveRecord(booking) {
+  const text = [
+    booking?.sourceType,
+    booking?.detectedImportType,
+    booking?.retreatType,
+    booking?.status,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return text.includes("archive") || text.includes("archived visit");
+}
 
 function getBookingInputMethod(booking) {
-  const sourceType = String(booking.sourceType || "Form").trim();
-  const detectedImportType = String(booking.detectedImportType || "").trim();
+  const sourceType = String(booking?.sourceType || "").trim();
+  const detectedImportType = String(booking?.detectedImportType || "").trim();
+  const normalizedSource = sourceType.toLowerCase();
 
-  if (!sourceType || sourceType === "Form") {
-    return "Public Form";
-  }
+  if (normalizedSource === "staff booking") return "Staff Booking";
+  if (!sourceType || normalizedSource === "form") return "Public Form";
 
-  if (sourceType === "Staff Booking") {
-    return "Staff Booking Form";
-  }
-
-  if (sourceType === "2027 Inquiry") {
-    return "Imported - 2027 Inquiry";
-  }
-
-  if (sourceType === "Master 2026") {
-    return "Imported - Master 2026";
-  }
-
-  if (sourceType === "Master") {
-    return "Imported - Master";
-  }
-
-  if (detectedImportType) {
-    return `Imported - ${detectedImportType}`;
-  }
-
-  return `Imported - ${sourceType}`;
+  return `Imported - ${detectedImportType || sourceType}`;
 }
+
+function getReportsSourceMode(booking) {
+  const sourceType = String(booking?.sourceType || "").trim().toLowerCase();
+
+  if (!sourceType || sourceType === "form" || sourceType === "staff booking") {
+    return "forms";
+  }
+
+  return "imports";
+}
+
+/* =========================================================
+   SETTINGS / DATE RANGE
+========================================================= */
 
 function getSavedReportsViewSettings() {
   try {
-    const savedSettings = localStorage.getItem(REPORTS_VIEW_SETTINGS_STORAGE_KEY);
-
-    if (!savedSettings) {
-      return DEFAULT_REPORTS_VIEW_SETTINGS;
-    }
-
-    return {
-      ...DEFAULT_REPORTS_VIEW_SETTINGS,
-      ...JSON.parse(savedSettings),
-    };
+    const saved = localStorage.getItem(REPORTS_VIEW_SETTINGS_STORAGE_KEY);
+    return saved
+      ? { ...DEFAULT_REPORTS_VIEW_SETTINGS, ...JSON.parse(saved) }
+      : DEFAULT_REPORTS_VIEW_SETTINGS;
   } catch (error) {
     console.error("Could not read reports settings:", error);
     return DEFAULT_REPORTS_VIEW_SETTINGS;
@@ -100,7 +147,10 @@ function getSavedReportsViewSettings() {
 
 function saveReportsViewSettings(settings) {
   try {
-    localStorage.setItem(REPORTS_VIEW_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    localStorage.setItem(
+      REPORTS_VIEW_SETTINGS_STORAGE_KEY,
+      JSON.stringify(settings)
+    );
   } catch (error) {
     console.error("Could not save reports settings:", error);
   }
@@ -108,38 +158,34 @@ function saveReportsViewSettings(settings) {
 
 function getReportsDateRange(settings) {
   const today = getLocalDate(formatDateForInput(new Date()));
-  const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth();
+  const year = today.getFullYear();
+  const month = today.getMonth();
 
   if (settings.dateRange === "allTime") {
-    return {
-      startDate: null,
-      endDate: null,
-      label: "All Time",
-    };
+    return { startDate: null, endDate: null, label: "All Time" };
   }
 
   if (settings.dateRange === "thisMonth") {
     return {
-      startDate: new Date(currentYear, currentMonth, 1),
-      endDate: new Date(currentYear, currentMonth + 1, 0),
+      startDate: new Date(year, month, 1),
+      endDate: new Date(year, month + 1, 0),
       label: "This Month",
     };
   }
 
   if (settings.dateRange === "nextMonth") {
     return {
-      startDate: new Date(currentYear, currentMonth + 1, 1),
-      endDate: new Date(currentYear, currentMonth + 2, 0),
+      startDate: new Date(year, month + 1, 1),
+      endDate: new Date(year, month + 2, 0),
       label: "Next Month",
     };
   }
 
   if (settings.dateRange === "nextYear") {
     return {
-      startDate: new Date(currentYear + 1, 0, 1),
-      endDate: new Date(currentYear + 1, 11, 31),
-      label: `${currentYear + 1}`,
+      startDate: new Date(year + 1, 0, 1),
+      endDate: new Date(year + 1, 11, 31),
+      label: `${year + 1}`,
     };
   }
 
@@ -160,69 +206,189 @@ function getReportsDateRange(settings) {
       };
     }
 
-    return {
-      startDate,
-      endDate,
-      label: "Custom Date Range",
-    };
+    return { startDate, endDate, label: "Custom Date Range" };
   }
 
   return {
-    startDate: new Date(currentYear, 0, 1),
-    endDate: new Date(currentYear, 11, 31),
-    label: `${currentYear}`,
+    startDate: new Date(year, 0, 1),
+    endDate: new Date(year, 11, 31),
+    label: `${year}`,
   };
 }
 
 function bookingTouchesReportsDateRange(booking, dateRange) {
-  if (!dateRange.startDate && !dateRange.endDate) {
-    return true;
-  }
+  if (!dateRange.startDate && !dateRange.endDate) return true;
 
-  const bookingStartDate = getLocalDate(booking.startDate);
+  const start = getLocalDate(booking.startDate);
+  if (!start) return false;
 
-  if (!bookingStartDate) {
-    return false;
-  }
-
-  const bookingEndDate = booking.endDate
-    ? getLocalDate(booking.endDate)
-    : bookingStartDate;
+  const end = booking.endDate ? getLocalDate(booking.endDate) : start;
 
   if (dateRange.startDate && dateRange.endDate) {
-    return bookingStartDate <= dateRange.endDate && bookingEndDate >= dateRange.startDate;
+    return start <= dateRange.endDate && end >= dateRange.startDate;
   }
 
-  if (dateRange.startDate) {
-    return bookingEndDate >= dateRange.startDate;
-  }
-
-  return bookingStartDate <= dateRange.endDate;
+  if (dateRange.startDate) return end >= dateRange.startDate;
+  return start <= dateRange.endDate;
 }
 
-function getReportsNumber(value) {
-  const text = String(value || "").replace(/[$,]/g, "").trim();
-  const match = text.match(/-?\d+(\.\d+)?/);
+/* =========================================================
+   GUESTS / NIGHTS / MEALS
+========================================================= */
 
-  if (!match) {
-    return 0;
+function getReportsGuestCountDetails(booking) {
+  const details = getRentalFormDetails(booking);
+
+  const hasActualAdults = !isBlankBookingValue(details.actualAdultGuests);
+  const hasActualChildren = !isBlankBookingValue(details.actualChildrenGuests);
+
+  if (hasActualAdults || hasActualChildren) {
+    return {
+      value:
+        getReportsNumber(details.actualAdultGuests) +
+        getReportsNumber(details.actualChildrenGuests),
+      source: "Actual",
+    };
   }
 
-  const number = Number(match[0]);
+  if (!isBlankBookingValue(details.approxTotalGuests)) {
+    return {
+      value: getReportsNumber(details.approxTotalGuests),
+      source: "Estimated",
+    };
+  }
 
-  return Number.isFinite(number) ? number : 0;
+  const hasApproxAdults = !isBlankBookingValue(details.approxAdultGuests);
+  const hasApproxChildren = !isBlankBookingValue(details.approxChildrenGuests);
+
+  if (hasApproxAdults || hasApproxChildren) {
+    return {
+      value:
+        getReportsNumber(details.approxAdultGuests) +
+        getReportsNumber(details.approxChildrenGuests),
+      source: "Estimated",
+    };
+  }
+
+  const fallback = firstReportsValue(
+    booking.attendeeCount,
+    booking.groupSize,
+    booking.persons
+  );
+
+  if (!isBlankBookingValue(fallback)) {
+    return { value: getReportsNumber(fallback), source: "Recorded" };
+  }
+
+  return { value: 0, source: "Missing" };
 }
 
 function getReportsGuestCount(booking) {
+  return getReportsGuestCountDetails(booking).value;
+}
+
+function getReportsNightCount(booking) {
+  const details = getRentalFormDetails(booking);
   return getReportsNumber(
-    booking.attendeeCount || booking.groupSize || booking.persons
+    firstReportsValue(details.numberOfNights, booking.nights)
   );
 }
 
+function getReportsMealCount(booking) {
+  const details = getRentalFormDetails(booking);
+
+  const directValue = firstReportsValue(
+    details.numberOfMeals,
+    booking.mealCount
+  );
+
+  if (!isBlankBookingValue(directValue)) {
+    return getReportsNumber(directValue);
+  }
+
+  const schedule = details.mealSchedule;
+
+  if (schedule && typeof schedule === "object") {
+    return Object.values(schedule).reduce((total, day) => {
+      if (!day || typeof day !== "object") return total;
+
+      return (
+        total +
+        (day.breakfast ? 1 : 0) +
+        (day.lunch ? 1 : 0) +
+        (day.dinner ? 1 : 0)
+      );
+    }, 0);
+  }
+
+  return 0;
+}
+
+/* =========================================================
+   DEPOSITS
+========================================================= */
+
+function getReportsDepositStatusValue(booking) {
+  const details = getRentalFormDetails(booking);
+
+  return firstReportsValue(
+    details.depositReceivedDate,
+    booking.depositReceived
+  );
+}
+
+function getReportsDepositAmount(booking) {
+  const details = getRentalFormDetails(booking);
+
+  return getReportsNumber(
+    firstReportsValue(details.depositAmount, booking.deposit)
+  );
+}
+
+function hasReportsDepositReceived(booking) {
+  const text = String(getReportsDepositStatusValue(booking) || "")
+    .trim()
+    .toLowerCase();
+
+  if (!text) return false;
+
+  return !["no", "n", "false", "not received", "pending", "0"].includes(text);
+}
+
+function getReportsDepositReceivedAmount(booking) {
+  return hasReportsDepositReceived(booking)
+    ? getReportsDepositAmount(booking)
+    : 0;
+}
+
+/* =========================================================
+   REVENUE
+========================================================= */
+
 function getReportsRevenueDetails(booking) {
-  const invoiceTotal = getReportsNumber(booking.invoiceLodgingMeals);
-  const expectedMinimumRevenue = getReportsNumber(booking.expectedMinimumRevenue);
-  const monthlyProjectedIncome = getReportsNumber(booking.monthlyProjectedIncome);
+  const details = getRentalFormDetails(booking);
+
+  const invoiceTotal = getReportsNumber(
+    firstReportsValue(
+      booking.invoiceTotal,
+      booking.invoiceLodgingMeals,
+      booking.invoice_total,
+      details.invoiceTotal
+    )
+  );
+
+  const expectedRevenue = getReportsNumber(
+    firstReportsValue(
+      booking.expectedRevenue,
+      booking.expectedMinimumRevenue,
+      booking.expected_revenue,
+      details.expectedRevenue
+    )
+  );
+
+  const monthlyProjection = getReportsNumber(
+    booking.monthlyProjectedIncome
+  );
 
   const itemizedTotal =
     getReportsNumber(booking.usageFee) +
@@ -231,24 +397,20 @@ function getReportsRevenueDetails(booking) {
     getReportsNumber(booking.miscCost);
 
   if (invoiceTotal) {
-    return {
-      value: invoiceTotal,
-      source: "Invoice Total",
-      confidence: "high",
-    };
+    return { value: invoiceTotal, source: "Invoice Total", confidence: "high" };
   }
 
-  if (expectedMinimumRevenue) {
+  if (expectedRevenue) {
     return {
-      value: expectedMinimumRevenue,
-      source: "Expected Minimum",
+      value: expectedRevenue,
+      source: "Expected Revenue",
       confidence: "medium",
     };
   }
 
-  if (monthlyProjectedIncome) {
+  if (monthlyProjection) {
     return {
-      value: monthlyProjectedIncome,
+      value: monthlyProjection,
       source: "Monthly Projection",
       confidence: "medium",
     };
@@ -262,55 +424,29 @@ function getReportsRevenueDetails(booking) {
     };
   }
 
-  return {
-    value: 0,
-    source: "Missing",
-    confidence: "missing",
-  };
+  return { value: 0, source: "Missing", confidence: "missing" };
 }
-
 
 function getReportsRevenue(booking) {
   return getReportsRevenueDetails(booking).value;
 }
 
-function formatReportsCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value || 0);
-}
-
-function formatReportsNumber(value) {
-  return new Intl.NumberFormat("en-US").format(value || 0);
-}
-
-function getReportsPercent(value, total) {
-  if (!total) {
-    return 0;
-  }
-
-  return Math.round((value / total) * 100);
-}
+/* =========================================================
+   MONTH / RETREAT TYPE
+========================================================= */
 
 function getReportsMonthKey(booking) {
   const date = getLocalDate(booking.startDate);
+  if (!date) return "";
 
-  if (!date) {
-    return "";
-  }
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-
-  return `${year}-${month}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}`;
 }
 
 function formatReportsMonthLabel(monthKey) {
-  if (!monthKey) {
-    return "No Month";
-  }
+  if (!monthKey) return "No Month";
 
   const [year, month] = monthKey.split("-");
   const date = new Date(Number(year), Number(month) - 1, 1);
@@ -325,9 +461,152 @@ function getReportsRetreatType(booking) {
   return String(booking.retreatType || "").trim() || "No Retreat Type";
 }
 
-function getReportsSourceLabel(booking) {
-  return getBookingInputMethod(booking);
+/* =========================================================
+   HOUSING
+========================================================= */
+
+const REPORTS_HOUSING_CONFIG = [
+  {
+    id: "bethel",
+    label: "Bethel",
+    field: "lodgingBethel",
+    aliases: ["bethel"],
+  },
+  {
+    id: "hebron-third",
+    label: "Hebron 3rd Floor",
+    field: "lodgingHebronThird",
+    aliases: ["hebron 3rd floor", "hebron third floor", "hebron 3rd"],
+  },
+  {
+    id: "hebron-bunks",
+    label: "Hebron Bunks",
+    field: "lodgingHebronBunks",
+    aliases: ["hebron bunks", "hebron bunk"],
+  },
+  {
+    id: "dothan",
+    label: "Dothan",
+    field: "lodgingDothan",
+    aliases: ["dothan"],
+  },
+  {
+    id: "ajalon",
+    label: "Ajalon",
+    field: "lodgingAjalon",
+    aliases: ["ajalon", "rustic: ajalon", "rustic ajalon"],
+  },
+  {
+    id: "capernaum",
+    label: "Capernaum",
+    field: "lodgingCapernaum",
+    aliases: ["capernaum", "rustic: capernaum", "rustic capernaum"],
+  },
+  {
+    id: "guest-house",
+    label: "Guest House",
+    field: "lodgingGuestHouse",
+    aliases: ["guest house", "guesthouse"],
+  },
+  {
+    id: "hebron-unspecified",
+    label: "Hebron — Unspecified",
+    field: null,
+    aliases: [],
+    genericHebron: true,
+  },
+];
+
+function getReportsHousingText(booking) {
+  return [booking?.roomName, booking?.buildingsRooms]
+    .filter(Boolean)
+    .join("; ")
+    .toLowerCase();
 }
+
+function getReportsHousingCountFromSummary(booking, row) {
+  const parts = String(booking?.buildingsRooms || "")
+    .split(/[;\n]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  for (const part of parts) {
+    const lowerPart = part.toLowerCase();
+
+    const matches = row.aliases.some((alias) =>
+      lowerPart.startsWith(alias.toLowerCase())
+    );
+
+    if (!matches) continue;
+
+    const countMatch = part.match(/:\s*(\d+)/);
+    if (countMatch) return Number(countMatch[1]);
+  }
+
+  return 0;
+}
+
+function reportsHasGenericHebron(booking) {
+  const text = getReportsHousingText(booking);
+
+  if (!/\bhebron\b/i.test(text)) return false;
+
+  const identifiesThird = /hebron\s+(3rd|third)/i.test(text);
+  const identifiesBunks = /hebron\s+bunks?/i.test(text);
+
+  return !identifiesThird && !identifiesBunks;
+}
+
+function getReportsHousingUsage(booking, row) {
+  if (row.genericHebron) {
+    return {
+      used: reportsHasGenericHebron(booking),
+      assignedGuests: 0,
+      countKnown: false,
+    };
+  }
+
+  const details = getRentalFormDetails(booking);
+
+  const detailCount = row.field ? getReportsNumber(details[row.field]) : 0;
+  const summaryCount = getReportsHousingCountFromSummary(booking, row);
+  const assignedGuests = detailCount || summaryCount || 0;
+
+  const explicitlyUsed = row.field
+    ? details?.housingUsage?.[row.field] === true
+    : false;
+
+  const housingText = getReportsHousingText(booking);
+
+  const foundInText = row.aliases.some((alias) =>
+    housingText.includes(alias.toLowerCase())
+  );
+
+  const used = assignedGuests > 0 || explicitlyUsed || foundInText;
+
+  return {
+    used,
+    assignedGuests,
+    countKnown: assignedGuests > 0,
+  };
+}
+
+function reportsBookingHasHousing(booking) {
+  return REPORTS_HOUSING_CONFIG.some(
+    (row) => getReportsHousingUsage(booking, row).used
+  );
+}
+
+function reportsBookingHasUnknownHousingCount(booking) {
+  return REPORTS_HOUSING_CONFIG.some((row) => {
+    const usage = getReportsHousingUsage(booking, row);
+    return usage.used && !usage.countKnown;
+  });
+}
+
+/* =========================================================
+   CSV
+========================================================= */
 
 function downloadReportsCsv(filename, sections) {
   const rows = [];
@@ -335,11 +614,7 @@ function downloadReportsCsv(filename, sections) {
   sections.forEach((section) => {
     rows.push([section.title]);
     rows.push(section.headers);
-
-    section.rows.forEach((row) => {
-      rows.push(row);
-    });
-
+    section.rows.forEach((row) => rows.push(row));
     rows.push([]);
   });
 
@@ -371,7 +646,17 @@ function downloadReportsCsv(filename, sections) {
   URL.revokeObjectURL(url);
 }
 
-function ReportSummaryCard({ icon: Icon, label, value, helper, tone = "default" }) {
+/* =========================================================
+   SMALL COMPONENTS
+========================================================= */
+
+function ReportSummaryCard({
+  icon: Icon,
+  label,
+  value,
+  helper,
+  tone = "default",
+}) {
   return (
     <article className={`reports-summary-card reports-summary-card-${tone}`}>
       <span className="reports-summary-icon">
@@ -389,7 +674,9 @@ function ReportSummaryCard({ icon: Icon, label, value, helper, tone = "default" 
 
 function ReportBarRow({ label, value, maxValue, valueLabel, helper }) {
   const width =
-    maxValue > 0 && value > 0 ? Math.max((value / maxValue) * 100, 4) : 0;
+    maxValue > 0 && value > 0
+      ? Math.max((value / maxValue) * 100, 4)
+      : 0;
 
   return (
     <div className="reports-bar-row">
@@ -399,13 +686,17 @@ function ReportBarRow({ label, value, maxValue, valueLabel, helper }) {
       </div>
 
       <div className="reports-bar-track">
-        <span style={{ width: `${width}%` }}></span>
+        <span style={{ width: `${width}%` }} />
       </div>
 
       {helper && <small>{helper}</small>}
     </div>
   );
 }
+
+/* =========================================================
+   RETREAT PIE
+========================================================= */
 
 const REPORTS_RETREAT_TYPE_COLORS = {
   pr: "#5c6bc0",
@@ -455,10 +746,10 @@ function normalizeReportsRetreatTypeLabel(label) {
 }
 
 function getRetreatPieColor(label, index) {
-  const normalizedLabel = normalizeReportsRetreatTypeLabel(label);
+  const normalized = normalizeReportsRetreatTypeLabel(label);
 
   return (
-    REPORTS_RETREAT_TYPE_COLORS[normalizedLabel] ||
+    REPORTS_RETREAT_TYPE_COLORS[normalized] ||
     REPORTS_RETREAT_FALLBACK_COLORS[
       index % REPORTS_RETREAT_FALLBACK_COLORS.length
     ]
@@ -466,9 +757,9 @@ function getRetreatPieColor(label, index) {
 }
 
 function formatRetreatPieLabel(label) {
-  const normalizedLabel = normalizeReportsRetreatTypeLabel(label);
+  const normalized = normalizeReportsRetreatTypeLabel(label);
 
-  const displayLabels = {
+  const labels = {
     pr: "PR",
     "day use": "Day Use",
     men: "Men",
@@ -493,16 +784,16 @@ function formatRetreatPieLabel(label) {
     "no retreat type": "No Retreat Type",
   };
 
-  return displayLabels[normalizedLabel] || label;
+  return labels[normalized] || label;
 }
 
 function ReportRetreatTypePieChart({ rows, totalBookings }) {
-  const MAX_RETREAT_PIE_GROUPS = 12;
-
+  const maxGroups = 12;
   const visibleRows = rows.filter((row) => row.bookings > 0);
-  const topRows = visibleRows.slice(0, MAX_RETREAT_PIE_GROUPS);
+  const topRows = visibleRows.slice(0, maxGroups);
+
   const additionalBookings = visibleRows
-    .slice(MAX_RETREAT_PIE_GROUPS)
+    .slice(maxGroups)
     .reduce((sum, row) => sum + row.bookings, 0);
 
   const chartRows = additionalBookings
@@ -548,8 +839,6 @@ function ReportRetreatTypePieChart({ rows, totalBookings }) {
       <div
         className="reports-retreat-pie-chart"
         style={{ background: pieBackground }}
-        role="img"
-        aria-label="Retreat type booking breakdown pie chart"
       >
         <div className="reports-retreat-pie-center">
           <strong>{formatReportsNumber(totalBookings)}</strong>
@@ -563,14 +852,13 @@ function ReportRetreatTypePieChart({ rows, totalBookings }) {
             <span
               className="reports-retreat-pie-dot"
               style={{ background: row.color }}
-            ></span>
+            />
 
             <div>
               <strong>{row.label}</strong>
               <small>
                 {formatReportsNumber(row.bookings)} booking
-                {row.bookings === 1 ? "" : "s"} ·{" "}
-                {Math.round(row.percent)}%
+                {row.bookings === 1 ? "" : "s"} · {Math.round(row.percent)}%
               </small>
             </div>
           </div>
@@ -579,6 +867,10 @@ function ReportRetreatTypePieChart({ rows, totalBookings }) {
     </div>
   );
 }
+
+/* =========================================================
+   MAIN VIEW
+========================================================= */
 
 function ReportsView({ inquiryBookings }) {
   const [reportsSettings, setReportsSettings] = useState(() =>
@@ -590,8 +882,8 @@ function ReportsView({ inquiryBookings }) {
   }, [reportsSettings]);
 
   const updateReportsSettings = (updates) => {
-    setReportsSettings((currentSettings) => ({
-      ...currentSettings,
+    setReportsSettings((current) => ({
+      ...current,
       ...updates,
     }));
   };
@@ -601,24 +893,43 @@ function ReportsView({ inquiryBookings }) {
     [reportsSettings]
   );
 
+  const operationalBookings = useMemo(
+    () =>
+      inquiryBookings.filter(
+        (booking) => !isReportsArchiveRecord(booking)
+      ),
+    [inquiryBookings]
+  );
+
+  const archiveExcludedCount =
+    inquiryBookings.length - operationalBookings.length;
+
   const statusOptions = useMemo(
     () =>
       Array.from(
-        new Set(inquiryBookings.map((booking) => booking.status).filter(Boolean))
+        new Set(
+          operationalBookings
+            .map((booking) => booking.status)
+            .filter(Boolean)
+        )
       ).sort(),
-    [inquiryBookings]
+    [operationalBookings]
   );
 
   const retreatTypeOptions = useMemo(
     () =>
       Array.from(
-        new Set(inquiryBookings.map((booking) => getReportsRetreatType(booking)))
+        new Set(
+          operationalBookings.map((booking) =>
+            getReportsRetreatType(booking)
+          )
+        )
       ).sort(),
-    [inquiryBookings]
+    [operationalBookings]
   );
 
   const filteredReportBookings = useMemo(() => {
-    return inquiryBookings.filter((booking) => {
+    return operationalBookings.filter((booking) => {
       if (
         reportsSettings.status !== "all" &&
         booking.status !== reportsSettings.status
@@ -633,25 +944,16 @@ function ReportsView({ inquiryBookings }) {
         return false;
       }
 
-      if (reportsSettings.sourceMode === "forms") {
-        const inputMethod = getReportsSourceLabel(booking).toLowerCase();
-
-        if (!inputMethod.includes("form")) {
-          return false;
-        }
-      }
-
-      if (reportsSettings.sourceMode === "imports") {
-        const inputMethod = getReportsSourceLabel(booking).toLowerCase();
-
-        if (inputMethod.includes("form")) {
-          return false;
-        }
+      if (
+        reportsSettings.sourceMode !== "all" &&
+        getReportsSourceMode(booking) !== reportsSettings.sourceMode
+      ) {
+        return false;
       }
 
       return bookingTouchesReportsDateRange(booking, reportDateRange);
     });
-  }, [inquiryBookings, reportsSettings, reportDateRange]);
+  }, [operationalBookings, reportsSettings, reportDateRange]);
 
   const totalBookings = filteredReportBookings.length;
 
@@ -678,6 +980,16 @@ function ReportsView({ inquiryBookings }) {
     0
   );
 
+  const totalNights = filteredReportBookings.reduce(
+    (sum, booking) => sum + getReportsNightCount(booking),
+    0
+  );
+
+  const totalMeals = filteredReportBookings.reduce(
+    (sum, booking) => sum + getReportsMealCount(booking),
+    0
+  );
+
   const totalCamperDays = filteredReportBookings.reduce(
     (sum, booking) => sum + getReportsNumber(booking.camperDays),
     0
@@ -689,32 +1001,39 @@ function ReportsView({ inquiryBookings }) {
   );
 
   const depositsReceived = filteredReportBookings.reduce(
-    (sum, booking) => sum + getReportsNumber(booking.depositReceived),
+    (sum, booking) => sum + getReportsDepositReceivedAmount(booking),
     0
   );
+
+  const depositsReceivedCount = filteredReportBookings.filter((booking) =>
+    hasReportsDepositReceived(booking)
+  ).length;
+
+  const actualGuestCountBookings = filteredReportBookings.filter(
+    (booking) => getReportsGuestCountDetails(booking).source === "Actual"
+  ).length;
 
   const revenueSourceRows = useMemo(() => {
     const sourceMap = new Map();
 
     filteredReportBookings.forEach((booking) => {
-      const revenueDetails = getReportsRevenueDetails(booking);
+      const revenue = getReportsRevenueDetails(booking);
 
-      if (!sourceMap.has(revenueDetails.source)) {
-        sourceMap.set(revenueDetails.source, {
-          label: revenueDetails.source,
+      if (!sourceMap.has(revenue.source)) {
+        sourceMap.set(revenue.source, {
+          label: revenue.source,
           count: 0,
           value: 0,
-          confidence: revenueDetails.confidence,
+          confidence: revenue.confidence,
         });
       }
 
-      const row = sourceMap.get(revenueDetails.source);
-
+      const row = sourceMap.get(revenue.source);
       row.count += 1;
-      row.value += revenueDetails.value;
+      row.value += revenue.value;
     });
 
-    const confidenceOrder = {
+    const order = {
       high: 1,
       medium: 2,
       low: 3,
@@ -723,7 +1042,7 @@ function ReportsView({ inquiryBookings }) {
 
     return Array.from(sourceMap.values()).sort(
       (a, b) =>
-        confidenceOrder[a.confidence] - confidenceOrder[b.confidence] ||
+        order[a.confidence] - order[b.confidence] ||
         b.count - a.count
     );
   }, [filteredReportBookings]);
@@ -738,10 +1057,7 @@ function ReportsView({ inquiryBookings }) {
 
     filteredReportBookings.forEach((booking) => {
       const monthKey = getReportsMonthKey(booking);
-
-      if (!monthKey) {
-        return;
-      }
+      if (!monthKey) return;
 
       if (!monthMap.has(monthKey)) {
         monthMap.set(monthKey, {
@@ -760,7 +1076,9 @@ function ReportsView({ inquiryBookings }) {
       row.guests += getReportsGuestCount(booking);
       row.revenue += getReportsRevenue(booking);
 
-      if (String(booking.status || "").toLowerCase().includes("confirm")) {
+      if (
+        String(booking.status || "").toLowerCase().includes("confirm")
+      ) {
         row.confirmed += 1;
       }
     });
@@ -775,7 +1093,10 @@ function ReportsView({ inquiryBookings }) {
     ...monthlyRows.map((row) => row.bookings)
   );
 
-  const maxMonthlyGuests = Math.max(0, ...monthlyRows.map((row) => row.guests));
+  const maxMonthlyGuests = Math.max(
+    0,
+    ...monthlyRows.map((row) => row.guests)
+  );
 
   const maxMonthlyRevenue = Math.max(
     0,
@@ -783,6 +1104,36 @@ function ReportsView({ inquiryBookings }) {
   );
 
   const revenueBreakdown = [
+    {
+      label: "Invoice Totals",
+      value: filteredReportBookings.reduce(
+        (sum, booking) =>
+          sum +
+          getReportsNumber(
+            firstReportsValue(
+              booking.invoiceTotal,
+              booking.invoiceLodgingMeals,
+              booking.invoice_total
+            )
+          ),
+        0
+      ),
+    },
+    {
+      label: "Expected Revenue",
+      value: filteredReportBookings.reduce(
+        (sum, booking) =>
+          sum +
+          getReportsNumber(
+            firstReportsValue(
+              booking.expectedRevenue,
+              booking.expectedMinimumRevenue,
+              booking.expected_revenue
+            )
+          ),
+        0
+      ),
+    },
     {
       label: "Usage Fees",
       value: filteredReportBookings.reduce(
@@ -812,13 +1163,6 @@ function ReportsView({ inquiryBookings }) {
       ),
     },
     {
-      label: "Expected Minimum Revenue",
-      value: filteredReportBookings.reduce(
-        (sum, booking) => sum + getReportsNumber(booking.expectedMinimumRevenue),
-        0
-      ),
-    },
-    {
       label: "Deposits Received",
       value: depositsReceived,
     },
@@ -830,28 +1174,27 @@ function ReportsView({ inquiryBookings }) {
   );
 
   const retreatTypeRows = useMemo(() => {
-    const retreatTypeMap = new Map();
+    const map = new Map();
 
     filteredReportBookings.forEach((booking) => {
-      const retreatType = getReportsRetreatType(booking);
+      const type = getReportsRetreatType(booking);
 
-      if (!retreatTypeMap.has(retreatType)) {
-        retreatTypeMap.set(retreatType, {
-          label: retreatType,
+      if (!map.has(type)) {
+        map.set(type, {
+          label: type,
           bookings: 0,
           guests: 0,
           revenue: 0,
         });
       }
 
-      const row = retreatTypeMap.get(retreatType);
-
+      const row = map.get(type);
       row.bookings += 1;
       row.guests += getReportsGuestCount(booking);
       row.revenue += getReportsRevenue(booking);
     });
 
-    return Array.from(retreatTypeMap.values()).sort(
+    return Array.from(map.values()).sort(
       (a, b) => b.bookings - a.bookings
     );
   }, [filteredReportBookings]);
@@ -861,43 +1204,74 @@ function ReportsView({ inquiryBookings }) {
     ...retreatTypeRows.map((row) => row.bookings)
   );
 
+  const housingUsageRows = useMemo(() => {
+    return REPORTS_HOUSING_CONFIG
+      .map((housingRow) => {
+        let bookings = 0;
+        let knownGuests = 0;
+        let unknownCountBookings = 0;
+
+        filteredReportBookings.forEach((booking) => {
+          const usage = getReportsHousingUsage(booking, housingRow);
+
+          if (!usage.used) return;
+
+          bookings += 1;
+
+          if (usage.countKnown) {
+            knownGuests += usage.assignedGuests;
+          } else {
+            unknownCountBookings += 1;
+          }
+        });
+
+        return {
+          id: housingRow.id,
+          label: housingRow.label,
+          bookings,
+          knownGuests,
+          unknownCountBookings,
+        };
+      })
+      .filter((row) => row.bookings > 0)
+      .sort((a, b) => b.bookings - a.bookings);
+  }, [filteredReportBookings]);
+
   const statusRows = useMemo(() => {
-    const statusMap = new Map();
+    const map = new Map();
 
     filteredReportBookings.forEach((booking) => {
       const status = String(booking.status || "No Status").trim();
-
-      statusMap.set(status, (statusMap.get(status) || 0) + 1);
+      map.set(status, (map.get(status) || 0) + 1);
     });
 
-    return Array.from(statusMap.entries())
-      .map(([label, count]) => ({
-        label,
-        count,
-      }))
+    return Array.from(map.entries())
+      .map(([label, count]) => ({ label, count }))
       .sort((a, b) => b.count - a.count);
   }, [filteredReportBookings]);
 
-  const maxStatusCount = Math.max(0, ...statusRows.map((row) => row.count));
+  const maxStatusCount = Math.max(
+    0,
+    ...statusRows.map((row) => row.count)
+  );
 
   const sourceRows = useMemo(() => {
-    const sourceMap = new Map();
+    const map = new Map();
 
     filteredReportBookings.forEach((booking) => {
-      const source = getReportsSourceLabel(booking);
-
-      sourceMap.set(source, (sourceMap.get(source) || 0) + 1);
+      const source = getBookingInputMethod(booking);
+      map.set(source, (map.get(source) || 0) + 1);
     });
 
-    return Array.from(sourceMap.entries())
-      .map(([label, count]) => ({
-        label,
-        count,
-      }))
+    return Array.from(map.entries())
+      .map(([label, count]) => ({ label, count }))
       .sort((a, b) => b.count - a.count);
   }, [filteredReportBookings]);
 
-  const maxSourceCount = Math.max(0, ...sourceRows.map((row) => row.count));
+  const maxSourceCount = Math.max(
+    0,
+    ...sourceRows.map((row) => row.count)
+  );
 
   const dataQualityRows = [
     {
@@ -907,16 +1281,18 @@ function ReportsView({ inquiryBookings }) {
       ).length,
     },
     {
-      label: "Missing Email + Phone",
+      label: "Missing Contact Method",
       count: filteredReportBookings.filter(
         (booking) =>
-          isBlankBookingValue(booking.email) && isBlankBookingValue(booking.phone)
+          isBlankBookingValue(booking.email) &&
+          isBlankBookingValue(booking.phone)
       ).length,
     },
     {
       label: "Missing Guest Count",
-      count: filteredReportBookings.filter((booking) =>
-        isBlankBookingValue(booking.attendeeCount)
+      count: filteredReportBookings.filter(
+        (booking) =>
+          getReportsGuestCountDetails(booking).source === "Missing"
       ).length,
     },
     {
@@ -928,20 +1304,43 @@ function ReportsView({ inquiryBookings }) {
     {
       label: "Missing Housing",
       count: filteredReportBookings.filter(
-        (booking) =>
-          isBlankBookingValue(booking.roomName) &&
-          isBlankBookingValue(booking.buildingsRooms)
+        (booking) => !reportsBookingHasHousing(booking)
       ).length,
     },
     {
-      label: "Missing Deposit Received",
+      label: "Housing Count Unknown",
       count: filteredReportBookings.filter((booking) =>
-        isBlankBookingValue(booking.depositReceived)
+        reportsBookingHasUnknownHousingCount(booking)
+      ).length,
+    },
+    {
+      label: "Confirmed / Contract Missing Deposit Status",
+      count: filteredReportBookings.filter((booking) => {
+        const status = String(booking.status || "").toLowerCase();
+
+        const shouldHaveDeposit =
+          status.includes("confirmed") ||
+          status.includes("contract");
+
+        return (
+          shouldHaveDeposit &&
+          !getReportsDepositStatusValue(booking)
+        );
+      }).length,
+    },
+    {
+      label: "Missing Revenue",
+      count: filteredReportBookings.filter(
+        (booking) =>
+          getReportsRevenueDetails(booking).confidence === "missing"
       ).length,
     },
   ];
 
-  const maxQualityCount = Math.max(0, ...dataQualityRows.map((row) => row.count));
+  const maxQualityCount = Math.max(
+    0,
+    ...dataQualityRows.map((row) => row.count)
+  );
 
   const handleExportReports = () => {
     downloadReportsCsv("toah-nipi-reports-summary.csv", [
@@ -955,9 +1354,12 @@ function ReportsView({ inquiryBookings }) {
           ["Cancelled Bookings", cancelledBookings.length],
           ["Waitlist Bookings", waitlistBookings.length],
           ["Total Guests", totalGuests],
+          ["Total Nights", totalNights],
+          ["Total Meal Services", totalMeals],
           ["Total Camper Days", totalCamperDays],
           ["Projected Revenue", projectedRevenue],
-          ["Deposits Received", depositsReceived],
+          ["Deposits Received - Count", depositsReceivedCount],
+          ["Deposits Received - Amount", depositsReceived],
         ],
       },
       {
@@ -972,9 +1374,12 @@ function ReportsView({ inquiryBookings }) {
         ]),
       },
       {
-        title: "Revenue Breakdown",
+        title: "Financial Field Totals",
         headers: ["Category", "Value"],
-        rows: revenueBreakdown.map((item) => [item.label, item.value]),
+        rows: revenueBreakdown.map((item) => [
+          item.label,
+          item.value,
+        ]),
       },
       {
         title: "Revenue Source Confidence",
@@ -997,6 +1402,31 @@ function ReportsView({ inquiryBookings }) {
         ]),
       },
       {
+        title: "Housing Usage",
+        headers: [
+          "Lodging",
+          "Bookings Using",
+          "Known Assigned Guests",
+          "Bookings With Unknown Count",
+        ],
+        rows: housingUsageRows.map((row) => [
+          row.label,
+          row.bookings,
+          row.knownGuests,
+          row.unknownCountBookings,
+        ]),
+      },
+      {
+        title: "Status Breakdown",
+        headers: ["Status", "Bookings"],
+        rows: statusRows.map((row) => [row.label, row.count]),
+      },
+      {
+        title: "Input Sources",
+        headers: ["Source", "Bookings"],
+        rows: sourceRows.map((row) => [row.label, row.count]),
+      },
+      {
         title: "Data Quality",
         headers: ["Issue", "Count"],
         rows: dataQualityRows.map((row) => [row.label, row.count]),
@@ -1017,9 +1447,17 @@ function ReportsView({ inquiryBookings }) {
               <p className="dashboard-eyebrow">Reporting</p>
               <h2>Reports</h2>
               <p>
-                High-level booking, revenue, group type, source, and data quality
-                insights across the selected report range.
+                Operational booking, attendance, housing, revenue, source,
+                and data-quality insights across the selected report range.
               </p>
+
+              {archiveExcludedCount > 0 && (
+                <span className="reports-header-note">
+                  {archiveExcludedCount} historical archive record
+                  {archiveExcludedCount === 1 ? "" : "s"} excluded from
+                  operational totals.
+                </span>
+              )}
             </div>
           </div>
 
@@ -1037,11 +1475,12 @@ function ReportsView({ inquiryBookings }) {
         <div className="reports-filter-bar">
           <label className="reports-filter-field">
             <span>Date Range</span>
-
             <select
               value={reportsSettings.dateRange}
               onChange={(event) =>
-                updateReportsSettings({ dateRange: event.target.value })
+                updateReportsSettings({
+                  dateRange: event.target.value,
+                })
               }
             >
               {reportsDateRangeOptions.map((option) => (
@@ -1056,10 +1495,9 @@ function ReportsView({ inquiryBookings }) {
             <>
               <label className="reports-filter-field">
                 <span>From</span>
-
                 <input
                   type="date"
-                  value={reportsSettings.customStartDate}
+                  value={reportsSettings.customStartDate || ""}
                   onChange={(event) =>
                     updateReportsSettings({
                       customStartDate: event.target.value,
@@ -1070,10 +1508,9 @@ function ReportsView({ inquiryBookings }) {
 
               <label className="reports-filter-field">
                 <span>To</span>
-
                 <input
                   type="date"
-                  value={reportsSettings.customEndDate}
+                  value={reportsSettings.customEndDate || ""}
                   onChange={(event) =>
                     updateReportsSettings({
                       customEndDate: event.target.value,
@@ -1086,15 +1523,15 @@ function ReportsView({ inquiryBookings }) {
 
           <label className="reports-filter-field">
             <span>Status</span>
-
             <select
               value={reportsSettings.status}
               onChange={(event) =>
-                updateReportsSettings({ status: event.target.value })
+                updateReportsSettings({
+                  status: event.target.value,
+                })
               }
             >
               <option value="all">All Statuses</option>
-
               {statusOptions.map((status) => (
                 <option value={status} key={status}>
                   {status}
@@ -1105,15 +1542,15 @@ function ReportsView({ inquiryBookings }) {
 
           <label className="reports-filter-field">
             <span>Retreat Type</span>
-
             <select
               value={reportsSettings.retreatType}
               onChange={(event) =>
-                updateReportsSettings({ retreatType: event.target.value })
+                updateReportsSettings({
+                  retreatType: event.target.value,
+                })
               }
             >
               <option value="all">All Retreat Types</option>
-
               {retreatTypeOptions.map((retreatType) => (
                 <option value={retreatType} key={retreatType}>
                   {retreatType}
@@ -1124,15 +1561,16 @@ function ReportsView({ inquiryBookings }) {
 
           <label className="reports-filter-field">
             <span>Source</span>
-
             <select
               value={reportsSettings.sourceMode}
               onChange={(event) =>
-                updateReportsSettings({ sourceMode: event.target.value })
+                updateReportsSettings({
+                  sourceMode: event.target.value,
+                })
               }
             >
               <option value="all">Forms + Imports</option>
-              <option value="forms">Forms Only</option>
+              <option value="forms">Booking Forms Only</option>
               <option value="imports">Imports Only</option>
             </select>
           </label>
@@ -1140,7 +1578,11 @@ function ReportsView({ inquiryBookings }) {
           <button
             className="secondary-dashboard-button reports-reset-button"
             type="button"
-            onClick={() => updateReportsSettings(DEFAULT_REPORTS_VIEW_SETTINGS)}
+            onClick={() =>
+              setReportsSettings({
+                ...DEFAULT_REPORTS_VIEW_SETTINGS,
+              })
+            }
           >
             Reset
           </button>
@@ -1160,7 +1602,10 @@ function ReportsView({ inquiryBookings }) {
           icon={FaRegCalendarCheck}
           label="Confirmed"
           value={formatReportsNumber(confirmedBookings.length)}
-          helper={`${getReportsPercent(confirmedBookings.length, totalBookings)}% of filtered rows`}
+          helper={`${getReportsPercent(
+            confirmedBookings.length,
+            totalBookings
+          )}% of filtered bookings`}
           tone="green"
         />
 
@@ -1168,7 +1613,9 @@ function ReportsView({ inquiryBookings }) {
           icon={FaUsers}
           label="Total Guests"
           value={formatReportsNumber(totalGuests)}
-          helper="Based on guest count fields"
+          helper={`${actualGuestCountBookings} booking${
+            actualGuestCountBookings === 1 ? "" : "s"
+          } using actual attendance`}
           tone="blue"
         />
 
@@ -1176,15 +1623,34 @@ function ReportsView({ inquiryBookings }) {
           icon={FaDollarSign}
           label="Projected Revenue"
           value={formatReportsCurrency(projectedRevenue)}
-          helper="Invoice, expected, monthly, or itemized values"
+          helper="Uses one best stored revenue value per booking"
           tone="gold"
+        />
+
+        <ReportSummaryCard
+          icon={FaMoon}
+          label="Total Nights"
+          value={formatReportsNumber(totalNights)}
+          helper="Staff Booking and imported stay counts"
+          tone="indigo"
+        />
+
+        <ReportSummaryCard
+          icon={FaUtensils}
+          label="Meal Services"
+          value={formatReportsNumber(totalMeals)}
+          helper="Stored meal counts or current meal schedules"
+          tone="orange"
         />
 
         <ReportSummaryCard
           icon={FaClock}
           label="Waitlist"
           value={formatReportsNumber(waitlistBookings.length)}
-          helper={`${getReportsPercent(waitlistBookings.length, totalBookings)}% of filtered rows`}
+          helper={`${getReportsPercent(
+            waitlistBookings.length,
+            totalBookings
+          )}% of filtered bookings`}
           tone="teal"
         />
 
@@ -1192,7 +1658,10 @@ function ReportsView({ inquiryBookings }) {
           icon={FaExclamationTriangle}
           label="Cancelled"
           value={formatReportsNumber(cancelledBookings.length)}
-          helper={`${getReportsPercent(cancelledBookings.length, totalBookings)}% of filtered rows`}
+          helper={`${getReportsPercent(
+            cancelledBookings.length,
+            totalBookings
+          )}% of filtered bookings`}
           tone="red"
         />
       </section>
@@ -1203,7 +1672,9 @@ function ReportsView({ inquiryBookings }) {
             <div>
               <p className="dashboard-eyebrow">Trends</p>
               <h3>Monthly Booking Trends</h3>
-              <span>Bookings, guests, and revenue grouped by arrival month.</span>
+              <span>
+                Bookings, guests, and revenue grouped by arrival month.
+              </span>
             </div>
           </div>
 
@@ -1211,8 +1682,8 @@ function ReportsView({ inquiryBookings }) {
             <div className="reports-monthly-grid">
               <div>
                 <h4 className="reports-monthly-heading">
-                  <FaClipboardList aria-hidden="true" />
-                  <span>Bookings by Month</span>
+                  <FaClipboardList />
+                  Bookings by Month
                 </h4>
 
                 <div className="reports-bar-list">
@@ -1222,20 +1693,19 @@ function ReportsView({ inquiryBookings }) {
                       label={row.label}
                       value={row.bookings}
                       maxValue={maxMonthlyBookings}
-                      valueLabel={`${row.bookings} booking${row.bookings === 1 ? "" : "s"}`}
+                      valueLabel={`${row.bookings} booking${
+                        row.bookings === 1 ? "" : "s"
+                      }`}
                       helper={`${row.confirmed} confirmed`}
                     />
                   ))}
                 </div>
-
-
-
               </div>
 
               <div>
                 <h4 className="reports-monthly-heading">
-                  <FaUsers aria-hidden="true" />
-                  <span>Guests by Month</span>
+                  <FaUsers />
+                  Guests by Month
                 </h4>
 
                 <div className="reports-bar-list">
@@ -1253,8 +1723,8 @@ function ReportsView({ inquiryBookings }) {
 
               <div>
                 <h4 className="reports-monthly-heading">
-                  <FaDollarSign aria-hidden="true" />
-                  <span>Revenue by Month</span>
+                  <FaDollarSign />
+                  Revenue by Month
                 </h4>
 
                 <div className="reports-bar-list">
@@ -1273,9 +1743,7 @@ function ReportsView({ inquiryBookings }) {
           ) : (
             <div className="reports-empty-state">
               <strong>No monthly report data</strong>
-              <p>
-                This usually means no filtered bookings have usable start dates.
-              </p>
+              <p>No filtered bookings have usable start dates.</p>
             </div>
           )}
         </article>
@@ -1284,8 +1752,12 @@ function ReportsView({ inquiryBookings }) {
           <div className="reports-panel-header">
             <div>
               <p className="dashboard-eyebrow">Revenue</p>
-              <h3>Financial Breakdown</h3>
-              <span>Totals from billing-related spreadsheet fields.</span>
+              <h3>Financial Field Totals</h3>
+              <span>
+                Stored billing fields from Staff Bookings and imported
+                records. Categories can overlap and should not be added
+                together.
+              </span>
             </div>
           </div>
 
@@ -1311,54 +1783,38 @@ function ReportsView({ inquiryBookings }) {
                 </summary>
 
                 <div className="reports-help-card">
-                  <strong>How revenue confidence works</strong>
-
+                  <strong>How projected revenue is chosen</strong>
                   <p>
-                    Each booking is counted once. The report checks revenue fields in
-                    order and uses the first usable value it finds, so the same booking
-                    is not double-counted.
+                    Each booking contributes only one revenue number to
+                    Projected Revenue.
                   </p>
 
                   <ol>
                     <li>
                       <strong>Invoice Total</strong>
-                      <span>
-                        Uses <code>invoiceLodgingMeals</code>. This is highest
-                        confidence because it is closest to an actual billing total.
-                      </span>
+                      <span>Highest-confidence stored billing total.</span>
                     </li>
-
                     <li>
-                      <strong>Expected Minimum</strong>
+                      <strong>Expected Revenue</strong>
                       <span>
-                        Used when there is no invoice total. It comes from{" "}
-                        <code>expectedMinimumRevenue</code>, so it is useful but still
-                        more of an estimate.
+                        Used when an invoice total is not available.
                       </span>
                     </li>
-
                     <li>
                       <strong>Monthly Projection</strong>
-                      <span>
-                        Used when invoice and expected minimum are both missing. It
-                        comes from <code>monthlyProjectedIncome</code>.
-                      </span>
+                      <span>Uses imported monthly projected income.</span>
                     </li>
-
                     <li>
                       <strong>Itemized Fallback</strong>
                       <span>
-                        Used when the main revenue fields are missing. It adds{" "}
-                        <code>usageFee</code> + <code>lodgingCost</code> +{" "}
-                        <code>foodCost</code> + <code>miscCost</code>.
+                        Usage fee + lodging + food + miscellaneous costs.
                       </span>
                     </li>
-
                     <li>
                       <strong>Missing</strong>
                       <span>
-                        No usable revenue value was found, so the booking counts as a
-                        row but adds <code>$0</code> to projected revenue.
+                        No usable stored revenue value was found. Quoted guest
+                        rates are not turned into invented revenue.
                       </span>
                     </li>
                   </ol>
@@ -1373,7 +1829,7 @@ function ReportsView({ inquiryBookings }) {
                   label={row.label}
                   value={row.value}
                   maxValue={maxRevenueSourceValue}
-                  valueLabel={`${row.count} row${
+                  valueLabel={`${row.count} booking${
                     row.count === 1 ? "" : "s"
                   } · ${formatReportsCurrency(row.value)}`}
                   helper={`${row.confidence} confidence`}
@@ -1400,7 +1856,7 @@ function ReportsView({ inquiryBookings }) {
               />
 
               <div className="reports-table-wrap">
-                <table className="reports-table">
+                <table className="reports-table reports-retreat-table">
                   <thead>
                     <tr>
                       <th>Retreat Type</th>
@@ -1421,13 +1877,15 @@ function ReportsView({ inquiryBookings }) {
                                 width: `${
                                   maxRetreatTypeBookings
                                     ? Math.max(
-                                        (row.bookings / maxRetreatTypeBookings) * 100,
+                                        (row.bookings /
+                                          maxRetreatTypeBookings) *
+                                          100,
                                         4
                                       )
                                     : 0
                                 }%`,
                               }}
-                            ></span>
+                            />
                           </div>
                         </td>
                         <td>{formatReportsNumber(row.bookings)}</td>
@@ -1442,7 +1900,63 @@ function ReportsView({ inquiryBookings }) {
           ) : (
             <div className="reports-empty-state">
               <strong>No retreat type data</strong>
-              <p>No rows matched the current report filters.</p>
+              <p>No bookings matched the current report filters.</p>
+            </div>
+          )}
+        </article>
+
+        <article className="dashboard-card reports-panel reports-panel-wide">
+          <div className="reports-panel-header">
+            <div>
+              <p className="dashboard-eyebrow">Housing</p>
+              <h3>Lodging Usage</h3>
+              <span>
+                Supports current Staff Booking allocations and imported
+                housing records with unknown guest counts.
+              </span>
+            </div>
+          </div>
+
+          {housingUsageRows.length > 0 ? (
+            <div className="reports-table-wrap">
+              <table className="reports-table reports-housing-table">
+                <thead>
+                  <tr>
+                    <th>Lodging</th>
+                    <th>Bookings Using</th>
+                    <th>Known Assigned Guests</th>
+                    <th>Count Unknown</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {housingUsageRows.map((row) => (
+                    <tr key={row.id}>
+                      <td>
+                        <strong>{row.label}</strong>
+                      </td>
+                      <td>{formatReportsNumber(row.bookings)}</td>
+                      <td>{formatReportsNumber(row.knownGuests)}</td>
+                      <td>
+                        {row.unknownCountBookings > 0 ? (
+                          <span className="reports-housing-unknown">
+                            {row.unknownCountBookings}
+                          </span>
+                        ) : (
+                          "0"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="reports-empty-state">
+              <strong>No housing data</strong>
+              <p>
+                No filtered bookings contain recognizable lodging assignments.
+              </p>
             </div>
           )}
         </article>
@@ -1452,7 +1966,9 @@ function ReportsView({ inquiryBookings }) {
             <div>
               <p className="dashboard-eyebrow">Pipeline</p>
               <h3>Status Breakdown</h3>
-              <span>High-level workflow totals, not individual cards.</span>
+              <span>
+                Current workflow status across the filtered bookings.
+              </span>
             </div>
           </div>
 
@@ -1463,46 +1979,14 @@ function ReportsView({ inquiryBookings }) {
                 label={row.label}
                 value={row.count}
                 maxValue={maxStatusCount}
-                valueLabel={`${row.count} row${row.count === 1 ? "" : "s"}`}
-                helper={`${getReportsPercent(row.count, totalBookings)}% of report`}
+                valueLabel={`${row.count} booking${
+                  row.count === 1 ? "" : "s"
+                }`}
+                helper={`${getReportsPercent(
+                  row.count,
+                  totalBookings
+                )}% of report`}
               />
-            ))}
-          </div>
-        </article>
-
-        <article className="dashboard-card reports-panel">
-          <div className="reports-panel-header">
-            <div>
-              <p className="dashboard-eyebrow">Data Health</p>
-              <h3>Data Quality Report</h3>
-              <span>Missing information that may need cleanup.</span>
-            </div>
-          </div>
-
-          <div className="reports-quality-list">
-            {dataQualityRows.map((row) => (
-              <div className="reports-quality-row" key={row.label}>
-                <div>
-                  <strong>{row.label}</strong>
-                  <span>
-                    {getReportsPercent(row.count, totalBookings)}% of filtered rows
-                  </span>
-                </div>
-
-                <em>{row.count}</em>
-
-                <div className="reports-mini-track">
-                  <span
-                    style={{
-                      width: `${
-                        maxQualityCount
-                          ? Math.max((row.count / maxQualityCount) * 100, 4)
-                          : 0
-                      }%`,
-                    }}
-                  ></span>
-                </div>
-              </div>
             ))}
           </div>
         </article>
@@ -1512,7 +1996,9 @@ function ReportsView({ inquiryBookings }) {
             <div>
               <p className="dashboard-eyebrow">Sources</p>
               <h3>Input Source Breakdown</h3>
-              <span>How booking rows entered the system.</span>
+              <span>
+                How operational booking records entered the system.
+              </span>
             </div>
           </div>
 
@@ -1523,9 +2009,57 @@ function ReportsView({ inquiryBookings }) {
                 label={row.label}
                 value={row.count}
                 maxValue={maxSourceCount}
-                valueLabel={`${row.count} row${row.count === 1 ? "" : "s"}`}
-                helper={`${getReportsPercent(row.count, totalBookings)}% of report`}
+                valueLabel={`${row.count} booking${
+                  row.count === 1 ? "" : "s"
+                }`}
+                helper={`${getReportsPercent(
+                  row.count,
+                  totalBookings
+                )}% of report`}
               />
+            ))}
+          </div>
+        </article>
+
+        <article className="dashboard-card reports-panel reports-panel-wide">
+          <div className="reports-panel-header">
+            <div>
+              <p className="dashboard-eyebrow">Data Health</p>
+              <h3>Data Quality Report</h3>
+              <span>
+                Separates missing data from known-but-incomplete imported data.
+              </span>
+            </div>
+          </div>
+
+          <div className="reports-quality-list">
+            {dataQualityRows.map((row) => (
+              <div className="reports-quality-row" key={row.label}>
+                <div>
+                  <strong>{row.label}</strong>
+                  <span>
+                    {getReportsPercent(row.count, totalBookings)}% of filtered
+                    bookings
+                  </span>
+                </div>
+
+                <em>{row.count}</em>
+
+                <div className="reports-mini-track">
+                  <span
+                    style={{
+                      width: `${
+                        maxQualityCount
+                          ? Math.max(
+                              (row.count / maxQualityCount) * 100,
+                              4
+                            )
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
             ))}
           </div>
         </article>
