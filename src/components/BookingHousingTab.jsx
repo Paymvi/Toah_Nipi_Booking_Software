@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import {
   FaBed,
   FaCheck,
+  FaChevronDown,
+  FaChevronRight,
   FaPen,
   FaSave,
   FaTimes,
@@ -25,6 +27,23 @@ const housingRows = [
     roomCategory: "Family Style Rooms",
     image: "/lodges/Bethel.webp",
     aliases: ["bethel"],
+    floors: [
+      {
+        id: "upper",
+        field: "lodgingBethelUpper",
+        label: "Upper Floor",
+      },
+      {
+        id: "middle",
+        field: "lodgingBethelMiddle",
+        label: "Middle Floor",
+      },
+      {
+        id: "lower",
+        field: "lodgingBethelLower",
+        label: "Lower Floor",
+      },
+    ],
   },
 
   {
@@ -62,6 +81,23 @@ const housingRows = [
     roomCategory: "Small Group Lodge",
     image: "/lodges/Dothan.webp",
     aliases: ["dothan"],
+    floors: [
+      {
+        id: "upper",
+        field: "lodgingDothanUpper",
+        label: "Upper Floor",
+      },
+      {
+        id: "middle",
+        field: "lodgingDothanMiddle",
+        label: "Middle Floor",
+      },
+      {
+        id: "lower",
+        field: "lodgingDothanLower",
+        label: "Lower Floor",
+      },
+    ],
   },
 
   {
@@ -259,6 +295,72 @@ function hasGenericHebronAssignment(booking) {
 }
 
 
+function getFloorTotal(row, values) {
+  if (!Array.isArray(row.floors)) {
+    return 0;
+  }
+
+  return row.floors.reduce(
+    (total, floor) => {
+      const value =
+        Number(values?.[floor.field] || 0);
+
+      return (
+        total +
+        (Number.isFinite(value)
+          ? value
+          : 0)
+      );
+    },
+    0
+  );
+}
+
+
+function rowHasFloorBreakdown(
+  row,
+  values
+) {
+  if (!Array.isArray(row.floors)) {
+    return false;
+  }
+
+  return row.floors.some(
+    (floor) => {
+      const value =
+        Number(values?.[floor.field] || 0);
+
+      return (
+        Number.isFinite(value) &&
+        value > 0
+      );
+    }
+  );
+}
+
+
+function getInitialExpandedHousingRows(
+  booking
+) {
+  const values =
+    getInitialHousingState(booking);
+
+  const result = {};
+
+  housingRows.forEach((row) => {
+    if (Array.isArray(row.floors)) {
+      result[row.id] =
+        rowHasFloorBreakdown(
+          row,
+          values
+        );
+    }
+  });
+
+  return result;
+}
+
+
 function getInitialHousingState(booking) {
   const details =
     booking?.rentalFormDetails || {};
@@ -272,6 +374,23 @@ function getInitialHousingState(booking) {
         booking?.buildingsRooms,
         row.roomName
       );
+
+    if (Array.isArray(row.floors)) {
+      row.floors.forEach((floor) => {
+        state[floor.field] =
+          cleanNumberValue(
+            details[floor.field]
+          );
+      });
+
+      const floorTotal =
+        getFloorTotal(row, state);
+
+      if (floorTotal > 0) {
+        state[row.field] =
+          String(floorTotal);
+      }
+    }
   });
 
   return state;
@@ -395,6 +514,13 @@ export default function BookingHousingTab({
       getInitialKnownUsage(booking)
     );
 
+  const [
+    expandedHousingRows,
+    setExpandedHousingRows,
+  ] = useState(() =>
+    getInitialExpandedHousingRows(booking)
+  );
+
   const [linenOption, setLinenOption] =
     useState(() =>
       getInitialLinenOption(booking)
@@ -417,6 +543,12 @@ export default function BookingHousingTab({
 
     setKnownUsage(
       getInitialKnownUsage(booking)
+    );
+
+    setExpandedHousingRows(
+      getInitialExpandedHousingRows(
+        booking
+      )
     );
 
     setLinenOption(
@@ -553,27 +685,128 @@ export default function BookingHousingTab({
   };
 
 
-  const toggleHousingUsage = (
-    field,
-    isUsed
+  const updateFloorValue = (
+    row,
+    floorField,
+    value
   ) => {
-    setKnownUsage(
-      (currentUsage) => ({
-        ...currentUsage,
-        [field]: isUsed,
-      })
+    if (
+      value !== "" &&
+      !/^\d+$/.test(value)
+    ) {
+      return;
+    }
+
+    setHousingValues(
+      (currentValues) => {
+        const nextValues = {
+          ...currentValues,
+          [floorField]: value,
+        };
+
+        const floorTotal =
+          getFloorTotal(
+            row,
+            nextValues
+          );
+
+        const hasFloorBreakdown =
+          rowHasFloorBreakdown(
+            row,
+            nextValues
+          );
+
+        nextValues[row.field] =
+          hasFloorBreakdown
+            ? String(floorTotal)
+            : "";
+
+        return nextValues;
+      }
     );
 
-    if (!isUsed) {
-      setHousingValues(
-        (currentValues) => ({
-          ...currentValues,
-          [field]: "",
+    const numericValue =
+      Number(value);
+
+    if (
+      value !== "" &&
+      Number.isFinite(numericValue) &&
+      numericValue > 0
+    ) {
+      setKnownUsage(
+        (currentUsage) => ({
+          ...currentUsage,
+          [row.field]: true,
         })
       );
     }
   };
 
+
+  const clearFloorBreakdown = (
+    row
+  ) => {
+    setHousingValues(
+      (currentValues) => {
+        const nextValues = {
+          ...currentValues,
+        };
+
+        row.floors.forEach((floor) => {
+          nextValues[floor.field] = "";
+        });
+
+        nextValues[row.field] = "";
+
+        return nextValues;
+      }
+    );
+  };
+
+
+  const toggleHousingUsage = (
+    row,
+    isUsed
+  ) => {
+    setKnownUsage(
+      (currentUsage) => ({
+        ...currentUsage,
+        [row.field]: isUsed,
+      })
+    );
+
+    if (!isUsed) {
+      setHousingValues(
+        (currentValues) => {
+          const nextValues = {
+            ...currentValues,
+            [row.field]: "",
+          };
+
+          if (Array.isArray(row.floors)) {
+            row.floors.forEach((floor) => {
+              nextValues[floor.field] = "";
+            });
+          }
+
+          return nextValues;
+        }
+      );
+    }
+  };
+
+
+  const toggleExpandedRow = (
+    rowId
+  ) => {
+    setExpandedHousingRows(
+      (currentRows) => ({
+        ...currentRows,
+        [rowId]:
+          !currentRows[rowId],
+      })
+    );
+  };
 
 
   const handleCancel = () => {
@@ -583,6 +816,12 @@ export default function BookingHousingTab({
 
     setKnownUsage(
       getInitialKnownUsage(booking)
+    );
+
+    setExpandedHousingRows(
+      getInitialExpandedHousingRows(
+        booking
+      )
     );
 
     setLinenOption(
@@ -625,6 +864,15 @@ export default function BookingHousingTab({
       lodgingBethel:
         housingValues.lodgingBethel || "",
 
+      lodgingBethelUpper:
+        housingValues.lodgingBethelUpper || "",
+
+      lodgingBethelMiddle:
+        housingValues.lodgingBethelMiddle || "",
+
+      lodgingBethelLower:
+        housingValues.lodgingBethelLower || "",
+
       lodgingHebronThird:
         housingValues.lodgingHebronThird || "",
 
@@ -633,6 +881,15 @@ export default function BookingHousingTab({
 
       lodgingDothan:
         housingValues.lodgingDothan || "",
+
+      lodgingDothanUpper:
+        housingValues.lodgingDothanUpper || "",
+
+      lodgingDothanMiddle:
+        housingValues.lodgingDothanMiddle || "",
+
+      lodgingDothanLower:
+        housingValues.lodgingDothanLower || "",
 
       lodgingAjalon:
         housingValues.lodgingAjalon || "",
@@ -889,42 +1146,138 @@ export default function BookingHousingTab({
                       assignedValue || 0
                     );
 
-                  return (
+                  const hasFloors =
+                    Array.isArray(row.floors) &&
+                    row.floors.length > 0;
+
+                  const isExpanded =
+                    Boolean(
+                      expandedHousingRows[
+                        row.id
+                      ]
+                    );
+
+                  const hasFloorBreakdown =
+                    hasFloors &&
+                    rowHasFloorBreakdown(
+                      row,
+                      housingValues
+                    );
+
+                  const floorTotal =
+                    hasFloors
+                      ? getFloorTotal(
+                          row,
+                          housingValues
+                        )
+                      : 0;
+
+                  const isAssigned =
+                    assignedNumber > 0 ||
+                    Boolean(
+                      knownUsage[row.field]
+                    );
+
+                  return [
                     <tr
-                      key={row.id}
-                      className={
-                        assignedNumber > 0
+                      key={`${row.id}-main`}
+                      className={[
+                        isAssigned
                           ? "booking-housing-row-assigned"
-                          : ""
-                      }
+                          : "",
+                        hasFloors
+                          ? "booking-housing-row-expandable"
+                          : "",
+                        isExpanded
+                          ? "booking-housing-row-expanded"
+                          : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                     >
 
                       <td>
-                        <div className="housing-room-cell">
+                        {hasFloors ? (
+                          <button
+                            className="housing-room-expand-button"
+                            type="button"
+                            onClick={() =>
+                              toggleExpandedRow(
+                                row.id
+                              )
+                            }
+                            aria-expanded={
+                              isExpanded
+                            }
+                          >
+                            <span className="housing-room-cell">
 
-                          {row.image ? (
-                            <img
-                              className="housing-room-thumb"
-                              src={row.image}
-                              alt={`${row.roomName} lodging`}
-                              onError={(
-                                event
-                              ) => {
-                                event.currentTarget.style.display =
-                                  "none";
-                              }}
-                            />
-                          ) : (
-                            <span className="housing-room-thumb-placeholder">
-                              <FaBed />
+                              {row.image ? (
+                                <img
+                                  className="housing-room-thumb"
+                                  src={row.image}
+                                  alt=""
+                                  aria-hidden="true"
+                                  onError={(
+                                    event
+                                  ) => {
+                                    event.currentTarget.style.display =
+                                      "none";
+                                  }}
+                                />
+                              ) : (
+                                <span className="housing-room-thumb-placeholder">
+                                  <FaBed />
+                                </span>
+                              )}
+
+                              <span className="housing-room-expand-copy">
+                                <strong>
+                                  {row.roomName}
+                                </strong>
+
+                                <small>
+                                  Click for floor breakdown
+                                </small>
+                              </span>
+
                             </span>
-                          )}
 
-                          <strong>
-                            {row.roomName}
-                          </strong>
+                            <span className="housing-room-expand-chevron">
+                              {isExpanded ? (
+                                <FaChevronDown />
+                              ) : (
+                                <FaChevronRight />
+                              )}
+                            </span>
+                          </button>
+                        ) : (
+                          <div className="housing-room-cell">
 
-                        </div>
+                            {row.image ? (
+                              <img
+                                className="housing-room-thumb"
+                                src={row.image}
+                                alt={`${row.roomName} lodging`}
+                                onError={(
+                                  event
+                                ) => {
+                                  event.currentTarget.style.display =
+                                    "none";
+                                }}
+                              />
+                            ) : (
+                              <span className="housing-room-thumb-placeholder">
+                                <FaBed />
+                              </span>
+                            )}
+
+                            <strong>
+                              {row.roomName}
+                            </strong>
+
+                          </div>
+                        )}
                       </td>
 
 
@@ -950,7 +1303,7 @@ export default function BookingHousingTab({
                               }
                               onChange={(event) =>
                                 toggleHousingUsage(
-                                  row.field,
+                                  row,
                                   event.target.checked
                                 )
                               }
@@ -975,27 +1328,47 @@ export default function BookingHousingTab({
 
                       <td>
                         {isEditing ? (
-                          <input
-                            className="booking-housing-count-input"
-                            type="number"
-                            min="0"
-                            value={assignedValue}
-                            placeholder={
-                              knownUsage[row.field]
-                                ? "Unknown"
-                                : "0"
-                            }
-                            onChange={(event) =>
-                              updateHousingValue(
-                                row.field,
-                                event.target.value
-                              )
-                            }
-                          />
+                          hasFloorBreakdown ? (
+                            <div className="booking-housing-calculated-count">
+                              <strong>
+                                {floorTotal}
+                              </strong>
+
+                              <small>
+                                From floors
+                              </small>
+                            </div>
+                          ) : (
+                            <input
+                              className="booking-housing-count-input"
+                              type="number"
+                              min="0"
+                              value={assignedValue}
+                              placeholder={
+                                knownUsage[row.field]
+                                  ? "Unknown"
+                                  : "0"
+                              }
+                              onChange={(event) =>
+                                updateHousingValue(
+                                  row.field,
+                                  event.target.value
+                                )
+                              }
+                            />
+                          )
                         ) : assignedNumber > 0 ? (
-                          <strong className="booking-housing-assigned-count">
-                            {assignedNumber}
-                          </strong>
+                          <div className="booking-housing-assigned-total">
+                            <strong className="booking-housing-assigned-count">
+                              {assignedNumber}
+                            </strong>
+
+                            {hasFloorBreakdown && (
+                              <small>
+                                Floor split saved
+                              </small>
+                            )}
+                          </div>
                         ) : knownUsage[row.field] ? (
                           <span className="booking-housing-count-unknown">
                             Unknown
@@ -1007,8 +1380,124 @@ export default function BookingHousingTab({
                         )}
                       </td>
 
-                    </tr>
-                  );
+                    </tr>,
+
+                    hasFloors && isExpanded ? (
+                      <tr
+                        key={`${row.id}-floors`}
+                        className="booking-housing-floor-detail-row"
+                      >
+                        <td
+                          colSpan="5"
+                          className="booking-housing-floor-detail-cell"
+                        >
+                          <div className="booking-housing-floor-panel">
+
+                            <div className="booking-housing-floor-panel-header">
+
+                              <div>
+                                <strong>
+                                  {row.roomName} Floor Breakdown
+                                </strong>
+
+                                <span>
+                                  Assign guests to the upper, middle, and lower floors.
+                                </span>
+                              </div>
+
+                              <div className="booking-housing-floor-total">
+                                <span>
+                                  Floor Total
+                                </span>
+
+                                <strong>
+                                  {floorTotal}
+                                </strong>
+                              </div>
+
+                            </div>
+
+
+                            <div className="booking-housing-floor-grid">
+
+                              {row.floors.map(
+                                (floor) => {
+
+                                  const floorValue =
+                                    housingValues[
+                                      floor.field
+                                    ] || "";
+
+                                  return (
+                                    <label
+                                      className="booking-housing-floor-field"
+                                      key={floor.id}
+                                    >
+                                      <span>
+                                        {floor.label}
+                                      </span>
+
+                                      {isEditing ? (
+                                        <div className="booking-housing-floor-input-wrap">
+                                          <input
+                                            type="number"
+                                            min="0"
+                                            value={floorValue}
+                                            placeholder="0"
+                                            onChange={(event) =>
+                                              updateFloorValue(
+                                                row,
+                                                floor.field,
+                                                event.target.value
+                                              )
+                                            }
+                                          />
+
+                                          <small>
+                                            guests
+                                          </small>
+                                        </div>
+                                      ) : (
+                                        <strong>
+                                          {floorValue || "0"}
+                                        </strong>
+                                      )}
+                                    </label>
+                                  );
+                                }
+                              )}
+
+                            </div>
+
+
+                            {isEditing &&
+                              hasFloorBreakdown && (
+                                <div className="booking-housing-floor-panel-footer">
+
+                                  <span>
+                                    The main {row.roomName} total is calculated automatically from these floors.
+                                  </span>
+
+                                  <button
+                                    className="booking-housing-clear-floor-button"
+                                    type="button"
+                                    onClick={() =>
+                                      clearFloorBreakdown(
+                                        row
+                                      )
+                                    }
+                                  >
+                                    Clear Floor Split
+                                  </button>
+
+                                </div>
+                              )}
+
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null,
+                  ];
                 }
               )}
 
