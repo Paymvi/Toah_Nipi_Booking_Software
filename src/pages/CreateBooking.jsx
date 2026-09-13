@@ -123,7 +123,7 @@ const lodgingFields = [
     name: "lodgingCapernaum",
     label: "Capernaum",
     capacity: "5",
-    image: null,
+    image: "/lodges/Capurnum.png",
   },
   {
     name: "lodgingGuestHouse",

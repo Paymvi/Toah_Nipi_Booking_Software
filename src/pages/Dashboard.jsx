@@ -6065,7 +6065,7 @@ const lodgingOverviewRows = [
     id: "capernaum",
     name: "Capernaum",
     capacity: "5",
-    image: null,
+    image: "/lodges/Capurnum.png",
     value: details?.lodgingCapernaum,
   },
   {
@@ -9531,14 +9531,14 @@ const getCalendarEventColor = (status) => {
               handleImportArchiveSpreadsheet={handleImportArchiveSpreadsheet}
               openArchiveImportPicker={openArchiveImportPicker}
             />
-
+{/* 
             <DashboardBackups
               onRestoreComplete={() => {
                 setSelectedBooking(null);
                 setBookingDetailTab("Overview");
                 setActiveView("Dashboard");
               }}
-            />
+            /> */}
 
           </>
         )}

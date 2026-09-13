@@ -120,7 +120,7 @@ const housingRows = [
     roomName: "Capernaum",
     housingArea: "Rustic Cottages",
     roomCategory: "Rustic Cottage",
-    image: null,
+    image: "/lodges/Capurnum.png",
     aliases: [
       "capernaum",
       "rustic: capernaum",
