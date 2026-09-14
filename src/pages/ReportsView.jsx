@@ -86,6 +86,13 @@ function formatReportsNumber(value) {
   return new Intl.NumberFormat("en-US").format(value || 0);
 }
 
+function formatReportsDecimal(value) {
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  }).format(value || 0);
+}
+
 function getReportsPercent(value, total) {
   return total ? Math.round((value / total) * 100) : 0;
 }
@@ -322,6 +329,49 @@ function getReportsMealCount(booking) {
   }
 
   return 0;
+}
+
+function getReportsCamperDaysDetails(booking) {
+  const storedValue = getReportsNumber(
+    firstReportsValue(
+      booking.camperDays,
+      booking.camper_days,
+      booking["Camper Days"]
+    )
+  );
+
+  if (storedValue > 0) {
+    return {
+      value: storedValue,
+      source: "Stored",
+    };
+  }
+
+  const guests = getReportsGuestCount(booking);
+  const nights = getReportsNightCount(booking);
+  const meals = getReportsMealCount(booking);
+
+  if (guests > 0 && (nights > 0 || meals > 0)) {
+    return {
+      value: guests * (nights * 0.4 + meals * 0.2),
+      source: "Calculated",
+      guests,
+      nights,
+      meals,
+    };
+  }
+
+  return {
+    value: 0,
+    source: "Missing",
+    guests,
+    nights,
+    meals,
+  };
+}
+
+function getReportsCamperDays(booking) {
+  return getReportsCamperDaysDetails(booking).value;
 }
 
 /* =========================================================
@@ -990,9 +1040,65 @@ function ReportsView({ inquiryBookings }) {
     0
   );
 
-  const totalCamperDays = filteredReportBookings.reduce(
-    (sum, booking) => sum + getReportsNumber(booking.camperDays),
+  const camperDayRows = useMemo(
+    () =>
+      filteredReportBookings.map((booking) =>
+        getReportsCamperDaysDetails(booking)
+      ),
+    [filteredReportBookings]
+  );
+
+  const totalCamperDays = camperDayRows.reduce(
+    (sum, row) => sum + row.value,
     0
+  );
+
+  const camperDaysStoredCount = camperDayRows.filter(
+    (row) => row.source === "Stored"
+  ).length;
+
+  const camperDaysCalculatedCount = camperDayRows.filter(
+    (row) => row.source === "Calculated"
+  ).length;
+
+  const camperDaysMissingCount = camperDayRows.filter(
+    (row) => row.source === "Missing"
+  ).length;
+
+  const camperDaysCoverageCount =
+    camperDaysStoredCount + camperDaysCalculatedCount;
+
+  const averageCamperDaysPerCoveredBooking = camperDaysCoverageCount
+    ? totalCamperDays / camperDaysCoverageCount
+    : 0;
+
+  const averageCamperDaysPerGuest = totalGuests
+    ? totalCamperDays / totalGuests
+    : 0;
+
+  const camperDaysBreakdownRows = [
+    {
+      label: "Stored camper day values",
+      count: camperDaysStoredCount,
+      helper: "Used an existing camperDays value already saved on the booking.",
+    },
+    {
+      label: "Calculated from guests, nights, and meals",
+      count: camperDaysCalculatedCount,
+      helper:
+        "Fallback formula: Guests × ((Nights × 0.4) + (Meals × 0.2)).",
+    },
+    {
+      label: "Missing enough data",
+      count: camperDaysMissingCount,
+      helper:
+        "Could not calculate camper days because guest count or usage counts were missing.",
+    },
+  ];
+
+  const maxCamperDaysBreakdownCount = Math.max(
+    0,
+    ...camperDaysBreakdownRows.map((row) => row.count)
   );
 
   const projectedRevenue = filteredReportBookings.reduce(
@@ -1665,6 +1771,126 @@ function ReportsView({ inquiryBookings }) {
           tone="red"
         />
       </section>
+
+      <article className="dashboard-card reports-panel reports-camper-days-panel">
+        <div className="reports-panel-header">
+          <div>
+            <p className="dashboard-eyebrow">Camp Usage</p>
+            <h3>Camper Days</h3>
+            <span>
+              Standardized usage across guests, overnight stays, and meals for the
+              selected report range.
+            </span>
+          </div>
+        </div>
+
+        <div className="reports-camper-days-layout">
+          <div className="reports-camper-days-main">
+            <div className="reports-camper-days-stat-grid">
+              <div className="reports-camper-days-stat">
+                <small>Total Camper Days</small>
+                <strong>{formatReportsDecimal(totalCamperDays)}</strong>
+                <p>
+                  {formatReportsNumber(camperDaysCoverageCount)} booking
+                  {camperDaysCoverageCount === 1 ? "" : "s"} with usable camper day
+                  data
+                </p>
+              </div>
+
+              <div className="reports-camper-days-stat">
+                <small>Average Per Covered Booking</small>
+                <strong>
+                  {formatReportsDecimal(averageCamperDaysPerCoveredBooking)}
+                </strong>
+                <p>
+                  Based only on bookings with stored or calculated camper day values
+                </p>
+              </div>
+
+              <div className="reports-camper-days-stat">
+                <small>Average Per Guest</small>
+                <strong>{formatReportsDecimal(averageCamperDaysPerGuest)}</strong>
+                <p>
+                  Based on {formatReportsNumber(totalGuests)} total recorded guest
+                  {totalGuests === 1 ? "" : "s"}
+                </p>
+              </div>
+
+              <div className="reports-camper-days-stat">
+                <small>Coverage</small>
+                <strong>
+                  {getReportsPercent(camperDaysCoverageCount, totalBookings)}%
+                </strong>
+                <p>
+                  {formatReportsNumber(camperDaysMissingCount)} booking
+                  {camperDaysMissingCount === 1 ? "" : "s"} missing enough data
+                </p>
+              </div>
+            </div>
+
+            <div className="reports-camper-days-breakdown">
+              <h4 className="reports-monthly-heading">
+                <FaClipboardList />
+                Camper Day Data Coverage
+              </h4>
+
+              <div className="reports-bar-list">
+                {camperDaysBreakdownRows.map((row) => (
+                  <ReportBarRow
+                    key={row.label}
+                    label={row.label}
+                    value={row.count}
+                    maxValue={maxCamperDaysBreakdownCount}
+                    valueLabel={`${formatReportsNumber(row.count)} booking${
+                      row.count === 1 ? "" : "s"
+                    }`}
+                    helper={row.helper}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <aside className="reports-camper-days-explainer">
+            <div className="reports-camper-days-note">
+              <small>What are camper days?</small>
+              <strong>
+                Camper days are a standardized way to measure how much a group used
+                the camp.
+              </strong>
+
+              <p>
+                They combine guest count, nights, and meals into one number so staff
+                can compare retreat usage more fairly across different group types and
+                stay lengths.
+              </p>
+
+              <div className="reports-camper-days-formula">
+                Camper Days = Guests × ((Nights × 0.4) + (Meals × 0.2))
+              </div>
+
+              <ul className="reports-camper-days-list">
+                <li>
+                  <strong>1 night</strong>
+                  <span>= 0.4 camper days per person</span>
+                </li>
+
+                <li>
+                  <strong>1 meal</strong>
+                  <span>= 0.2 camper days per person</span>
+                </li>
+
+                <li>
+                  <strong>Simple example</strong>
+                  <span>
+                    1 guest staying 3 nights and eating 3 meals = 1.8 camper days
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+      </article>
 
       <section className="reports-grid">
         <article className="dashboard-card reports-panel reports-panel-wide">

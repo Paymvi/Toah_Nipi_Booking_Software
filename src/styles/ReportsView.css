@@ -713,6 +713,155 @@
 }
 
 /* =========================================================
+   CAMPER DAYS
+========================================================= */
+
+.reports-camper-days-panel {
+  overflow: hidden;
+}
+
+.reports-camper-days-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.95fr);
+  gap: 18px;
+  padding: 18px;
+}
+
+.reports-camper-days-main {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.reports-camper-days-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.reports-camper-days-stat {
+  padding: 14px;
+  border: 1px solid #e2e7ee;
+  border-radius: 10px;
+  background: #fbfcfd;
+}
+
+.reports-camper-days-stat small {
+  display: block;
+  color: #7b8290;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.reports-camper-days-stat strong {
+  display: block;
+  margin-top: 6px;
+  color: #252936;
+  font-size: 1.32rem;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.reports-camper-days-stat p {
+  margin: 6px 0 0;
+  color: #858c9b;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.reports-camper-days-breakdown {
+  padding: 14px;
+  border: 1px solid #e2e7ee;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.reports-camper-days-breakdown .reports-bar-list {
+  padding: 0;
+  gap: 10px;
+}
+
+.reports-camper-days-explainer {
+  min-width: 0;
+}
+
+.reports-camper-days-note {
+  height: 100%;
+  padding: 16px;
+  border: 1px solid #dddff0;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #fcfcff 0%, #f7f5ff 100%);
+}
+
+.reports-camper-days-note > small {
+  display: block;
+  color: #6a60a4;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.reports-camper-days-note > strong {
+  display: block;
+  margin-top: 8px;
+  color: #252936;
+  font-size: 0.97rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.reports-camper-days-note > p {
+  margin: 8px 0 0;
+  color: #6f7788;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.reports-camper-days-formula {
+  margin-top: 14px;
+  padding: 11px 12px;
+  border: 1px solid #ddd8f4;
+  border-radius: 9px;
+  background: #fff;
+  color: #43398f;
+  font-size: 0.8rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.reports-camper-days-list {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reports-camper-days-list li {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid #ebeef4;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.reports-camper-days-list strong {
+  color: #252936;
+  font-size: 0.79rem;
+  font-weight: 650;
+}
+
+.reports-camper-days-list span {
+  color: #7f8796;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+/* =========================================================
    EMPTY STATE
 ========================================================= */
 
