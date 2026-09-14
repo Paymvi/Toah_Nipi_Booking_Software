@@ -1173,6 +1173,10 @@ function ReportsView({ inquiryBookings }) {
           confirmed: 0,
           guests: 0,
           revenue: 0,
+
+          // Camper Days
+          camperDays: 0,
+          camperDayBookings: 0,
         });
       }
 
@@ -1181,6 +1185,13 @@ function ReportsView({ inquiryBookings }) {
       row.bookings += 1;
       row.guests += getReportsGuestCount(booking);
       row.revenue += getReportsRevenue(booking);
+
+      const camperDays = getReportsCamperDays(booking);
+
+      if (camperDays > 0) {
+        row.camperDays += camperDays;
+        row.camperDayBookings += 1;
+      }
 
       if (
         String(booking.status || "").toLowerCase().includes("confirm")
@@ -1207,6 +1218,112 @@ function ReportsView({ inquiryBookings }) {
   const maxMonthlyRevenue = Math.max(
     0,
     ...monthlyRows.map((row) => row.revenue)
+  );
+
+  /* =========================================================
+    CAMPER DAY ANALYTICS
+  ========================================================= */
+
+  const camperDayMonthlyRows = monthlyRows.filter(
+    (row) => row.camperDays > 0
+  );
+
+  const maxMonthlyCamperDays = Math.max(
+    0,
+    ...camperDayMonthlyRows.map((row) => row.camperDays)
+  );
+
+  const peakCamperDayMonth =
+    camperDayMonthlyRows.reduce((peak, row) => {
+      if (!peak || row.camperDays > peak.camperDays) {
+        return row;
+      }
+
+      return peak;
+    }, null);
+
+  const camperDaysByRetreatTypeRows = useMemo(() => {
+    const map = new Map();
+
+    filteredReportBookings.forEach((booking) => {
+      const camperDays = getReportsCamperDays(booking);
+
+      if (camperDays <= 0) return;
+
+      const retreatType = getReportsRetreatType(booking);
+
+      if (!map.has(retreatType)) {
+        map.set(retreatType, {
+          label: retreatType,
+          camperDays: 0,
+          bookings: 0,
+          guests: 0,
+        });
+      }
+
+      const row = map.get(retreatType);
+
+      row.camperDays += camperDays;
+      row.bookings += 1;
+      row.guests += getReportsGuestCount(booking);
+    });
+
+    return Array.from(map.values()).sort(
+      (a, b) => b.camperDays - a.camperDays
+    );
+  }, [filteredReportBookings]);
+
+  const topCamperDayRetreatTypes =
+    camperDaysByRetreatTypeRows.slice(0, 6);
+
+  const maxRetreatTypeCamperDays = Math.max(
+    0,
+    ...topCamperDayRetreatTypes.map((row) => row.camperDays)
+  );
+
+  const largestCamperDayBookings = useMemo(() => {
+    return filteredReportBookings
+      .map((booking) => {
+        const camperDays = getReportsCamperDays(booking);
+
+        const groupName =
+          firstReportsValue(
+            booking.organizationName,
+            booking.guestGroupName,
+            booking.name,
+            booking.contactName
+          ) || "Unnamed Group";
+
+        const startDate = getLocalDate(booking.startDate);
+
+        const dateLabel = startDate
+          ? new Intl.DateTimeFormat("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            }).format(startDate)
+          : "No arrival date";
+
+        return {
+          id:
+            booking.id ||
+            `${groupName}-${booking.startDate || ""}-${camperDays}`,
+          groupName,
+          dateLabel,
+          camperDays,
+          guests: getReportsGuestCount(booking),
+          nights: getReportsNightCount(booking),
+          meals: getReportsMealCount(booking),
+        };
+      })
+      .filter((row) => row.camperDays > 0)
+      .sort((a, b) => b.camperDays - a.camperDays)
+      .slice(0, 5);
+  }, [filteredReportBookings]);
+
+  const maxLargestBookingCamperDays = Math.max(
+    0,
+    ...largestCamperDayBookings.map((row) => row.camperDays)
   );
 
   const revenueBreakdown = [
@@ -1470,12 +1587,20 @@ function ReportsView({ inquiryBookings }) {
       },
       {
         title: "Monthly Trends",
-        headers: ["Month", "Bookings", "Confirmed", "Guests", "Revenue"],
+        headers: [
+          "Month",
+          "Bookings",
+          "Confirmed",
+          "Guests",
+          "Camper Days",
+          "Revenue",
+        ],
         rows: monthlyRows.map((row) => [
           row.label,
           row.bookings,
           row.confirmed,
           row.guests,
+          row.camperDays,
           row.revenue,
         ]),
       },
@@ -1789,65 +1914,122 @@ function ReportsView({ inquiryBookings }) {
             <div className="reports-camper-days-stat-grid">
               <div className="reports-camper-days-stat">
                 <small>Total Camper Days</small>
-                <strong>{formatReportsDecimal(totalCamperDays)}</strong>
-                <p>
-                  {formatReportsNumber(camperDaysCoverageCount)} booking
-                  {camperDaysCoverageCount === 1 ? "" : "s"} with usable camper day
-                  data
-                </p>
-              </div>
 
-              <div className="reports-camper-days-stat">
-                <small>Average Per Covered Booking</small>
                 <strong>
-                  {formatReportsDecimal(averageCamperDaysPerCoveredBooking)}
+                  {formatReportsDecimal(totalCamperDays)}
                 </strong>
+
                 <p>
-                  Based only on bookings with stored or calculated camper day values
+                  Across {formatReportsNumber(camperDaysCoverageCount)} booking
+                  {camperDaysCoverageCount === 1 ? "" : "s"} with usable data
                 </p>
               </div>
 
               <div className="reports-camper-days-stat">
-                <small>Average Per Guest</small>
-                <strong>{formatReportsDecimal(averageCamperDaysPerGuest)}</strong>
-                <p>
-                  Based on {formatReportsNumber(totalGuests)} total recorded guest
-                  {totalGuests === 1 ? "" : "s"}
-                </p>
-              </div>
+                <small>Average Per Booking</small>
 
-              <div className="reports-camper-days-stat">
-                <small>Coverage</small>
                 <strong>
-                  {getReportsPercent(camperDaysCoverageCount, totalBookings)}%
+                  {formatReportsDecimal(
+                    averageCamperDaysPerCoveredBooking
+                  )}
                 </strong>
+
+                <p>
+                  Average among bookings with usable camper day data
+                </p>
+              </div>
+
+              <div className="reports-camper-days-stat">
+                <small>Peak Usage Month</small>
+
+                <strong>
+                  {peakCamperDayMonth
+                    ? peakCamperDayMonth.label
+                    : "—"}
+                </strong>
+
+                <p>
+                  {peakCamperDayMonth
+                    ? `${formatReportsDecimal(
+                        peakCamperDayMonth.camperDays
+                      )} camper days`
+                    : "No usable monthly data"}
+                </p>
+              </div>
+
+              <div className="reports-camper-days-stat">
+                <small>Data Coverage</small>
+
+                <strong>
+                  {getReportsPercent(
+                    camperDaysCoverageCount,
+                    totalBookings
+                  )}%
+                </strong>
+
                 <p>
                   {formatReportsNumber(camperDaysMissingCount)} booking
-                  {camperDaysMissingCount === 1 ? "" : "s"} missing enough data
+                  {camperDaysMissingCount === 1 ? "" : "s"} cannot currently be measured
                 </p>
               </div>
             </div>
 
-            <div className="reports-camper-days-breakdown">
-              <h4 className="reports-monthly-heading">
-                <FaClipboardList />
-                Camper Day Data Coverage
-              </h4>
+            <div className="reports-camper-days-trend">
+              <div className="reports-camper-days-section-heading">
+                <div>
+                  <p className="dashboard-eyebrow">
+                    Usage Over Time
+                  </p>
 
-              <div className="reports-bar-list">
-                {camperDaysBreakdownRows.map((row) => (
-                  <ReportBarRow
-                    key={row.label}
-                    label={row.label}
-                    value={row.count}
-                    maxValue={maxCamperDaysBreakdownCount}
-                    valueLabel={`${formatReportsNumber(row.count)} booking${
-                      row.count === 1 ? "" : "s"
-                    }`}
-                    helper={row.helper}
-                  />
-                ))}
+                  <h4>
+                    <FaChartBar />
+                    Camper Days by Month
+                  </h4>
+
+                  <span>
+                    Shows when camp usage was highest across the selected report range.
+                  </span>
+                </div>
               </div>
+
+              {camperDayMonthlyRows.length > 0 ? (
+                <div className="reports-bar-list">
+                  {camperDayMonthlyRows.map((row) => {
+                    const average =
+                      row.camperDayBookings > 0
+                        ? row.camperDays / row.camperDayBookings
+                        : 0;
+
+                    return (
+                      <ReportBarRow
+                        key={`camper-days-${row.monthKey}`}
+                        label={row.label}
+                        value={row.camperDays}
+                        maxValue={maxMonthlyCamperDays}
+                        valueLabel={`${formatReportsDecimal(
+                          row.camperDays
+                        )} camper days`}
+                        helper={`${formatReportsNumber(
+                          row.camperDayBookings
+                        )} covered booking${
+                          row.camperDayBookings === 1 ? "" : "s"
+                        } · ${formatReportsDecimal(
+                          average
+                        )} average`}
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="reports-empty-state">
+                  <strong>No Camper Day trend data</strong>
+
+                  <p>
+                    No filtered bookings have both a usable arrival date and Camper Day
+                    information.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1887,8 +2069,150 @@ function ReportsView({ inquiryBookings }) {
                   </span>
                 </li>
               </ul>
+
+              <div className="reports-camper-days-coverage-summary">
+                <div className="reports-camper-days-coverage-heading">
+                  <span>Data Coverage</span>
+
+                  <strong>
+                    {getReportsPercent(
+                      camperDaysCoverageCount,
+                      totalBookings
+                    )}%
+                  </strong>
+                </div>
+
+                <div className="reports-camper-days-coverage-track">
+                  <span
+                    style={{
+                      width: `${getReportsPercent(
+                        camperDaysCoverageCount,
+                        totalBookings
+                      )}%`,
+                    }}
+                  />
+                </div>
+
+                <div className="reports-camper-days-coverage-counts">
+                  <span>
+                    <strong>{camperDaysStoredCount}</strong>
+                    Stored
+                  </span>
+
+                  <span>
+                    <strong>{camperDaysCalculatedCount}</strong>
+                    Calculated
+                  </span>
+
+                  <span>
+                    <strong>{camperDaysMissingCount}</strong>
+                    Missing
+                  </span>
+                </div>
+              </div>
             </div>
           </aside>
+        </div>
+
+
+        <div className="reports-camper-days-insight-grid">
+          <section className="reports-camper-days-insight-card">
+            <div className="reports-camper-days-section-heading">
+              <div>
+                <p className="dashboard-eyebrow">
+                  Group Mix
+                </p>
+
+                <h4>
+                  <FaUsers />
+                  Camper Days by Retreat Type
+                </h4>
+
+                <span>
+                  Retreat categories generating the most overall camp usage.
+                </span>
+              </div>
+            </div>
+
+            {topCamperDayRetreatTypes.length > 0 ? (
+              <div className="reports-bar-list">
+                {topCamperDayRetreatTypes.map((row) => (
+                  <ReportBarRow
+                    key={`camper-retreat-${row.label}`}
+                    label={row.label}
+                    value={row.camperDays}
+                    maxValue={maxRetreatTypeCamperDays}
+                    valueLabel={`${formatReportsDecimal(
+                      row.camperDays
+                    )} days`}
+                    helper={`${formatReportsNumber(
+                      row.bookings
+                    )} booking${
+                      row.bookings === 1 ? "" : "s"
+                    } · ${formatReportsNumber(
+                      row.guests
+                    )} guests`}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="reports-empty-state">
+                <strong>No retreat usage data</strong>
+                <p>
+                  No retreat types have usable Camper Day values.
+                </p>
+              </div>
+            )}
+          </section>
+
+          <section className="reports-camper-days-insight-card">
+            <div className="reports-camper-days-section-heading">
+              <div>
+                <p className="dashboard-eyebrow">
+                  Highest Usage
+                </p>
+
+                <h4>
+                  <FaClipboardList />
+                  Largest Retreats by Camper Days
+                </h4>
+
+                <span>
+                  Individual bookings producing the greatest overall camp usage.
+                </span>
+              </div>
+            </div>
+
+            {largestCamperDayBookings.length > 0 ? (
+              <div className="reports-bar-list">
+                {largestCamperDayBookings.map((row) => (
+                  <ReportBarRow
+                    key={row.id}
+                    label={row.groupName}
+                    value={row.camperDays}
+                    maxValue={maxLargestBookingCamperDays}
+                    valueLabel={`${formatReportsDecimal(
+                      row.camperDays
+                    )} days`}
+                    helper={`${row.dateLabel} · ${formatReportsNumber(
+                      row.guests
+                    )} guests · ${formatReportsNumber(
+                      row.nights
+                    )} nights · ${formatReportsNumber(
+                      row.meals
+                    )} meals`}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="reports-empty-state">
+                <strong>No Camper Day booking data</strong>
+                <p>
+                  No individual bookings have usable Camper Day values.
+                </p>
+              </div>
+            )}
+          </section>
         </div>
       </article>
 
