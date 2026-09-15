@@ -9272,18 +9272,9 @@ export default function Dashboard() {
   };
 
   const getCalendarEventColor = (status) => {
-    const normalizedStatus = String(status || "")
-      .trim()
-      .toLowerCase();
 
-    if (
-      normalizedStatus.includes("confirmed") ||
-      normalizedStatus.includes("booked")
-    ) {
-      return "calendar-event-green";
-    }
+    return "calendar-event-green";
 
-    return "calendar-event-gold";
   };
 
   const handleActiveViewChange = (nextView) => {

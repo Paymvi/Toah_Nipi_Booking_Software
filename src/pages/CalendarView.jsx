@@ -30,20 +30,8 @@ function getHeatmapOpacity(totalCount) {
   return heatOpacityByCount[Math.min(totalCount, 5)] || "0";
 }
 
-function getHeatmapBucketForInquiry(inquiry, getCalendarEventColor) {
-  const colorClass = getCalendarEventColor(inquiry.status);
-
-  if (colorClass === "calendar-event-green") return "confirmed";
-  if (colorClass === "calendar-event-gold") return "inquiry";
-  if (colorClass === "calendar-event-blue") return "contract";
-
-  const statusText = String(inquiry.status || "").toLowerCase();
-
-  if (statusText.includes("confirmed")) return "confirmed";
-  if (statusText.includes("contract")) return "contract";
-  if (statusText.includes("inquir")) return "inquiry";
-
-  return "other";
+function getHeatmapBucketForInquiry(inquiry) {
+  return "confirmed";
 }
 
 function getPrimaryHeatmapBucket(bucketCounts) {
@@ -618,12 +606,7 @@ export default function CalendarView({
                 <div className="calendar-year-heatmap-legend">
                   <span>
                     <i className="calendar-year-heatmap-dot calendar-year-heatmap-dot-confirmed"></i>
-                    Confirmed
-                  </span>
-
-                  <span>
-                    <i className="calendar-year-heatmap-dot calendar-year-heatmap-dot-inquiry"></i>
-                    Unconfirmed
+                    Bookings
                   </span>
 
                   <em>Darker days have more dated bookings.</em>
@@ -756,12 +739,7 @@ export default function CalendarView({
         <div className="calendar-legend">
           <span>
             <i className="legend-dot legend-confirmed"></i>
-            Confirmed
-          </span>
-
-          <span>
-            <i className="legend-dot legend-inquiry"></i>
-            Unconfirmed
+            Bookings
           </span>
         </div>
 
