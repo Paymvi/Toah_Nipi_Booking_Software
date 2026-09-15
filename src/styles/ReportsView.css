@@ -1011,7 +1011,59 @@
 
 
 
+/* =========================================================
+   CAMPER DAYS SPACING FIXES
+========================================================= */
 
+/* Give the entire camper section breathing room */
+.reports-camper-days-panel {
+  padding: 18px;
+}
+
+
+/* Header spacing */
+.reports-camper-days-panel .reports-panel-header {
+  margin-bottom: 4px;
+}
+
+
+/* KPI cards */
+.reports-camper-days-stat-grid {
+  padding: 0;
+  margin-bottom: 18px;
+}
+
+
+/* Main two-column area */
+.reports-camper-days-layout {
+  padding: 0;
+  gap: 20px;
+}
+
+
+/* Trend card */
+.reports-camper-days-trend {
+  padding: 18px;
+}
+
+
+/* Explainer card */
+.reports-camper-days-note {
+  padding: 18px;
+}
+
+
+/* Bottom insight cards */
+.reports-camper-days-insight-grid {
+  padding: 18px 0 0;
+  margin-top: 18px;
+}
+
+
+/* Make the inside cards consistent */
+.reports-camper-days-insight-card {
+  padding: 18px;
+}
 
 
 
