@@ -132,6 +132,12 @@
   min-height: calc(126px + ((var(--calendar-event-row-count, 1) - 1) * 32px));
   min-width: 0;
 }
+.calendar-week-row {
+  position: relative;
+}
+.calendar-grid-span-mode {
+  position: relative;
+}
 
 .calendar-week-row .calendar-cell {
   position: relative;
@@ -164,8 +170,14 @@
   position: absolute;
   z-index: 5;
 
-  left: calc((((var(--event-start-column) - 1) * 100%) / 7) + 5px);
-  width: calc(((var(--event-span-days) * 100%) / 7) - 10px);
+  left: calc(
+    (var(--event-start-column) - 1) * (100% / 7) + 5px
+  );
+
+  width: calc(
+    var(--event-span-days) * (100% / 7) - 10px
+  );
+
   top: calc(36px + (var(--event-lane) * 32px));
 
   height: 27px;
