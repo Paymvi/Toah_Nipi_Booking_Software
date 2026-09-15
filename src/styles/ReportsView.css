@@ -1191,3 +1191,136 @@
     padding: 0 16px 16px;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   TOOLTIP STATUS EXPLANATION
+========================================================= */
+
+.calendar-tooltip-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+
+.calendar-tooltip-title {
+  display: block;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+
+/* Status section */
+
+.calendar-tooltip-status {
+
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 10px;
+
+  padding-top: 12px;
+
+  border-top: 1px solid #e5e7eb;
+
+  width: 100%;
+
+}
+
+
+.calendar-tooltip-status-text {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 4px;
+
+  min-width: 0;
+
+}
+
+
+.calendar-tooltip-status-text strong {
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+}
+
+
+.calendar-tooltip-status-text small {
+
+  display: block;
+
+  max-width: 220px;
+
+  font-size: 12px;
+
+  line-height: 1.45;
+
+  color: #64748b;
+
+  white-space: normal;
+
+  overflow-wrap: anywhere;
+
+}
+
+
+/* Dot */
+
+.calendar-status-dot {
+
+  width: 11px;
+
+  height: 11px;
+
+  border-radius: 50%;
+
+  margin-top: 5px;
+
+  flex-shrink: 0;
+
+}
+
+
+.calendar-status-dot-green {
+
+  background: #2f6f5f;
+
+}
+
+
+.calendar-status-dot-gold {
+
+  background: #d5aa3f;
+
+}

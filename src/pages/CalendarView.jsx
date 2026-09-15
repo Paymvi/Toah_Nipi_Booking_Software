@@ -435,9 +435,9 @@ export default function CalendarView({
             </h2>
 
             <p>
-              Full calendar view for confirmed bookings, contract sent bookings,
-              and inquiries with selected dates.
+              Full calendar view for confirmed and unconfirmed guest groups with selected dates.
             </p>
+            
           </div>
 
           <button
@@ -623,12 +623,7 @@ export default function CalendarView({
 
                   <span>
                     <i className="calendar-year-heatmap-dot calendar-year-heatmap-dot-inquiry"></i>
-                    Inquiry
-                  </span>
-
-                  <span>
-                    <i className="calendar-year-heatmap-dot calendar-year-heatmap-dot-contract"></i>
-                    Contract Sent
+                    Unconfirmed
                   </span>
 
                   <em>Darker days have more dated bookings.</em>
@@ -765,15 +760,11 @@ export default function CalendarView({
           </span>
 
           <span>
-            <i className="legend-dot legend-contract"></i>
-            Contract Sent
-          </span>
-
-          <span>
             <i className="legend-dot legend-inquiry"></i>
-            Inquiry
+            Unconfirmed
           </span>
         </div>
+
       </article>
 
       <aside className="dashboard-card calendar-view-agenda">

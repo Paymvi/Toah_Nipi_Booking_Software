@@ -9271,8 +9271,10 @@ export default function Dashboard() {
     setSelectedYear(today.getFullYear());
   };
 
-const getCalendarEventColor = (status) => {
-  const normalizedStatus = String(status || "").toLowerCase();
+  const getCalendarEventColor = (status) => {
+    const normalizedStatus = String(status || "")
+      .trim()
+      .toLowerCase();
 
     if (
       normalizedStatus.includes("confirmed") ||
@@ -9281,26 +9283,7 @@ const getCalendarEventColor = (status) => {
       return "calendar-event-green";
     }
 
-    if (normalizedStatus.includes("contract")) {
-      return "calendar-event-blue";
-    }
-
-    if (
-      normalizedStatus.includes("inquiry") ||
-      normalizedStatus.includes("lead")
-    ) {
-      return "calendar-event-gold";
-    }
-
-    if (normalizedStatus.includes("cancel")) {
-      return "calendar-event-pink";
-    }
-
-    if (normalizedStatus.includes("wait")) {
-      return "calendar-event-teal";
-    }
-
-    return "calendar-event-purple";
+    return "calendar-event-gold";
   };
 
   const handleActiveViewChange = (nextView) => {
