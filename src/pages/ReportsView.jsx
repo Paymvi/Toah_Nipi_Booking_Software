@@ -722,14 +722,30 @@ function ReportSummaryCard({
   );
 }
 
-function ReportBarRow({ label, value, maxValue, valueLabel, helper }) {
+function ReportBarRow({
+  label,
+  value,
+  maxValue,
+  valueLabel,
+  helper,
+  onHover,
+  hoverKey,
+}) {
   const width =
     maxValue > 0 && value > 0
       ? Math.max((value / maxValue) * 100, 4)
       : 0;
 
   return (
-    <div className="reports-bar-row">
+      <div
+        className="reports-bar-row"
+        onMouseEnter={() =>
+          onHover && onHover(hoverKey)
+        }
+        onMouseLeave={() =>
+          onHover && onHover(null)
+        }
+      >
       <div className="reports-bar-row-top">
         <strong>{label}</strong>
         <span>{valueLabel || formatReportsNumber(value)}</span>
@@ -926,6 +942,8 @@ function ReportsView({ inquiryBookings }) {
   const [reportsSettings, setReportsSettings] = useState(() =>
     getSavedReportsViewSettings()
   );
+
+  const [hoveredCamperMonth, setHoveredCamperMonth] = useState(null);
 
   useEffect(() => {
     saveReportsViewSettings(reportsSettings);
@@ -1227,6 +1245,43 @@ function ReportsView({ inquiryBookings }) {
   const camperDayMonthlyRows = monthlyRows.filter(
     (row) => row.camperDays > 0
   );
+
+  const hoveredCamperMonthGroups = useMemo(() => {
+    if (!hoveredCamperMonth) return [];
+
+    return filteredReportBookings
+      .filter(
+        (booking) =>
+          getReportsMonthKey(booking) === hoveredCamperMonth
+      )
+      .map((booking) => {
+        const camperDays =
+          getReportsCamperDaysDetails(booking);
+
+        const groupName =
+          firstReportsValue(
+            booking.organizationName,
+            booking.guestGroupName,
+            booking.name,
+            booking.contactName
+          ) || "Unnamed Group";
+
+        return {
+          groupName,
+          camperDays: camperDays.value,
+          guests: getReportsGuestCount(booking),
+          nights: getReportsNightCount(booking),
+          meals: getReportsMealCount(booking),
+        };
+      })
+      .filter((row) => row.camperDays > 0)
+      .sort((a, b) => b.camperDays - a.camperDays)
+      .slice(0, 5);
+
+  }, [
+    hoveredCamperMonth,
+    filteredReportBookings,
+  ]);
 
   const maxMonthlyCamperDays = Math.max(
     0,
@@ -2011,11 +2066,9 @@ function ReportsView({ inquiryBookings }) {
                         )} camper days`}
                         helper={`${formatReportsNumber(
                           row.camperDayBookings
-                        )} covered booking${
-                          row.camperDayBookings === 1 ? "" : "s"
-                        } · ${formatReportsDecimal(
-                          average
-                        )} average`}
+                        )} covered bookings`}
+                        onHover={setHoveredCamperMonth}
+                        hoverKey={row.monthKey}
                       />
                     );
                   })}
@@ -2035,81 +2088,183 @@ function ReportsView({ inquiryBookings }) {
 
           <aside className="reports-camper-days-explainer">
             <div className="reports-camper-days-note">
-              <small>What are camper days?</small>
-              <strong>
-                Camper days are a standardized way to measure how much a group used
-                the camp.
-              </strong>
-
-              <p>
-                They combine guest count, nights, and meals into one number so staff
-                can compare retreat usage more fairly across different group types and
-                stay lengths.
-              </p>
-
-              <div className="reports-camper-days-formula">
-                Camper Days = Guests × ((Nights × 0.4) + (Meals × 0.2))
-              </div>
-
-              <ul className="reports-camper-days-list">
-                <li>
-                  <strong>1 night</strong>
-                  <span>= 0.4 camper days per person</span>
-                </li>
-
-                <li>
-                  <strong>1 meal</strong>
-                  <span>= 0.2 camper days per person</span>
-                </li>
-
-                <li>
-                  <strong>Simple example</strong>
-                  <span>
-                    1 guest staying 3 nights and eating 3 meals = 1.8 camper days
-                  </span>
-                </li>
-              </ul>
-
-              <div className="reports-camper-days-coverage-summary">
-                <div className="reports-camper-days-coverage-heading">
-                  <span>Data Coverage</span>
+              {hoveredCamperMonth ? (
+                <>
+                  <small>
+                    Monthly Breakdown
+                  </small>
 
                   <strong>
-                    {getReportsPercent(
-                      camperDaysCoverageCount,
-                      totalBookings
-                    )}%
+                    {formatReportsMonthLabel(
+                      hoveredCamperMonth
+                    )}
                   </strong>
-                </div>
 
-                <div className="reports-camper-days-coverage-track">
-                  <span
-                    style={{
-                      width: `${getReportsPercent(
-                        camperDaysCoverageCount,
-                        totalBookings
-                      )}%`,
-                    }}
-                  />
-                </div>
+                  <p>
+                    Groups contributing the most camper days
+                    during this month.
+                  </p>
 
-                <div className="reports-camper-days-coverage-counts">
-                  <span>
-                    <strong>{camperDaysStoredCount}</strong>
-                    Stored
-                  </span>
 
-                  <span>
-                    <strong>{camperDaysCalculatedCount}</strong>
-                    Calculated
-                  </span>
+                  <div className="reports-camper-group-cards">
 
-                  <span>
-                    <strong>{camperDaysMissingCount}</strong>
-                    Missing
-                  </span>
-                </div>
-              </div>
+                    {hoveredCamperMonthGroups.length > 0 ? (
+
+                      hoveredCamperMonthGroups.map((group) => (
+
+                        <div
+                          className="reports-camper-group-card"
+                          key={group.groupName}
+                        >
+
+                          <strong>
+                            {group.groupName}
+                          </strong>
+
+                          <span>
+                            {formatReportsNumber(group.guests)}
+                            {" "}guests ·{" "}
+                            {formatReportsNumber(group.nights)}
+                            {" "}nights ·{" "}
+                            {formatReportsNumber(group.meals)}
+                            {" "}meals
+                          </span>
+
+                          <b>
+                            {formatReportsDecimal(
+                              group.camperDays
+                            )}
+                            {" "}camper days
+                          </b>
+
+                        </div>
+
+                      ))
+
+                    ) : (
+
+                      <p>
+                        No detailed group data available.
+                      </p>
+
+                    )}
+
+                  </div>
+                </>
+              ) : (
+  <>
+    <small>
+      What Are Camper Days?
+    </small>
+
+    <strong>
+      Camper Days measure total camp usage
+    </strong>
+
+    <p>
+      Camper days are a standardized way to measure how much a
+      group used the camp. They combine guests, overnight stays,
+      and meals into one number so staff can compare retreat usage
+      more fairly across different group sizes and lengths.
+    </p>
+
+    <div className="reports-camper-formula">
+      Camper Days = Guests × ((Nights × 0.4) + (Meals × 0.2))
+    </div>
+
+
+    <div className="reports-camper-explainer-card">
+      <strong>
+        1 night
+      </strong>
+
+      <span>
+        = 0.4 camper days per person
+      </span>
+    </div>
+
+
+    <div className="reports-camper-explainer-card">
+      <strong>
+        1 meal
+      </strong>
+
+      <span>
+        = 0.2 camper days per person
+      </span>
+    </div>
+
+
+    <div className="reports-camper-explainer-card">
+      <strong>
+        Simple Example
+      </strong>
+
+      <span>
+        1 guest staying 3 nights and eating 3 meals =
+        1.8 camper days
+      </span>
+    </div>
+
+
+    <div className="reports-camper-data-coverage">
+      <div>
+        <strong>
+          Data Coverage
+        </strong>
+
+        <span>
+          {getReportsPercent(
+            camperDaysCoverageCount,
+            totalBookings
+          )}%
+        </span>
+      </div>
+
+
+      <div className="reports-camper-coverage-track">
+        <span
+          style={{
+            width: `${
+              getReportsPercent(
+                camperDaysCoverageCount,
+                totalBookings
+              )
+            }%`,
+          }}
+        />
+      </div>
+
+
+      <div className="reports-camper-coverage-stats">
+
+        <span>
+          <strong>
+            {camperDaysStoredCount}
+          </strong>
+          Stored
+        </span>
+
+
+        <span>
+          <strong>
+            {camperDaysCalculatedCount}
+          </strong>
+          Calculated
+        </span>
+
+
+        <span>
+          <strong>
+            {camperDaysMissingCount}
+          </strong>
+          Missing
+        </span>
+
+      </div>
+    </div>
+  </>
+)}
             </div>
           </aside>
         </div>
