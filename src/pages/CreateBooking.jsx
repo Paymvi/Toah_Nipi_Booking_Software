@@ -452,6 +452,7 @@ function createInitialFormState(
     /* Linens */
     linenOption: "No",
     linenSets: "",
+    linenPieces: "",
 
     /* Notes */
     notes: "",
@@ -950,6 +951,10 @@ function createExistingBookingFormState(booking) {
 
     linenSets:
       details.linenSets ||
+      "",
+
+    linenPieces:
+      details.linenPieces ||
       "",
 
 
@@ -2963,7 +2968,7 @@ export default function CreateBooking({
               <div className="rental-subsection">
                 <h3>Linens</h3>
 
-                <div className="rental-field-grid">
+                <div className="rental-field-grid rental-linen-grid">
 
                   <label className="rental-field">
                     <span>Linen Option</span>
@@ -2996,6 +3001,21 @@ export default function CreateBooking({
                       min="0"
                       name="linenSets"
                       value={formData.linenSets}
+                      onChange={handleChange}
+                      disabled={
+                        formData.linenOption === "No"
+                      }
+                    />
+                  </label>
+
+                  <label className="rental-field">
+                    <span># of Linen Pieces</span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name="linenPieces"
+                      value={formData.linenPieces || ""}
                       onChange={handleChange}
                       disabled={
                         formData.linenOption === "No"

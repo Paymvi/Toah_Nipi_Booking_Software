@@ -5246,7 +5246,7 @@
   display: grid;
 
   grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+    repeat(3, minmax(0, 1fr));
 
   gap: 12px;
 }
@@ -7353,4 +7353,22 @@
   .lodging-calendar-building-option {
     min-width: 150px;
   }
+}
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   LINENS GRID
+========================================================= */
+
+.rental-linen-grid {
+  grid-template-columns: 2fr 1fr 1fr;
+  align-items: end;
 }

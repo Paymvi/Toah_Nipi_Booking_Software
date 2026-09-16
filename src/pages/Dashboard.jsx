@@ -6098,6 +6098,12 @@ const overviewLinenSets =
     booking.linenSets
   ) || 0;
 
+  const overviewLinenPieces =
+    firstBookingOverviewValue(
+      details?.linenPieces,
+      booking.linenPieces
+    ) || 0;
+
   /* =====================================================
     BOOKING STATUS
   ===================================================== */
@@ -6539,7 +6545,17 @@ const overviewLinenSets =
                     </strong>
                   </div>
 
+                  <div className="booking-overview-linen-item">
+                    <span>Linen Pieces</span>
+
+                    <strong>
+                      {overviewLinenPieces}
+                    </strong>
+                  </div>
+
                 </div>
+
+
 
               </div>
 
