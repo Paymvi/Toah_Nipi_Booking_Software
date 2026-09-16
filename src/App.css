@@ -6939,6 +6939,132 @@
 
 
 
+/* =====================================================
+   ROOM BREAKDOWN INSIDE FLOOR CARDS
+===================================================== */
+
+
+.booking-housing-floor-field {
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+
+  padding:18px;
+
+  border:1px solid #e4e8ef;
+  border-radius:10px;
+
+  background:#ffffff;
+}
+
+
+.booking-housing-floor-header {
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+}
+
+
+.booking-housing-floor-header strong {
+
+  color:#303442;
+  font-size:.95rem;
+  font-weight:650;
+
+}
+
+
+.booking-housing-floor-header span {
+
+  color:#5c6f46;
+  font-size:.8rem;
+  font-weight:650;
+
+}
+
+
+
+.booking-housing-room-list {
+
+  display:grid;
+  gap:8px;
+
+}
+
+
+.booking-housing-room-row {
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:10px 12px;
+
+  border-radius:8px;
+
+  background:#f8fafc;
+
+  border:1px solid #edf0f4;
+
+}
+
+
+.booking-housing-room-row span {
+
+  color:#4b5563;
+
+  font-size:.85rem;
+
+  font-weight:600;
+
+}
+
+
+
+.booking-housing-room-row input {
+
+  width:70px;
+
+  border:1px solid #dfe4ec;
+
+  border-radius:7px;
+
+  padding:6px 8px;
+
+  text-align:center;
+
+}
+
+
+.booking-housing-room-row strong {
+
+  color:#303442;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* =========================================================
    Lodging Calendar
 ========================================================= */

@@ -26,22 +26,82 @@ const housingRows = [
     housingArea: "Bethel Lodge",
     roomCategory: "Family Style Rooms",
     image: "/lodges/Bethel.webp",
-    aliases: ["bethel"],
+
     floors: [
       {
         id: "upper",
-        field: "lodgingBethelUpper",
         label: "Upper Floor",
+
+        rooms: [
+          {
+            id: "room-1",
+            label: "Room 1",
+            field: "lodgingBethelUpperRoom1",
+          },
+          {
+            id: "room-2",
+            label: "Room 2",
+            field: "lodgingBethelUpperRoom2",
+          },
+        ],
       },
+
+
       {
         id: "middle",
-        field: "lodgingBethelMiddle",
         label: "Middle Floor",
+
+        rooms: [
+          {
+            id: "room-3",
+            label: "Room 3",
+            field: "lodgingBethelMiddleRoom3",
+          },
+          {
+            id: "room-4",
+            label: "Room 4",
+            field: "lodgingBethelMiddleRoom4",
+          },
+          {
+            id: "room-5",
+            label: "Room 5",
+            field: "lodgingBethelMiddleRoom5",
+          },
+          {
+            id: "room-6",
+            label: "Room 6",
+            field: "lodgingBethelMiddleRoom6",
+          },
+        ],
       },
+
+
       {
         id: "lower",
-        field: "lodgingBethelLower",
         label: "Lower Floor",
+
+        rooms: [
+          {
+            id: "room-7",
+            label: "Room 7",
+            field: "lodgingBethelLowerRoom7",
+          },
+          {
+            id: "room-8",
+            label: "Room 8",
+            field: "lodgingBethelLowerRoom8",
+          },
+          {
+            id: "room-9",
+            label: "Room 9",
+            field: "lodgingBethelLowerRoom9",
+          },
+          {
+            id: "room-10",
+            label: "Room 10",
+            field: "lodgingBethelLowerRoom10",
+          },
+        ],
       },
     ],
   },
@@ -96,16 +156,52 @@ const housingRows = [
     aliases: ["dothan"],
     floors: [
       {
-        id: "upper",
-        field: "lodgingDothanUpper",
-        label: "Upper Floor",
+        id:"upper",
+        label:"Upper Floor",
+
+        rooms:[
+          {
+            id:"room-1",
+            label:"Room 1",
+            field:"lodgingDothanUpperRoom1"
+          },
+          {
+            id:"room-2",
+            label:"Room 2",
+            field:"lodgingDothanUpperRoom2"
+          }
+        ]
       },
+
+
       {
-        id: "middle",
-        field: "lodgingDothanMiddle",
-        label: "Middle Floor",
-      },
-    ],
+        id:"middle",
+        label:"Middle Floor",
+
+        rooms:[
+          {
+            id:"room-3",
+            label:"Room 3",
+            field:"lodgingDothanMiddleRoom3"
+          },
+          {
+            id:"room-4",
+            label:"Room 4",
+            field:"lodgingDothanMiddleRoom4"
+          },
+          {
+            id:"room-5",
+            label:"Room 5",
+            field:"lodgingDothanMiddleRoom5"
+          },
+          {
+            id:"room-6",
+            label:"Room 6",
+            field:"lodgingDothanMiddleRoom6"
+          }
+        ]
+      }
+      ],
   },
 
   {
@@ -217,12 +313,20 @@ function importedBookingUsesHousingRow(
   booking,
   row
 ) {
+
   const housingText =
     getBookingHousingText(booking);
+
 
   if (!housingText) {
     return false;
   }
+
+
+  if (!Array.isArray(row.aliases)) {
+    return false;
+  }
+
 
   return row.aliases.some((alias) =>
     housingText.includes(
@@ -304,14 +408,62 @@ function hasGenericHebronAssignment(booking) {
 
 
 function getFloorTotal(row, values) {
+
   if (!Array.isArray(row.floors)) {
     return 0;
   }
 
+
   return row.floors.reduce(
     (total, floor) => {
+
+
+      // Floors with individual rooms
+      if (floor.rooms) {
+
+        return (
+          total +
+          getRoomTotal(
+            floor,
+            values
+          )
+        );
+
+      }
+
+
+      // Floors without rooms
       const value =
-        Number(values?.[floor.field] || 0);
+        Number(
+          values?.[floor.field] || 0
+        );
+
+
+      return (
+        total +
+        (
+          Number.isFinite(value)
+            ? value
+            : 0
+        )
+      );
+
+
+    },
+    0
+  );
+}
+
+function getRoomTotal(floor, values) {
+  if (!Array.isArray(floor.rooms)) {
+    return 0;
+  }
+
+  return floor.rooms.reduce(
+    (total, room) => {
+      const value = Number(
+        values?.[room.field] || 0
+      );
 
       return (
         total +
@@ -329,21 +481,44 @@ function rowHasFloorBreakdown(
   row,
   values
 ) {
+
   if (!Array.isArray(row.floors)) {
     return false;
   }
 
-  return row.floors.some(
-    (floor) => {
-      const value =
-        Number(values?.[floor.field] || 0);
 
-      return (
-        Number.isFinite(value) &&
-        value > 0
-      );
+  return row.floors.some(
+    (floor)=>{
+
+      if(floor.rooms){
+
+        return floor.rooms.some(
+          (room)=>{
+
+            const value =
+              Number(
+                values?.[room.field] || 0
+              );
+
+            return value > 0;
+
+          }
+        );
+
+      }
+
+
+      const value =
+        Number(
+          values?.[floor.field] || 0
+        );
+
+
+      return value > 0;
+
     }
   );
+
 }
 
 
@@ -384,11 +559,28 @@ function getInitialHousingState(booking) {
       );
 
     if (Array.isArray(row.floors)) {
-      row.floors.forEach((floor) => {
-        state[floor.field] =
-          cleanNumberValue(
-            details[floor.field]
-          );
+      row.floors.forEach((floor)=>{
+
+        if (floor.rooms) {
+
+          floor.rooms.forEach((room)=>{
+
+            state[room.field] =
+              cleanNumberValue(
+                details[room.field]
+              );
+
+          });
+
+        } else {
+
+          state[floor.field] =
+            cleanNumberValue(
+              details[floor.field]
+            );
+
+        }
+
       });
 
       const floorTotal =
@@ -458,6 +650,7 @@ function buildLodgingSummary(
 ) {
   return housingRows
     .map((row) => {
+
       const value =
         String(
           values[row.field] || ""
@@ -465,6 +658,70 @@ function buildLodgingSummary(
 
       const numberValue =
         Number(value);
+
+
+      if (
+        row.floors &&
+        Array.isArray(row.floors)
+      ) {
+
+        const breakdown = row.floors
+          .map((floor)=>{
+
+
+            // Buildings with rooms
+            if (floor.rooms) {
+
+              const roomText =
+                floor.rooms
+                  .map((room)=>{
+
+                    const amount =
+                      values[room.field];
+
+                    if(amount){
+                      return `${room.label}: ${amount}`;
+                    }
+
+                    return "";
+
+                  })
+                  .filter(Boolean)
+                  .join(", ");
+
+
+              if(roomText){
+                return `${floor.label} - ${roomText}`;
+              }
+
+              return "";
+            }
+
+
+            // Buildings without rooms
+            const floorValue =
+              values[floor.field];
+
+
+            if(floorValue){
+              return `${floor.label}: ${floorValue}`;
+            }
+
+
+            return "";
+
+          })
+          .filter(Boolean)
+          .join("; ");
+
+
+        if(breakdown){
+          return `${row.roomName}: ${breakdown}`;
+        }
+
+      }
+
+
 
       if (
         value &&
@@ -474,11 +731,14 @@ function buildLodgingSummary(
         return `${row.roomName}: ${value}`;
       }
 
-      if (knownUsage[row.field]) {
+
+      if(knownUsage[row.field]){
         return `${row.roomName}: count unknown`;
       }
 
+
       return "";
+
     })
     .filter(Boolean)
     .join("; ");
@@ -576,12 +836,29 @@ export default function BookingHousingTab({
   ======================================================= */
 
   const totalAssigned = useMemo(() => {
+
     return housingRows.reduce(
-      (total, row) => {
+      (total,row)=>{
+
+
+        if(row.floors){
+
+          return (
+            total +
+            getFloorTotal(
+              row,
+              housingValues
+            )
+          );
+
+        }
+
+
         const value =
           Number(
             housingValues[row.field] || 0
           );
+
 
         return (
           total +
@@ -589,10 +866,14 @@ export default function BookingHousingTab({
             ? value
             : 0)
         );
+
+
       },
-      0
+    0
     );
-  }, [housingValues]);
+
+
+    },[housingValues]);
 
   const unknownAssignmentCount =
     useMemo(() => {
@@ -750,27 +1031,98 @@ export default function BookingHousingTab({
     }
   };
 
-
-  const clearFloorBreakdown = (
-    row
+  const updateRoomValue = (
+    row,
+    floor,
+    roomField,
+    value
   ) => {
+
+    if (
+      value !== "" &&
+      !/^\d+$/.test(value)
+    ) {
+      return;
+    }
+
+
     setHousingValues(
-      (currentValues) => {
+      (currentValues)=>({
+
+        ...currentValues,
+
+        [roomField]:value
+
+      })
+    );
+
+
+    const numericValue =
+      Number(value);
+
+
+    if(
+      value !== "" &&
+      Number.isFinite(numericValue) &&
+      numericValue > 0
+    ){
+
+      setKnownUsage(
+        (currentUsage)=>({
+
+          ...currentUsage,
+
+          [row.field]:true
+
+        })
+      );
+
+    }
+
+  };
+
+
+  const clearFloorBreakdown = (row) => {
+
+    setHousingValues(
+      (currentValues)=>{
+
         const nextValues = {
           ...currentValues,
         };
 
-        row.floors.forEach((floor) => {
-          nextValues[floor.field] = "";
+
+        row.floors.forEach((floor)=>{
+
+
+          if(floor.rooms){
+
+            floor.rooms.forEach((room)=>{
+
+              nextValues[room.field] = "";
+
+            });
+
+          }
+          else {
+
+            nextValues[floor.field] = "";
+
+          }
+
+
         });
+
 
         nextValues[row.field] = "";
 
+
         return nextValues;
+
       }
     );
-  };
 
+  };
 
   const toggleHousingUsage = (
     row,
@@ -792,9 +1144,28 @@ export default function BookingHousingTab({
           };
 
           if (Array.isArray(row.floors)) {
-            row.floors.forEach((floor) => {
-              nextValues[floor.field] = "";
+
+            row.floors.forEach((floor)=>{
+
+
+              if(floor.rooms){
+
+                floor.rooms.forEach((room)=>{
+
+                  nextValues[room.field] = "";
+
+                });
+
+              }
+              else {
+
+                nextValues[floor.field] = "";
+
+              }
+
+
             });
+
           }
 
           return nextValues;
@@ -881,6 +1252,38 @@ export default function BookingHousingTab({
       lodgingBethelLower:
         housingValues.lodgingBethelLower || "",
 
+          lodgingBethelUpperRoom1:
+            housingValues.lodgingBethelUpperRoom1 || "",
+
+          lodgingBethelUpperRoom2:
+            housingValues.lodgingBethelUpperRoom2 || "",
+
+
+          lodgingBethelMiddleRoom3:
+            housingValues.lodgingBethelMiddleRoom3 || "",
+
+          lodgingBethelMiddleRoom4:
+            housingValues.lodgingBethelMiddleRoom4 || "",
+
+          lodgingBethelMiddleRoom5:
+            housingValues.lodgingBethelMiddleRoom5 || "",
+
+          lodgingBethelMiddleRoom6:
+            housingValues.lodgingBethelMiddleRoom6 || "",
+
+
+          lodgingBethelLowerRoom7:
+            housingValues.lodgingBethelLowerRoom7 || "",
+
+          lodgingBethelLowerRoom8:
+            housingValues.lodgingBethelLowerRoom8 || "",
+
+          lodgingBethelLowerRoom9:
+            housingValues.lodgingBethelLowerRoom9 || "",
+
+          lodgingBethelLowerRoom10:
+            housingValues.lodgingBethelLowerRoom10 || "",
+
       lodgingHebronThird:
         housingValues.lodgingHebronThird || "",
 
@@ -901,6 +1304,25 @@ export default function BookingHousingTab({
 
       lodgingDothanMiddle:
         housingValues.lodgingDothanMiddle || "",
+
+          lodgingDothanUpperRoom1:
+            housingValues.lodgingDothanUpperRoom1 || "",
+
+          lodgingDothanUpperRoom2:
+            housingValues.lodgingDothanUpperRoom2 || "",
+
+
+          lodgingDothanMiddleRoom3:
+            housingValues.lodgingDothanMiddleRoom3 || "",
+
+          lodgingDothanMiddleRoom4:
+            housingValues.lodgingDothanMiddleRoom4 || "",
+
+          lodgingDothanMiddleRoom5:
+            housingValues.lodgingDothanMiddleRoom5 || "",
+
+          lodgingDothanMiddleRoom6:
+            housingValues.lodgingDothanMiddleRoom6 || "",
 
       lodgingAjalon:
         housingValues.lodgingAjalon || "",
@@ -1248,7 +1670,7 @@ export default function BookingHousingTab({
                                 </strong>
 
                                 <small>
-                                  Click for floor breakdown
+                                  Click for room breakdown
                                 </small>
                               </span>
 
@@ -1413,55 +1835,124 @@ export default function BookingHousingTab({
                             >
 
                               {row.floors.map(
-                                (floor) => {
+                                (floor)=>{
 
-                                  const floorValue =
-                                    housingValues[
-                                      floor.field
-                                    ] || "";
-
-                                  return (
-                                    <label
-                                      className="booking-housing-floor-field"
-                                      key={floor.id}
-                                    >
-                                      <span>
-                                        {floor.label}
-                                      </span>
-
-                                      {isEditing ? (
-                                        <div className="booking-housing-floor-input-wrap">
-                                          <input
-                                            type="number"
-                                            min="0"
-                                            value={floorValue}
-                                            placeholder="0"
-                                            onChange={(event) =>
-                                              updateFloorValue(
-                                                row,
-                                                floor.field,
-                                                event.target.value
-                                              )
-                                            }
-                                          />
-
-                                          <small>
-                                            guests
-                                          </small>
-                                        </div>
-                                      ) : (
-                                        <strong>
-                                          {floorValue || "0"}
-                                        </strong>
-                                      )}
-                                    </label>
+                                const floorTotal =
+                                  getRoomTotal(
+                                    floor,
+                                    housingValues
                                   );
+
+
+                                return (
+
+                                <div
+                                className="booking-housing-floor-field"
+                                key={floor.id}
+                                >
+
+                                <div className="booking-housing-floor-header">
+
+                                <strong>
+                                {floor.label}
+                                </strong>
+
+                                <span>
+                                {floorTotal} guests
+                                </span>
+
+                                </div>
+
+
+                                <div className="booking-housing-room-list">
+
+
+                                {floor.rooms?.map(
+                                (room)=>{
+
+                                const roomValue =
+                                housingValues[
+                                room.field
+                                ] || "";
+
+
+                                return (
+
+                                <div
+                                className="booking-housing-room-row"
+                                key={room.id}
+                                >
+
+                                <span>
+                                {room.label}
+                                </span>
+
+
+                                {isEditing ? (
+
+                                <input
+                                type="number"
+                                min="0"
+                                value={roomValue}
+                                placeholder="0"
+
+                                onChange={(event)=>
+                                updateRoomValue(
+                                row,
+                                floor,
+                                room.field,
+                                event.target.value
+                                )
                                 }
-                              )}
+                                />
+
+                                ) : (
+
+                                <strong>
+                                {roomValue || "0"}
+                                </strong>
+
+                                )}
+
+                                </div>
+
+                                )
+
+                                }
+
+                                )}
+
+
+                                </div>
+
+
+                                </div>
+
+                                )
+
+                                }
+
+                                )}
 
                               <div className="booking-housing-floor-total-card">
-                                <span>Floor Total</span>
-                                <strong>{floorTotal}</strong>
+                                <span>
+                                  Total
+                                </span>
+                                <strong>
+                                  {row.floors.reduce(
+                                    (total, floor) =>
+                                      total +
+                                      (floor.rooms
+                                        ? getRoomTotal(
+                                            floor,
+                                            housingValues
+                                          )
+                                        : Number(
+                                            housingValues[floor.field] || 0
+                                          )),
+                                    0
+                                  )}
+                                </strong>
                               </div>
 
                             </div>
