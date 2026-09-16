@@ -209,6 +209,8 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
 
   const [copiedContactCell, setCopiedContactCell] = useState("");
 
+  const [contactSearch, setContactSearch] = useState("");
+
   useEffect(() => {
     saveContactIdList(CONTACTS_VIEW_STARRED_STORAGE_KEY, starredContactIds);
   }, [starredContactIds]);
@@ -226,11 +228,25 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
   );
 
   const sortedContacts = useMemo(() => {
+    const searchValue = contactSearch.trim().toLowerCase();
+
     return contacts
       .map((contact) => ({
         ...contact,
         isStarred: starredContactIdSet.has(contact.id),
       }))
+      .filter((contact) => {
+        if (!searchValue) {
+          return true;
+        }
+
+        return (
+          contact.contactName.toLowerCase().includes(searchValue) ||
+          contact.organizationName.toLowerCase().includes(searchValue) ||
+          contact.email.toLowerCase().includes(searchValue) ||
+          contact.phone.toLowerCase().includes(searchValue)
+        );
+      })
       .sort((a, b) => {
         if (showStarredFirst && a.isStarred !== b.isStarred) {
           return a.isStarred ? -1 : 1;
@@ -238,7 +254,12 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
 
         return a.contactName.localeCompare(b.contactName);
       });
-  }, [contacts, starredContactIdSet, showStarredFirst]);
+  }, [
+    contacts,
+    starredContactIdSet,
+    showStarredFirst,
+    contactSearch,
+  ]);
 
   const toggleContactStar = (contactId) => {
     setStarredContactIds((currentIds) => {
@@ -340,20 +361,35 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
         </div>
 
         <div className="contacts-view-toolbar">
+
+          <div className="contacts-view-search">
+            <input
+              type="text"
+              placeholder="Search contacts, organizations, email, or phone..."
+              value={contactSearch}
+              onChange={(event) => setContactSearch(event.target.value)}
+            />
+          </div>
+
+
           <label className="contacts-view-pin-toggle">
             <input
               type="checkbox"
               checked={showStarredFirst}
-              onChange={(event) => setShowStarredFirst(event.target.checked)}
+              onChange={(event) =>
+                setShowStarredFirst(event.target.checked)
+              }
             />
 
             <span>Show starred contacts first</span>
           </label>
 
+
           <p>
             Star important contacts to highlight them. Turn this option on to
             move starred contacts to the top.
           </p>
+
         </div>
 
         {sortedContacts.length > 0 ? (
@@ -464,10 +500,15 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
           </div>
         ) : (
           <div className="empty-state">
-            <strong>No contacts yet</strong>
+            <strong>
+              {contactSearch
+                ? "No matching contacts"
+                : "No contacts yet"}
+            </strong>
             <p>
-              Submit the public form or import a spreadsheet to build the
-              contacts list.
+              {contactSearch
+                ? "Try adjusting your search terms."
+                : "Submit the public form or import a spreadsheet to build the contacts list."}
             </p>
           </div>
         )}

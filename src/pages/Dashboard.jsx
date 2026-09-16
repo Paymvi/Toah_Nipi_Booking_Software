@@ -3351,7 +3351,7 @@ function BookingIncidentNotesCard({ booking, onSaveBooking }) {
                 event.target.value
               )
             }
-            placeholder="Example: 9/8/2026 — Guest reported an injury near the dining hall. First aid was provided. Staff followed up with the group leader."
+            placeholder="Example: 9/8/2026 - Guest reported an injury near the dining hall. First aid was provided. Staff followed up with the group leader."
           />
         </label>
       ) : hasIncidentNotes ? (
