@@ -58,6 +58,44 @@ const retreatTypes = [
   "Other",
 ];
 
+const ethnicBreakdownOptions = [
+  {
+    value: "",
+    label: "Select an option",
+    description: "",
+  },
+  {
+    value: "White",
+    label: "White",
+    description:
+      "Including European, North African, and Middle Eastern origins",
+  },
+  {
+    value: "Black or African American",
+    label: "Black or African American",
+    description:
+      "Origins in Black racial groups of Africa",
+  },
+  {
+    value: "American Indian or Alaska Native",
+    label: "American Indian or Alaska Native",
+    description:
+      "Origins in Indigenous peoples of the Americas",
+  },
+  {
+    value: "Asian",
+    label: "Asian",
+    description:
+      "Origins in East, Southeast Asia, or the Indian subcontinent",
+  },
+  {
+    value: "Native Hawaiian or Other Pacific Islander",
+    label: "Native Hawaiian or Other Pacific Islander",
+    description:
+      "Origins in the original peoples of Hawaii, Guam, Samoa, or other Pacific Islands",
+  },
+];
+
 const MEAL_TYPES = [
   {
     key: "breakfast",
@@ -177,7 +215,7 @@ const TEST_BOOKING_DATA = {
   actualAdultGuests: "10",
   actualChildrenGuests: "37",
 
-  ethnicBreakdown: "Optional test information",
+  ethnicBreakdown: "White",
 
   adultRateQuoted: "115",
   childRateQuoted: "85",
@@ -2310,12 +2348,31 @@ export default function CreateBooking({
                       <small>Optional</small>
                     </span>
 
-                    <input
-                      type="text"
+                    <select
                       name="ethnicBreakdown"
                       value={formData.ethnicBreakdown}
                       onChange={handleChange}
-                    />
+                    >
+                      {ethnicBreakdownOptions.map((option) => (
+                        <option
+                          value={option.value}
+                          key={option.value}
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    {formData.ethnicBreakdown && (
+                      <small className="ethnic-breakdown-help">
+                        {
+                          ethnicBreakdownOptions.find(
+                            (option) =>
+                              option.value === formData.ethnicBreakdown
+                          )?.description
+                        }
+                      </small>
+                    )}
                   </label>
 
                 </div>
