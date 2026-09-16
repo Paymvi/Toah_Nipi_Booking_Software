@@ -330,6 +330,69 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
     );
   }
 
+  function formatBookingDate(dateValue) {
+    if (!dateValue) {
+      return "";
+    }
+
+    const parsedDate = new Date(`${dateValue}T00:00:00`);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return dateValue;
+    }
+
+    return parsedDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
+  function getBookingDateRange(booking) {
+    const start = formatBookingDate(booking.startDate);
+    const end = formatBookingDate(booking.endDate);
+
+    if (start && end) {
+      return `${start} – ${end}`;
+    }
+
+    if (start) {
+      return start;
+    }
+
+    if (end) {
+      return end;
+    }
+
+    return "No dates";
+  }
+
+  function getBookingGuestCount(booking) {
+    return booking.attendeeCount || booking.groupSize || "N/A";
+  }
+
+  function getBookingStatusClassName(statusValue) {
+    const normalizedStatus = String(statusValue || "").trim().toLowerCase();
+
+    if (normalizedStatus === "confirmed") {
+      return "is-confirmed";
+    }
+
+    if (normalizedStatus === "contract sent") {
+      return "is-contract-sent";
+    }
+
+    if (normalizedStatus === "inquiry") {
+      return "is-inquiry";
+    }
+
+    if (normalizedStatus === "cancelled") {
+      return "is-cancelled";
+    }
+
+    return "is-default";
+  }
+
   
   return (
     <section className="contacts-view-page">
@@ -525,68 +588,77 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
 
 
                             <div className="contacts-bookings-list">
+                              {[...contact.bookings]
+                                .sort((a, b) => {
+                                  const aTime = a.startDate
+                                    ? new Date(`${a.startDate}T00:00:00`).getTime()
+                                    : 0;
 
-                              {contact.bookings.map((booking, index) => (
-                                <div
-                                  className="contacts-booking-item"
-                                  key={
-                                    booking.id ||
-                                    `${contact.id}-booking-${index}`
-                                  }
-                                >
+                                  const bTime = b.startDate
+                                    ? new Date(`${b.startDate}T00:00:00`).getTime()
+                                    : 0;
 
-                                  <div>
-                                    <strong>
-                                      {booking.retreatType ||
-                                        "Unnamed Retreat"}
-                                    </strong>
-
-                                    <span>
-                                      {booking.startDate || "No date"}
-                                      {" - "}
-                                      {booking.endDate || ""}
-                                    </span>
-                                  </div>
-
-
-                                  <div>
-                                    <span>
-                                      Guests
-                                    </span>
-
-                                    <strong>
-                                      {booking.attendeeCount ||
-                                        booking.groupSize ||
-                                        "N/A"}
-                                    </strong>
-                                  </div>
-
-
-                                  <div>
-                                    <span>
-                                      Status
-                                    </span>
-
-                                    <strong>
-                                      {booking.status || "Unknown"}
-                                    </strong>
-                                  </div>
-
-
-                                  <button
-                                    className="table-link"
-                                    type="button"
-                                    onClick={() =>
-                                      openBookingDetail(booking)
-                                    }
+                                  return bTime - aTime;
+                                })
+                                .map((booking, index) => (
+                                  <div
+                                    className="contacts-booking-item"
+                                    key={booking.id || `${contact.id}-booking-${index}`}
                                   >
-                                    Open
-                                  </button>
+                                    <div className="contacts-booking-main">
+                                      <div className="contacts-booking-title-row">
+                                        <div className="contacts-booking-title-group">
+
+                                          <strong className="contacts-booking-title">
+                                            {booking.eventName ||
+                                              booking.organizationName ||
+                                              booking.retreatName ||
+                                              "Unnamed Booking"}
+                                          </strong>
 
 
-                                </div>
-                              ))}
+                                          {booking.retreatType && (
+                                            <span className="contacts-booking-type">
+                                              {booking.retreatType}
+                                            </span>
+                                          )}
 
+                                        </div>
+
+                                        <span
+                                          className={`contacts-booking-status-pill ${getBookingStatusClassName(
+                                            booking.status
+                                          )}`}
+                                        >
+                                          {booking.status || "Unknown"}
+                                        </span>
+                                      </div>
+
+                                      <div className="contacts-booking-info">
+
+                                        <span className="contacts-booking-date">
+                                          {getBookingDateRange(booking)}
+                                        </span>
+
+                                        <span className="contacts-booking-guests">
+                                          {getBookingGuestCount(booking)} Guests
+                                        </span>
+
+                                      </div>
+                                      
+                                    </div>
+
+                                    <div className="contacts-booking-actions">
+                                      <button
+                                        className="contacts-booking-open-button"
+                                        type="button"
+                                        onClick={() => openBookingDetail(booking)}
+                                      >
+                                        Open Booking
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
                             </div>
 
                           </div>
