@@ -1113,3 +1113,119 @@
   }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Expanded Contact Bookings
+========================================================= */
+
+
+.contacts-bookings-expanded-row td {
+  padding: 0 !important;
+  background: #f8fafc !important;
+}
+
+
+.contacts-bookings-expanded {
+  padding: 14px 18px 18px;
+
+  border-top: 1px solid #dfe4ec;
+}
+
+
+.contacts-bookings-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  margin-bottom:12px;
+
+  color:#303442;
+}
+
+
+.contacts-bookings-header span {
+  color:#858c9b;
+  font-size:.75rem;
+}
+
+
+.contacts-bookings-list {
+  display:grid;
+  gap:8px;
+}
+
+
+.contacts-booking-item {
+  display:grid;
+
+  grid-template-columns:
+    2fr
+    .6fr
+    .8fr
+    auto;
+
+  align-items:center;
+  gap:16px;
+
+  padding:12px;
+
+  background:white;
+
+  border:1px solid #e2e7ee;
+  border-radius:8px;
+}
+
+
+.contacts-booking-item span {
+  display:block;
+
+  color:#858c9b;
+
+  font-size:.72rem;
+}
+
+
+.contacts-booking-item strong {
+  color:#303442;
+
+  font-size:.82rem;
+}
+
+
+.contacts-booking-item button {
+  justify-self:end;
+}
+
+
+@media(max-width:900px){
+
+  .contacts-booking-item {
+
+    grid-template-columns:1fr;
+
+  }
+
+}

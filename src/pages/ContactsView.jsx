@@ -211,6 +211,8 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
 
   const [contactSearch, setContactSearch] = useState("");
 
+  const [expandedContactId, setExpandedContactId] = useState(null);
+
   useEffect(() => {
     saveContactIdList(CONTACTS_VIEW_STARRED_STORAGE_KEY, starredContactIds);
   }, [starredContactIds]);
@@ -260,6 +262,12 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
     showStarredFirst,
     contactSearch,
   ]);
+
+  const toggleContactBookings = (contactId) => {
+    setExpandedContactId((currentId) =>
+      currentId === contactId ? null : contactId
+    );
+  };
 
   const toggleContactStar = (contactId) => {
     setStarredContactIds((currentIds) => {
@@ -420,6 +428,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                     .join(" ");
 
                   return (
+                  <>
                     <tr className={rowClassName} key={contact.id}>
                       <td className="contacts-view-favorite-cell">
                         <button
@@ -486,13 +495,109 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                           <button
                             className="table-link"
                             type="button"
-                            onClick={() => openBookingDetail(latestBooking)}
+                            onClick={() => toggleContactBookings(contact.id)}
                           >
-                            View Booking
+                            {expandedContactId === contact.id
+                              ? "Hide Bookings"
+                              : "View Bookings"}
                           </button>
                         </div>
                       </td>
                     </tr>
+
+
+                    {expandedContactId === contact.id && (
+                      <tr className="contacts-bookings-expanded-row">
+                        <td colSpan="7">
+
+                          <div className="contacts-bookings-expanded">
+
+                            <div className="contacts-bookings-header">
+                              <strong>
+                                Booking History
+                              </strong>
+
+                              <span>
+                                {contact.bookings.length} booking
+                                {contact.bookings.length === 1 ? "" : "s"}
+                              </span>
+                            </div>
+
+
+                            <div className="contacts-bookings-list">
+
+                              {contact.bookings.map((booking, index) => (
+                                <div
+                                  className="contacts-booking-item"
+                                  key={
+                                    booking.id ||
+                                    `${contact.id}-booking-${index}`
+                                  }
+                                >
+
+                                  <div>
+                                    <strong>
+                                      {booking.retreatType ||
+                                        "Unnamed Retreat"}
+                                    </strong>
+
+                                    <span>
+                                      {booking.startDate || "No date"}
+                                      {" - "}
+                                      {booking.endDate || ""}
+                                    </span>
+                                  </div>
+
+
+                                  <div>
+                                    <span>
+                                      Guests
+                                    </span>
+
+                                    <strong>
+                                      {booking.attendeeCount ||
+                                        booking.groupSize ||
+                                        "N/A"}
+                                    </strong>
+                                  </div>
+
+
+                                  <div>
+                                    <span>
+                                      Status
+                                    </span>
+
+                                    <strong>
+                                      {booking.status || "Unknown"}
+                                    </strong>
+                                  </div>
+
+
+                                  <button
+                                    className="table-link"
+                                    type="button"
+                                    onClick={() =>
+                                      openBookingDetail(booking)
+                                    }
+                                  >
+                                    Open
+                                  </button>
+
+
+                                </div>
+                              ))}
+
+                            </div>
+
+                          </div>
+
+                        </td>
+                      </tr>
+                    )}
+
+                    </>
+
+                    
                   );
                 })}
               </tbody>

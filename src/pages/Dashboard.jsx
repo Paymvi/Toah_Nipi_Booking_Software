@@ -3371,12 +3371,6 @@ function BookingIncidentNotesCard({ booking, onSaveBooking }) {
             <strong>
               No incidents recorded
             </strong>
-
-            <p>
-              Add a note if an incident,
-              concern, or important follow-up
-              occurs during this booking.
-            </p>
           </div>
         </div>
       )}
