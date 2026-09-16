@@ -71,6 +71,19 @@ const housingRows = [
       "hebron bunks",
       "hebron bunk",
     ],
+
+    floors: [
+      {
+        id: "mens",
+        field: "lodgingHebronBunksMens",
+        label: "Men's Bunks",
+      },
+      {
+        id: "womens",
+        field: "lodgingHebronBunksWomens",
+        label: "Women's Bunks",
+      },
+    ],
   },
 
   {
@@ -91,11 +104,6 @@ const housingRows = [
         id: "middle",
         field: "lodgingDothanMiddle",
         label: "Middle Floor",
-      },
-      {
-        id: "lower",
-        field: "lodgingDothanLower",
-        label: "Lower Floor",
       },
     ],
   },
@@ -120,7 +128,7 @@ const housingRows = [
     roomName: "Capernaum",
     housingArea: "Rustic Cottages",
     roomCategory: "Rustic Cottage",
-    image: "/lodges/Capurnum.png",
+    image: "/lodges/Capurnum.webp",
     aliases: [
       "capernaum",
       "rustic: capernaum",
@@ -879,6 +887,12 @@ export default function BookingHousingTab({
       lodgingHebronBunks:
         housingValues.lodgingHebronBunks || "",
 
+      lodgingHebronBunksMens:
+        housingValues.lodgingHebronBunksMens || "",
+
+      lodgingHebronBunksWomens:
+        housingValues.lodgingHebronBunksWomens || "",
+
       lodgingDothan:
         housingValues.lodgingDothan || "",
 
@@ -887,9 +901,6 @@ export default function BookingHousingTab({
 
       lodgingDothanMiddle:
         housingValues.lodgingDothanMiddle || "",
-
-      lodgingDothanLower:
-        housingValues.lodgingDothanLower || "",
 
       lodgingAjalon:
         housingValues.lodgingAjalon || "",
@@ -1393,32 +1404,13 @@ export default function BookingHousingTab({
                         >
                           <div className="booking-housing-floor-panel">
 
-                            <div className="booking-housing-floor-panel-header">
 
-                              <div>
-                                <strong>
-                                  {row.roomName} Floor Breakdown
-                                </strong>
-
-                                <span>
-                                  Assign guests to the upper, middle, and lower floors.
-                                </span>
-                              </div>
-
-                              <div className="booking-housing-floor-total">
-                                <span>
-                                  Floor Total
-                                </span>
-
-                                <strong>
-                                  {floorTotal}
-                                </strong>
-                              </div>
-
-                            </div>
-
-
-                            <div className="booking-housing-floor-grid">
+                            <div
+                              className="booking-housing-floor-grid"
+                              style={{
+                                "--floor-count": row.floors.length,
+                              }}
+                            >
 
                               {row.floors.map(
                                 (floor) => {
@@ -1466,6 +1458,11 @@ export default function BookingHousingTab({
                                   );
                                 }
                               )}
+
+                              <div className="booking-housing-floor-total-card">
+                                <span>Floor Total</span>
+                                <strong>{floorTotal}</strong>
+                              </div>
 
                             </div>
 
