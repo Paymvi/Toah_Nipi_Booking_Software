@@ -1822,3 +1822,102 @@
   }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+/* Building-based year heatmap colors */
+
+.calendar-year-heatmap-day-bethel {
+  background: rgb(47 111 95 / var(--heat-opacity));
+  border-color: rgb(47 111 95 / 0.35);
+  color: #173b32;
+}
+
+
+.calendar-year-heatmap-day-hebron {
+  background: rgb(79 70 165 / var(--heat-opacity));
+  border-color: rgb(79 70 165 / 0.35);
+  color: #30275f;
+}
+
+
+.calendar-year-heatmap-day-dothan {
+  background: rgb(76 101 169 / var(--heat-opacity));
+  border-color: rgb(76 101 169 / 0.35);
+  color: #263765;
+}
+
+
+.calendar-year-heatmap-day-ajalon {
+  background: rgb(55 125 122 / var(--heat-opacity));
+  border-color: rgb(55 125 122 / 0.35);
+  color: #214d4b;
+}
+
+
+.calendar-year-heatmap-day-capernaum {
+  background: rgb(200 123 142 / var(--heat-opacity));
+  border-color: rgb(200 123 142 / 0.35);
+  color: #7a4050;
+}
+
+
+.calendar-year-heatmap-day-guest-house {
+  background: rgb(213 170 63 / var(--heat-opacity));
+  border-color: rgb(213 170 63 / 0.35);
+  color: #5f470d;
+}
+
+
+.calendar-year-heatmap-day-unassigned {
+  background: rgb(150 150 150 / var(--heat-opacity));
+  border-color: rgb(150 150 150 / 0.3);
+  color: #555;
+}
+
+
+
+
+
+
+
+
+.calendar-year-heatmap-day.lodging-hebron {
+  background: rgb(79 70 165 / var(--heat-opacity));
+}
+
+
+.calendar-year-heatmap-day.lodging-bethel {
+  background: rgb(47 111 95 / var(--heat-opacity));
+}
+
+
+.calendar-year-heatmap-day.lodging-dothan {
+  background: rgb(200 123 63 / var(--heat-opacity));
+}
+
+
+.calendar-year-heatmap-day.lodging-ajalon {
+  background: rgb(110 120 170 / var(--heat-opacity));
+}
+
+
+.calendar-year-heatmap-day.lodging-capernaum {
+  background: rgb(90 150 150 / var(--heat-opacity));
+}
+
+
+.calendar-year-heatmap-day.lodging-guest-house {
+  background: rgb(181 138 146 / var(--heat-opacity));
+  border-color: rgb(181 138 146 / 0.45);
+  color: #6b3f48;
+}

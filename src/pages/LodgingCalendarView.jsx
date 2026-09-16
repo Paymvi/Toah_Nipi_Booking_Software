@@ -106,23 +106,22 @@ function inquiryTouchesYear(inquiry, year) {
 }
 
 
-function getHeatmapBucketForInquiry(inquiry) {
-  const status = String(inquiry.status || "")
-    .toLowerCase();
-
-  if (status.includes("confirmed")) {
-    return "confirmed";
+function getHeatmapBuildingBucket(inquiry, selectedBuilding) {
+  if (
+    selectedBuilding !== "all" &&
+    selectedBuilding !== "unassigned"
+  ) {
+    return selectedBuilding;
   }
 
-  if (status.includes("contract")) {
-    return "contract";
+  const assignedBuildings =
+    getAssignedBuildingIds(inquiry);
+
+  if (!assignedBuildings.length) {
+    return "unassigned";
   }
 
-  if (status.includes("inquiry")) {
-    return "inquiry";
-  }
-
-  return "other";
+  return assignedBuildings[0];
 }
 
 
@@ -595,22 +594,17 @@ export default function LodgingCalendarView({
   
           const bucketCounts = inquiries.reduce(
             (counts, inquiry) => {
-              const bucket = getHeatmapBucketForInquiry(
+              const bucket = getHeatmapBuildingBucket(
                 inquiry,
-                getCalendarEventColor
+                selectedBuilding
               );
-  
+
               return {
                 ...counts,
-                [bucket]: counts[bucket] + 1,
+                [bucket]: (counts[bucket] || 0) + 1,
               };
             },
-            {
-              confirmed: 0,
-              contract: 0,
-              inquiry: 0,
-              other: 0,
-            }
+            {}
           );
   
           const activeBuckets = Object.keys(bucketCounts).filter(
@@ -1093,7 +1087,7 @@ export default function LodgingCalendarView({
                 <div className="calendar-year-heatmap-legend">
                   <span>
                     <i className="calendar-year-heatmap-dot calendar-year-heatmap-dot-confirmed"></i>
-                    Bookings
+                    Building colors
                   </span>
 
                   <em>Darker days have more dated bookings.</em>
@@ -1132,11 +1126,11 @@ export default function LodgingCalendarView({
                               ? "calendar-year-heatmap-day-active"
                               : "",
                             day.primaryBucket
-                              ? `calendar-year-heatmap-day-${day.primaryBucket}`
+                              ? getBuildingConfig(day.primaryBucket)?.colorClass
                               : "",
                           ]
-                            .filter(Boolean)
-                            .join(" ");
+                          .filter(Boolean)
+                          .join(" ");
 
                           return (
                             <button
@@ -1156,15 +1150,16 @@ export default function LodgingCalendarView({
                                 <strong>{day.totalCount}</strong>
                               )}
 
-                              {day.activeBuckets.length > 1 && (
-                                <div className="calendar-year-heatmap-day-dots">
-                                  {day.activeBuckets.map((bucket) => (
-                                    <i
-                                      className={`calendar-year-heatmap-dot calendar-year-heatmap-dot-${bucket}`}
-                                      key={bucket}
-                                    ></i>
-                                  ))}
-                                </div>
+                              {selectedBuilding === "all" &&
+                                day.activeBuckets.length > 1 && (
+                                  <div className="calendar-year-heatmap-day-dots">
+                                    {day.activeBuckets.map((bucket) => (
+                                      <i
+                                        className={`calendar-year-heatmap-dot calendar-year-heatmap-dot-${bucket}`}
+                                        key={bucket}
+                                      ></i>
+                                    ))}
+                                  </div>
                               )}
                             </button>
                           );
