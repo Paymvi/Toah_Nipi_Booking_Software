@@ -332,21 +332,29 @@ function BookingMealsProgramOverview({ booking, details }) {
     ) || "—";
 
   const breakfastTime =
-    getOverviewDisplayValue(
-      details?.breakfastTime,
-      parsedMealSummary.breakfastTime
+    formatBookingOverviewTime(
+      getOverviewDisplayValue(
+        details?.breakfastTime,
+        parsedMealSummary.breakfastTime
+      )
     ) || "—";
+
 
   const lunchTime =
-    getOverviewDisplayValue(
-      details?.lunchTime,
-      parsedMealSummary.lunchTime
+    formatBookingOverviewTime(
+      getOverviewDisplayValue(
+        details?.lunchTime,
+        parsedMealSummary.lunchTime
+      )
     ) || "—";
 
+
   const dinnerTime =
-    getOverviewDisplayValue(
-      details?.dinnerTime,
-      parsedMealSummary.dinnerTime
+    formatBookingOverviewTime(
+      getOverviewDisplayValue(
+        details?.dinnerTime,
+        parsedMealSummary.dinnerTime
+      )
     ) || "—";
 
   const breakfastCount =
@@ -4598,12 +4606,12 @@ function StaffBookingFormDetails({
 
           <StaffBookingDetailField
             label="Arrival Time"
-            value={details.arrivalTime}
+            value={formatBookingOverviewTime(details.arrivalTime)}
           />
 
           <StaffBookingDetailField
             label="Departure Time"
-            value={details.departureTime}
+            value={formatBookingOverviewTime(details.departureTime)}
           />
 
           <StaffBookingDetailField
@@ -4795,6 +4803,46 @@ function formatBookingOverviewValue(value) {
   }
 
   return String(value);
+}
+
+function formatBookingOverviewTime(value) {
+  if (!value) return "—";
+
+  const time = String(value).trim();
+
+  // Already formatted
+  if (
+    time.toLowerCase().includes("am") ||
+    time.toLowerCase().includes("pm")
+  ) {
+    return time;
+  }
+
+  const parts = time.split(":");
+
+  if (parts.length < 2) {
+    return time;
+  }
+
+  const hours = Number(parts[0]);
+  const minutes = Number(parts[1]);
+
+  if (
+    Number.isNaN(hours) ||
+    Number.isNaN(minutes)
+  ) {
+    return time;
+  }
+
+  const date = new Date();
+
+  date.setHours(hours);
+  date.setMinutes(minutes);
+
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 
@@ -6230,7 +6278,7 @@ const overviewLinenSets =
                 <span>
                   <small>Arrival</small>
                   <strong>
-                    {details.arrivalTime}
+                    {formatBookingOverviewTime(details.arrivalTime)}
                   </strong>
                 </span>
               )}
@@ -6239,7 +6287,7 @@ const overviewLinenSets =
                 <span>
                   <small>Departure</small>
                   <strong>
-                    {details.departureTime}
+                    {formatBookingOverviewTime(details.departureTime)}
                   </strong>
                 </span>
               )}
