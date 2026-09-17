@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   FaHome,
@@ -8184,6 +8185,8 @@ function PortalAdminView({ inquiryBookings, openBookingDetail }) {
 
 
 export default function Dashboard() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const today = new Date();
 
   const masterFileInputRef = useRef(null);
@@ -8198,6 +8201,55 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [activeView, setActiveView] = useState("Dashboard");
+
+  useEffect(() => {
+
+    const pathMap = {
+      "/dashboard": "Dashboard",
+      "/form": "Form",
+      "/portal-admin": "Portal View",
+      "/calendar": "Calendar View",
+      "/lodging-calendar": "Lodging Calendar",
+      "/contacts": "Contacts View",
+      "/inquiry-pipeline": "Inquiry Pipeline",
+      "/reports": "Reports",
+      "/jobs": "Jobs",
+      "/user-admin": "User Admin"
+    };
+
+
+    setActiveView(
+      pathMap[location.pathname] || "Dashboard"
+    );
+
+  }, [location.pathname]);
+
+  const routes = {
+    Dashboard: "/dashboard",
+    Form: "/form",
+    "Portal View": "/portal-admin",
+
+    "Calendar View": "/calendar",
+    "Lodging Calendar": "/lodging-calendar",
+    "Inquiry Pipeline": "/inquiry-pipeline",
+    [SPREADSHEET_VIEW_NAME]: "/master-spreadsheet",
+    [INQUIRY_SPREADSHEET_VIEW_NAME]: "/inquiry-spreadsheet",
+    "Contacts View": "/contacts",
+    
+    Reports: "/reports",
+
+    
+    "User Admin": "/user-admin",
+    Jobs: "/jobs",
+  };
+
+  useEffect(() => {
+    const pathMap = Object.fromEntries(
+      Object.entries(routes).map(([key, value]) => [value, key])
+    );
+
+    setActiveView(pathMap[location.pathname] || "Dashboard");
+  }, [location.pathname]);
   const [hasOpenedSpreadsheetView, setHasOpenedSpreadsheetView] = useState(false);
   const [isSpreadsheetRevealLoading, setIsSpreadsheetRevealLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -8348,7 +8400,7 @@ export default function Dashboard() {
 
       setPublicInquiries([]);
       setSelectedBooking(null);
-      setActiveView("Dashboard");
+      navigate("/dashboard")
     } catch (error) {
       console.error("Could not delete bookings from Supabase:", error);
       alert("Could not delete bookings from Supabase. Check the console.");
@@ -8383,7 +8435,7 @@ export default function Dashboard() {
       setSelectedBooking(null);
       setBookingDetailTab("Overview");
 
-      setActiveView(SPREADSHEET_VIEW_NAME);
+      navigate("/master-spreadsheet")
     } catch (error) {
       console.error("Could not delete booking:", error);
 
@@ -9358,6 +9410,7 @@ export default function Dashboard() {
     }
 
     setActiveView(nextView);
+    navigate(routes[nextView] || "/dashboard");
   };
 
   const openBookingDetail = (booking) => {
@@ -9378,7 +9431,7 @@ export default function Dashboard() {
     setSelectedBooking(null);
     setBookingDetailTab("Overview");
 
-    setActiveView("Form");
+    navigate("/form")
 
     window.scrollTo({
       top: 0,
@@ -9433,7 +9486,7 @@ export default function Dashboard() {
             onClick={() => {
               setSelectedBooking(null);
               setBookingDetailTab("Overview");
-              handleActiveViewChange("Dashboard");
+              navigate("/dashboard")
             }}
           >
             <FaHome />
@@ -9450,7 +9503,7 @@ export default function Dashboard() {
               setSelectedBooking(null);
               setBookingFormSeed(null);
               setBookingDetailTab("Overview");
-              handleActiveViewChange("Form");
+              navigate("/form")
             }}
           >
             <FaClipboardList />
@@ -9466,7 +9519,7 @@ export default function Dashboard() {
             onClick={() => {
               setSelectedBooking(null);
               setBookingDetailTab("Overview");
-              handleActiveViewChange("Portal View");
+              navigate("/portal-admin")
             }}
           >
             <FaKey />
@@ -9619,7 +9672,7 @@ export default function Dashboard() {
             onSaveBooking={saveBookingEdits}
             onBack={() => {
               setSelectedBooking(null);
-              setActiveView(INQUIRY_SPREADSHEET_VIEW_NAME);
+              navigate("/inquiry-spreadsheet");
             }}
           />
         ) : activeView === "Booking Detail" ? (
@@ -9633,7 +9686,7 @@ export default function Dashboard() {
             currentStaffUserId={currentStaffUserId}
             onBack={() => {
               setSelectedBooking(null);
-              setActiveView(SPREADSHEET_VIEW_NAME);
+              navigate("/master-spreadsheet");
             }}
           />
         ) : activeView === "Calendar View" ? (
