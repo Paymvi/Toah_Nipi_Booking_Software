@@ -1509,3 +1509,71 @@
   font-weight:650;
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   Contacts Name Sort Toggle
+========================================================= */
+
+.contacts-view-name-sort {
+
+  display:flex;
+  align-items:center;
+  gap:6px;
+
+  color:#64748b;
+  font-size:.78rem;
+  font-weight:600;
+
+}
+
+
+.contacts-view-name-sort button {
+
+  height:30px;
+
+  padding:0 10px;
+
+  border-radius:7px;
+
+  border:1px solid #dfe4ec;
+
+  background:#ffffff;
+
+  color:#475569;
+
+  font-size:.76rem;
+
+  font-weight:600;
+
+  cursor:pointer;
+
+}
+
+
+.contacts-view-name-sort button:hover {
+
+  background:#f8fafc;
+
+}
+
+
+.contacts-view-name-sort button.active {
+
+  background:#443a9c;
+
+  border-color:#443a9c;
+
+  color:#ffffff;
+
+}

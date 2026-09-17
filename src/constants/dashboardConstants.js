@@ -650,3 +650,7 @@ export const SPREADSHEET_SHARED_RAW_COLUMNS = new Set([
 
 export const SPREADSHEET_VIEW_STARRED_STORAGE_KEY =
   "spreadsheetViewStarredBookingIds";
+
+
+export const CONTACTS_VIEW_NAME_SORT_STORAGE_KEY =
+  "contacts_view_name_sort";

@@ -4,6 +4,7 @@ import { FaRegStar, FaStar, FaUsers } from "react-icons/fa";
 import {
   CONTACTS_VIEW_STARRED_FIRST_STORAGE_KEY,
   CONTACTS_VIEW_STARRED_STORAGE_KEY,
+  CONTACTS_VIEW_NAME_SORT_STORAGE_KEY,
 } from "../constants/dashboardConstants";
 
 const CONTACTS_RENDER_LOADING_MS = 140;
@@ -105,6 +106,18 @@ function getContactsFromBookings(bookings) {
   );
 }
 
+function getLastName(fullName) {
+  const parts = String(fullName || "")
+    .trim()
+    .split(/\s+/);
+
+  if (parts.length <= 1) {
+    return parts[0] || "";
+  }
+
+  return parts[parts.length - 1];
+}
+
 async function copyTextToClipboard(text) {
   const textToCopy = String(text ?? "").trim();
 
@@ -193,6 +206,29 @@ function ContactsViewLoadingScreen({ bookingRowCount }) {
   );
 }
 
+function formatContactName(contactName, mode) {
+  const name = String(contactName || "").trim();
+
+  if (!name) {
+    return "No contact name";
+  }
+
+  if (mode !== "last") {
+    return name;
+  }
+
+  const parts = name.split(/\s+/);
+
+  if (parts.length < 2) {
+    return name;
+  }
+
+  const lastName = parts.pop();
+  const firstName = parts.join(" ");
+
+  return `${lastName}, ${firstName}`;
+}
+
 function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
   const contacts = useMemo(
     () => getContactsFromBookings(inquiryBookings),
@@ -205,6 +241,12 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
 
   const [showStarredFirst, setShowStarredFirst] = useState(() =>
     getSavedContactsBoolean(CONTACTS_VIEW_STARRED_FIRST_STORAGE_KEY, false)
+  );
+
+  const [nameSortMode, setNameSortMode] = useState(() =>
+    localStorage.getItem(
+      CONTACTS_VIEW_NAME_SORT_STORAGE_KEY
+    ) || "first"
   );
 
   const [copiedContactCell, setCopiedContactCell] = useState("");
@@ -223,6 +265,13 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
       showStarredFirst
     );
   }, [showStarredFirst]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      CONTACTS_VIEW_NAME_SORT_STORAGE_KEY,
+      nameSortMode
+    );
+  }, [nameSortMode]);
 
   const starredContactIdSet = useMemo(
     () => new Set(starredContactIds),
@@ -254,13 +303,30 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
           return a.isStarred ? -1 : 1;
         }
 
-        return a.contactName.localeCompare(b.contactName);
+        if (nameSortMode === "last") {
+          return getLastName(a.contactName)
+            .localeCompare(
+              getLastName(b.contactName)
+            );
+        }
+
+        return formatContactName(
+          a.contactName,
+          nameSortMode
+        ).localeCompare(
+          formatContactName(
+            b.contactName,
+            nameSortMode
+          )
+        );
+
       });
   }, [
     contacts,
     starredContactIdSet,
     showStarredFirst,
     contactSearch,
+    nameSortMode,
   ]);
 
   const toggleContactBookings = (contactId) => {
@@ -442,6 +508,43 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
             />
           </div>
 
+          <div className="contacts-view-name-sort">
+
+            <span>
+              Sort:
+            </span>
+
+            <button
+              type="button"
+              className={
+                nameSortMode === "first"
+                  ? "active"
+                  : ""
+              }
+              onClick={() =>
+                setNameSortMode("first")
+              }
+            >
+              First Name
+            </button>
+
+
+            <button
+              type="button"
+              className={
+                nameSortMode === "last"
+                  ? "active"
+                  : ""
+              }
+              onClick={() =>
+                setNameSortMode("last")
+              }
+            >
+              Last Name
+            </button>
+
+          </div>
+
 
           <label className="contacts-view-pin-toggle">
             <input
@@ -514,10 +617,18 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                       <CopyableContactCell
                         cellId={`${contact.id}-contact-name`}
                         copyLabel="contact name"
-                        value={contact.contactName}
+                        value={formatContactName(
+                          contact.contactName,
+                          nameSortMode
+                        )}
                       >
                         <div className="contacts-view-name-cell">
-                          <strong>{contact.contactName}</strong>
+                          <strong>
+                            {formatContactName(
+                              contact.contactName,
+                              nameSortMode
+                            )}
+                          </strong>
                         </div>
                       </CopyableContactCell>
 
