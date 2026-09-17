@@ -405,6 +405,50 @@ function getNumberOfNightsBetweenDates(
   );
 }
 
+function validateRequiredBookingFields(formData) {
+  const errors = [];
+
+  if (!formData.organizationName.trim()) {
+    errors.push("Guest Group Name is required.");
+  }
+
+  if (!formData.retreatType) {
+    errors.push("Retreat Type is required.");
+  }
+
+  if (!formData.contactName.trim()) {
+    errors.push("Primary Contact is required.");
+  }
+
+  if (!formData.startDate) {
+    errors.push("Arrival date is required.");
+  }
+
+  if (!formData.endDate) {
+    errors.push("Departure date is required.");
+  }
+
+  if (
+    formData.startDate &&
+    formData.endDate &&
+    formData.endDate < formData.startDate
+  ) {
+    errors.push(
+      "Departure date cannot be before arrival date."
+    );
+  }
+
+  if (
+    !formData.approxTotalGuests &&
+    !formData.approxAdultGuests &&
+    !formData.approxChildrenGuests
+  ) {
+    errors.push("Guest count is required.");
+  }
+
+  return errors;
+}
+
 function createInitialFormState(
   initialInquiry = null
 ) {
@@ -1415,6 +1459,9 @@ export default function CreateBooking({
   const [submitError, setSubmitError] =
     useState("");
 
+  const [validationErrors, setValidationErrors] =
+    useState([]);
+
   const stayDates =
     getStayDates(
       formData.startDate,
@@ -1560,6 +1607,15 @@ export default function CreateBooking({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    const errors = validateRequiredBookingFields(formData);
+
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+
+    setValidationErrors([]);
 
     try {
       setIsSubmitting(true);
@@ -1981,6 +2037,28 @@ export default function CreateBooking({
           </div>
         )}
 
+        {validationErrors.length > 0 && (
+          <div className="rental-error-message">
+
+            <FaExclamationTriangle />
+
+            <div>
+              <strong>
+                Please complete the required fields:
+              </strong>
+
+              <ul>
+                {validationErrors.map((error) => (
+                  <li key={error}>
+                    {error}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+          </div>
+        )}
+
 
         {submitError && (
           <div className="rental-error-message">
@@ -2037,12 +2115,13 @@ export default function CreateBooking({
 
 
                 <label className="rental-field">
-                  <span>Type of Retreat</span>
+                  <span>Type of Retreat *</span>
 
                   <select
                     name="retreatType"
                     value={formData.retreatType}
                     onChange={handleChange}
+                    required
                   >
                     <option value="">
                       Select retreat type
@@ -2085,11 +2164,12 @@ export default function CreateBooking({
                     <div className="rental-stay-schedule-fields">
 
                       <label className="rental-field">
-                        <span>Date</span>
+                        <span>Date *</span>
 
                         <input
                           type="date"
                           name="startDate"
+                          required
                           value={formData.startDate}
                           onChange={handleChange}
                         />
@@ -2120,7 +2200,7 @@ export default function CreateBooking({
                     <div className="rental-stay-schedule-fields">
 
                       <label className="rental-field">
-                        <span>Date</span>
+                        <span>Date *</span>
 
                         <input
                           type="date"
@@ -2222,12 +2302,13 @@ export default function CreateBooking({
                   <label className="rental-field rental-field-full">
                     <span>
                       <FaUsers className="rental-field-label-icon" />
-                      Estimated Total Guests
+                      Estimated Total Guests *
                     </span>
 
                     <input
                       type="text"
                       name="approxTotalGuests"
+                      required
                       value={
                         formData.approxTotalGuests
                       }
