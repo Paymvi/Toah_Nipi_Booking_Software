@@ -549,6 +549,19 @@ function createInitialFormState(
 
     activityNotes: "",
 
+    /* Facilities */
+    facilities: [
+      {
+        date: "",
+        time: "",
+        task: "",
+        assignedTo: "",
+        notes: "",
+      },
+    ],
+
+    facilityNotes: "",
+
     mealNotes: "",
 
     /* Lodging */
@@ -1036,6 +1049,13 @@ function createExistingBookingFormState(booking) {
 
     activityNotes:
       details.activityNotes ||
+      "",
+
+    facilities:
+      savedFacilities,
+
+    facilityNotes:
+      details.facilityNotes ||
       "",
 
     allergyNotes:
@@ -1545,6 +1565,74 @@ export default function CreateBooking({
   };
 
 
+
+  const handleFacilityChange = (
+    index,
+    field,
+    value
+  ) => {
+    setFormData((current) => {
+      const updatedFacilities = [
+        ...current.facilities,
+      ];
+
+      updatedFacilities[index] = {
+        ...updatedFacilities[index],
+        [field]: value,
+      };
+
+      return {
+        ...current,
+        facilities: updatedFacilities,
+      };
+    });
+  };
+
+
+  const handleAddFacility = () => {
+    setFormData((current) => ({
+      ...current,
+      facilities: [
+        ...current.facilities,
+        {
+          date: "",
+          time: "",
+          task: "",
+          assignedTo: "",
+          notes: "",
+        },
+      ],
+    }));
+  };
+
+
+  const handleRemoveFacility = (index) => {
+    setFormData((current) => {
+      const updatedFacilities =
+        current.facilities.filter(
+          (_, facilityIndex) =>
+            facilityIndex !== index
+        );
+
+      return {
+        ...current,
+        facilities:
+          updatedFacilities.length > 0
+            ? updatedFacilities
+            : [
+                {
+                  date: "",
+                  time: "",
+                  task: "",
+                  assignedTo: "",
+                  notes: "",
+                },
+              ],
+      };
+    });
+  };
+
+
   const handleMealToggle = (
     date,
     mealKey
@@ -1758,6 +1846,17 @@ export default function CreateBooking({
                 activity.date ||
                 activity.time ||
                 activity.activity
+            ),
+
+        facilities:
+          formData.facilities
+            .filter(
+              (facility) =>
+                facility.date ||
+                facility.time ||
+                facility.task ||
+                facility.assignedTo ||
+                facility.notes
             ),
 
         linenSets:
@@ -3156,6 +3255,132 @@ export default function CreateBooking({
 
           </section>
 
+
+
+
+          {/* ===================================================
+              FACILITIES
+          =================================================== */}
+
+          <section className="rental-form-section">
+            <header className="rental-section-header">
+              <div className="rental-section-icon">
+                <FaUsers />
+              </div>
+
+              <div>
+                <h2>Facilities</h2>
+                <p>
+                  Facility preparation tasks and assigned staff.
+                </p>
+              </div>
+            </header>
+
+            <div className="rental-section-body">
+
+              <div className="rental-field rental-allergies-field">
+                <span>Facility Task Schedule</span>
+
+                <div className="rental-allergy-headings rental-facility-headings">
+                  <span>Date</span>
+                  <span>Time</span>
+                  <span>Task</span>
+                  <span>Assigned To</span>
+                  <span></span>
+                </div>
+
+                <div className="rental-allergy-list">
+                  {formData.facilities.map((facility, index) => (
+                    <div
+                      className="rental-allergy-row rental-facility-row"
+                      key={index}
+                    >
+                      <input
+                        type="date"
+                        value={facility.date}
+                        onChange={(event) =>
+                          handleFacilityChange(
+                            index,
+                            "date",
+                            event.target.value
+                          )
+                        }
+                      />
+
+                      <input
+                        type="time"
+                        value={facility.time}
+                        onChange={(event) =>
+                          handleFacilityChange(
+                            index,
+                            "time",
+                            event.target.value
+                          )
+                        }
+                      />
+
+                      <input
+                        type="text"
+                        value={facility.task}
+                        placeholder="Example: Setup keyboard in Bethel"
+                        onChange={(event) =>
+                          handleFacilityChange(
+                            index,
+                            "task",
+                            event.target.value
+                          )
+                        }
+                      />
+
+                      <input
+                        type="text"
+                        value={facility.assignedTo}
+                        placeholder="Staff member"
+                        onChange={(event) =>
+                          handleFacilityChange(
+                            index,
+                            "assignedTo",
+                            event.target.value
+                          )
+                        }
+                      />
+
+                      <button
+                        type="button"
+                        className="rental-allergy-remove"
+                        onClick={() =>
+                          handleRemoveFacility(index)
+                        }
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="rental-allergy-add-below"
+                  onClick={handleAddFacility}
+                >
+                  + Add facility task
+                </button>
+
+                <label className="rental-allergy-notes">
+                  <span>Facility Notes</span>
+
+                  <textarea
+                    name="facilityNotes"
+                    rows="3"
+                    value={formData.facilityNotes}
+                    onChange={handleChange}
+                    placeholder="Special setup instructions, maintenance notes, or facility details."
+                  />
+                </label>
+
+              </div>
+            </div>
+          </section>
 
 
           {/* ===================================================

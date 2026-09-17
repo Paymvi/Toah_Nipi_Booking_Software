@@ -7565,3 +7565,53 @@
   grid-template-columns: 2fr 1fr 1fr;
   align-items: end;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   FACILITIES SECTION
+========================================================= */
+
+.rental-facility-headings {
+  grid-template-columns: 1fr 1fr 2fr 1.5fr auto;
+}
+
+.rental-facility-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr 1.5fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.rental-facility-row input {
+  width: 100%;
+}
+
+.rental-facility-row .rental-allergy-remove {
+  height: 42px;
+}
+
+@media (max-width: 900px) {
+  .rental-facility-row,
+  .rental-facility-headings {
+    grid-template-columns: 1fr;
+  }
+}
