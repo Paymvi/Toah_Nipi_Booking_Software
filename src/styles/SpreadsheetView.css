@@ -3126,3 +3126,44 @@
   line-height: 1.45;
   vertical-align: top;
 }
+
+/* =========================================================
+   Spreadsheet Date Range Filter
+========================================================= */
+
+.spreadsheet-year-view-toggle button:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.spreadsheet-date-range-filter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.spreadsheet-date-range-filter label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: #667085;
+  font-weight: 600;
+}
+
+.spreadsheet-date-range-filter input {
+  border: 1px solid #dfe4ea;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font: inherit;
+  color: #202939;
+  background: white;
+}
+
+@media (max-width: 700px) {
+  .spreadsheet-date-range-filter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

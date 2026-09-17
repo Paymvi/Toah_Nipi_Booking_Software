@@ -3342,12 +3342,34 @@ function BookingSpreadsheetView({
     [processedInquiryBookings]
   );
 
+  const spreadsheetDateBounds = useMemo(() => {
+    const usableDates = processedInquiryBookings
+      .flatMap((booking) => [booking.startDate, booking.endDate])
+      .filter(Boolean)
+      .map((date) => new Date(date))
+      .filter((date) => !Number.isNaN(date.getTime()))
+      .sort((a, b) => a - b);
+
+    return {
+      earliest: usableDates[0] ? usableDates[0].toISOString().slice(0, 10) : "",
+      latest: usableDates.length
+        ? usableDates[usableDates.length - 1].toISOString().slice(0, 10)
+        : "",
+    };
+  }, [processedInquiryBookings]);
+
   const filteredAndSortedBookings = useMemo(() => {
     const searchText = String(
       spreadsheetSettings.searchText || ""
     )
       .trim()
       .toLowerCase();
+
+    const effectiveStartDate =
+      spreadsheetSettings.startDate || spreadsheetDateBounds.earliest;
+
+    const effectiveEndDate =
+      spreadsheetSettings.endDate || spreadsheetDateBounds.latest;
 
     const filteredBookings = processedInquiryBookings.filter((booking) => {
       const bookingYear = getSpreadsheetBookingYear(booking);
@@ -3370,6 +3392,16 @@ function BookingSpreadsheetView({
       if (
         spreadsheetYearView !== "all" &&
         bookingYear !== spreadsheetYearView
+      ) {
+        return false;
+      }
+
+      if (
+        !bookingTouchesSpreadsheetDateRange(
+          booking,
+          effectiveStartDate,
+          effectiveEndDate
+        )
       ) {
         return false;
       }
@@ -3430,6 +3462,9 @@ function BookingSpreadsheetView({
     processedInquiryBookings,
     spreadsheetYearView,
     spreadsheetSettings.searchText,
+    spreadsheetSettings.startDate,
+    spreadsheetSettings.endDate,
+    spreadsheetDateBounds,
     spreadsheetSettings.sortColumnId,
     spreadsheetSettings.sortDirection,
     spreadsheetSettings.showStarredRowsFirst,
@@ -3735,6 +3770,49 @@ function BookingSpreadsheetView({
               >
                 2027
               </button>
+
+              <button
+                className={
+                  spreadsheetSettings.startDate || spreadsheetSettings.endDate
+                    ? "active"
+                    : ""
+                }
+                type="button"
+                disabled
+                title="Custom date ranges are selected below"
+              >
+                Other
+              </button>
+            </div>
+
+            <div className="spreadsheet-date-range-filter">
+              <label>
+                <span>Start date</span>
+                <input
+                  type="date"
+                  value={spreadsheetSettings.startDate || ""}
+                  placeholder={spreadsheetDateBounds.earliest}
+                  onChange={(event) =>
+                    updateSpreadsheetSettings({
+                      startDate: event.target.value,
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                <span>End date</span>
+                <input
+                  type="date"
+                  value={spreadsheetSettings.endDate || ""}
+                  placeholder={spreadsheetDateBounds.latest}
+                  onChange={(event) =>
+                    updateSpreadsheetSettings({
+                      endDate: event.target.value,
+                    })
+                  }
+                />
+              </label>
             </div>
 
 
