@@ -18,6 +18,13 @@ import { upsertBooking } from "../services/bookingService";
 import {
   parseDesiredDateRange,
 } from "../utils/dateUtils";
+import {
+ parseDateInputAsUTC,
+ getStayDates,
+ formatMealScheduleDate,
+ getMealTotals,
+ getMealScheduleBounds,
+} from "../utils/dateUtils";
 
 import {
   FaUser,
@@ -27,6 +34,8 @@ import {
   FaGlobeAmericas,
   FaMoon,
 } from "react-icons/fa";
+
+
 
 
 /* =========================================================
@@ -96,23 +105,7 @@ const ethnicBreakdownOptions = [
   },
 ];
 
-const MEAL_TYPES = [
-  {
-    key: "breakfast",
-    label: "Breakfast",
-    shortLabel: "B",
-  },
-  {
-    key: "lunch",
-    label: "Lunch",
-    shortLabel: "L",
-  },
-  {
-    key: "dinner",
-    label: "Dinner",
-    shortLabel: "D",
-  },
-];
+import { MEAL_TYPES } from "../constants/mealConstants";
 
 const paymentMethods = [
   "",
@@ -1113,162 +1106,6 @@ function createExistingBookingFormState(booking) {
 /* =========================================================
    HELPERS
 ========================================================= */
-
-function parseDateInputAsUTC(dateString) {
-  if (!dateString) {
-    return null;
-  }
-
-  const [
-    year,
-    month,
-    day,
-  ] = dateString
-    .split("-")
-    .map(Number);
-
-  if (!year || !month || !day) {
-    return null;
-  }
-
-  return new Date(
-    Date.UTC(
-      year,
-      month - 1,
-      day
-    )
-  );
-}
-
-
-function getStayDates(
-  startDate,
-  endDate
-) {
-  const start =
-    parseDateInputAsUTC(startDate);
-
-  const end =
-    parseDateInputAsUTC(endDate);
-
-  if (
-    !start ||
-    !end ||
-    end < start
-  ) {
-    return [];
-  }
-
-  const dates = [];
-
-  const current =
-    new Date(start);
-
-  while (current <= end) {
-    dates.push(
-      current
-        .toISOString()
-        .slice(0, 10)
-    );
-
-    current.setUTCDate(
-      current.getUTCDate() + 1
-    );
-  }
-
-  return dates;
-}
-
-
-function formatMealScheduleDate(
-  dateString
-) {
-  const date =
-    parseDateInputAsUTC(dateString);
-
-  if (!date) {
-    return dateString;
-  }
-
-  return new Intl.DateTimeFormat(
-    "en-US",
-    {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      timeZone: "UTC",
-    }
-  ).format(date);
-}
-
-
-function getMealTotals(formData) {
-  const stayDates =
-    getStayDates(
-      formData.startDate,
-      formData.endDate
-    );
-
-  const totals = {
-    breakfast: 0,
-    lunch: 0,
-    dinner: 0,
-    total: 0,
-  };
-
-  stayDates.forEach((date) => {
-    const dayMeals =
-      formData.mealSchedule?.[date] || {};
-
-    MEAL_TYPES.forEach((meal) => {
-      if (dayMeals[meal.key]) {
-        totals[meal.key] += 1;
-        totals.total += 1;
-      }
-    });
-  });
-
-  return totals;
-}
-
-
-function getMealScheduleBounds(
-  formData
-) {
-  const stayDates =
-    getStayDates(
-      formData.startDate,
-      formData.endDate
-    );
-
-  const selectedMeals = [];
-
-  stayDates.forEach((date) => {
-    MEAL_TYPES.forEach((meal) => {
-      if (
-        formData.mealSchedule?.[date]?.[
-          meal.key
-        ]
-      ) {
-        selectedMeals.push({
-          date,
-          meal: meal.label,
-        });
-      }
-    });
-  });
-
-  return {
-    firstMeal:
-      selectedMeals[0]?.meal || "",
-
-    lastMeal:
-      selectedMeals[
-        selectedMeals.length - 1
-      ]?.meal || "",
-  };
-}
 
 function getGuestTotal(
   adults,

@@ -1,33 +1,34 @@
 /*
 dateUtils.js
--------------------------------------------------------------------------------
-Shared date helper functions for the booking dashboard.
 
-This file keeps date-related logic out of Dashboard.jsx so the dashboard page
-stays smaller and easier to maintain.
+-------------------------------------------------------------------------------
+
+Shared date and booking helper functions.
+
+This file keeps date-related logic out of React components.
 
 This file handles:
-- Formatting booking dates for display
-- Formatting submitted-at dates
+
+- Formatting booking dates
 - Creating readable date ranges
-- Calendar/month calculations
-- Date range comparison for calendar events
-- Converting Excel dates into YYYY-MM-DD strings
-- Parsing flexible imported spreadsheet date text
+- Calendar calculations
+- Date overlap checks
+- Excel date parsing
+- Stay date generation
+- Meal schedule calculations
 
 Most booking dates are stored as:
 
-  YYYY-MM-DD
+YYYY-MM-DD
 
 Example:
 
-  2026-06-15
+2026-06-15
 
-When creating JavaScript Date objects from those strings, we append "T00:00:00"
-so the browser treats the value as a local date instead of shifting it because
-of timezone conversion.
 -------------------------------------------------------------------------------
 */
+
+import { MEAL_TYPES } from "../constants/mealConstants";
 
 // Formats a YYYY-MM-DD date string into a readable US date.
 // Example: "2026-06-15" -> "6/15/2026"
@@ -241,5 +242,165 @@ export function parseDesiredDateRange(value) {
     startDate,
     endDate: endDate || startDate,
     desiredDatesText: desiredDateText,
+  };
+}
+
+
+
+
+
+export function parseDateInputAsUTC(dateString) {
+  if (!dateString) {
+    return null;
+  }
+
+  const [
+    year,
+    month,
+    day,
+  ] = dateString
+    .split("-")
+    .map(Number);
+
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return new Date(
+    Date.UTC(
+      year,
+      month - 1,
+      day
+    )
+  );
+}
+
+
+export function getStayDates(
+  startDate,
+  endDate
+) {
+  const start =
+    parseDateInputAsUTC(startDate);
+
+  const end =
+    parseDateInputAsUTC(endDate);
+
+  if (
+    !start ||
+    !end ||
+    end < start
+  ) {
+    return [];
+  }
+
+  const dates = [];
+
+  const current =
+    new Date(start);
+
+  while (current <= end) {
+    dates.push(
+      current
+        .toISOString()
+        .slice(0, 10)
+    );
+
+    current.setUTCDate(
+      current.getUTCDate() + 1
+    );
+  }
+
+  return dates;
+}
+
+
+export function formatMealScheduleDate(
+  dateString
+) {
+  const date =
+    parseDateInputAsUTC(dateString);
+
+  if (!date) {
+    return dateString;
+  }
+
+  return new Intl.DateTimeFormat(
+    "en-US",
+    {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      timeZone: "UTC",
+    }
+  ).format(date);
+}
+
+
+export function getMealTotals(formData) {
+  const stayDates =
+    getStayDates(
+      formData.startDate,
+      formData.endDate
+    );
+
+  const totals = {
+    breakfast: 0,
+    lunch: 0,
+    dinner: 0,
+    total: 0,
+  };
+
+  stayDates.forEach((date) => {
+    const dayMeals =
+      formData.mealSchedule?.[date] || {};
+
+    MEAL_TYPES.forEach((meal) => {
+      if (dayMeals[meal.key]) {
+        totals[meal.key] += 1;
+        totals.total += 1;
+      }
+    });
+  });
+
+  return totals;
+}
+
+
+export function getMealScheduleBounds(
+  formData
+) {
+  const stayDates =
+    getStayDates(
+      formData.startDate,
+      formData.endDate
+    );
+
+  const selectedMeals = [];
+
+  stayDates.forEach((date) => {
+    MEAL_TYPES.forEach((meal) => {
+      if (
+        formData.mealSchedule?.[date]?.[
+          meal.key
+        ]
+      ) {
+        selectedMeals.push({
+          date,
+          meal: meal.label,
+        });
+      }
+    });
+  });
+
+  return {
+    firstMeal:
+      selectedMeals[0]?.meal || "",
+
+    lastMeal:
+      selectedMeals[
+        selectedMeals.length - 1
+      ]?.meal || "",
   };
 }
