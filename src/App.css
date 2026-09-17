@@ -7615,3 +7615,25 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+
+
+
+
+
+/* =========================================================
+   CAMPING AS A HOUSING OPTION
+   Uses the existing housing table/floor breakdown styles.
+========================================================= */
+
+/*
+  No special card styling needed.
+  Camping is rendered by the existing housing table.
+  These optional rules only make the camping row feel
+  consistent with expandable housing rows.
+*/
+
+.booking-housing-row-expandable .housing-room-cell strong {
+  line-height: 1.2;
+}

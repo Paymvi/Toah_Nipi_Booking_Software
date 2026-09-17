@@ -6860,7 +6860,12 @@ function BookingDetailView({
   </div>
 )}
 
-{activeTab === "Housing" && <BookingHousingTab booking={booking} />}
+{activeTab === "Housing" && (
+  <BookingHousingTab
+    booking={booking}
+    onSaveBooking={onSaveBooking}
+  />
+)}
 
 {activeTab === "Meals & Activities" && (
   <BookingProgramLogisticsTab

@@ -244,6 +244,34 @@ const housingRows = [
       "guesthouse",
     ],
   },
+
+  {
+    id: "camping",
+    field: "lodgingCamping",
+    roomName: "Camping",
+    housingArea: "Outdoor Areas",
+    roomCategory: "Tent / RV Sites",
+    image: "",
+    aliases: [
+      "camping",
+      "tent",
+      "rv",
+    ],
+
+    rooms: [
+      {
+        id: "tent",
+        label: "Tent",
+        field: "lodgingCampingTent",
+      },
+      {
+        id: "rv",
+        label: "RV",
+        field: "lodgingCampingRV",
+      },
+    ],
+  },
+
 ];
 
 
@@ -477,47 +505,56 @@ function getRoomTotal(floor, values) {
 }
 
 
-function rowHasFloorBreakdown(
-  row,
-  values
-) {
+function rowHasFloorBreakdown(row, values) {
+
+  if (Array.isArray(row.rooms)) {
+
+    return row.rooms.some((room)=>{
+
+      const value =
+        Number(
+          values?.[room.field] || 0
+        );
+
+      return value > 0;
+
+    });
+
+  }
+
 
   if (!Array.isArray(row.floors)) {
     return false;
   }
 
 
-  return row.floors.some(
-    (floor)=>{
+  return row.floors.some((floor)=>{
 
-      if(floor.rooms){
+    if (floor.rooms) {
 
-        return floor.rooms.some(
-          (room)=>{
+      return floor.rooms.some((room)=>{
 
-            const value =
-              Number(
-                values?.[room.field] || 0
-              );
+        const value =
+          Number(
+            values?.[room.field] || 0
+          );
 
-            return value > 0;
+        return value > 0;
 
-          }
-        );
-
-      }
-
-
-      const value =
-        Number(
-          values?.[floor.field] || 0
-        );
-
-
-      return value > 0;
+      });
 
     }
-  );
+
+
+    const value =
+      Number(
+        values?.[floor.field] || 0
+      );
+
+
+    return value > 0;
+
+  });
 
 }
 
@@ -531,7 +568,10 @@ function getInitialExpandedHousingRows(
   const result = {};
 
   housingRows.forEach((row) => {
-    if (Array.isArray(row.floors)) {
+    if (
+      Array.isArray(row.floors) ||
+      Array.isArray(row.rooms)
+    ) {
       result[row.id] =
         rowHasFloorBreakdown(
           row,
@@ -558,8 +598,21 @@ function getInitialHousingState(booking) {
         row.roomName
       );
 
-    if (Array.isArray(row.floors)) {
-      row.floors.forEach((floor)=>{
+    if (
+      Array.isArray(row.floors) ||
+      Array.isArray(row.rooms)
+    ) {
+
+      if (row.rooms) {
+        row.rooms.forEach((room)=>{
+          state[room.field] =
+            cleanNumberValue(
+              details[room.field]
+            );
+        });
+      }
+
+      row.floors?.forEach((floor)=>{
 
         if (floor.rooms) {
 
@@ -621,7 +674,6 @@ function getInitialLinenOption(booking) {
   return "No";
 }
 
-
 function getInitialLinenSets(booking) {
   const details =
     booking?.rentalFormDetails || {};
@@ -658,6 +710,33 @@ function buildLodgingSummary(
 
       const numberValue =
         Number(value);
+
+
+      if (Array.isArray(row.rooms)) {
+
+        const breakdown =
+          row.rooms
+            .map((room)=>{
+
+              const amount =
+                values[room.field];
+
+              if(amount){
+                return `${room.label}: ${amount}`;
+              }
+
+              return "";
+
+            })
+            .filter(Boolean)
+            .join(", ");
+
+
+        if(breakdown){
+          return `${row.roomName}: ${breakdown}`;
+        }
+
+      }
 
 
       if (
@@ -798,7 +877,7 @@ export default function BookingHousingTab({
     useState(() =>
       getInitialLinenSets(booking)
     );
-
+    
 
   /* =======================================================
      RESET WHEN ANOTHER BOOKING IS OPENED / SAVED
@@ -841,12 +920,27 @@ export default function BookingHousingTab({
       (total,row)=>{
 
 
-        if(row.floors){
+        if(Array.isArray(row.floors)){
 
           return (
             total +
             getFloorTotal(
               row,
+              housingValues
+            )
+          );
+
+        }
+
+
+        if(Array.isArray(row.rooms)){
+
+          return (
+            total +
+            getRoomTotal(
+              {
+                rooms: row.rooms
+              },
               housingValues
             )
           );
@@ -1092,7 +1186,14 @@ export default function BookingHousingTab({
         };
 
 
-        row.floors.forEach((floor)=>{
+        if (Array.isArray(row.rooms)) {
+          row.rooms.forEach((room)=>{
+            nextValues[room.field] = "";
+          });
+        }
+
+
+        row.floors?.forEach((floor)=>{
 
 
           if(floor.rooms){
@@ -1143,7 +1244,18 @@ export default function BookingHousingTab({
             [row.field]: "",
           };
 
-          if (Array.isArray(row.floors)) {
+          if (
+            Array.isArray(row.floors) ||
+            Array.isArray(row.rooms)
+          ) {
+
+            if(row.rooms){
+
+              row.rooms.forEach((room)=>{
+                nextValues[room.field] = "";
+              });
+
+            }
 
             row.floors.forEach((floor)=>{
 
@@ -1217,6 +1329,8 @@ export default function BookingHousingTab({
 
   const handleSave = async () => {
     if (!onSaveBooking) {
+      console.error("BookingHousingTab: onSaveBooking is missing");
+      alert("Save function is not connected");
       return;
     }
 
@@ -1232,6 +1346,18 @@ export default function BookingHousingTab({
         linenSets
       );
 
+    const campingSummary =
+      [
+        housingValues.lodgingCampingTent
+          ? `Tent: ${housingValues.lodgingCampingTent}`
+          : "",
+
+        housingValues.lodgingCampingRV
+          ? `RV: ${housingValues.lodgingCampingRV}`
+          : "",
+      ]
+      .filter(Boolean)
+      .join(", ");
 
     const updatedRentalFormDetails = {
       ...(booking.rentalFormDetails || {}),
@@ -1333,6 +1459,15 @@ export default function BookingHousingTab({
       lodgingGuestHouse:
         housingValues.lodgingGuestHouse || "",
 
+      lodgingCamping:
+        housingValues.lodgingCamping || "",
+
+      lodgingCampingTent:
+        housingValues.lodgingCampingTent || "",
+
+      lodgingCampingRV:
+        housingValues.lodgingCampingRV || "",
+
       linenOption,
 
       linenSets:
@@ -1342,30 +1477,39 @@ export default function BookingHousingTab({
     };
 
 
-    await onSaveBooking({
-      ...booking,
+    try {
+        await onSaveBooking({
+          ...booking,
 
-      /*
-        This stays compatible with the spreadsheet /
-        availability portions of the dashboard.
-      */
-      buildingsRooms,
+          buildingsRooms: [
+            buildingsRooms,
+            campingSummary,
+          ].filter(Boolean).join("; "),
 
-      /*
-        This matches CreateBooking's linen summary.
-      */
-      linenSets: linenSummary,
+          linenSets: linenSummary,
 
-      /*
-        These are the actual detailed housing fields
-        used by the current Staff Booking system.
-      */
-      rentalFormDetails:
-        updatedRentalFormDetails,
+          rentalFormDetails:
+            updatedRentalFormDetails,
 
-      updatedAt:
-        new Date().toISOString(),
-    });
+          updatedAt:
+            new Date().toISOString(),
+        });
+
+
+        setIsEditing(false);
+
+      } catch (error) {
+
+        console.error(
+          "Failed saving housing:",
+          error
+        );
+
+        alert(
+          "Failed saving housing. Check console."
+        );
+
+      }
 
 
     setIsEditing(false);
@@ -1580,8 +1724,8 @@ export default function BookingHousingTab({
                     );
 
                   const hasFloors =
-                    Array.isArray(row.floors) &&
-                    row.floors.length > 0;
+                    Array.isArray(row.floors) ||
+                    Array.isArray(row.rooms)
 
                   const isExpanded =
                     Boolean(
@@ -1598,12 +1742,17 @@ export default function BookingHousingTab({
                     );
 
                   const floorTotal =
-                    hasFloors
+                    Array.isArray(row.floors)
                       ? getFloorTotal(
                           row,
                           housingValues
                         )
-                      : 0;
+                      : Array.isArray(row.rooms)
+                        ? getRoomTotal(
+                            row,
+                            housingValues
+                          )
+                        : 0;
 
                   const isAssigned =
                     assignedNumber > 0 ||
@@ -1768,7 +1917,7 @@ export default function BookingHousingTab({
                               </strong>
 
                               <small>
-                                From floors
+                                From breakdown
                               </small>
                             </div>
                           ) : (
@@ -1790,6 +1939,16 @@ export default function BookingHousingTab({
                               }
                             />
                           )
+                        ) : hasFloorBreakdown ? (
+                          <div className="booking-housing-assigned-total">
+                            <strong className="booking-housing-assigned-count">
+                              {floorTotal}
+                            </strong>
+
+                            <small>
+                              Room split saved
+                            </small>
+                          </div>
                         ) : assignedNumber > 0 ? (
                           <div className="booking-housing-assigned-total">
                             <strong className="booking-housing-assigned-count">
@@ -1830,11 +1989,23 @@ export default function BookingHousingTab({
                             <div
                               className="booking-housing-floor-grid"
                               style={{
-                                "--floor-count": row.floors.length,
+                                "--floor-count":
+                                  row.floors
+                                    ? row.floors.length
+                                    : 1,
                               }}
                             >
 
-                              {row.floors.map(
+                              {(
+                                row.floors ||
+                                [
+                                  {
+                                    id: row.id,
+                                    label: row.roomName,
+                                    rooms: row.rooms
+                                  }
+                                ]
+                              ).map(
                                 (floor)=>{
 
                                 const floorTotal =
@@ -1939,7 +2110,14 @@ export default function BookingHousingTab({
                                   Total
                                 </span>
                                 <strong>
-                                  {row.floors.reduce(
+                                  {(
+                                    row.floors ||
+                                    [
+                                      {
+                                        rooms: row.rooms
+                                      }
+                                    ]
+                                  ).reduce(
                                     (total, floor) =>
                                       total +
                                       (floor.rooms
@@ -1996,6 +2174,7 @@ export default function BookingHousingTab({
         </div>
 
       </section>
+
 
 
       {/* ===================================================
