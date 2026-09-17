@@ -1577,3 +1577,64 @@
   color:#ffffff;
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   APPROXIMATE GUESTS GRID FIX
+========================================================= */
+
+.rental-approx-guests-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px;
+}
+
+
+.rental-approx-guests-grid .rental-field-full {
+  grid-column: span 5;
+}
+
+
+@media (max-width: 1200px) {
+  .rental-approx-guests-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .rental-approx-guests-grid .rental-field-full {
+    grid-column: span 3;
+  }
+}
+
+
+@media (max-width: 800px) {
+  .rental-approx-guests-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rental-approx-guests-grid .rental-field-full {
+    grid-column: span 2;
+  }
+}
+
+
+@media (max-width: 550px) {
+  .rental-approx-guests-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rental-approx-guests-grid .rental-field-full {
+    grid-column: span 1;
+  }
+}

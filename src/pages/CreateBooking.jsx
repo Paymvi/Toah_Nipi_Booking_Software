@@ -208,12 +208,14 @@ const TEST_BOOKING_DATA = {
   /* Guest Information */
   approxTotalGuests: "50",
   approxAdultGuests: "12",
-  approxChildrenGuests: "38",
+  approxChildrenUnder3: "3",
+  approxChildren3to17: "35",
   minimumGuarantee: "45",
   maximumGuarantee: "55",
 
   actualAdultGuests: "10",
-  actualChildrenGuests: "37",
+  actualChildrenUnder3: "2",
+  actualChildren3to17: "35",
 
   ethnicBreakdown: "White",
 
@@ -441,7 +443,8 @@ function validateRequiredBookingFields(formData) {
   if (
     !formData.approxTotalGuests &&
     !formData.approxAdultGuests &&
-    !formData.approxChildrenGuests
+    !formData.approxChildrenUnder3 &&
+    !formData.approxChildren3to17
   ) {
     errors.push("Guest count is required.");
   }
@@ -469,13 +472,15 @@ function createInitialFormState(
     approxTotalGuests: "",
 
     approxAdultGuests: "",
-    approxChildrenGuests: "",
+    approxChildrenUnder3: "",
+    approxChildren3to17: "",
 
     minimumGuarantee: "",
     maximumGuarantee: "",
 
     actualAdultGuests: "",
-    actualChildrenGuests: "",
+    actualChildrenUnder3: "",
+    actualChildren3to17: "",
 
     ethnicBreakdown: "",
 
@@ -840,9 +845,14 @@ function createExistingBookingFormState(booking) {
       details.approxAdultGuests ||
       "",
 
-    approxChildrenGuests:
-      details.approxChildrenGuests ||
-      "",
+   approxChildrenUnder3:
+    details.approxChildrenUnder3 ||
+    "",
+
+  approxChildren3to17:
+    details.approxChildren3to17 ||
+    details.approxChildrenGuests ||
+    "",
 
     minimumGuarantee:
       details.minimumGuarantee ||
@@ -858,7 +868,12 @@ function createExistingBookingFormState(booking) {
       details.actualAdultGuests ||
       "",
 
-    actualChildrenGuests:
+    actualChildrenUnder3:
+      details.actualChildrenUnder3 ||
+      "",
+
+    actualChildren3to17:
+      details.actualChildren3to17 ||
       details.actualChildrenGuests ||
       "",
 
@@ -1255,17 +1270,31 @@ function getMealScheduleBounds(
   };
 }
 
-function getGuestTotal(adults, children) {
-  const hasAdults = String(adults || "").trim() !== "";
-  const hasChildren = String(children || "").trim() !== "";
+function getGuestTotal(
+  adults,
+  childrenUnder3,
+  children3to17
+) {
+  const values = [
+    adults,
+    childrenUnder3,
+    children3to17,
+  ];
 
-  if (!hasAdults && !hasChildren) {
+  const hasAny =
+    values.some(
+      (value) =>
+        String(value || "").trim() !== ""
+    );
+
+  if (!hasAny) {
     return "";
   }
 
   return String(
     Number(adults || 0) +
-    Number(children || 0)
+    Number(childrenUnder3 || 0) +
+    Number(children3to17 || 0)
   );
 }
 
@@ -1625,7 +1654,8 @@ export default function CreateBooking({
       const approxGuestBreakdownTotal =
         getGuestTotal(
           formData.approxAdultGuests,
-          formData.approxChildrenGuests
+          formData.approxChildrenUnder3,
+          formData.approxChildren3to17
         );
 
 
@@ -1646,7 +1676,8 @@ export default function CreateBooking({
       const actualGuestTotal =
         getGuestTotal(
           formData.actualAdultGuests,
-          formData.actualChildrenGuests
+          formData.actualChildrenUnder3,
+          formData.actualChildren3to17
         );
 
       const calculatedMealTotals =
@@ -2115,27 +2146,34 @@ export default function CreateBooking({
 
 
                 <label className="rental-field">
-                  <span>Type of Retreat *</span>
+                  <span>
+                    <FaChild className="rental-field-label-icon" />
+                    Under 3
+                  </span>
 
-                  <select
-                    name="retreatType"
-                    value={formData.retreatType}
+                  <input
+                    type="number"
+                    min="0"
+                    name="actualChildrenUnder3"
+                    value={formData.actualChildrenUnder3}
                     onChange={handleChange}
-                    required
-                  >
-                    <option value="">
-                      Select retreat type
-                    </option>
+                  />
+                </label>
 
-                    {retreatTypes.map((type) => (
-                      <option
-                        value={type}
-                        key={type}
-                      >
-                        {type}
-                      </option>
-                    ))}
-                  </select>
+
+                <label className="rental-field">
+                  <span>
+                    <FaChild className="rental-field-label-icon" />
+                    Ages 3–17
+                  </span>
+
+                  <input
+                    type="number"
+                    min="0"
+                    name="actualChildren3to17"
+                    value={formData.actualChildren3to17}
+                    onChange={handleChange}
+                  />
                 </label>
 
 
@@ -2302,13 +2340,12 @@ export default function CreateBooking({
                   <label className="rental-field rental-field-full">
                     <span>
                       <FaUsers className="rental-field-label-icon" />
-                      Estimated Total Guests *
+                      Estimated Total Guests
                     </span>
 
                     <input
                       type="text"
                       name="approxTotalGuests"
-                      required
                       value={
                         formData.approxTotalGuests
                       }
@@ -2336,14 +2373,30 @@ export default function CreateBooking({
                   <label className="rental-field">
                     <span>
                       <FaChild className="rental-field-label-icon" />
-                      Children
+                      Under 3
                     </span>
 
                     <input
                       type="number"
                       min="0"
-                      name="approxChildrenGuests"
-                      value={formData.approxChildrenGuests}
+                      name="approxChildrenUnder3"
+                      value={formData.approxChildrenUnder3}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>
+                      <FaChild className="rental-field-label-icon" />
+                      Ages 3–17
+                    </span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name="approxChildren3to17"
+                      value={formData.approxChildren3to17}
                       onChange={handleChange}
                     />
                   </label>
@@ -2386,7 +2439,7 @@ export default function CreateBooking({
               <div className="rental-subsection">
                 <h3>Actual Guests</h3>
 
-                <div className="rental-field-grid rental-field-grid-3">
+                <div className="rental-field-grid rental-actual-guests-grid">
 
                   <label className="rental-field">
                     <span>
@@ -2407,14 +2460,30 @@ export default function CreateBooking({
                   <label className="rental-field">
                     <span>
                       <FaChild className="rental-field-label-icon" />
-                      Children
+                      Under 3
                     </span>
 
                     <input
                       type="number"
                       min="0"
-                      name="actualChildrenGuests"
-                      value={formData.actualChildrenGuests}
+                      name="actualChildrenUnder3"
+                      value={formData.actualChildrenUnder3}
+                      onChange={handleChange}
+                    />
+                  </label>
+
+
+                  <label className="rental-field">
+                    <span>
+                      <FaChild className="rental-field-label-icon" />
+                      Ages 3–17
+                    </span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      name="actualChildren3to17"
+                      value={formData.actualChildren3to17}
                       onChange={handleChange}
                     />
                   </label>
