@@ -7093,6 +7093,45 @@
 
 
 
+
+/* =========================================================
+   ACTIVITIES
+========================================================= */
+
+.rental-activity-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr auto;
+  gap: 12px;
+}
+
+.rental-activity-row input,
+.rental-activity-row select {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .rental-activity-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* =========================================================
    Lodging Calendar
 ========================================================= */

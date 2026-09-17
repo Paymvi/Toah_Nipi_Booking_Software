@@ -107,6 +107,26 @@ const ethnicBreakdownOptions = [
 
 import { MEAL_TYPES } from "../constants/mealConstants";
 
+const activityOptions = [
+  "Hebron: Dining Hall",
+  "Hebron: Rock Wall",
+  "Hebron: OverFlow",
+  "Hebron: Meeting Space",
+
+  "Bethel: Meeting Space",
+
+  "Field: Front of Hebron",
+  "Field: Back of Hebron",
+
+  "Fire pit",
+  "Swimming",
+  "Kayaking",
+  "Fire pit",  
+  
+  "Other",
+
+];
+
 const paymentMethods = [
   "",
   "Check",
@@ -518,6 +538,17 @@ function createInitialFormState(
 
     allergyNotes: "",
 
+    /* Activities */
+    activities: [
+      {
+        date: "",
+        time: "",
+        activity: "",
+      },
+    ],
+
+    activityNotes: "",
+
     mealNotes: "",
 
     /* Lodging */
@@ -759,6 +790,18 @@ function createExistingBookingFormState(booking) {
       ? details.mealSchedule
       : {};
 
+  const savedActivities =
+    Array.isArray(details.activities) &&
+    details.activities.length > 0
+      ? details.activities
+      : [
+          {
+            date: "",
+            time: "",
+            activity: "",
+          },
+        ];
+
   return {
     ...baseState,
     ...details,
@@ -987,6 +1030,13 @@ function createExistingBookingFormState(booking) {
 
     allergies:
       savedAllergies,
+
+    activities:
+      savedActivities,
+
+    activityNotes:
+      details.activityNotes ||
+      "",
 
     allergyNotes:
       details.allergyNotes ||
@@ -1431,6 +1481,70 @@ export default function CreateBooking({
     });
   };
 
+
+  const handleActivityChange = (
+    index,
+    field,
+    value
+  ) => {
+    setFormData((current) => {
+      const updatedActivities = [
+        ...current.activities,
+      ];
+
+      updatedActivities[index] = {
+        ...updatedActivities[index],
+        [field]: value,
+      };
+
+      return {
+        ...current,
+        activities: updatedActivities,
+      };
+    });
+  };
+
+
+  const handleAddActivity = () => {
+    setFormData((current) => ({
+      ...current,
+      activities: [
+        ...current.activities,
+        {
+          date: "",
+          time: "",
+          activity: "",
+        },
+      ],
+    }));
+  };
+
+
+  const handleRemoveActivity = (index) => {
+    setFormData((current) => {
+      const updatedActivities =
+        current.activities.filter(
+          (_, activityIndex) =>
+            activityIndex !== index
+        );
+
+      return {
+        ...current,
+        activities:
+          updatedActivities.length > 0
+            ? updatedActivities
+            : [
+                {
+                  date: "",
+                  time: "",
+                  activity: "",
+                },
+              ],
+      };
+    });
+  };
+
+
   const handleMealToggle = (
     date,
     mealKey
@@ -1638,8 +1752,13 @@ export default function CreateBooking({
           mealsSummary,
 
         activities:
-          existingBooking?.activities ||
-          "",
+          formData.activities
+            .filter(
+              (activity) =>
+                activity.date ||
+                activity.time ||
+                activity.activity
+            ),
 
         linenSets:
           linenSummary,
@@ -1980,39 +2099,6 @@ export default function CreateBooking({
                     required
                   />
                 </label>
-
-
-                <label className="rental-field">
-                  <span>
-                    <FaChild className="rental-field-label-icon" />
-                    Under 3
-                  </span>
-
-                  <input
-                    type="number"
-                    min="0"
-                    name="actualChildrenUnder3"
-                    value={formData.actualChildrenUnder3}
-                    onChange={handleChange}
-                  />
-                </label>
-
-
-                <label className="rental-field">
-                  <span>
-                    <FaChild className="rental-field-label-icon" />
-                    Ages 3–17
-                  </span>
-
-                  <input
-                    type="number"
-                    min="0"
-                    name="actualChildren3to17"
-                    value={formData.actualChildren3to17}
-                    onChange={handleChange}
-                  />
-                </label>
-
 
                 <label className="rental-field">
                   <span>Primary Contact *</span>
@@ -2639,7 +2725,7 @@ export default function CreateBooking({
 
 
           {/* ===================================================
-              ARRIVAL + MEALS
+              MEALS
           =================================================== */}
 
           <section className="rental-form-section">
@@ -2942,6 +3028,134 @@ export default function CreateBooking({
               </div>
             </div>
           </section>
+
+
+          {/* ===================================================
+              ACTIVITIES
+          =================================================== */}
+
+          <section className="rental-form-section">
+            <header className="rental-section-header">
+              <div className="rental-section-icon">
+                <FaCalendarAlt />
+              </div>
+
+              <div>
+                <h2>Activities</h2>
+              </div>
+            </header>
+
+            <div className="rental-section-body">
+
+              <div className="rental-field rental-allergies-field">
+
+                <span>Activity Schedule</span>
+
+                <div className="rental-allergy-headings">
+                  <span>Date</span>
+                  <span>Time</span>
+                  <span>Activity</span>
+                  <span></span>
+                </div>
+
+                <div className="rental-allergy-list">
+
+                  {formData.activities.map((activity, index) => (
+                    <div
+                      className="rental-allergy-row rental-activity-row"
+                      key={index}
+                    >
+
+                      <input
+                        type="date"
+                        value={activity.date}
+                        onChange={(event) =>
+                          handleActivityChange(
+                            index,
+                            "date",
+                            event.target.value
+                          )
+                        }
+                      />
+
+                      <input
+                        type="time"
+                        value={activity.time}
+                        onChange={(event) =>
+                          handleActivityChange(
+                            index,
+                            "time",
+                            event.target.value
+                          )
+                        }
+                      />
+
+                      <select
+                        value={activity.activity}
+                        onChange={(event) =>
+                          handleActivityChange(
+                            index,
+                            "activity",
+                            event.target.value
+                          )
+                        }
+                      >
+                        <option value="">
+                          Select activity
+                        </option>
+
+                        {activityOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+
+                      <div className="rental-allergy-actions">
+                        {formData.activities.length > 1 && (
+                          <button
+                            type="button"
+                            className="rental-allergy-remove"
+                            onClick={() =>
+                              handleRemoveActivity(index)
+                            }
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+
+                    </div>
+                  ))}
+
+                </div>
+
+                <button
+                  type="button"
+                  className="rental-allergy-add-below"
+                  onClick={handleAddActivity}
+                >
+                  + Add another activity
+                </button>
+
+                <label className="rental-allergy-notes">
+                  <span>Activity Notes</span>
+
+                  <textarea
+                    name="activityNotes"
+                    rows="3"
+                    value={formData.activityNotes}
+                    onChange={handleChange}
+                    placeholder="Special instructions, equipment needs, or activity details."
+                  />
+                </label>
+
+              </div>
+
+            </div>
+
+          </section>
+
 
 
           {/* ===================================================
