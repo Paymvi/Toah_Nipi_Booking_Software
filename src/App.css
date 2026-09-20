@@ -7637,3 +7637,48 @@
 .booking-housing-row-expandable .housing-room-cell strong {
   line-height: 1.2;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   CREATE BOOKING — DAY CAMPERS
+   Small supplemental stylesheet for the two simple fields.
+========================================================= */
+
+.rental-day-campers-subsection {
+  margin-top: 24px;
+}
+
+.rental-day-campers-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 720px;
+}
+
+@media (max-width: 640px) {
+  .rental-day-campers-grid {
+    grid-template-columns: 1fr;
+    max-width: none;
+  }
+}

@@ -246,14 +246,41 @@ function bookingTouchesReportsDateRange(booking, dateRange) {
 function getReportsGuestCountDetails(booking) {
   const details = getRentalFormDetails(booking);
 
-  const hasActualAdults = !isBlankBookingValue(details.actualAdultGuests);
-  const hasActualChildren = !isBlankBookingValue(details.actualChildrenGuests);
+  /*
+    Current Staff Booking fields split children into:
+      - under 3
+      - ages 3–17
 
-  if (hasActualAdults || hasActualChildren) {
+    Older records may still use actualChildrenGuests / approxChildrenGuests,
+    so Reports supports both shapes.
+  */
+  const hasActualAdults = !isBlankBookingValue(details.actualAdultGuests);
+  const hasActualChildrenUnder3 =
+    !isBlankBookingValue(details.actualChildrenUnder3);
+  const hasActualChildren3to17 =
+    !isBlankBookingValue(details.actualChildren3to17);
+  const hasLegacyActualChildren =
+    !isBlankBookingValue(details.actualChildrenGuests);
+
+  if (
+    hasActualAdults ||
+    hasActualChildrenUnder3 ||
+    hasActualChildren3to17 ||
+    hasLegacyActualChildren
+  ) {
+    const currentChildren =
+      getReportsNumber(details.actualChildrenUnder3) +
+      getReportsNumber(details.actualChildren3to17);
+
+    const children =
+      hasActualChildrenUnder3 || hasActualChildren3to17
+        ? currentChildren
+        : getReportsNumber(details.actualChildrenGuests);
+
     return {
       value:
         getReportsNumber(details.actualAdultGuests) +
-        getReportsNumber(details.actualChildrenGuests),
+        children,
       source: "Actual",
     };
   }
@@ -266,13 +293,32 @@ function getReportsGuestCountDetails(booking) {
   }
 
   const hasApproxAdults = !isBlankBookingValue(details.approxAdultGuests);
-  const hasApproxChildren = !isBlankBookingValue(details.approxChildrenGuests);
+  const hasApproxChildrenUnder3 =
+    !isBlankBookingValue(details.approxChildrenUnder3);
+  const hasApproxChildren3to17 =
+    !isBlankBookingValue(details.approxChildren3to17);
+  const hasLegacyApproxChildren =
+    !isBlankBookingValue(details.approxChildrenGuests);
 
-  if (hasApproxAdults || hasApproxChildren) {
+  if (
+    hasApproxAdults ||
+    hasApproxChildrenUnder3 ||
+    hasApproxChildren3to17 ||
+    hasLegacyApproxChildren
+  ) {
+    const currentChildren =
+      getReportsNumber(details.approxChildrenUnder3) +
+      getReportsNumber(details.approxChildren3to17);
+
+    const children =
+      hasApproxChildrenUnder3 || hasApproxChildren3to17
+        ? currentChildren
+        : getReportsNumber(details.approxChildrenGuests);
+
     return {
       value:
         getReportsNumber(details.approxAdultGuests) +
-        getReportsNumber(details.approxChildrenGuests),
+        children,
       source: "Estimated",
     };
   }
@@ -331,6 +377,91 @@ function getReportsMealCount(booking) {
   return 0;
 }
 
+function getReportsDayCamperDetails(booking) {
+  const details = getRentalFormDetails(booking);
+
+  /*
+    Current simple Staff Booking fields:
+      dayCamperCount = number of day campers
+      dayCamperMeals = meals per day camper
+
+    The legacy array fallback keeps bookings created while the earlier
+    row-based Day Campers UI was being tested compatible with Reports.
+  */
+  const legacyDayCampers = Array.isArray(details.dayCampers)
+    ? details.dayCampers
+    : [];
+
+  const legacyCount = legacyDayCampers.reduce(
+    (sum, entry) => sum + getReportsNumber(entry?.count),
+    0
+  );
+
+  const legacyMealServings = legacyDayCampers.reduce(
+    (sum, entry) =>
+      sum +
+      getReportsNumber(entry?.count) *
+        getReportsNumber(entry?.mealsPerCamper),
+    0
+  );
+
+  const count = getReportsNumber(
+    firstReportsValue(
+      details.dayCamperCount,
+      booking.dayCamperCount,
+      legacyCount > 0 ? legacyCount : ""
+    )
+  );
+
+  const legacyMealsPerCamper =
+    legacyCount > 0 && legacyMealServings > 0
+      ? legacyMealServings / legacyCount
+      : 0;
+
+  const mealsPerCamper = getReportsNumber(
+    firstReportsValue(
+      details.dayCamperMeals,
+      booking.dayCamperMeals,
+      legacyMealsPerCamper > 0 ? legacyMealsPerCamper : ""
+    )
+  );
+
+  const storedMealServings = getReportsNumber(
+    firstReportsValue(
+      details.dayCamperMealServings,
+      details.dayCamperTotals?.mealServings,
+      booking.dayCamperMealServings
+    )
+  );
+
+  const mealServings =
+    storedMealServings > 0
+      ? storedMealServings
+      : legacyMealServings > 0
+        ? legacyMealServings
+        : count * mealsPerCamper;
+
+  const storedCamperDays = getReportsNumber(
+    firstReportsValue(
+      details.dayCamperCamperDays,
+      details.dayCamperTotals?.camperDays,
+      booking.dayCamperCamperDays
+    )
+  );
+
+  const camperDays =
+    storedCamperDays > 0
+      ? storedCamperDays
+      : mealServings * 0.2;
+
+  return {
+    count,
+    mealsPerCamper,
+    mealServings,
+    camperDays,
+  };
+}
+
 function getReportsCamperDaysDetails(booking) {
   const storedValue = getReportsNumber(
     firstReportsValue(
@@ -340,24 +471,51 @@ function getReportsCamperDaysDetails(booking) {
     )
   );
 
+  const guests = getReportsGuestCount(booking);
+  const nights = getReportsNightCount(booking);
+  const meals = getReportsMealCount(booking);
+  const dayCampers = getReportsDayCamperDetails(booking);
+
+  /*
+    If an imported record already has a stored Camper Days value,
+    treat that as the canonical total and do not add anything on top.
+    This avoids double-counting historical/imported calculations.
+  */
   if (storedValue > 0) {
     return {
       value: storedValue,
       source: "Stored",
+      guests,
+      nights,
+      meals,
+      dayCampers: dayCampers.count,
+      dayCamperMeals: dayCampers.mealsPerCamper,
+      dayCamperMealServings: dayCampers.mealServings,
+      dayCamperCamperDays: dayCampers.camperDays,
     };
   }
 
-  const guests = getReportsGuestCount(booking);
-  const nights = getReportsNightCount(booking);
-  const meals = getReportsMealCount(booking);
+  const overnightCamperDays =
+    guests > 0 && (nights > 0 || meals > 0)
+      ? guests * (nights * 0.4 + meals * 0.2)
+      : 0;
 
-  if (guests > 0 && (nights > 0 || meals > 0)) {
+  const dayCamperCamperDays = dayCampers.camperDays;
+  const totalCamperDays =
+    overnightCamperDays + dayCamperCamperDays;
+
+  if (totalCamperDays > 0) {
     return {
-      value: guests * (nights * 0.4 + meals * 0.2),
+      value: totalCamperDays,
       source: "Calculated",
       guests,
       nights,
       meals,
+      overnightCamperDays,
+      dayCampers: dayCampers.count,
+      dayCamperMeals: dayCampers.mealsPerCamper,
+      dayCamperMealServings: dayCampers.mealServings,
+      dayCamperCamperDays,
     };
   }
 
@@ -367,6 +525,11 @@ function getReportsCamperDaysDetails(booking) {
     guests,
     nights,
     meals,
+    overnightCamperDays,
+    dayCampers: dayCampers.count,
+    dayCamperMeals: dayCampers.mealsPerCamper,
+    dayCamperMealServings: dayCampers.mealServings,
+    dayCamperCamperDays,
   };
 }
 
@@ -1058,6 +1221,23 @@ function ReportsView({ inquiryBookings }) {
     0
   );
 
+  const totalDayCampers = filteredReportBookings.reduce(
+    (sum, booking) => sum + getReportsDayCamperDetails(booking).count,
+    0
+  );
+
+  const totalDayCamperMealServings = filteredReportBookings.reduce(
+    (sum, booking) =>
+      sum + getReportsDayCamperDetails(booking).mealServings,
+    0
+  );
+
+  const totalDayCamperCamperDays = filteredReportBookings.reduce(
+    (sum, booking) =>
+      sum + getReportsDayCamperDetails(booking).camperDays,
+    0
+  );
+
   const camperDayRows = useMemo(
     () =>
       filteredReportBookings.map((booking) =>
@@ -1101,10 +1281,10 @@ function ReportsView({ inquiryBookings }) {
       helper: "Used an existing camperDays value already saved on the booking.",
     },
     {
-      label: "Calculated from guests, nights, and meals",
+      label: "Calculated from overnight guests and day campers",
       count: camperDaysCalculatedCount,
       helper:
-        "Fallback formula: Guests × ((Nights × 0.4) + (Meals × 0.2)).",
+        "Formula: overnight guests × ((nights × 0.4) + (meals × 0.2)) + day campers × meals × 0.2.",
     },
     {
       label: "Missing enough data",
@@ -1195,6 +1375,8 @@ function ReportsView({ inquiryBookings }) {
           // Camper Days
           camperDays: 0,
           camperDayBookings: 0,
+          dayCampers: 0,
+          dayCamperMealServings: 0,
         });
       }
 
@@ -1205,6 +1387,10 @@ function ReportsView({ inquiryBookings }) {
       row.revenue += getReportsRevenue(booking);
 
       const camperDays = getReportsCamperDays(booking);
+      const dayCamperDetails = getReportsDayCamperDetails(booking);
+
+      row.dayCampers += dayCamperDetails.count;
+      row.dayCamperMealServings += dayCamperDetails.mealServings;
 
       if (camperDays > 0) {
         row.camperDays += camperDays;
@@ -1272,6 +1458,9 @@ function ReportsView({ inquiryBookings }) {
           guests: getReportsGuestCount(booking),
           nights: getReportsNightCount(booking),
           meals: getReportsMealCount(booking),
+          dayCampers: camperDays.dayCampers || 0,
+          dayCamperMeals: camperDays.dayCamperMeals || 0,
+          dayCamperMealServings: camperDays.dayCamperMealServings || 0,
         };
       })
       .filter((row) => row.camperDays > 0)
@@ -1313,6 +1502,7 @@ function ReportsView({ inquiryBookings }) {
           camperDays: 0,
           bookings: 0,
           guests: 0,
+          dayCampers: 0,
         });
       }
 
@@ -1321,6 +1511,7 @@ function ReportsView({ inquiryBookings }) {
       row.camperDays += camperDays;
       row.bookings += 1;
       row.guests += getReportsGuestCount(booking);
+      row.dayCampers += getReportsDayCamperDetails(booking).count;
     });
 
     return Array.from(map.values()).sort(
@@ -1369,6 +1560,8 @@ function ReportsView({ inquiryBookings }) {
           guests: getReportsGuestCount(booking),
           nights: getReportsNightCount(booking),
           meals: getReportsMealCount(booking),
+          dayCampers: getReportsDayCamperDetails(booking).count,
+          dayCamperMeals: getReportsDayCamperDetails(booking).mealsPerCamper,
         };
       })
       .filter((row) => row.camperDays > 0)
@@ -1634,6 +1827,9 @@ function ReportsView({ inquiryBookings }) {
           ["Total Guests", totalGuests],
           ["Total Nights", totalNights],
           ["Total Meal Services", totalMeals],
+          ["Total Day Campers", totalDayCampers],
+          ["Day Camper Meal Servings", totalDayCamperMealServings],
+          ["Day Camper Camper Days", totalDayCamperCamperDays],
           ["Total Camper Days", totalCamperDays],
           ["Projected Revenue", projectedRevenue],
           ["Deposits Received - Count", depositsReceivedCount],
@@ -1647,6 +1843,8 @@ function ReportsView({ inquiryBookings }) {
           "Bookings",
           "Confirmed",
           "Guests",
+          "Day Campers",
+          "Day Camper Meal Servings",
           "Camper Days",
           "Revenue",
         ],
@@ -1655,6 +1853,8 @@ function ReportsView({ inquiryBookings }) {
           row.bookings,
           row.confirmed,
           row.guests,
+          row.dayCampers,
+          row.dayCamperMealServings,
           row.camperDays,
           row.revenue,
         ]),
@@ -1958,8 +2158,8 @@ function ReportsView({ inquiryBookings }) {
             <p className="dashboard-eyebrow">Camp Usage</p>
             <h3>Camper Days</h3>
             <span>
-              Standardized usage across guests, overnight stays, and meals for the
-              selected report range.
+              Standardized usage across overnight guests, stays, meals, and day
+              campers for the selected report range.
             </span>
           </div>
         </div>
@@ -1977,6 +2177,11 @@ function ReportsView({ inquiryBookings }) {
                 <p>
                   Across {formatReportsNumber(camperDaysCoverageCount)} booking
                   {camperDaysCoverageCount === 1 ? "" : "s"} with usable data
+                  {totalDayCampers > 0
+                    ? ` · includes ${formatReportsNumber(totalDayCampers)} day camper${
+                        totalDayCampers === 1 ? "" : "s"
+                      }`
+                    : ""}
                 </p>
               </div>
 
@@ -2066,7 +2271,13 @@ function ReportsView({ inquiryBookings }) {
                         )} camper days`}
                         helper={`${formatReportsNumber(
                           row.camperDayBookings
-                        )} covered bookings`}
+                        )} covered bookings${
+                          row.dayCampers > 0
+                            ? ` · ${formatReportsNumber(row.dayCampers)} day camper${
+                                row.dayCampers === 1 ? "" : "s"
+                              }`
+                            : ""
+                        }`}
                         onHover={setHoveredCamperMonth}
                         hoverKey={row.monthKey}
                       />
@@ -2123,11 +2334,24 @@ function ReportsView({ inquiryBookings }) {
 
                           <span>
                             {formatReportsNumber(group.guests)}
-                            {" "}guests ·{" "}
+                            {" "}overnight guests ·{" "}
                             {formatReportsNumber(group.nights)}
                             {" "}nights ·{" "}
                             {formatReportsNumber(group.meals)}
-                            {" "}meals
+                            {" "}overnight meals
+                            {group.dayCampers > 0 && (
+                              <>
+                                {" · "}
+                                {formatReportsNumber(group.dayCampers)}
+                                {" "}day camper
+                                {group.dayCampers === 1 ? "" : "s"}
+                                {group.dayCamperMeals > 0
+                                  ? ` × ${formatReportsDecimal(
+                                      group.dayCamperMeals
+                                    )} meals`
+                                  : ""}
+                              </>
+                            )}
                           </span>
 
                           <b>
@@ -2163,13 +2387,17 @@ function ReportsView({ inquiryBookings }) {
 
     <p>
       Camper days are a standardized way to measure how much a
-      group used the camp. They combine guests, overnight stays,
-      and meals into one number so staff can compare retreat usage
-      more fairly across different group sizes and lengths.
+      group used the camp. Overnight guests receive credit for
+      nights and meals. Day campers receive meal credit only, since
+      they do not stay overnight.
     </p>
 
     <div className="reports-camper-formula">
-      Camper Days = Guests × ((Nights × 0.4) + (Meals × 0.2))
+      Overnight = Guests × ((Nights × 0.4) + (Meals × 0.2))
+      <br />
+      Day Campers = Day Campers × Meals per Camper × 0.2
+      <br />
+      Total Camper Days = Overnight + Day Campers
     </div>
 
 
@@ -2197,12 +2425,24 @@ function ReportsView({ inquiryBookings }) {
 
     <div className="reports-camper-explainer-card">
       <strong>
+        Day campers
+      </strong>
+
+      <span>
+        = number of day campers × meals per camper × 0.2
+      </span>
+    </div>
+
+
+    <div className="reports-camper-explainer-card">
+      <strong>
         Simple Example
       </strong>
 
       <span>
-        1 guest staying 3 nights and eating 3 meals =
-        1.8 camper days
+        1 overnight guest staying 3 nights and eating 3 meals =
+        1.8 camper days. 10 day campers eating 2 meals each add
+        4 camper days.
       </span>
     </div>
 
@@ -2306,7 +2546,13 @@ function ReportsView({ inquiryBookings }) {
                       row.bookings === 1 ? "" : "s"
                     } · ${formatReportsNumber(
                       row.guests
-                    )} guests`}
+                    )} overnight guests${
+                      row.dayCampers > 0
+                        ? ` · ${formatReportsNumber(row.dayCampers)} day camper${
+                            row.dayCampers === 1 ? "" : "s"
+                          }`
+                        : ""
+                    }`}
                   />
                 ))}
               </div>
@@ -2351,11 +2597,17 @@ function ReportsView({ inquiryBookings }) {
                     )} days`}
                     helper={`${row.dateLabel} · ${formatReportsNumber(
                       row.guests
-                    )} guests · ${formatReportsNumber(
+                    )} overnight guests · ${formatReportsNumber(
                       row.nights
                     )} nights · ${formatReportsNumber(
                       row.meals
-                    )} meals`}
+                    )} overnight meals${
+                      row.dayCampers > 0
+                        ? ` · ${formatReportsNumber(row.dayCampers)} day camper${
+                            row.dayCampers === 1 ? "" : "s"
+                          } × ${formatReportsDecimal(row.dayCamperMeals)} meals`
+                        : ""
+                    }`}
                   />
                 ))}
               </div>

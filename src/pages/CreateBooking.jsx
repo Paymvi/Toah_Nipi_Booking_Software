@@ -275,6 +275,9 @@ const TEST_BOOKING_DATA = {
       dinner: false,
     },
   },
+  /* Day Campers */
+  dayCamperCount: "6",
+  dayCamperMeals: "2",
 
   breakfastTime: "08:00",
   lunchTime: "12:00",
@@ -462,6 +465,38 @@ function validateRequiredBookingFields(formData) {
     errors.push("Guest count is required.");
   }
 
+  const dayCamperCountText = String(
+    formData.dayCamperCount ?? ""
+  ).trim();
+
+  const dayCamperMealsText = String(
+    formData.dayCamperMeals ?? ""
+  ).trim();
+
+  if (dayCamperCountText) {
+    const dayCamperCount = Number(dayCamperCountText);
+
+    if (
+      !Number.isFinite(dayCamperCount) ||
+      dayCamperCount < 0 ||
+      !Number.isInteger(dayCamperCount)
+    ) {
+      errors.push("# of Day Campers must be a whole number of 0 or greater.");
+    }
+  }
+
+  if (dayCamperMealsText) {
+    const dayCamperMeals = Number(dayCamperMealsText);
+
+    if (
+      !Number.isFinite(dayCamperMeals) ||
+      dayCamperMeals < 0 ||
+      !Number.isInteger(dayCamperMeals)
+    ) {
+      errors.push("# of Day Camper Meals must be a whole number of 0 or greater.");
+    }
+  }
+
   return errors;
 }
 
@@ -522,6 +557,9 @@ function createInitialFormState(
 
     /* Meals */
     mealSchedule: {},
+    /* Day Campers */
+    dayCamperCount: "",
+    dayCamperMeals: "",
 
     firstMeal: "",
     lastMeal: "",
@@ -815,6 +853,73 @@ function createExistingBookingFormState(booking) {
           },
         ];
 
+  const savedFacilities =
+    Array.isArray(details.facilities) &&
+    details.facilities.length > 0
+      ? details.facilities
+      : [
+          {
+            date: "",
+            time: "",
+            task: "",
+            assignedTo: "",
+            notes: "",
+          },
+        ];
+
+  /*
+    Day camper fields are intentionally simple:
+      - one total day-camper count
+      - one meals-per-camper count
+
+    The fallbacks below also understand the earlier temporary
+    dayCampers array so an already-tested booking can still load.
+  */
+  const legacyDayCampers =
+    Array.isArray(details.dayCampers)
+      ? details.dayCampers
+      : [];
+
+  const legacyDayCamperCount =
+    legacyDayCampers.reduce(
+      (total, entry) =>
+        total + Number(entry?.count || 0),
+      0
+    );
+
+  const legacyDayCamperMealServings =
+    legacyDayCampers.reduce(
+      (total, entry) =>
+        total +
+        Number(entry?.count || 0) *
+          Number(entry?.mealsPerCamper || 0),
+      0
+    );
+
+  const savedDayCamperCount =
+    details.dayCamperCount !== undefined &&
+    details.dayCamperCount !== null &&
+    String(details.dayCamperCount).trim() !== ""
+      ? String(details.dayCamperCount)
+      : legacyDayCamperCount > 0
+        ? String(legacyDayCamperCount)
+        : "";
+
+  const savedDayCamperMeals =
+    details.dayCamperMeals !== undefined &&
+    details.dayCamperMeals !== null &&
+    String(details.dayCamperMeals).trim() !== ""
+      ? String(details.dayCamperMeals)
+      : legacyDayCamperCount > 0 &&
+          legacyDayCamperMealServings > 0
+        ? String(
+            Math.round(
+              legacyDayCamperMealServings /
+                legacyDayCamperCount
+            )
+          )
+        : "";
+
   return {
     ...baseState,
     ...details,
@@ -1020,6 +1125,12 @@ function createExistingBookingFormState(booking) {
 
     mealSchedule:
       savedMealSchedule,
+
+    dayCamperCount:
+      savedDayCamperCount,
+
+    dayCamperMeals:
+      savedDayCamperMeals,
 
     firstMeal:
       details.firstMeal ||
@@ -1501,7 +1612,6 @@ export default function CreateBooking({
     });
   };
 
-
   const handleActivityChange = (
     index,
     field,
@@ -1725,6 +1835,18 @@ export default function CreateBooking({
       const mealScheduleBounds =
         getMealScheduleBounds(formData);
 
+      const dayCamperCount =
+        Number(formData.dayCamperCount || 0);
+
+      const dayCamperMeals =
+        Number(formData.dayCamperMeals || 0);
+
+      const dayCamperMealServings =
+        dayCamperCount * dayCamperMeals;
+
+      const dayCamperCamperDays =
+        dayCamperMealServings * 0.2;
+
       const attendeeCount =
         actualGuestTotal ||
         approxGuestTotal;
@@ -1918,6 +2040,23 @@ export default function CreateBooking({
             field values.
           */
           ...formData,
+
+          /*
+            Simple day-camper inputs. The derived values are stored
+            for reporting, but are not shown in this form.
+          */
+          dayCamperCount:
+            String(formData.dayCamperCount || ""),
+
+          dayCamperMeals:
+            String(formData.dayCamperMeals || ""),
+
+          dayCamperMealServings,
+          dayCamperCamperDays,
+
+          /* Remove the earlier temporary row-based format. */
+          dayCampers: undefined,
+          dayCamperTotals: undefined,
 
           numberOfMeals:
             String(
@@ -2547,6 +2686,40 @@ export default function CreateBooking({
                     )}
                   </label>
 
+                </div>
+              </div>
+
+              <div className="rental-subsection rental-day-campers-subsection">
+                <h3>Day Campers</h3>
+
+                <div className="rental-field-grid rental-day-campers-grid">
+                  <label className="rental-field">
+                    <span># of Day Campers</span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      name="dayCamperCount"
+                      value={formData.dayCamperCount}
+                      onChange={handleChange}
+                      placeholder="0"
+                    />
+                  </label>
+
+                  <label className="rental-field">
+                    <span># of Meals per Camper</span>
+
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      name="dayCamperMeals"
+                      value={formData.dayCamperMeals}
+                      onChange={handleChange}
+                      placeholder="0"
+                    />
+                  </label>
                 </div>
               </div>
 
