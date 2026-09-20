@@ -431,6 +431,18 @@ export default function LodgingCalendarView({
   const [selectedBuilding, setSelectedBuilding] =
     useState("all");
 
+  const [availabilityStartDate, setAvailabilityStartDate] =
+    useState("");
+
+  const [availabilityEndDate, setAvailabilityEndDate] =
+    useState("");
+
+  const [availabilitySummary, setAvailabilitySummary] =
+    useState(null);
+
+  const [availabilityError, setAvailabilityError] =
+    useState("");
+
   const [calendarView, setCalendarView] =
       useState("month");
 
@@ -777,6 +789,92 @@ export default function LodgingCalendarView({
     );
   }
 
+  function handleAvailabilityDateChange(setter, value) {
+    setter(value);
+    setAvailabilityError("");
+    setAvailabilitySummary(null);
+  }
+
+
+  function generateAvailableLodgingSummary() {
+    const startDate =
+      parseDateOnly(availabilityStartDate);
+
+    const endDate =
+      parseDateOnly(availabilityEndDate);
+
+    if (!startDate || !endDate) {
+      setAvailabilitySummary(null);
+      setAvailabilityError(
+        "Choose both a start date and an end date."
+      );
+      return;
+    }
+
+    if (endDate < startDate) {
+      setAvailabilitySummary(null);
+      setAvailabilityError(
+        "The end date must be the same as or later than the start date."
+      );
+      return;
+    }
+
+    const buildings = LODGING_BUILDINGS.map(
+      (building) => {
+        const overlappingBookings =
+          safeDatedInquiries.filter((booking) => {
+            const bookingRange =
+              getInquiryDateRange(booking);
+
+            if (!bookingRange) {
+              return false;
+            }
+
+            const overlapsSelectedPeriod =
+              bookingRange.startDate <= endDate &&
+              bookingRange.endDate >= startDate;
+
+            return (
+              overlapsSelectedPeriod &&
+              bookingMatchesBuilding(
+                booking,
+                building.id
+              )
+            );
+          });
+
+        return {
+          ...building,
+          overlappingBookings,
+          isAvailable:
+            overlappingBookings.length === 0,
+        };
+      }
+    );
+
+    setAvailabilityError("");
+    setAvailabilitySummary({
+      startDate: availabilityStartDate,
+      endDate: availabilityEndDate,
+      buildings,
+    });
+  }
+
+
+  const availableBuildingCount =
+    availabilitySummary
+      ? availabilitySummary.buildings.filter(
+          (building) => building.isAvailable
+        ).length
+      : 0;
+
+  const assignedBuildingCount =
+    availabilitySummary
+      ? availabilitySummary.buildings.length -
+        availableBuildingCount
+      : 0;
+
+
   function goToPreviousWeek(){
 
     setSelectedWeekStart(
@@ -854,6 +952,235 @@ export default function LodgingCalendarView({
           ))}
         </div>
 
+
+        <section className="lodging-availability-generator">
+          <div className="lodging-availability-generator-header">
+            <div>
+              <span className="lodging-availability-kicker">
+                Availability lookup
+              </span>
+
+              <h3>
+                Generate available lodging summary
+              </h3>
+
+              <p>
+                Choose a date range to see which lodging
+                buildings have no overlapping assignments
+                and which already have groups scheduled.
+              </p>
+            </div>
+
+            <span className="lodging-availability-note">
+              Building-level summary
+            </span>
+          </div>
+
+          <div className="lodging-availability-controls">
+            <label>
+              <span>Start date</span>
+
+              <input
+                type="date"
+                value={availabilityStartDate}
+                onChange={(event) =>
+                  handleAvailabilityDateChange(
+                    setAvailabilityStartDate,
+                    event.target.value
+                  )
+                }
+              />
+            </label>
+
+            <label>
+              <span>End date</span>
+
+              <input
+                type="date"
+                value={availabilityEndDate}
+                min={availabilityStartDate || undefined}
+                onChange={(event) =>
+                  handleAvailabilityDateChange(
+                    setAvailabilityEndDate,
+                    event.target.value
+                  )
+                }
+              />
+            </label>
+
+            <button
+              className="lodging-availability-generate-button"
+              type="button"
+              onClick={generateAvailableLodgingSummary}
+            >
+              Generate Available Lodging Summary
+            </button>
+          </div>
+
+          {availabilityError && (
+            <p
+              className="lodging-availability-error"
+              role="alert"
+            >
+              {availabilityError}
+            </p>
+          )}
+
+          {availabilitySummary && (
+            <div className="lodging-availability-summary">
+              <div className="lodging-availability-summary-header">
+                <div>
+                  <span>Availability summary</span>
+
+                  <strong>
+                    {formatDateRange(
+                      availabilitySummary.startDate,
+                      availabilitySummary.endDate
+                    )}
+                  </strong>
+                </div>
+
+                <div className="lodging-availability-summary-totals">
+                  <span className="available">
+                    {availableBuildingCount} clear
+                  </span>
+
+                  <span className="assigned">
+                    {assignedBuildingCount} assigned
+                  </span>
+                </div>
+              </div>
+
+              <div className="lodging-availability-summary-grid">
+                {availabilitySummary.buildings.map(
+                  (building) => (
+                    <article
+                      className={[
+                        "lodging-availability-building-card",
+                        building.colorClass || "",
+                        building.isAvailable
+                          ? "is-available"
+                          : "has-assignments",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      key={building.id}
+                    >
+                      <div className="lodging-availability-building-heading">
+                        <div className="lodging-availability-building-name">
+                          <span className="lodging-availability-building-image">
+                            <img
+                              src={building.image}
+                              alt=""
+                              aria-hidden="true"
+                              onError={(event) => {
+                                event.currentTarget.style.display =
+                                  "none";
+                              }}
+                            />
+                          </span>
+
+                          <div>
+                            <strong>
+                              {building.label}
+                            </strong>
+
+                            <small>
+                              {building.isAvailable
+                                ? "No overlapping lodging assignments"
+                                : `${building.overlappingBookings.length} overlapping assignment${
+                                    building.overlappingBookings.length === 1
+                                      ? ""
+                                      : "s"
+                                  }`}
+                            </small>
+                          </div>
+                        </div>
+
+                        <span
+                          className={`lodging-availability-status ${
+                            building.isAvailable
+                              ? "available"
+                              : "assigned"
+                          }`}
+                        >
+                          {building.isAvailable
+                            ? "Available"
+                            : "Assigned"}
+                        </span>
+                      </div>
+
+                      {building.isAvailable ? (
+                        <p className="lodging-availability-clear-message">
+                          No dated booking in the selected
+                          period is currently assigned to this
+                          building.
+                        </p>
+                      ) : (
+                        <div className="lodging-availability-conflicts">
+                          <span>Assignments in this period</span>
+
+                          <ul>
+                            {building.overlappingBookings
+                              .slice(0, 3)
+                              .map((booking, index) => (
+                                <li
+                                  key={`${building.id}-${
+                                    booking.id || index
+                                  }`}
+                                >
+                                  <div>
+                                    <strong>
+                                      {booking.organizationName ||
+                                        "Unnamed Organization"}
+                                    </strong>
+
+                                    <small>
+                                      {formatDateRange(
+                                        booking.startDate,
+                                        booking.endDate
+                                      )}
+                                    </small>
+                                  </div>
+
+                                  <span>
+                                    {booking.status ||
+                                      "No status"}
+                                  </span>
+                                </li>
+                              ))}
+                          </ul>
+
+                          {building.overlappingBookings.length >
+                            3 && (
+                            <em>
+                              +{
+                                building.overlappingBookings
+                                  .length - 3
+                              } more assignment
+                              {building.overlappingBookings
+                                .length - 3 ===
+                              1
+                                ? ""
+                                : "s"}
+                            </em>
+                          )}
+                        </div>
+                      )}
+                    </article>
+                  )
+                )}
+              </div>
+
+              <p className="lodging-availability-summary-footnote">
+                This summary is intentionally conservative:
+                a building is marked assigned when any dated
+                booking overlaps the selected period and lists
+                that building in its lodging assignment.
+              </p>
+            </div>
+          )}
+        </section>
 
         <div
           className="lodging-calendar-building-switcher"
