@@ -960,6 +960,7 @@ function getDefaultSpreadsheetSettings() {
     sourceTypes: [],
     sourceSheets: [],
     statuses: [],
+    buildingTypes: [],
     waitlist: "all",
 
     startDate: "",
@@ -1362,6 +1363,96 @@ function isSpreadsheetUsableValue(value) {
     text !== "no contact name" &&
     text !== "unnamed organization" &&
     text !== "unassigned"
+  );
+}
+
+const SPREADSHEET_BUILDING_OPTIONS = [
+  { value: "Hebron", label: "Hebron" },
+  { value: "Bethel", label: "Bethel" },
+  { value: "Dothan", label: "Dothan" },
+  { value: "Guest House", label: "Guest House" },
+  { value: "Ajalon", label: "Ajalon" },
+  { value: "Capernaum", label: "Capernaum" },
+];
+
+function getSpreadsheetBuildingValueText(value) {
+  if (value === null || value === undefined || value === "") {
+    return "";
+  }
+
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value).toLowerCase();
+    } catch {
+      return String(value).toLowerCase();
+    }
+  }
+
+  return String(value).trim().toLowerCase();
+}
+
+function getSpreadsheetBuildingSearchText(booking) {
+  const rawBuildingValues =
+    booking.rawSpreadsheetData && typeof booking.rawSpreadsheetData === "object"
+      ? Object.entries(booking.rawSpreadsheetData)
+          .filter(([key]) => /building|room|housing|lodg/i.test(key))
+          .map(([, value]) => value)
+      : [];
+
+  return [
+    booking.roomName,
+    booking.buildingsRooms,
+    booking.housing,
+    booking.housingSummary,
+    booking.housingAssignments,
+    booking.lodging,
+    booking.lodgingSummary,
+    booking.lodgingAssignments,
+    ...rawBuildingValues,
+  ]
+    .map(getSpreadsheetBuildingValueText)
+    .filter(Boolean)
+    .join(" ");
+}
+
+function bookingMatchesSpreadsheetBuilding(booking, buildingType) {
+  const buildingText = getSpreadsheetBuildingSearchText(booking);
+
+  if (!buildingText) {
+    return false;
+  }
+
+  if (buildingType === "Hebron") {
+    return (
+      buildingText.includes("hebron") ||
+      buildingText.includes("men's bunks") ||
+      buildingText.includes("mens bunks") ||
+      buildingText.includes("women's bunks") ||
+      buildingText.includes("womens bunks")
+    );
+  }
+
+  if (buildingType === "Guest House") {
+    return (
+      buildingText.includes("guest house") ||
+      buildingText.includes("guesthouse")
+    );
+  }
+
+  return buildingText.includes(String(buildingType || "").toLowerCase());
+}
+
+function bookingMatchesSpreadsheetBuildingFilters(booking, selectedBuildingTypes) {
+  const selectedBuildings = Array.isArray(selectedBuildingTypes)
+    ? selectedBuildingTypes
+    : [];
+
+  if (selectedBuildings.length === 0) {
+    return true;
+  }
+
+  return selectedBuildings.some((buildingType) =>
+    bookingMatchesSpreadsheetBuilding(booking, buildingType)
   );
 }
 
@@ -3115,6 +3206,12 @@ function BookingSpreadsheetView({
     getSavedSpreadsheetSettings()
   );
 
+  const selectedSpreadsheetBuildings = Array.isArray(
+    spreadsheetSettings.buildingTypes
+  )
+    ? spreadsheetSettings.buildingTypes
+    : [];
+
   const [savedSpreadsheetViews, setSavedSpreadsheetViews] = useState(() =>
     getSavedSpreadsheetSavedViews()
   );
@@ -3396,6 +3493,23 @@ function BookingSpreadsheetView({
         return false;
       }
 
+      /*
+        BUILDING TYPE
+
+        An empty selection means "all buildings". When staff select
+        multiple buildings, a booking is shown if it uses ANY selected
+        building. A booking assigned to both Hebron and Bethel therefore
+        matches either filter.
+      */
+      if (
+        !bookingMatchesSpreadsheetBuildingFilters(
+          booking,
+          selectedSpreadsheetBuildings
+        )
+      ) {
+        return false;
+      }
+
       if (
         !bookingTouchesSpreadsheetDateRange(
           booking,
@@ -3461,6 +3575,7 @@ function BookingSpreadsheetView({
   }, [
     processedInquiryBookings,
     spreadsheetYearView,
+    selectedSpreadsheetBuildings,
     spreadsheetSettings.searchText,
     spreadsheetSettings.startDate,
     spreadsheetSettings.endDate,
@@ -3815,6 +3930,65 @@ function BookingSpreadsheetView({
               </label>
             </div>
 
+            <div className="spreadsheet-building-filter">
+              <div className="spreadsheet-building-filter-header">
+                <div>
+                  <span>Building Type</span>
+                  <small>
+                    {selectedSpreadsheetBuildings.length === 0
+                      ? "All buildings"
+                      : `${selectedSpreadsheetBuildings.length} selected`}
+                  </small>
+                </div>
+
+                {selectedSpreadsheetBuildings.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateSpreadsheetSettings({ buildingTypes: [] })
+                    }
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              <div
+                className="spreadsheet-building-filter-options"
+                aria-label="Filter spreadsheet by building type"
+              >
+                {SPREADSHEET_BUILDING_OPTIONS.map((building) => {
+                  const isSelected = selectedSpreadsheetBuildings.includes(
+                    building.value
+                  );
+
+                  return (
+                    <button
+                      className={isSelected ? "active" : ""}
+                      type="button"
+                      key={building.value}
+                      aria-pressed={isSelected}
+                      onClick={() =>
+                        updateSpreadsheetSettings({
+                          buildingTypes: toggleSpreadsheetArrayValue(
+                            selectedSpreadsheetBuildings,
+                            building.value
+                          ),
+                        })
+                      }
+                    >
+                      <span className="spreadsheet-building-filter-check"
+                        aria-hidden="true"
+                      >
+                        {isSelected ? "✓" : ""}
+                      </span>
+                      <span>{building.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
 
             <label className="spreadsheet-row-preview-toggle">
               <input
@@ -3932,6 +4106,15 @@ function BookingSpreadsheetView({
                   {spreadsheetSettings.searchText
                     ? `"${spreadsheetSettings.searchText}"`
                     : "None"}
+                </strong>
+              </span>
+
+              <span>
+                Buildings:{" "}
+                <strong>
+                  {selectedSpreadsheetBuildings.length === 0
+                    ? "All"
+                    : selectedSpreadsheetBuildings.join(", ")}
                 </strong>
               </span>
 
@@ -4104,7 +4287,7 @@ function BookingSpreadsheetView({
               <div className="empty-state">
                 <strong>No Master bookings match this view</strong>
                 <p>
-                  Try clearing the search or selecting a different year.
+                  Try clearing the search, building filters, date range, or selecting a different year.
                 </p>
               </div>
             )}
