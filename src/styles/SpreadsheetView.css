@@ -3302,3 +3302,293 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   FINAL OVERRIDE V2: Spacious Spreadsheet Header
+   Uses the full card width and keeps controls compact.
+========================================================= */
+
+.spreadsheet-view-header {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 16px !important;
+  padding: 18px !important;
+}
+
+.spreadsheet-view-header-top {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.spreadsheet-view-header-top .dashboard-heading-with-icon {
+  min-width: 0;
+}
+
+.spreadsheet-view-header-top .spreadsheet-year-view-toggle {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.spreadsheet-view-header-layout {
+  min-width: 0;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
+  align-items: start;
+  gap: 16px;
+}
+
+.spreadsheet-view-header-main {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+/* Compact summary cards so they do not dominate the header. */
+.spreadsheet-view-summary {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)) !important;
+  gap: 8px !important;
+
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+.spreadsheet-view-summary .spreadsheet-summary-card,
+.spreadsheet-view-summary span {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 58px !important;
+  height: 58px !important;
+
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 11px !important;
+}
+
+.spreadsheet-view-summary strong {
+  font-size: 1.08rem;
+}
+
+/* The building picker now gets the wide side of the header. */
+.spreadsheet-view-header-main .spreadsheet-building-filter {
+  width: 100%;
+  margin: 0;
+
+  padding: 12px;
+  gap: 10px;
+}
+
+.spreadsheet-view-header-main .spreadsheet-building-filter-options {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.spreadsheet-view-header-main .spreadsheet-building-filter-options > button {
+  min-height: 38px;
+  padding: 7px 10px;
+}
+
+/* Right-side controls are intentionally compact. */
+.spreadsheet-settings-stack {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+
+  display: grid !important;
+  gap: 9px !important;
+
+  justify-self: stretch !important;
+  align-self: start !important;
+}
+
+.spreadsheet-date-range-filter {
+  width: 100%;
+  margin-top: 0 !important;
+
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 9px !important;
+}
+
+.spreadsheet-date-range-filter label {
+  min-width: 0;
+}
+
+.spreadsheet-date-range-filter input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+}
+
+.spreadsheet-header-toggle-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.spreadsheet-header-toggle-grid .spreadsheet-row-preview-toggle {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 7px;
+  padding: 7px 9px;
+}
+
+.spreadsheet-header-toggle-grid .spreadsheet-row-preview-toggle span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spreadsheet-header-sort,
+.spreadsheet-header-search {
+  width: 100%;
+  max-width: none !important;
+}
+
+.spreadsheet-header-sort {
+  display: grid;
+  gap: 6px;
+}
+
+.spreadsheet-header-sort > label,
+.spreadsheet-header-search > label {
+  color: #667085;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.spreadsheet-header-sort-control {
+  position: relative;
+  width: 100%;
+  min-height: 42px;
+
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+
+  padding: 0 10px;
+  border: 1px solid #d8dee8;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(28, 35, 52, 0.04);
+}
+
+.spreadsheet-header-sort-control > svg {
+  color: #443a9c;
+}
+
+.spreadsheet-header-sort-control select {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #303442;
+
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.spreadsheet-header-search-control input {
+  min-height: 42px;
+}
+
+/* Responsive: keep the new layout roomy until there really is not space. */
+@media (max-width: 1500px) {
+  .spreadsheet-view-header-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(330px, 360px);
+  }
+
+  .spreadsheet-view-header-main .spreadsheet-building-filter-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .spreadsheet-view-header-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .spreadsheet-settings-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: end !important;
+  }
+
+  .spreadsheet-date-range-filter {
+    grid-column: 1 / -1;
+  }
+
+  .spreadsheet-header-toggle-grid {
+    grid-column: 1 / -1;
+  }
+
+  .spreadsheet-view-header-main .spreadsheet-building-filter-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .spreadsheet-view-header-top {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .spreadsheet-view-header-top .spreadsheet-year-view-toggle {
+    width: 100%;
+  }
+
+  .spreadsheet-view-header-top .spreadsheet-year-view-toggle button {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .spreadsheet-view-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .spreadsheet-view-header-main .spreadsheet-building-filter-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .spreadsheet-settings-stack {
+    grid-template-columns: 1fr !important;
+  }
+
+  .spreadsheet-date-range-filter,
+  .spreadsheet-header-toggle-grid {
+    grid-template-columns: 1fr;
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .spreadsheet-view-summary {
+    grid-template-columns: 1fr !important;
+  }
+
+  .spreadsheet-view-header-main .spreadsheet-building-filter-options {
+    grid-template-columns: 1fr;
+  }
+}
+

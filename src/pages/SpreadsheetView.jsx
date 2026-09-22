@@ -3813,7 +3813,7 @@ function BookingSpreadsheetView({
   <section className="spreadsheet-view-page">
       <article className="dashboard-card spreadsheet-view-card">
         <div className="spreadsheet-view-header">
-          <div className="spreadsheet-view-header-main">
+          <div className="spreadsheet-view-header-top">
             <div className="dashboard-heading-with-icon">
               <span className="section-icon">
                 <FaTable />
@@ -3824,31 +3824,6 @@ function BookingSpreadsheetView({
                 <h2>All Booking Data</h2>
               </div>
             </div>
-
-            {visibleSummaryCards.length > 0 && (
-              <div className="spreadsheet-view-summary">
-                {visibleSummaryCards.map((card) => (
-                  <span
-                    className={`spreadsheet-summary-card ${card.className}`}
-                    key={card.id}
-                  >
-                    <strong>{card.value}</strong>
-                    {card.label}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="spreadsheet-settings-stack">
-            {/* <button
-              className="primary-dashboard-button spreadsheet-settings-button"
-              type="button"
-              onClick={() => setIsSettingsOpen(true)}
-            >
-              <FaCog />
-              Settings
-            </button> */}
 
             <div
               className="spreadsheet-year-view-toggle"
@@ -3899,199 +3874,225 @@ function BookingSpreadsheetView({
                 Other
               </button>
             </div>
+          </div>
 
-            <div className="spreadsheet-date-range-filter">
-              <label>
-                <span>Start date</span>
-                <input
-                  type="date"
-                  value={spreadsheetSettings.startDate || ""}
-                  placeholder={spreadsheetDateBounds.earliest}
-                  onChange={(event) =>
-                    updateSpreadsheetSettings({
-                      startDate: event.target.value,
-                    })
-                  }
-                />
-              </label>
-
-              <label>
-                <span>End date</span>
-                <input
-                  type="date"
-                  value={spreadsheetSettings.endDate || ""}
-                  placeholder={spreadsheetDateBounds.latest}
-                  onChange={(event) =>
-                    updateSpreadsheetSettings({
-                      endDate: event.target.value,
-                    })
-                  }
-                />
-              </label>
-            </div>
-
-            <div className="spreadsheet-building-filter">
-              <div className="spreadsheet-building-filter-header">
-                <div>
-                  <span>Building Type</span>
-                  <small>
-                    {selectedSpreadsheetBuildings.length === 0
-                      ? "All buildings"
-                      : `${selectedSpreadsheetBuildings.length} selected`}
-                  </small>
+          <div className="spreadsheet-view-header-layout">
+            <div className="spreadsheet-view-header-main">
+              {visibleSummaryCards.length > 0 && (
+                <div className="spreadsheet-view-summary">
+                  {visibleSummaryCards.map((card) => (
+                    <span
+                      className={`spreadsheet-summary-card ${card.className}`}
+                      key={card.id}
+                    >
+                      <strong>{card.value}</strong>
+                      {card.label}
+                    </span>
+                  ))}
                 </div>
+              )}
 
-                {selectedSpreadsheetBuildings.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      updateSpreadsheetSettings({ buildingTypes: [] })
-                    }
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
+              <div className="spreadsheet-building-filter">
+                <div className="spreadsheet-building-filter-header">
+                  <div>
+                    <span>Building Type</span>
+                    <small>
+                      {selectedSpreadsheetBuildings.length === 0
+                        ? "All buildings"
+                        : `${selectedSpreadsheetBuildings.length} selected`}
+                    </small>
+                  </div>
 
-              <div
-                className="spreadsheet-building-filter-options"
-                aria-label="Filter spreadsheet by building type"
-              >
-                {SPREADSHEET_BUILDING_OPTIONS.map((building) => {
-                  const isSelected = selectedSpreadsheetBuildings.includes(
-                    building.value
-                  );
-
-                  return (
+                  {selectedSpreadsheetBuildings.length > 0 && (
                     <button
-                      className={isSelected ? "active" : ""}
                       type="button"
-                      key={building.value}
-                      aria-pressed={isSelected}
                       onClick={() =>
-                        updateSpreadsheetSettings({
-                          buildingTypes: toggleSpreadsheetArrayValue(
-                            selectedSpreadsheetBuildings,
-                            building.value
-                          ),
-                        })
+                        updateSpreadsheetSettings({ buildingTypes: [] })
                       }
                     >
-                      <span className="spreadsheet-building-filter-check"
-                        aria-hidden="true"
-                      >
-                        {isSelected ? "✓" : ""}
-                      </span>
-                      <span>{building.label}</span>
+                      Clear
                     </button>
-                  );
-                })}
-              </div>
-            </div>
-
-
-            <label className="spreadsheet-row-preview-toggle">
-              <input
-                type="checkbox"
-                checked={Boolean(spreadsheetSettings.showRowPreviewPopups)}
-                onChange={(event) =>
-                  updateSpreadsheetSettings({
-                    showRowPreviewPopups: event.target.checked,
-                  })
-                }
-              />
-
-              <span>
-                <FaInfoCircle />
-                Row popups
-              </span>
-            </label>
-
-            <label className="spreadsheet-row-preview-toggle spreadsheet-starred-first-toggle">
-              <input
-                type="checkbox"
-                checked={Boolean(spreadsheetSettings.showStarredRowsFirst)}
-                onChange={(event) =>
-                  updateSpreadsheetSettings({
-                    showStarredRowsFirst: event.target.checked,
-                  })
-                }
-              />
-
-              <span>
-                <FaStar />
-                Starred first
-              </span>
-            </label>
-
-
-            {/* =========================================================
-                QUICK SORT
-            ========================================================= */}
-            <div className="spreadsheet-header-sort">
-              <label htmlFor="spreadsheet-header-sort-select">
-                Sort By
-              </label>
-
-              <div className="spreadsheet-header-sort-control">
-                <FaSortAmountDown />
-
-                <select
-                  id="spreadsheet-header-sort-select"
-                  value={currentQuickSortValue}
-                  onChange={handleQuickSortChange}
-                >
-                  {currentQuickSortValue === "custom" && (
-                    <option value="custom" disabled>
-                      Custom table sort
-                    </option>
                   )}
+                </div>
 
-                  {SPREADSHEET_QUICK_SORT_OPTIONS.map((option) => (
-                    <option
-                      value={option.value}
-                      key={option.value}
-                    >
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                <div
+                  className="spreadsheet-building-filter-options"
+                  aria-label="Filter spreadsheet by building type"
+                >
+                  {SPREADSHEET_BUILDING_OPTIONS.map((building) => {
+                    const isSelected = selectedSpreadsheetBuildings.includes(
+                      building.value
+                    );
+
+                    return (
+                      <button
+                        className={isSelected ? "active" : ""}
+                        type="button"
+                        key={building.value}
+                        aria-pressed={isSelected}
+                        onClick={() =>
+                          updateSpreadsheetSettings({
+                            buildingTypes: toggleSpreadsheetArrayValue(
+                              selectedSpreadsheetBuildings,
+                              building.value
+                            ),
+                          })
+                        }
+                      >
+                        <span
+                          className="spreadsheet-building-filter-check"
+                          aria-hidden="true"
+                        >
+                          {isSelected ? "✓" : ""}
+                        </span>
+                        <span>{building.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
+            <div className="spreadsheet-settings-stack">
+              {/* <button
+                className="primary-dashboard-button spreadsheet-settings-button"
+                type="button"
+                onClick={() => setIsSettingsOpen(true)}
+              >
+                <FaCog />
+                Settings
+              </button> */}
 
-            <div className="spreadsheet-header-search">
-              <label htmlFor="spreadsheet-header-search-input">
-                Search Everything
-              </label>
-
-              <div className="spreadsheet-header-search-control">
-                <input
-                  id="spreadsheet-header-search-input"
-                  type="search"
-                  value={spreadsheetSettings.searchText}
-                  placeholder="Search bookings..."
-                  onChange={(event) =>
-                    updateSpreadsheetSettings({
-                      searchText: event.target.value,
-                    })
-                  }
-                />
-
-                {spreadsheetSettings.searchText && (
-                  <button
-                    type="button"
-                    className="spreadsheet-header-search-clear"
-                    onClick={() =>
+              <div className="spreadsheet-date-range-filter">
+                <label>
+                  <span>Start date</span>
+                  <input
+                    type="date"
+                    value={spreadsheetSettings.startDate || ""}
+                    placeholder={spreadsheetDateBounds.earliest}
+                    onChange={(event) =>
                       updateSpreadsheetSettings({
-                        searchText: "",
+                        startDate: event.target.value,
                       })
                     }
-                    aria-label="Clear spreadsheet search"
+                  />
+                </label>
+
+                <label>
+                  <span>End date</span>
+                  <input
+                    type="date"
+                    value={spreadsheetSettings.endDate || ""}
+                    placeholder={spreadsheetDateBounds.latest}
+                    onChange={(event) =>
+                      updateSpreadsheetSettings({
+                        endDate: event.target.value,
+                      })
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="spreadsheet-header-toggle-grid">
+                <label className="spreadsheet-row-preview-toggle">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(spreadsheetSettings.showRowPreviewPopups)}
+                    onChange={(event) =>
+                      updateSpreadsheetSettings({
+                        showRowPreviewPopups: event.target.checked,
+                      })
+                    }
+                  />
+
+                  <span>
+                    <FaInfoCircle />
+                    Row popups
+                  </span>
+                </label>
+
+                <label className="spreadsheet-row-preview-toggle spreadsheet-starred-first-toggle">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(spreadsheetSettings.showStarredRowsFirst)}
+                    onChange={(event) =>
+                      updateSpreadsheetSettings({
+                        showStarredRowsFirst: event.target.checked,
+                      })
+                    }
+                  />
+
+                  <span>
+                    <FaStar />
+                    Starred first
+                  </span>
+                </label>
+              </div>
+
+              {/* =========================================================
+                  QUICK SORT
+              ========================================================= */}
+              <div className="spreadsheet-header-sort">
+                <label htmlFor="spreadsheet-header-sort-select">
+                  Sort By
+                </label>
+
+                <div className="spreadsheet-header-sort-control">
+                  <FaSortAmountDown />
+
+                  <select
+                    id="spreadsheet-header-sort-select"
+                    value={currentQuickSortValue}
+                    onChange={handleQuickSortChange}
                   >
-                    ×
-                  </button>
-                )}
+                    {currentQuickSortValue === "custom" && (
+                      <option value="custom" disabled>
+                        Custom table sort
+                      </option>
+                    )}
+
+                    {SPREADSHEET_QUICK_SORT_OPTIONS.map((option) => (
+                      <option value={option.value} key={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="spreadsheet-header-search">
+                <label htmlFor="spreadsheet-header-search-input">
+                  Search Everything
+                </label>
+
+                <div className="spreadsheet-header-search-control">
+                  <input
+                    id="spreadsheet-header-search-input"
+                    type="search"
+                    value={spreadsheetSettings.searchText}
+                    placeholder="Search bookings..."
+                    onChange={(event) =>
+                      updateSpreadsheetSettings({
+                        searchText: event.target.value,
+                      })
+                    }
+                  />
+
+                  {spreadsheetSettings.searchText && (
+                    <button
+                      type="button"
+                      className="spreadsheet-header-search-clear"
+                      onClick={() =>
+                        updateSpreadsheetSettings({
+                          searchText: "",
+                        })
+                      }
+                      aria-label="Clear spreadsheet search"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
