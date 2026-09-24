@@ -78,6 +78,10 @@ import StaffSignOutButton from "../components/StaffSignOutButton";
 import { supabase } from "../lib/supabaseClient";
 
 import {
+  markGuestInquiryConverted,
+} from "../services/guestInquiryService";
+
+import {
   monthNames,
   sidebarSections,
   activityLocations,
@@ -8209,29 +8213,6 @@ export default function Dashboard() {
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [activeView, setActiveView] = useState("Dashboard");
 
-  useEffect(() => {
-
-    const pathMap = {
-      "/dashboard": "Dashboard",
-      "/form": "Form",
-      "/portal-admin": "Portal View",
-
-      "/calendar": "Calendar View",
-      "/lodging-calendar": "Lodging Calendar",
-      "/contacts": "Contacts View",
-      "/inquiry-pipeline": "Inquiry Pipeline",
-      "/reports": "Reports",
-      "/jobs": "Jobs",
-      "/user-admin": "User Admin",
-      "/guest-inquiries": "Guest Inquiries",
-    };
-
-
-    setActiveView(
-      pathMap[location.pathname] || "Dashboard"
-    );
-
-  }, [location.pathname]);
 
   const routes = {
     Dashboard: "/dashboard",
@@ -8247,9 +8228,10 @@ export default function Dashboard() {
     
     Reports: "/reports",
 
-    
     "User Admin": "/user-admin",
     Jobs: "/jobs",
+
+    "Guest Inquiries": "/guest-inquiries",
   };
 
   useEffect(() => {
@@ -8276,6 +8258,11 @@ export default function Dashboard() {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [bookingDetailTab, setBookingDetailTab] = useState("Overview");
   const [bookingFormSeed, setBookingFormSeed] = useState(null);
+
+  const [
+    guestBookingSource,
+    setGuestBookingSource,
+  ] = useState(null);
 
   const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
   const [isDatedInquirySettingsOpen, setIsDatedInquirySettingsOpen] =
@@ -9448,6 +9435,34 @@ export default function Dashboard() {
     });
   };
 
+  const startBookingFromGuestInquiry = ({
+    bookingSeed,
+    guestInquiryId,
+    guestOrganizationName,
+  }) => {
+    setBookingFormSeed(
+      bookingSeed
+    );
+
+    setGuestBookingSource({
+      guestInquiryId,
+      guestOrganizationName,
+    });
+
+    setSelectedBooking(null);
+
+    setBookingDetailTab(
+      "Overview"
+    );
+
+    navigate("/form");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
 
   return (
     <main
@@ -9511,6 +9526,7 @@ export default function Dashboard() {
             onClick={() => {
               setSelectedBooking(null);
               setBookingFormSeed(null);
+              setGuestBookingSource(null);
               setBookingDetailTab("Overview");
               navigate("/form")
             }}
@@ -9701,7 +9717,24 @@ export default function Dashboard() {
                 "blank-booking-form"
               }
               initialInquiry={bookingFormSeed}
-              onBookingCreated={() => {
+              onBookingCreated={async (
+                savedBooking
+              ) => {
+                if (guestBookingSource) {
+                  try {
+                    await markGuestInquiryConverted(
+                      guestBookingSource.guestInquiryId,
+                      savedBooking?.id
+                    );
+                  } catch (error) {
+                    console.error(
+                      "Booking saved, but guest inquiry could not be marked converted:",
+                      error
+                    );
+                  }
+                }
+
+                setGuestBookingSource(null);
                 setBookingFormSeed(null);
               }}
             />
@@ -9787,7 +9820,11 @@ export default function Dashboard() {
           />
 
         ) : activeView === "Guest Inquiries" ? (
-          <GuestInquiriesView />
+          <GuestInquiriesView
+            onCreateBooking={
+              startBookingFromGuestInquiry
+            }
+          />
 
         ) : activeView === "Reports" ? (
           <ReportsView inquiryBookings={inquiryBookings} />

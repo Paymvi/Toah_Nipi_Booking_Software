@@ -28,12 +28,11 @@ import {
   FaUtensils,
 } from "react-icons/fa";
 
-import CreateBooking from "./CreateBooking";
+// import CreateBooking from "./CreateBooking";
 
 import {
   declineGuestInquiry,
   getGuestInquiries,
-  markGuestInquiryConverted,
 } from "../services/guestInquiryService";
 
 
@@ -650,7 +649,9 @@ function RequestCard({
 }
 
 
-export default function GuestInquiriesView() {
+export default function GuestInquiriesView({
+  onCreateBooking,
+}) {
   const [
     inquiries,
     setInquiries,
@@ -669,11 +670,6 @@ export default function GuestInquiriesView() {
   const [
     selectedInquiry,
     setSelectedInquiry,
-  ] = useState(null);
-
-  const [
-    bookingSeed,
-    setBookingSeed,
   ] = useState(null);
 
   const [
@@ -809,28 +805,28 @@ export default function GuestInquiriesView() {
 
 
   const openBookingForm = () => {
-    if (
-      !selectedInquiry
-    ) {
+    if (!selectedInquiry) {
       return;
     }
 
-    setBookingSeed(
+    const bookingSeed =
       guestInquiryToStaffInquiry(
         selectedInquiry
-      )
-    );
+      );
 
-    setSelectedInquiry(
-      null
-    );
+    if (onCreateBooking) {
+      onCreateBooking({
+        bookingSeed,
+        guestInquiryId:
+          selectedInquiry.id,
+        guestOrganizationName:
+          selectedInquiry.organization_name ||
+          "Guest inquiry",
+      });
+    }
 
+    setSelectedInquiry(null);
     setActionError("");
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
   };
 
 
@@ -890,114 +886,6 @@ export default function GuestInquiriesView() {
       }
     };
 
-
-  const handleBookingCreated =
-    async (
-      savedBooking
-    ) => {
-      if (!bookingSeed) {
-        return;
-      }
-
-      try {
-        await markGuestInquiryConverted(
-          bookingSeed.id,
-          savedBooking?.id
-        );
-
-        setActionMessage(
-          `${bookingSeed.organizationName || "Guest inquiry"} was converted into a booking.`
-        );
-
-        setBookingSeed(
-          null
-        );
-
-        await loadGuestInquiries();
-      } catch (error) {
-        console.error(
-          "The booking saved, but the guest inquiry could not be marked converted:",
-          error
-        );
-
-        setBookingSeed(
-          null
-        );
-
-        setActionError(
-          "The booking saved successfully, but the original guest request could not be marked Converted. Do not create a second booking for it."
-        );
-
-        await loadGuestInquiries();
-      }
-
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-    };
-
-
-  if (bookingSeed) {
-    return (
-      <section className="guest-requests-page">
-        <div className="guest-request-booking-toolbar">
-          <button
-            type="button"
-            className="guest-request-secondary-button"
-            onClick={() =>
-              setBookingSeed(
-                null
-              )
-            }
-          >
-            <FaArrowLeft />
-            Back to Guest Inquiries
-          </button>
-
-          <div>
-            <small>
-              Creating booking from
-            </small>
-
-            <strong>
-              {
-                bookingSeed.organizationName
-              }
-            </strong>
-          </div>
-        </div>
-
-        <div className="guest-request-booking-notice">
-          <FaEnvelopeOpenText />
-
-          <div>
-            <strong>
-              Guest-submitted information has been copied into the real staff booking form.
-            </strong>
-
-            <p>
-              Review everything, add staff-only details such as retreat type,
-              rates, housing, and official received dates, then save normally.
-            </p>
-          </div>
-        </div>
-
-        <CreateBooking
-          key={
-            bookingSeed.id
-          }
-          embedded
-          initialInquiry={
-            bookingSeed
-          }
-          onBookingCreated={
-            handleBookingCreated
-          }
-        />
-      </section>
-    );
-  }
 
 
   if (isLoading) {

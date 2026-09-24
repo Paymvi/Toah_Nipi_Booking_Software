@@ -97,6 +97,13 @@ export default function App() {
 
 
 
+          <Route
+            path="/guest-inquiries"
+            element={<Dashboard />}
+          />
+
+
+
           <Route 
             path="*" 
             element={<Navigate to="/dashboard" replace />} 
