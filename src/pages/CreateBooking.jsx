@@ -641,6 +641,18 @@ function createInitialFormState(
   }
 
 
+  /*
+    Guest web-form submissions carry their extra
+    structured fields inside guestFormDetails.
+  */
+  const guestDetails =
+    initialInquiry?.guestFormDetails &&
+    typeof initialInquiry.guestFormDetails === "object" &&
+    !Array.isArray(initialInquiry.guestFormDetails)
+      ? initialInquiry.guestFormDetails
+      : {};
+
+
   const desiredDatesText =
     cleanInquiryPrefillValue(
       initialInquiry.desiredDatesText
@@ -762,13 +774,96 @@ function createInitialFormState(
     approxTotalGuests:
       estimatedSize,
 
+    /* Extra guest-web-form attendance fields. */
+    approxAdultGuests:
+      String(guestDetails.approxAdultGuests ?? ""),
+
+    approxChildrenUnder3:
+      String(guestDetails.approxChildrenUnder3 ?? ""),
+
+    approxChildren3to17:
+      String(guestDetails.approxChildren3to17 ?? ""),
+
+
+    numberOfNights:
+      String(
+        guestDetails.numberOfNights ??
+        prefillNumberOfNights ??
+        ""
+      ),
+
+    numberOfMeals:
+      String(guestDetails.numberOfMeals ?? ""),
+
 
     /*
-      If we successfully got a date range,
-      we can safely calculate # of nights too.
+      Guest-submitted document dates stay guest-reported
+      source facts. They do not automatically become the
+      staff's official received dates or drive status.
     */
-    numberOfNights:
-      prefillNumberOfNights,
+    depositAmount:
+      String(guestDetails.depositAmount ?? ""),
+
+    paymentMethod:
+      guestDetails.paymentMethod || "",
+
+    arrivalTime:
+      guestDetails.arrivalTime || "",
+
+    departureTime:
+      guestDetails.departureTime || "",
+
+    mealSchedule:
+      guestDetails.mealSchedule &&
+      typeof guestDetails.mealSchedule === "object" &&
+      !Array.isArray(guestDetails.mealSchedule)
+        ? guestDetails.mealSchedule
+        : {},
+
+    breakfastTime:
+      guestDetails.breakfastTime || "",
+
+    lunchTime:
+      guestDetails.lunchTime || "",
+
+    dinnerTime:
+      guestDetails.dinnerTime || "",
+
+    allergies:
+      Array.isArray(guestDetails.allergies) &&
+      guestDetails.allergies.length > 0
+        ? guestDetails.allergies
+        : baseState.allergies,
+
+    allergyNotes:
+      guestDetails.allergyNotes || "",
+
+    mealNotes:
+      guestDetails.mealNotes || "",
+
+    activities:
+      Array.isArray(guestDetails.activities) &&
+      guestDetails.activities.length > 0
+        ? guestDetails.activities
+        : baseState.activities,
+
+    linenOption:
+      guestDetails.linenOption || "No",
+
+    linenSets:
+      String(guestDetails.linenSets ?? ""),
+
+    linenPieces:
+      String(guestDetails.linenPieces ?? ""),
+
+    guestReportedContractReturnedDate:
+      guestDetails.guestReportedContractReturnedDate || "",
+
+    guestReportedDepositSentDate:
+      guestDetails.guestReportedDepositSentDate || "",
+
+    guestReportedInsuranceCertificateSentDate:
+      guestDetails.guestReportedInsuranceCertificateSentDate || "",
 
 
     inquiryDate:
