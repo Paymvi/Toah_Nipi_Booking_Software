@@ -71,6 +71,8 @@ import DashboardBackups from "../components/DashboardBackups";
 
 import CreateBooking from "../pages/CreateBooking";
 
+import GuestInquiriesView from "../pages/GuestInquiriesView";
+
 import StaffSignOutButton from "../components/StaffSignOutButton";
 
 import { supabase } from "../lib/supabaseClient";
@@ -8213,13 +8215,15 @@ export default function Dashboard() {
       "/dashboard": "Dashboard",
       "/form": "Form",
       "/portal-admin": "Portal View",
+
       "/calendar": "Calendar View",
       "/lodging-calendar": "Lodging Calendar",
       "/contacts": "Contacts View",
       "/inquiry-pipeline": "Inquiry Pipeline",
       "/reports": "Reports",
       "/jobs": "Jobs",
-      "/user-admin": "User Admin"
+      "/user-admin": "User Admin",
+      "/guest-inquiries": "Guest Inquiries",
     };
 
 
@@ -9588,6 +9592,37 @@ export default function Dashboard() {
             })}
           </div>
         ))}
+
+        <div className="sidebar-section">
+          <p>Requests</p>
+
+          <button
+            className={`sidebar-link ${
+              activeView === "Guest Inquiries"
+                ? "sidebar-link-active"
+                : ""
+            }`}
+            type="button"
+            title="Guest Inquiries"
+            onClick={() => {
+              setSelectedBooking(null);
+
+              setBookingDetailTab(
+                "Overview"
+              );
+
+              handleActiveViewChange(
+                "Guest Inquiries"
+              );
+            }}
+          >
+            <FaEnvelopeOpenText />
+
+            <span>
+              Guest Inquiries
+            </span>
+          </button>
+        </div>
       </aside>
 
       <section className="dashboard-main">
@@ -9743,10 +9778,17 @@ export default function Dashboard() {
               saveBookingEdits({
                 ...booking,
                 status: nextStatus,
-                waitlist: nextStatus === "Waitlist" ? "Yes" : booking.waitlist,
+                waitlist:
+                  nextStatus === "Waitlist"
+                    ? "Yes"
+                    : booking.waitlist,
               })
             }
           />
+
+        ) : activeView === "Guest Inquiries" ? (
+          <GuestInquiriesView />
+
         ) : activeView === "Reports" ? (
           <ReportsView inquiryBookings={inquiryBookings} />
         ) : activeView === "Portal View" ? (
