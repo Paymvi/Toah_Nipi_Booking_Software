@@ -8387,6 +8387,100 @@ export default function Dashboard() {
   };
 
 
+  const sidebarItemLookup = Object.fromEntries(
+    sidebarSections
+      .flatMap((section) => section.items)
+      .map((item) => [item.label, item])
+  );
+
+  const reorganizedSidebarSections = [
+    {
+      label: "Calendar",
+      items: [
+        {
+          ...sidebarItemLookup["Calendar"],
+          label: "Main Calendar",
+          view: "Calendar View",
+          icon:
+            sidebarItemLookup["Calendar"]?.icon ||
+            FaCalendarAlt,
+        },
+        {
+          ...sidebarItemLookup["Lodging Calendar"],
+          label: "Lodging Calendar",
+          view: "Lodging Calendar",
+          icon:
+            sidebarItemLookup["Lodging Calendar"]?.icon ||
+            FaBed,
+        },
+      ],
+    },
+    {
+      label: "Spreadsheet",
+      items: [
+        {
+          ...sidebarItemLookup["Master Spreadsheet"],
+          label: "Master Calendar",
+          view: SPREADSHEET_VIEW_NAME,
+          icon:
+            sidebarItemLookup["Master Spreadsheet"]?.icon ||
+            FaTable,
+        },
+        {
+          ...sidebarItemLookup["Inquiry Spreadsheet"],
+          label: "Inquiry Spreadsheet",
+          view: INQUIRY_SPREADSHEET_VIEW_NAME,
+          icon:
+            sidebarItemLookup["Inquiry Spreadsheet"]?.icon ||
+            FaClipboardList,
+        },
+        {
+          ...sidebarItemLookup["Contacts"],
+          label: "Contacts",
+          view: "Contacts View",
+          icon:
+            sidebarItemLookup["Contacts"]?.icon ||
+            FaUsers,
+        },
+      ],
+    },
+    {
+      label: "Reporting",
+      items: [
+        {
+          ...sidebarItemLookup["Reports"],
+          label: "Reports",
+          view: "Reports",
+          icon:
+            sidebarItemLookup["Reports"]?.icon ||
+            FaChartBar,
+        },
+      ],
+    },
+    {
+      label: "Other",
+      items: [
+        {
+          ...sidebarItemLookup["User Admin"],
+          label: "User Admin",
+          view: "User Admin",
+          icon:
+            sidebarItemLookup["User Admin"]?.icon ||
+            FaUserShield,
+        },
+        {
+          ...sidebarItemLookup["Jobs"],
+          label: "Jobs",
+          view: "Jobs",
+          icon:
+            sidebarItemLookup["Jobs"]?.icon ||
+            FaClipboardList,
+        },
+      ],
+    },
+  ];
+
+
   return (
     <main
       className={`dashboard-shell ${
@@ -8474,9 +8568,35 @@ export default function Dashboard() {
             <span>Portals</span>
           </button>
 
+          <button
+            className={`sidebar-link ${
+              activeView === "Guest Inquiries"
+                ? "sidebar-link-active"
+                : ""
+            }`}
+            type="button"
+            title="Guest Inquiries"
+            onClick={() => {
+              setSelectedBooking(null);
+
+              setBookingDetailTab(
+                "Overview"
+              );
+
+              handleActiveViewChange(
+                "Guest Inquiries"
+              );
+            }}
+          >
+            <FaEnvelopeOpenText />
+
+            <span>
+              Guest Inquiries
+            </span>
+          </button>
         </div>
 
-        {sidebarSections.map((section) => (
+        {reorganizedSidebarSections.map((section) => (
           <div
             className="sidebar-section"
             key={section.label}
@@ -8531,37 +8651,6 @@ export default function Dashboard() {
             })}
           </div>
         ))}
-
-        <div className="sidebar-section">
-          <p>Requests</p>
-
-          <button
-            className={`sidebar-link ${
-              activeView === "Guest Inquiries"
-                ? "sidebar-link-active"
-                : ""
-            }`}
-            type="button"
-            title="Guest Inquiries"
-            onClick={() => {
-              setSelectedBooking(null);
-
-              setBookingDetailTab(
-                "Overview"
-              );
-
-              handleActiveViewChange(
-                "Guest Inquiries"
-              );
-            }}
-          >
-            <FaEnvelopeOpenText />
-
-            <span>
-              Guest Inquiries
-            </span>
-          </button>
-        </div>
       </aside>
 
       <section className="dashboard-main">
