@@ -627,7 +627,7 @@
   color: #655ab6;
 
   font-size: 0.7rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
@@ -1099,6 +1099,310 @@
   font-weight: 700;
 
   cursor: pointer;
+}
+
+
+.portal-document-group-list {
+  display: grid;
+  gap: 22px;
+}
+
+
+.portal-document-group {
+  overflow: hidden;
+
+  border: 1px solid #e2e5ec;
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 5px 16px
+    rgba(28, 35, 52, 0.035);
+}
+
+
+.portal-document-group-heading {
+  position: relative;
+
+  min-height: 78px;
+
+  padding: 15px 18px 15px 20px;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+
+  border-bottom: 1px solid transparent;
+}
+
+
+.portal-document-group-heading::before {
+  content: "";
+
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+
+  width: 4px;
+
+  border-radius: 0 999px 999px 0;
+}
+
+
+.portal-document-group-heading > div {
+  min-width: 0;
+}
+
+
+.portal-document-group-heading p {
+  margin: 0;
+
+  font-size: 0.96rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+
+.portal-document-group-heading span {
+  display: block;
+
+  margin-top: 5px;
+
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+
+.portal-document-group-heading > strong {
+  min-height: 30px;
+
+  padding: 0 11px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid transparent;
+  border-radius: 999px;
+
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   GENERAL DOCUMENTS — BLUE
+========================================================= */
+
+
+.portal-document-group-general {
+  border-color: #d7e3f5;
+}
+
+
+.portal-document-group-general
+.portal-document-group-heading {
+  border-bottom-color: #dce6f4;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f4f8fd 0%,
+      #edf4fc 100%
+    );
+}
+
+
+.portal-document-group-general
+.portal-document-group-heading::before {
+  background: #4c74b5;
+}
+
+
+.portal-document-group-general
+.portal-document-group-heading p {
+  color: #315b97;
+}
+
+
+.portal-document-group-general
+.portal-document-group-heading span {
+  color: #74849b;
+}
+
+
+.portal-document-group-general
+.portal-document-group-heading > strong {
+  border-color: #ccdbee;
+
+  background: #ffffff;
+  color: #3f659d;
+}
+
+
+.portal-document-group-general
+.portal-document-assignment-table {
+  border: 0;
+  border-radius: 0;
+
+  box-shadow: none;
+}
+
+
+.portal-document-group-general
+.portal-document-assignment-table-header {
+  background: #f8fbff;
+}
+
+
+.portal-document-group-general
+.portal-document-option-row:hover:not(.assigned) {
+  background: #f8fbff;
+}
+
+
+.portal-document-group-general
+.portal-document-option-row.selected {
+  background: #f2f7fd;
+
+  box-shadow:
+    inset 4px 0 0
+    #4c74b5;
+}
+
+
+.portal-document-group-general
+.portal-document-option-row.selected
+.portal-document-option-check {
+  border-color: #4c74b5;
+
+  background: #4c74b5;
+}
+
+
+.portal-document-group-general
+.portal-document-type-pill {
+  background: #eaf2fb;
+  color: #3f659d;
+}
+
+
+.portal-document-group-general
+.portal-document-file-extension {
+  border-color: #d9e3f1;
+
+  background: #f7faff;
+  color: #526b8e;
+}
+
+
+/* =========================================================
+   INTERVARSITY DOCUMENTS — ORANGE
+========================================================= */
+
+
+.portal-document-group-intervarsity {
+  border-color: #efd6bc;
+}
+
+
+.portal-document-group-intervarsity
+.portal-document-group-heading {
+  border-bottom-color: #f0dac3;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff8f1 0%,
+      #fff1e3 100%
+    );
+}
+
+
+.portal-document-group-intervarsity
+.portal-document-group-heading::before {
+  background: #d17a2d;
+}
+
+
+.portal-document-group-intervarsity
+.portal-document-group-heading p {
+  color: #a85e1f;
+}
+
+
+.portal-document-group-intervarsity
+.portal-document-group-heading span {
+  color: #8d7867;
+}
+
+
+.portal-document-group-intervarsity
+.portal-document-group-heading > strong {
+  border-color: #ebcdae;
+
+  background: #ffffff;
+  color: #a96324;
+}
+
+
+.portal-document-group-intervarsity
+.portal-document-assignment-table {
+  border: 0;
+  border-radius: 0;
+
+  box-shadow: none;
+}
+
+
+.portal-document-group-intervarsity
+.portal-document-assignment-table-header {
+  background: #fffaf5;
+}
+
+
+.portal-document-group-intervarsity
+.portal-document-option-row:hover:not(.assigned) {
+  background: #fffaf5;
+}
+
+
+.portal-document-group-intervarsity
+.portal-document-option-row.selected {
+  background: #fff7ef;
+
+  box-shadow:
+    inset 4px 0 0
+    #d17a2d;
+}
+
+
+.portal-document-group-intervarsity
+.portal-document-option-row.selected
+.portal-document-option-check {
+  border-color: #d17a2d;
+
+  background: #d17a2d;
+}
+
+
+.portal-document-group-intervarsity
+.portal-document-type-pill {
+  background: #fff0df;
+  color: #a85e1f;
+}
+
+
+.portal-document-group-intervarsity
+.portal-document-file-extension {
+  border-color: #efdcc8;
+
+  background: #fffaf5;
+  color: #99673b;
 }
 
 
@@ -1587,6 +1891,28 @@
   .portal-task-assignment-panel,
   .portal-document-assignment-panel {
     padding: 16px;
+  }
+
+
+  .portal-document-group-heading {
+    min-height: 0;
+
+    padding: 14px 16px 14px 18px;
+
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 10px;
+  }
+
+
+  .portal-document-group-heading::before {
+    top: 12px;
+    bottom: 12px;
+  }
+
+
+  .portal-document-group-heading > strong {
+    justify-self: start;
   }
 
 

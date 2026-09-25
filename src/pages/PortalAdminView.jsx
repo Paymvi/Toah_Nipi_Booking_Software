@@ -125,18 +125,21 @@ const PORTAL_DOCUMENT_OPTIONS = [
     title: "InterVarsity Guest Clean-Up Procedures",
     fileName: "2026 InterVarsity Guest Clean-Up Procedures-rev.8.26.pdf",
     documentType: "Policy Document",
+    audience: "intervarsity",
   },
   {
     id: "guest-house-policy-information",
     title: "Guest House Policy Information",
     fileName: "2026 Toah Nipi CRC Guest House Policy Information-rev.8.26.pdf",
     documentType: "Policy Document",
+    audience: "general",
   },
   {
     id: "guest-policy-information",
     title: "Guest Policy Information",
     fileName: "2026 Toah Nipi CRC Guest Policy Information doc-rev.8.26.pdf",
     documentType: "Policy Document",
+    audience: "general",
   },
   {
     id: "intervarsity-guest-house-policy-information",
@@ -144,6 +147,7 @@ const PORTAL_DOCUMENT_OPTIONS = [
     fileName:
       "2026 Toah Nipi CRC InterVarsity Guest House Policy Information-rev.8.26.pdf",
     documentType: "Policy Document",
+    audience: "intervarsity",
   },
   {
     id: "intervarsity-policy-information-form",
@@ -151,18 +155,21 @@ const PORTAL_DOCUMENT_OPTIONS = [
     fileName:
       "2026 Toah Nipi CRC InterVarsity Policy Information Form-rev. 8.26.docx",
     documentType: "Policy Form",
+    audience: "intervarsity",
   },
   {
     id: "sample-coi-form",
     title: "Sample Certificate of Insurance Form",
     fileName: "Sample COI Form.pdf",
     documentType: "Sample Form",
+    audience: "general",
   },
   {
     id: "welcome-reservation-information",
     title: "Welcome & Reservation Information",
     fileName: "Welcome & Reservation Information.pdf",
     documentType: "Information Sheet",
+    audience: "general",
   },
 ];
 
@@ -1451,6 +1458,34 @@ function PortalDocumentAssignmentPanel({
     ).length;
 
 
+  const documentGroups = [
+    {
+      id: "general",
+      label: "General Documents",
+      helper:
+        "Standard documents that may be used for any retreat group.",
+      documents:
+        PORTAL_DOCUMENT_OPTIONS.filter(
+          (document) =>
+            document.audience ===
+            "general"
+        ),
+    },
+    {
+      id: "intervarsity",
+      label: "InterVarsity Documents",
+      helper:
+        "Documents specifically intended for InterVarsity groups.",
+      documents:
+        PORTAL_DOCUMENT_OPTIONS.filter(
+          (document) =>
+            document.audience ===
+            "intervarsity"
+        ),
+    },
+  ];
+
+
   function toggleDocument(
     documentId,
     selected
@@ -1576,129 +1611,172 @@ function PortalDocumentAssignmentPanel({
         </div>
       ) : (
         <>
-          <div className="portal-document-assignment-table">
-            <div className="portal-document-assignment-table-header">
-              <span>
-                Document
-              </span>
-
-              <span>
-                Type
-              </span>
-
-              <span>
-                File
-              </span>
-            </div>
-
-            {PORTAL_DOCUMENT_OPTIONS.map(
-              (document) => {
-                const draft =
-                  documentDrafts[
-                    document.id
-                  ];
-
-                const disabled =
-                  draft
-                    ?.alreadyAssigned;
-
-                const extension =
-                  document.fileName
-                    .split(".")
-                    .pop()
-                    ?.toUpperCase() ||
-                  "FILE";
-
-                return (
-                  <div
-                    className={`portal-document-option-row ${
-                      draft
-                        ?.selected
-                        ? "selected"
-                        : ""
-                    } ${
-                      disabled
-                        ? "assigned"
-                        : ""
-                    }`}
-                    key={
-                      document.id
-                    }
-                  >
-                    <label className="portal-document-option-main">
-                      <input
-                        type="checkbox"
-                        checked={
-                          Boolean(
-                            draft
-                              ?.selected
-                          )
-                        }
-                        disabled={
-                          disabled ||
-                          isAssigning
-                        }
-                        onChange={(
-                          event
-                        ) =>
-                          toggleDocument(
-                            document.id,
-                            event
-                              .target
-                              .checked
-                          )
-                        }
-                      />
-
-                      <span className="portal-document-option-check">
-                        {disabled
-                          ? "✓"
-                          : ""}
-                      </span>
-
-                      <span className="portal-document-option-copy">
-                        <strong>
-                          {
-                            document.title
-                          }
-                        </strong>
-
-                        <small>
-                          {
-                            document.fileName
-                          }
-                        </small>
-
-                        {disabled && (
-                          <em>
-                            Already assigned
-                          </em>
-                        )}
-                      </span>
-                    </label>
-
+          <div className="portal-document-group-list">
+            {documentGroups.map(
+              (group) => (
+                <section
+                  className={`portal-document-group portal-document-group-${group.id}`}
+                  key={
+                    group.id
+                  }
+                >
+                  <div className="portal-document-group-heading">
                     <div>
-                      <span className="portal-document-type-pill">
+                      <p>
                         {
-                          document.documentType
+                          group.label
+                        }
+                      </p>
+
+                      <span>
+                        {
+                          group.helper
                         }
                       </span>
                     </div>
 
-                    <div className="portal-document-file-meta">
-                      <span className="portal-document-file-extension">
-                        {
-                          extension
-                        }
+                    <strong>
+                      {
+                        group.documents
+                          .length
+                      }{" "}
+                      document
+                      {group.documents
+                        .length ===
+                      1
+                        ? ""
+                        : "s"}
+                    </strong>
+                  </div>
+
+
+                  <div className="portal-document-assignment-table">
+                    <div className="portal-document-assignment-table-header">
+                      <span>
+                        Document
                       </span>
 
                       <span>
-                        Standard document
+                        Type
+                      </span>
+
+                      <span>
+                        File
                       </span>
                     </div>
+
+                    {group.documents.map(
+                      (document) => {
+                        const draft =
+                          documentDrafts[
+                            document.id
+                          ];
+
+                        const disabled =
+                          draft
+                            ?.alreadyAssigned;
+
+                        const extension =
+                          document.fileName
+                            .split(".")
+                            .pop()
+                            ?.toUpperCase() ||
+                          "FILE";
+
+                        return (
+                          <div
+                            className={`portal-document-option-row ${
+                              draft
+                                ?.selected
+                                ? "selected"
+                                : ""
+                            } ${
+                              disabled
+                                ? "assigned"
+                                : ""
+                            }`}
+                            key={
+                              document.id
+                            }
+                          >
+                            <label className="portal-document-option-main">
+                              <input
+                                type="checkbox"
+                                checked={
+                                  Boolean(
+                                    draft
+                                      ?.selected
+                                  )
+                                }
+                                disabled={
+                                  disabled ||
+                                  isAssigning
+                                }
+                                onChange={(
+                                  event
+                                ) =>
+                                  toggleDocument(
+                                    document.id,
+                                    event
+                                      .target
+                                      .checked
+                                  )
+                                }
+                              />
+
+                              <span className="portal-document-option-check">
+                                {disabled
+                                  ? "✓"
+                                  : ""}
+                              </span>
+
+                              <span className="portal-document-option-copy">
+                                <strong>
+                                  {
+                                    document.title
+                                  }
+                                </strong>
+
+                                <small>
+                                  {
+                                    document.fileName
+                                  }
+                                </small>
+
+                                {disabled && (
+                                  <em>
+                                    Already assigned
+                                  </em>
+                                )}
+                              </span>
+                            </label>
+
+                            <div>
+                              <span className="portal-document-type-pill">
+                                {
+                                  document.documentType
+                                }
+                              </span>
+                            </div>
+
+                            <div className="portal-document-file-meta">
+                              <span className="portal-document-file-extension">
+                                {
+                                  extension
+                                }
+                              </span>
+
+                              <span>
+                                Standard document
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      }
+                    )}
                   </div>
-                );
-              }
+                </section>
+              )
             )}
           </div>
 
