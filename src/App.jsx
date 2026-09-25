@@ -11,6 +11,7 @@ import "./styles/AdminJobsView.css";
 import "./styles/BackupView.css";
 import "./styles/Auth.css";
 import "./styles/PortalAdminView.css";
+import "./styles/GuestInquiriesView.css";
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
