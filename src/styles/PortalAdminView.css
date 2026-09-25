@@ -383,11 +383,56 @@
 
 
 .portal-checklist-preview-row small,
-.portal-checklist-preview-more,
 .portal-checklist-preview-empty {
   color: #858c9b;
 
   font-size: 0.78rem;
+}
+
+
+.portal-checklist-preview-toggle {
+  width: max-content;
+
+  margin: 1px 0 0 22px;
+  padding: 4px 2px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  border: 0;
+  border-radius: 6px;
+
+  background: transparent;
+  color: #7a8191;
+
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    color 150ms ease,
+    background-color 150ms ease;
+}
+
+
+.portal-checklist-preview-toggle:hover {
+  color: #443a9c;
+
+  background: #f7f5ff;
+}
+
+
+.portal-checklist-preview-toggle:focus-visible {
+  outline: 2px solid rgba(68, 58, 156, 0.28);
+  outline-offset: 2px;
+}
+
+
+.portal-checklist-preview-toggle svg {
+  font-size: 0.7rem;
 }
 
 

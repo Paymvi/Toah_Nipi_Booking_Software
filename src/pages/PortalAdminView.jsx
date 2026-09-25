@@ -560,6 +560,29 @@ function PortalAdminProgressBar({
 function PortalChecklistPreview({
   items,
 }) {
+  const [
+    isExpanded,
+    setIsExpanded,
+  ] =
+    useState(false);
+
+
+  useEffect(
+    () => {
+      if (
+        items.length <= 5
+      ) {
+        setIsExpanded(
+          false
+        );
+      }
+    },
+    [
+      items.length,
+    ]
+  );
+
+
   if (
     items.length === 0
   ) {
@@ -570,66 +593,97 @@ function PortalChecklistPreview({
     );
   }
 
-  return (
-    <div className="portal-checklist-preview">
-      {items
-        .slice(
+
+  const visibleItems =
+    isExpanded
+      ? items
+      : items.slice(
           0,
           5
-        )
-        .map(
-          (item) => (
-            <div
-              className={`portal-checklist-preview-row portal-item-${item.status}`}
-              key={
-                item.id
-              }
-            >
-              <span></span>
+        );
 
-              <div>
-                <strong>
-                  {
-                    item.title
-                  }
-                </strong>
+  const hiddenItemCount =
+    Math.max(
+      items.length - 5,
+      0
+    );
 
-                <small>
-                  {item.status ===
-                  "needsReview"
-                    ? "Needs staff review"
+
+  return (
+    <div className="portal-checklist-preview">
+      {visibleItems.map(
+        (item) => (
+          <div
+            className={`portal-checklist-preview-row portal-item-${item.status}`}
+            key={
+              item.id
+            }
+          >
+            <span></span>
+
+            <div>
+              <strong>
+                {
+                  item.title
+                }
+              </strong>
+
+              <small>
+                {item.status ===
+                "needsReview"
+                  ? "Needs staff review"
+                  : item.status ===
+                      "waitingOnGuest"
+                    ? "Waiting on guest"
                     : item.status ===
-                        "waitingOnGuest"
-                      ? "Waiting on guest"
-                      : item.status ===
-                          "completed"
-                        ? "Complete"
-                        : "Not started"}
+                        "completed"
+                      ? "Complete"
+                      : "Not started"}
 
-                  {item.dueDate
-                    ? ` · Due ${item.dueDate}`
-                    : ""}
-                </small>
-              </div>
+                {item.dueDate
+                  ? ` · Due ${item.dueDate}`
+                  : ""}
+              </small>
             </div>
-          )
-        )}
+          </div>
+        )
+      )}
+
 
       {items.length >
         5 && (
-        <small className="portal-checklist-preview-more">
-          +
-          {
-            items.length -
-            5
-          }{" "}
-          more item
-          {items.length -
-            5 ===
-          1
-            ? ""
-            : "s"}
-        </small>
+        <button
+          className="portal-checklist-preview-toggle"
+          type="button"
+          aria-expanded={
+            isExpanded
+          }
+          onClick={() =>
+            setIsExpanded(
+              (current) =>
+                !current
+            )
+          }
+        >
+          <span>
+            {isExpanded
+              ? "Show less"
+              : `+${hiddenItemCount} more item${
+                  hiddenItemCount ===
+                  1
+                    ? ""
+                    : "s"
+                }`}
+          </span>
+
+          {isExpanded
+            ? (
+              <FaChevronUp />
+            )
+            : (
+              <FaChevronDown />
+            )}
+        </button>
       )}
     </div>
   );
