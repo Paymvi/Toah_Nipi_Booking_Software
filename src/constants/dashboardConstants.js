@@ -87,12 +87,12 @@ export const sidebarSections = [
         icon: FaUsers,
       },
 
-      {
-        label: "Inquiry Pipeline",
-        view: "Inquiry Pipeline",
-        icon: FaClipboardList,
-        hasBadge: true,
-      },
+      // {
+      //   label: "Inquiry Pipeline",
+      //   view: "Inquiry Pipeline",
+      //   icon: FaClipboardList,
+      //   hasBadge: true,
+      // },
     ],
   },
 
