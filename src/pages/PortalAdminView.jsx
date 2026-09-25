@@ -8,6 +8,7 @@ import {
   FaKey,
   FaSyncAlt,
   FaTasks,
+  FaFileAlt,
   FaExclamationTriangle,
   FaCheckCircle,
   FaCopy,
@@ -109,6 +110,59 @@ const PORTAL_TASK_OPTIONS = [
     guestAction: "mark_ready",
     actionLabel: "Submit",
     defaultRequired: true,
+  },
+];
+
+
+/* =========================================================
+   PORTAL DOCUMENT CATALOG
+   Staff can only assign documents from this list.
+========================================================= */
+
+const PORTAL_DOCUMENT_OPTIONS = [
+  {
+    id: "intervarsity-cleanup-procedures",
+    title: "InterVarsity Guest Clean-Up Procedures",
+    fileName: "2026 InterVarsity Guest Clean-Up Procedures-rev.8.26.pdf",
+    documentType: "Policy Document",
+  },
+  {
+    id: "guest-house-policy-information",
+    title: "Guest House Policy Information",
+    fileName: "2026 Toah Nipi CRC Guest House Policy Information-rev.8.26.pdf",
+    documentType: "Policy Document",
+  },
+  {
+    id: "guest-policy-information",
+    title: "Guest Policy Information",
+    fileName: "2026 Toah Nipi CRC Guest Policy Information doc-rev.8.26.pdf",
+    documentType: "Policy Document",
+  },
+  {
+    id: "intervarsity-guest-house-policy-information",
+    title: "InterVarsity Guest House Policy Information",
+    fileName:
+      "2026 Toah Nipi CRC InterVarsity Guest House Policy Information-rev.8.26.pdf",
+    documentType: "Policy Document",
+  },
+  {
+    id: "intervarsity-policy-information-form",
+    title: "InterVarsity Policy Information Form",
+    fileName:
+      "2026 Toah Nipi CRC InterVarsity Policy Information Form-rev. 8.26.docx",
+    documentType: "Policy Form",
+  },
+  {
+    id: "sample-coi-form",
+    title: "Sample Certificate of Insurance Form",
+    fileName: "Sample COI Form.pdf",
+    documentType: "Sample Form",
+  },
+  {
+    id: "welcome-reservation-information",
+    title: "Welcome & Reservation Information",
+    fileName: "Welcome & Reservation Information.pdf",
+    documentType: "Information Sheet",
   },
 ];
 
@@ -406,6 +460,68 @@ async function insertPortalChecklistItems(
     data || []
   ).map(
     normalizePortalChecklistItem
+  );
+}
+
+
+async function insertPortalDocuments(
+  bookingId,
+  documents
+) {
+  const {
+    data,
+    error,
+  } =
+    await supabase
+      .from(
+        "portal_documents"
+      )
+      .insert(
+        documents.map(
+          (document) => ({
+            booking_id:
+              bookingId,
+
+            title:
+              document.title,
+
+            document_type:
+              document.documentType,
+
+            file_name:
+              document.fileName,
+
+            status:
+              "ready",
+
+            uploaded_by_guest:
+              false,
+
+            last_changed_at:
+              new Date()
+                .toISOString(),
+          })
+        )
+      )
+      .select(`
+        id,
+        title,
+        document_type,
+        file_name,
+        status,
+        uploaded_by_guest,
+        last_changed_at,
+        created_at
+      `);
+
+  if (error) {
+    throw error;
+  }
+
+  return (
+    data || []
+  ).map(
+    normalizePortalDocument
   );
 }
 
@@ -1214,6 +1330,440 @@ function PortalTaskAssignmentPanel({
 
 
 /* =========================================================
+   DOCUMENT ASSIGNMENT
+========================================================= */
+
+function createDocumentAssignmentDraft(
+  record
+) {
+  const assignedFileNames =
+    new Set(
+      record.documents.map(
+        (document) =>
+          String(
+            document.fileName || ""
+          )
+            .trim()
+            .toLowerCase()
+      )
+    );
+
+  const assignedTitles =
+    new Set(
+      record.documents.map(
+        (document) =>
+          String(
+            document.title || ""
+          )
+            .trim()
+            .toLowerCase()
+      )
+    );
+
+  return Object.fromEntries(
+    PORTAL_DOCUMENT_OPTIONS.map(
+      (document) => {
+        const alreadyAssigned =
+          assignedFileNames.has(
+            document.fileName
+              .trim()
+              .toLowerCase()
+          ) ||
+          assignedTitles.has(
+            document.title
+              .trim()
+              .toLowerCase()
+          );
+
+        return [
+          document.id,
+          {
+            selected:
+              false,
+
+            alreadyAssigned,
+          },
+        ];
+      }
+    )
+  );
+}
+
+
+function PortalDocumentAssignmentPanel({
+  record,
+  isAssigning,
+  onAssignDocuments,
+  onClose,
+}) {
+  const [
+    documentDrafts,
+    setDocumentDrafts,
+  ] =
+    useState(
+      () =>
+        createDocumentAssignmentDraft(
+          record
+        )
+    );
+
+  const [
+    assignmentError,
+    setAssignmentError,
+  ] =
+    useState("");
+
+
+  useEffect(
+    () => {
+      setDocumentDrafts(
+        createDocumentAssignmentDraft(
+          record
+        )
+      );
+
+      setAssignmentError(
+        ""
+      );
+    },
+    [
+      record.id,
+      record.documents,
+    ]
+  );
+
+
+  const selectedCount =
+    Object.values(
+      documentDrafts
+    ).filter(
+      (draft) =>
+        draft.selected &&
+        !draft.alreadyAssigned
+    ).length;
+
+  const availableCount =
+    Object.values(
+      documentDrafts
+    ).filter(
+      (draft) =>
+        !draft.alreadyAssigned
+    ).length;
+
+
+  function toggleDocument(
+    documentId,
+    selected
+  ) {
+    setDocumentDrafts(
+      (currentDrafts) => ({
+        ...currentDrafts,
+
+        [documentId]: {
+          ...currentDrafts[
+            documentId
+          ],
+
+          selected,
+        },
+      })
+    );
+  }
+
+
+  async function handleAssignSelected() {
+    const selectedDocuments =
+      PORTAL_DOCUMENT_OPTIONS.filter(
+        (document) => {
+          const draft =
+            documentDrafts[
+              document.id
+            ];
+
+          return (
+            draft?.selected &&
+            !draft
+              ?.alreadyAssigned
+          );
+        }
+      );
+
+    if (
+      selectedDocuments.length === 0
+    ) {
+      setAssignmentError(
+        "Choose at least one document to assign."
+      );
+
+      return;
+    }
+
+    try {
+      setAssignmentError(
+        ""
+      );
+
+      await onAssignDocuments(
+        record,
+        selectedDocuments
+      );
+    } catch (error) {
+      console.error(
+        "Could not assign portal documents:",
+        error
+      );
+
+      setAssignmentError(
+        error?.message ||
+          "Could not assign the selected documents."
+      );
+    }
+  }
+
+
+  return (
+    <section className="portal-document-assignment-panel">
+      <div className="portal-document-assignment-header">
+        <div>
+          <p>
+            Document Assignment
+          </p>
+
+          <h4>
+            Assign documents to{" "}
+            {
+              record.organizationName
+            }
+          </h4>
+
+          <span>
+            Choose which standard
+            documents should appear
+            in this group&apos;s
+            Documents tab.
+          </span>
+        </div>
+
+        <button
+          className="portal-document-assignment-close"
+          type="button"
+          onClick={
+            onClose
+          }
+        >
+          Close
+        </button>
+      </div>
+
+
+      {availableCount ===
+      0 ? (
+        <div className="portal-document-assignment-complete">
+          <FaCheckCircle />
+
+          <div>
+            <strong>
+              Every available document
+              is already assigned
+            </strong>
+
+            <span>
+              This group already has
+              the full standard
+              document set.
+            </span>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="portal-document-assignment-table">
+            <div className="portal-document-assignment-table-header">
+              <span>
+                Document
+              </span>
+
+              <span>
+                Type
+              </span>
+
+              <span>
+                File
+              </span>
+            </div>
+
+            {PORTAL_DOCUMENT_OPTIONS.map(
+              (document) => {
+                const draft =
+                  documentDrafts[
+                    document.id
+                  ];
+
+                const disabled =
+                  draft
+                    ?.alreadyAssigned;
+
+                const extension =
+                  document.fileName
+                    .split(".")
+                    .pop()
+                    ?.toUpperCase() ||
+                  "FILE";
+
+                return (
+                  <div
+                    className={`portal-document-option-row ${
+                      draft
+                        ?.selected
+                        ? "selected"
+                        : ""
+                    } ${
+                      disabled
+                        ? "assigned"
+                        : ""
+                    }`}
+                    key={
+                      document.id
+                    }
+                  >
+                    <label className="portal-document-option-main">
+                      <input
+                        type="checkbox"
+                        checked={
+                          Boolean(
+                            draft
+                              ?.selected
+                          )
+                        }
+                        disabled={
+                          disabled ||
+                          isAssigning
+                        }
+                        onChange={(
+                          event
+                        ) =>
+                          toggleDocument(
+                            document.id,
+                            event
+                              .target
+                              .checked
+                          )
+                        }
+                      />
+
+                      <span className="portal-document-option-check">
+                        {disabled
+                          ? "✓"
+                          : ""}
+                      </span>
+
+                      <span className="portal-document-option-copy">
+                        <strong>
+                          {
+                            document.title
+                          }
+                        </strong>
+
+                        <small>
+                          {
+                            document.fileName
+                          }
+                        </small>
+
+                        {disabled && (
+                          <em>
+                            Already assigned
+                          </em>
+                        )}
+                      </span>
+                    </label>
+
+                    <div>
+                      <span className="portal-document-type-pill">
+                        {
+                          document.documentType
+                        }
+                      </span>
+                    </div>
+
+                    <div className="portal-document-file-meta">
+                      <span className="portal-document-file-extension">
+                        {
+                          extension
+                        }
+                      </span>
+
+                      <span>
+                        Standard document
+                      </span>
+                    </div>
+                  </div>
+                );
+              }
+            )}
+          </div>
+
+
+          {assignmentError && (
+            <div className="portal-document-assignment-error">
+              <FaExclamationTriangle />
+
+              <span>
+                {
+                  assignmentError
+                }
+              </span>
+            </div>
+          )}
+
+
+          <div className="portal-document-assignment-footer">
+            <span>
+              {selectedCount ===
+              0
+                ? "Select one or more documents."
+                : `${selectedCount} document${
+                    selectedCount ===
+                    1
+                      ? ""
+                      : "s"
+                  } selected`}
+            </span>
+
+            <button
+              className="primary-dashboard-button"
+              type="button"
+              disabled={
+                selectedCount ===
+                  0 ||
+                isAssigning
+              }
+              onClick={
+                handleAssignSelected
+              }
+            >
+              <FaPlus />
+
+              {isAssigning
+                ? "Assigning..."
+                : `Assign ${
+                    selectedCount ||
+                    ""
+                  } Document${
+                    selectedCount ===
+                    1
+                      ? ""
+                      : "s"
+                  }`}
+            </button>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+
+/* =========================================================
    PORTAL RECORD CARD
 ========================================================= */
 
@@ -1221,15 +1771,17 @@ function PortalRecordCard({
   record,
   copiedBookingId,
   isAssigning,
+  isAssigningDocuments,
   onCopyPortalLink,
   onOpenBooking,
   onAssignTasks,
+  onAssignDocuments,
 }) {
   const [
-    isAssignmentOpen,
-    setIsAssignmentOpen,
+    openManager,
+    setOpenManager,
   ] =
-    useState(false);
+    useState("");
 
   const portalStatusLabel =
     getPortalStatusLabel(
@@ -1403,19 +1955,54 @@ function PortalRecordCard({
             className="portal-assign-task-button"
             type="button"
             onClick={() =>
-              setIsAssignmentOpen(
+              setOpenManager(
                 (current) =>
-                  !current
+                  current ===
+                  "tasks"
+                    ? ""
+                    : "tasks"
               )
             }
           >
             <FaTasks />
 
-            {isAssignmentOpen
+            {openManager ===
+            "tasks"
               ? "Hide Tasks"
               : "Assign Tasks"}
 
-            {isAssignmentOpen
+            {openManager ===
+            "tasks"
+              ? (
+                <FaChevronUp />
+              )
+              : (
+                <FaChevronDown />
+              )}
+          </button>
+
+          <button
+            className="portal-assign-document-button"
+            type="button"
+            onClick={() =>
+              setOpenManager(
+                (current) =>
+                  current ===
+                  "documents"
+                    ? ""
+                    : "documents"
+              )
+            }
+          >
+            <FaFileAlt />
+
+            {openManager ===
+            "documents"
+              ? "Hide Documents"
+              : "Assign Documents"}
+
+            {openManager ===
+            "documents"
               ? (
                 <FaChevronUp />
               )
@@ -1480,7 +2067,8 @@ function PortalRecordCard({
       </aside>
 
 
-      {isAssignmentOpen && (
+      {openManager ===
+        "tasks" && (
         <PortalTaskAssignmentPanel
           record={
             record
@@ -1492,8 +2080,29 @@ function PortalRecordCard({
             onAssignTasks
           }
           onClose={() =>
-            setIsAssignmentOpen(
-              false
+            setOpenManager(
+              ""
+            )
+          }
+        />
+      )}
+
+
+      {openManager ===
+        "documents" && (
+        <PortalDocumentAssignmentPanel
+          record={
+            record
+          }
+          isAssigning={
+            isAssigningDocuments
+          }
+          onAssignDocuments={
+            onAssignDocuments
+          }
+          onClose={() =>
+            setOpenManager(
+              ""
             )
           }
         />
@@ -1550,6 +2159,12 @@ export default function PortalAdminView({
   const [
     assigningBookingId,
     setAssigningBookingId,
+  ] =
+    useState("");
+
+  const [
+    assigningDocumentBookingId,
+    setAssigningDocumentBookingId,
   ] =
     useState("");
 
@@ -1959,6 +2574,78 @@ export default function PortalAdminView({
   }
 
 
+  async function handleAssignDocuments(
+    record,
+    documents
+  ) {
+    const existingFileNames =
+      new Set(
+        record.documents.map(
+          (document) =>
+            String(
+              document.fileName ||
+                ""
+            )
+              .trim()
+              .toLowerCase()
+        )
+      );
+
+    const existingTitles =
+      new Set(
+        record.documents.map(
+          (document) =>
+            String(
+              document.title ||
+                ""
+            )
+              .trim()
+              .toLowerCase()
+        )
+      );
+
+    const safeDocuments =
+      documents.filter(
+        (document) =>
+          !existingFileNames.has(
+            document.fileName
+              .trim()
+              .toLowerCase()
+          ) &&
+          !existingTitles.has(
+            document.title
+              .trim()
+              .toLowerCase()
+          )
+      );
+
+    if (
+      safeDocuments.length === 0
+    ) {
+      throw new Error(
+        "Those documents are already assigned to this group."
+      );
+    }
+
+    try {
+      setAssigningDocumentBookingId(
+        record.id
+      );
+
+      await insertPortalDocuments(
+        record.id,
+        safeDocuments
+      );
+
+      await loadPortalRecords();
+    } finally {
+      setAssigningDocumentBookingId(
+        ""
+      );
+    }
+  }
+
+
   return (
     <section className="portal-admin-page">
       <article className="dashboard-card portal-admin-hero-card">
@@ -2162,6 +2849,10 @@ export default function PortalAdminView({
                   assigningBookingId ===
                   record.id
                 }
+                isAssigningDocuments={
+                  assigningDocumentBookingId ===
+                  record.id
+                }
                 onCopyPortalLink={
                   handleCopyPortalLink
                 }
@@ -2170,6 +2861,9 @@ export default function PortalAdminView({
                 }
                 onAssignTasks={
                   handleAssignTasks
+                }
+                onAssignDocuments={
+                  handleAssignDocuments
                 }
               />
             )
