@@ -7118,6 +7118,313 @@ function UserAdminView({
 
 
 
+/* =========================================================
+   DASHBOARD HOME — OPERATIONAL HELPERS
+========================================================= */
+
+function getDashboardHomeDay(date = new Date()) {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+}
+
+function getDashboardHomeBookingDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  return getLocalDate(value);
+}
+
+function isDashboardHomeSameDay(firstDate, secondDate) {
+  if (!firstDate || !secondDate) {
+    return false;
+  }
+
+  return (
+    firstDate.getFullYear() === secondDate.getFullYear() &&
+    firstDate.getMonth() === secondDate.getMonth() &&
+    firstDate.getDate() === secondDate.getDate()
+  );
+}
+
+function dashboardHomeBookingTouchesDate(booking, date) {
+  const startDate = getDashboardHomeBookingDate(
+    booking.startDate
+  );
+
+  if (!startDate) {
+    return false;
+  }
+
+  const endDate =
+    getDashboardHomeBookingDate(
+      booking.endDate
+    ) || startDate;
+
+  return date >= startDate && date <= endDate;
+}
+
+function isDashboardHomeInactiveBooking(booking) {
+  const status = String(
+    booking?.status || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  return (
+    status.includes("cancel") ||
+    status.includes("archive") ||
+    status.includes("waitlist")
+  );
+}
+
+function getDashboardHomeGuestCount(booking) {
+  const rawValue =
+    booking?.attendeeCount ||
+    booking?.persons ||
+    "";
+
+  const numericValue = Number(
+    String(rawValue)
+      .replace(/[^0-9.-]/g, "")
+  );
+
+  return Number.isFinite(numericValue)
+    ? numericValue
+    : 0;
+}
+
+function getDashboardHomeHousingLabel(booking) {
+  const housing = [
+    booking?.roomName,
+    booking?.buildingsRooms,
+  ]
+    .map((value) => String(value || "").trim())
+    .filter(
+      (value, index, values) =>
+        value &&
+        value.toLowerCase() !== "unassigned" &&
+        value.toLowerCase() !== "no room" &&
+        values.indexOf(value) === index
+    )
+    .join(" · ");
+
+  return housing || "Housing not assigned";
+}
+
+const DASHBOARD_HOME_BUILDINGS = [
+  {
+    key: "bethel",
+    label: "Bethel",
+    aliases: ["bethel"],
+    detailFields: ["lodgingBethel"],
+  },
+  {
+    key: "hebron",
+    label: "Hebron",
+    aliases: ["hebron"],
+    detailFields: [
+      "lodgingHebronThird",
+      "lodgingHebronBunks",
+    ],
+  },
+  {
+    key: "dothan",
+    label: "Dothan",
+    aliases: ["dothan"],
+    detailFields: ["lodgingDothan"],
+  },
+  {
+    key: "ajalon",
+    label: "Ajalon",
+    aliases: ["ajalon", "aijalon"],
+    detailFields: ["lodgingAjalon"],
+  },
+  {
+    key: "capernaum",
+    label: "Capernaum",
+    aliases: ["capernaum", "capurnum"],
+    detailFields: ["lodgingCapernaum"],
+  },
+  {
+    key: "guest-house",
+    label: "Guest House",
+    aliases: ["guest house", "guesthouse"],
+    detailFields: ["lodgingGuestHouse"],
+  },
+];
+
+function dashboardHomeHasLodgingValue(value) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return false;
+  }
+
+  const text = String(value).trim();
+
+  if (!text) {
+    return false;
+  }
+
+  const normalizedText =
+    text.toLowerCase();
+
+  if (
+    normalizedText === "0" ||
+    normalizedText === "no" ||
+    normalizedText === "none" ||
+    normalizedText === "n/a" ||
+    normalizedText === "na"
+  ) {
+    return false;
+  }
+
+  const numericValue = Number(
+    text.replace(/[^0-9.-]/g, "")
+  );
+
+  if (Number.isFinite(numericValue)) {
+    return numericValue > 0;
+  }
+
+  return true;
+}
+
+function getDashboardHomeBuildingTags(booking) {
+  const details =
+    booking?.rentalFormDetails || {};
+
+  const housingText = [
+    booking?.roomName,
+    booking?.buildingsRooms,
+  ]
+    .map((value) =>
+      String(value || "")
+        .trim()
+        .toLowerCase()
+    )
+    .filter(Boolean)
+    .join(" ");
+
+  const matchedBuildings =
+    DASHBOARD_HOME_BUILDINGS.filter(
+      (building) => {
+        const appearsInHousingText =
+          building.aliases.some((alias) =>
+            housingText.includes(
+              alias.toLowerCase()
+            )
+          );
+
+        const appearsInDetailedHousing =
+          building.detailFields.some(
+            (fieldName) =>
+              dashboardHomeHasLodgingValue(
+                details?.[fieldName]
+              )
+          );
+
+        return (
+          appearsInHousingText ||
+          appearsInDetailedHousing
+        );
+      }
+    );
+
+  if (matchedBuildings.length > 0) {
+    return matchedBuildings;
+  }
+
+  return [
+    {
+      key: "unassigned",
+      label: "Unassigned",
+    },
+  ];
+}
+
+
+function dashboardHomeBookingNeedsHousing(booking) {
+  const retreatType = String(
+    booking?.retreatType || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    retreatType.includes("day use") ||
+    retreatType.includes("day-use")
+  ) {
+    return false;
+  }
+
+  const housingText = [
+    booking?.roomName,
+    booking?.buildingsRooms,
+  ]
+    .map((value) => String(value || "").trim())
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    housingText.includes("no room") ||
+    housingText.includes("day use") ||
+    housingText.includes("day-use")
+  ) {
+    return false;
+  }
+
+  return (
+    !housingText ||
+    housingText === "unassigned" ||
+    housingText.includes("unassigned")
+  );
+}
+
+function getDashboardHomeStatusTone(status) {
+  const normalizedStatus = String(
+    status || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    normalizedStatus.includes("confirmed") ||
+    normalizedStatus.includes("booked")
+  ) {
+    return "confirmed";
+  }
+
+  if (normalizedStatus.includes("contract")) {
+    return "contract";
+  }
+
+  if (
+    normalizedStatus.includes("inquiry") ||
+    normalizedStatus.includes("lead")
+  ) {
+    return "inquiry";
+  }
+
+  return "neutral";
+}
+
+function formatDashboardHomeDateTile(date) {
+  return {
+    month: date.toLocaleDateString("en-US", {
+      month: "short",
+    }),
+    day: date.getDate(),
+  };
+}
+
+
 export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -8202,7 +8509,381 @@ export default function Dashboard() {
     (inquiry) => inquiry.promoCode.trim() !== ""
   );
 
-  
+
+  /* =========================================================
+     DASHBOARD HOME — OPERATIONAL SNAPSHOT
+  ========================================================= */
+
+  const dashboardToday =
+    getDashboardHomeDay(today);
+
+  const dashboardSevenDaysOut =
+    addDays(dashboardToday, 7);
+
+  const dashboardFourteenDaysOut =
+    addDays(dashboardToday, 14);
+
+  const dashboardThirtyDaysOut =
+    addDays(dashboardToday, 30);
+
+  const dashboardNinetyDaysOut =
+    addDays(dashboardToday, 90);
+
+  const dashboardNinetyDaysAgo =
+    addDays(dashboardToday, -90);
+
+  const dashboardScheduledBookings =
+    datedInquiries.filter(
+      (booking) =>
+        !isDashboardHomeInactiveBooking(
+          booking
+        )
+    );
+
+  const dashboardBookingsToday =
+    dashboardScheduledBookings.filter(
+      (booking) =>
+        dashboardHomeBookingTouchesDate(
+          booking,
+          dashboardToday
+        )
+    );
+
+  const dashboardGuestsToday =
+    dashboardBookingsToday.reduce(
+      (total, booking) =>
+        total +
+        getDashboardHomeGuestCount(
+          booking
+        ),
+      0
+    );
+
+  const dashboardArrivalsNextSevenDays =
+    dashboardScheduledBookings.filter(
+      (booking) => {
+        const startDate =
+          getDashboardHomeBookingDate(
+            booking.startDate
+          );
+
+        return (
+          startDate &&
+          startDate >= dashboardToday &&
+          startDate < dashboardSevenDaysOut
+        );
+      }
+    );
+
+  const dashboardUpcomingArrivals =
+    dashboardScheduledBookings
+      .filter((booking) => {
+        const startDate =
+          getDashboardHomeBookingDate(
+            booking.startDate
+          );
+
+        return (
+          startDate &&
+          startDate >= dashboardToday &&
+          startDate <= dashboardFourteenDaysOut
+        );
+      })
+      .slice(0, 7);
+
+  const dashboardUpcomingThirtyDays =
+    dashboardScheduledBookings.filter(
+      (booking) => {
+        const startDate =
+          getDashboardHomeBookingDate(
+            booking.startDate
+          );
+
+        return (
+          startDate &&
+          startDate >= dashboardToday &&
+          startDate <= dashboardThirtyDaysOut
+        );
+      }
+    );
+
+  const dashboardUpcomingThirtyDayGuests =
+    dashboardUpcomingThirtyDays.reduce(
+      (total, booking) =>
+        total +
+        getDashboardHomeGuestCount(
+          booking
+        ),
+      0
+    );
+
+  const dashboardMissingDates =
+    inquiryBookings.filter(
+      (booking) => {
+        if (
+          booking.startDate ||
+          isDashboardHomeInactiveBooking(
+            booking
+          )
+        ) {
+          return false;
+        }
+
+        const submittedDate =
+          booking.submittedAt
+            ? new Date(
+                booking.submittedAt
+              )
+            : null;
+
+        return (
+          submittedDate &&
+          !Number.isNaN(
+            submittedDate.getTime()
+          ) &&
+          submittedDate >=
+            dashboardNinetyDaysAgo
+        );
+      }
+    );
+
+  const dashboardHousingNeedsAttention =
+    dashboardScheduledBookings.filter(
+      (booking) => {
+        const startDate =
+          getDashboardHomeBookingDate(
+            booking.startDate
+          );
+
+        return (
+          startDate &&
+          startDate >= dashboardToday &&
+          startDate <= dashboardNinetyDaysOut &&
+          dashboardHomeBookingNeedsHousing(
+            booking
+          )
+        );
+      }
+    );
+
+  const dashboardGuestCountsMissing =
+    dashboardScheduledBookings.filter(
+      (booking) => {
+        const startDate =
+          getDashboardHomeBookingDate(
+            booking.startDate
+          );
+
+        const hasGuestCount = Boolean(
+          String(
+            booking.attendeeCount ||
+              booking.persons ||
+              ""
+          ).trim()
+        );
+
+        return (
+          startDate &&
+          startDate >= dashboardToday &&
+          startDate <= dashboardNinetyDaysOut &&
+          !hasGuestCount
+        );
+      }
+    );
+
+  const dashboardContractsAwaitingReturn =
+    dashboardScheduledBookings.filter(
+      (booking) => {
+        const details =
+          booking.rentalFormDetails || {};
+
+        const endDate =
+          getDashboardHomeBookingDate(
+            booking.endDate ||
+              booking.startDate
+          );
+
+        return (
+          details.contractSentDate &&
+          !details.contractReturnedDate &&
+          (!endDate ||
+            endDate >= dashboardToday)
+        );
+      }
+    );
+
+  const dashboardAttentionItems = [
+    {
+      id: "dates",
+      title: "Missing retreat dates",
+      description:
+        "Recent active inquiries from the last 90 days still need dates.",
+      count: dashboardMissingDates.length,
+      tone: "gold",
+      icon: FaCalendarAlt,
+      view: INQUIRY_SPREADSHEET_VIEW_NAME,
+    },
+    {
+      id: "housing",
+      title: "Lodging not assigned",
+      description:
+        "Upcoming groups in the next 90 days still need housing.",
+      count:
+        dashboardHousingNeedsAttention.length,
+      tone: "blue",
+      icon: FaBed,
+      view: "Lodging Calendar",
+    },
+    {
+      id: "guests",
+      title: "Guest counts missing",
+      description:
+        "Upcoming groups are missing a recorded group size.",
+      count:
+        dashboardGuestCountsMissing.length,
+      tone: "purple",
+      icon: FaUsers,
+      view: SPREADSHEET_VIEW_NAME,
+    },
+    {
+      id: "contracts",
+      title: "Contracts awaiting return",
+      description:
+        "Contracts have been sent but no returned date is recorded.",
+      count:
+        dashboardContractsAwaitingReturn.length,
+      tone: "green",
+      icon: FaFileContract,
+      view: SPREADSHEET_VIEW_NAME,
+    },
+  ];
+
+  const dashboardVisibleAttentionItems =
+    dashboardAttentionItems.filter(
+      (item) => item.count > 0
+    );
+
+  const dashboardAttentionTotal =
+    dashboardVisibleAttentionItems.reduce(
+      (total, item) =>
+        total + item.count,
+      0
+    );
+
+  const dashboardWeekDays = Array.from(
+    { length: 7 },
+    (_, index) => {
+      const date = addDays(
+        dashboardToday,
+        index
+      );
+
+      const arrivals =
+        dashboardScheduledBookings.filter(
+          (booking) => {
+            const startDate =
+              getDashboardHomeBookingDate(
+                booking.startDate
+              );
+
+            return isDashboardHomeSameDay(
+              startDate,
+              date
+            );
+          }
+        );
+
+      const onSite =
+        dashboardScheduledBookings.filter(
+          (booking) =>
+            dashboardHomeBookingTouchesDate(
+              booking,
+              date
+            )
+        );
+
+      return {
+        date,
+        arrivals,
+        onSite,
+        guests: onSite.reduce(
+          (total, booking) =>
+            total +
+            getDashboardHomeGuestCount(
+              booking
+            ),
+          0
+        ),
+      };
+    }
+  );
+
+  const dashboardCurrentStaffUser =
+    staffUsers.find(
+      (user) =>
+        user.id === currentStaffUserId
+    );
+
+  const dashboardGreeting =
+    today.getHours() < 12
+      ? "Good morning"
+      : today.getHours() < 17
+      ? "Good afternoon"
+      : "Good evening";
+
+  const dashboardTodayLabel =
+    today.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+
+  const dashboardQuickActions = [
+    {
+      label: "New Booking",
+      description:
+        "Create a staff booking",
+      icon: FaPlus,
+      view: "Form",
+    },
+    {
+      label: "Main Calendar",
+      description:
+        "See all scheduled groups",
+      icon: FaCalendarAlt,
+      view: "Calendar View",
+    },
+    {
+      label: "Lodging Calendar",
+      description:
+        "Check building availability",
+      icon: FaBed,
+      view: "Lodging Calendar",
+    },
+    {
+      label: "Guest Inquiries",
+      description:
+        "Review new guest requests",
+      icon: FaEnvelopeOpenText,
+      view: "Guest Inquiries",
+    },
+    {
+      label: "Master Spreadsheet",
+      description:
+        "Open all booking records",
+      icon: FaTable,
+      view: SPREADSHEET_VIEW_NAME,
+    },
+    {
+      label: "Jobs",
+      description:
+        "View assigned staff work",
+      icon: FaClipboardList,
+      view: "Jobs",
+    },
+  ];
+
 
   const exportInquiriesToSpreadsheet = async () => {
     if (inquiryBookings.length === 0) {
@@ -8420,7 +9101,7 @@ export default function Dashboard() {
       items: [
         {
           ...sidebarItemLookup["Master Spreadsheet"],
-          label: "Master Calendar",
+          label: "Master Spreadhsheet",
           view: SPREADSHEET_VIEW_NAME,
           icon:
             sidebarItemLookup["Master Spreadsheet"]?.icon ||
@@ -8860,459 +9541,656 @@ export default function Dashboard() {
             openBookingDetail={openBookingDetail}
           />
         ) : (
-          <>
-        <section className="dashboard-stats-grid">
-          <article className="dashboard-stat-card stat-card-green">
-            <div className="dashboard-stat-icon">
-              <FaClipboardList />
-            </div>
+          <section className="home-dashboard-page">
+            <header className="home-dashboard-hero">
+              <div className="home-dashboard-hero-copy">
+                <span className="home-dashboard-eyebrow">
+                  {dashboardTodayLabel}
+                </span>
 
-            <div>
-              <span>Total Inquiries</span>
-              <strong>{inquiryBookings.length}</strong>
-              <p>Submitted through the form</p>
-            </div>
-          </article>
+                <h1>
+                  {dashboardGreeting}
+                  {dashboardCurrentStaffUser?.name
+                    ? `, ${dashboardCurrentStaffUser.name}`
+                    : ""}
+                  .
+                </h1>
 
-          <article className="dashboard-stat-card stat-card-blue">
-            <div className="dashboard-stat-icon">
-              <FaRegCalendarCheck />
-            </div>
-
-            <div>
-              <span>Calendar Entries</span>
-              <strong>{datedInquiries.length}</strong>
-              <p>Inquiries with a start date</p>
-            </div>
-          </article>
-
-          <article className="dashboard-stat-card stat-card-gold">
-            <div className="dashboard-stat-icon">
-              <FaExclamationTriangle />
-            </div>
-
-            <div>
-              <span>Missing Dates</span>
-              <strong>{inquiriesMissingDates.length}</strong>
-              <p>Need staff follow-up</p>
-            </div>
-          </article>
-
-          <article className="dashboard-stat-card stat-card-purple">
-            <div className="dashboard-stat-icon">
-              <FaTicketAlt />
-            </div>
-
-            <div>
-              <span>Promo Codes</span>
-              <strong>{inquiriesWithPromoCodes.length}</strong>
-              <p>Submissions with a promo code</p>
-            </div>
-          </article>
-        </section>
-
-        {/* <section className="dashboard-card tasks-card">
-          <div className="dashboard-card-header collapsible-card-header">
-            <div className="dashboard-heading-with-icon">
-              <span className="section-icon">
-                <FaClipboardList />
-              </span>
-
-              <div>
-                <h2>Submitted Booking Inquiries</h2>
                 <p>
-                  {inquiryBookings.length} total inquiry
-                  {inquiryBookings.length === 1 ? "" : "ies"} from forms and Excel imports.
+                  Here is what is happening at camp, what is coming next,
+                  and what needs staff attention.
                 </p>
               </div>
-            </div>
 
-            <button
-              className="collapse-toggle-button"
-              type="button"
-              onClick={() =>
-                setIsSubmittedInquiriesOpen((currentValue) => !currentValue)
-              }
-              aria-expanded={isSubmittedInquiriesOpen}
-              aria-controls="submitted-inquiries-content"
-            >
-              <span>{isSubmittedInquiriesOpen ? "Hide" : "Show"}</span>
-              <strong>{isSubmittedInquiriesOpen ? "−" : "+"}</strong>
-            </button>
-          </div>
+              <div className="home-dashboard-hero-actions">
+                <button
+                  className="home-dashboard-primary-action"
+                  type="button"
+                  onClick={() => {
+                    setSelectedBooking(null);
+                    setBookingFormSeed(null);
+                    setGuestBookingSource(null);
+                    setBookingDetailTab(
+                      "Overview"
+                    );
+                    navigate("/form");
+                  }}
+                >
+                  <FaPlus />
+                  New Booking
+                </button>
 
-          {isSubmittedInquiriesOpen && (
-            <div id="submitted-inquiries-content" className="collapsible-card-content">
-              {inquiryBookings.length > 0 ? (
-                <div className="dashboard-table-wrap">
-                  <table className="dashboard-table">
-                    <thead>
-                      <tr>
-                        <th>Organization</th>
-                        <th>Contact</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Dates</th>
-                        <th>Group Size</th>
-                        <th>Retreat Type</th>
-                        <th>Promo Code</th>
-                        <th>Waitlist</th>
-                        <th>Submitted</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {inquiryBookings.map((inquiry) => (
-                        <tr key={inquiry.id}>
-                          <td>
-                            <button
-                              className="table-link"
-                              type="button"
-                              onClick={() => openBookingDetail(inquiry)}
-                            >
-                              {inquiry.organizationName}
-                            </button>
-                          </td>
-                          <td>{inquiry.contactName}</td>
-                          <td>{getSpreadsheetDisplayValue(inquiry.email)}</td>
-                          <td>{getSpreadsheetDisplayValue(inquiry.phone)}</td>
-                          <td>{getSpreadsheetDateRangeDisplay(inquiry.startDate, inquiry.endDate)}</td>
-                          <td>{inquiry.attendeeCount || "—"}</td>
-                          <td>{inquiry.retreatType || "—"}</td>
-                          <td>{inquiry.promoCode || "—"}</td>
-                          <td>{inquiry.waitlist || "No"}</td>
-                          <td>{formatSubmittedDate(inquiry.submittedAt)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <strong>No inquiries yet</strong>
-                  <p>Submit the public form first, then return to this dashboard.</p>
-                </div>
-              )}
-            </div>
-          )}
-        </section> */}
-
-        <section className="dashboard-lower-grid">
-          <article className="dashboard-card calendar-card">
-            <div className="dashboard-card-header">
-              <div className="dashboard-heading-with-icon">
-                <span className="section-icon">
+                <button
+                  className="home-dashboard-secondary-action"
+                  type="button"
+                  onClick={() =>
+                    handleActiveViewChange(
+                      "Calendar View"
+                    )
+                  }
+                >
                   <FaCalendarAlt />
+                  Open Calendar
+                </button>
+              </div>
+            </header>
+
+            <section className="home-dashboard-metrics">
+              <article className="home-dashboard-metric home-dashboard-metric-green">
+                <span className="home-dashboard-metric-icon">
+                  <FaHome />
                 </span>
 
                 <div>
-                  <h2>Groups At a Glance</h2>
+                  <span>On Site Today</span>
+                  <strong>
+                    {dashboardBookingsToday.length}
+                  </strong>
                   <p>
-                    Calendar view based only on inquiries that have selected dates.
+                    {dashboardGuestsToday} recorded guest
+                    {dashboardGuestsToday === 1
+                      ? ""
+                      : "s"}
                   </p>
                 </div>
-              </div>
+              </article>
 
-              <button
-                className="secondary-dashboard-button"
-                type="button"
-                onClick={goToCurrentMonth}
-              >
-                This Month
-              </button>
-            </div>
+              <article className="home-dashboard-metric home-dashboard-metric-blue">
+                <span className="home-dashboard-metric-icon">
+                  <FaSignInAlt />
+                </span>
 
-            <div className="calendar-controls">
-              <button type="button" onClick={goToPreviousMonth}>
-                «
-              </button>
-
-              <select
-                value={selectedMonth}
-                onChange={(event) =>
-                  setSelectedMonth(Number(event.target.value))
-                }
-              >
-                {monthNames.map((month, index) => (
-                  <option value={index} key={month}>
-                    {month}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={selectedYear}
-                onChange={(event) =>
-                  setSelectedYear(Number(event.target.value))
-                }
-              >
-                {[2025, 2026, 2027, 2028, 2029, 2030].map((year) => (
-                  <option value={year} key={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-
-              <button type="button" onClick={goToNextMonth}>
-                »
-              </button>
-            </div>
-
-            <BookingCalendar
-              calendarCells={calendarCells}
-              datedInquiries={datedInquiries}
-              selectedYear={selectedYear}
-              selectedMonth={selectedMonth}
-              getCalendarEventColor={getCalendarEventColor}
-            />
-
-            <div className="calendar-legend">
-              <span>
-                <i className="legend-dot legend-confirmed"></i>
-                Confirmed
-              </span>
-
-              <span>
-                <i className="legend-dot legend-contract"></i>
-                Contract Sent
-              </span>
-
-              <span>
-                <i className="legend-dot legend-inquiry"></i>
-                Inquiry
-              </span>
-            </div>
-
-
-          </article>
-
-          <div className="dashboard-side-stack">
-
-            <article className="dashboard-card dated-inquiries-dashboard-card">
-              <div className="dashboard-card-header dated-inquiries-dashboard-header">
                 <div>
-                  <div className="dated-inquiries-title-row">
-                    <h2>Dated Inquiries</h2>
+                  <span>Arriving Next 7 Days</span>
+                  <strong>
+                    {dashboardArrivalsNextSevenDays.length}
+                  </strong>
+                  <p>
+                    Scheduled group
+                    {dashboardArrivalsNextSevenDays.length === 1
+                      ? ""
+                      : "s"}
+                  </p>
+                </div>
+              </article>
 
-                    <div className="dated-inquiries-settings">
-                      <button
-                        className={`dated-inquiries-settings-button ${
-                          isDatedInquirySettingsOpen ? "active" : ""
-                        }`}
-                        type="button"
-                        onClick={() =>
-                          setIsDatedInquirySettingsOpen((currentValue) => !currentValue)
+              <article className="home-dashboard-metric home-dashboard-metric-gold">
+                <span className="home-dashboard-metric-icon">
+                  <FaExclamationTriangle />
+                </span>
+
+                <div>
+                  <span>Needs Attention</span>
+                  <strong>
+                    {dashboardAttentionTotal}
+                  </strong>
+                  <p>
+                    Across {dashboardVisibleAttentionItems.length} action categor
+                    {dashboardVisibleAttentionItems.length === 1
+                      ? "y"
+                      : "ies"}
+                  </p>
+                </div>
+              </article>
+
+              <article className="home-dashboard-metric home-dashboard-metric-purple">
+                <span className="home-dashboard-metric-icon">
+                  <FaUsers />
+                </span>
+
+                <div>
+                  <span>Next 30 Days</span>
+                  <strong>
+                    {dashboardUpcomingThirtyDays.length}
+                  </strong>
+                  <p>
+                    {dashboardUpcomingThirtyDayGuests} expected guest
+                    {dashboardUpcomingThirtyDayGuests === 1
+                      ? ""
+                      : "s"}
+                  </p>
+                </div>
+              </article>
+            </section>
+
+            <section className="home-dashboard-main-grid">
+              <div className="home-dashboard-column">
+                <article className="home-dashboard-card">
+                  <header className="home-dashboard-card-header">
+                    <div className="home-dashboard-card-heading">
+                      <span className="home-dashboard-card-icon home-dashboard-card-icon-gold">
+                        <FaExclamationTriangle />
+                      </span>
+
+                      <div>
+                        <span className="home-dashboard-section-label">
+                          Staff Focus
+                        </span>
+                        <h2>Action Center</h2>
+                        <p>
+                          The booking records most likely to need follow-up.
+                        </p>
+                      </div>
+                    </div>
+                  </header>
+
+                  {dashboardVisibleAttentionItems.length > 0 ? (
+                    <div className="home-dashboard-attention-list">
+                      {dashboardVisibleAttentionItems.map(
+                        (item) => {
+                          const Icon = item.icon;
+
+                          return (
+                            <button
+                              className={`home-dashboard-attention-item home-dashboard-attention-${item.tone}`}
+                              type="button"
+                              key={item.id}
+                              onClick={() =>
+                                handleActiveViewChange(
+                                  item.view
+                                )
+                              }
+                            >
+                              <span className="home-dashboard-attention-icon">
+                                <Icon />
+                              </span>
+
+                              <span className="home-dashboard-attention-copy">
+                                <strong>
+                                  {item.title}
+                                </strong>
+                                <small>
+                                  {item.description}
+                                </small>
+                              </span>
+
+                              <span className="home-dashboard-attention-count">
+                                {item.count}
+                              </span>
+
+                              <FaChevronRight className="home-dashboard-attention-arrow" />
+                            </button>
+                          );
                         }
-                        aria-label="Open dated inquiry display settings"
-                        title="Display settings"
-                      >
-                        <FaCog />
-                      </button>
-
-                      {isDatedInquirySettingsOpen && (
-                        <div className="dated-inquiries-settings-menu">
-                          <div className="dated-inquiries-settings-menu-header">
-                            <h3>Display Settings</h3>
-                            <p>Customize how dated inquiry cards appear.</p>
-                          </div>
-
-                          <label className="dated-inquiries-setting-option">
-                            <input
-                              type="checkbox"
-                              checked={datedInquirySettings.tintByRetreatType}
-                              onChange={(event) =>
-                                updateDatedInquirySetting(
-                                  "tintByRetreatType",
-                                  event.target.checked
-                                )
-                              }
-                            />
-
-                            <span>
-                              <strong>Color cards by retreat type</strong>
-                              <small>Lightly tint each card based on its retreat type.</small>
-                            </span>
-                          </label>
-
-                          <label className="dated-inquiries-setting-option">
-                            <input
-                              type="checkbox"
-                              checked={datedInquirySettings.showRetreatTypeLegend}
-                              onChange={(event) =>
-                                updateDatedInquirySetting(
-                                  "showRetreatTypeLegend",
-                                  event.target.checked
-                                )
-                              }
-                            />
-
-                            <span>
-                              <strong>Show color legend</strong>
-                              <small>Display the meaning of each retreat type color.</small>
-                            </span>
-                          </label>
-                        </div>
                       )}
                     </div>
-                  </div>
+                  ) : (
+                    <div className="home-dashboard-all-clear">
+                      <span>
+                        <FaRegCalendarCheck />
+                      </span>
 
-                  <p>
-                    {filteredDatedInquiries.length} of {datedInquiries.length} dated booking
-                    {datedInquiries.length === 1 ? "" : "s"} shown.
-                  </p>
-
-                  <span className="dated-inquiries-filter-summary">
-                    Filter: {activeDatedInquiryFilterLabel}
-                  </span>
-                </div>
-
-                <div className="dated-inquiries-filter-bar">
-                  <label className="dated-inquiries-filter-field">
-                    <span>Date Range</span>
-
-                    <select
-                      value={datedInquiryDateFilter}
-                      onChange={(event) => setDatedInquiryDateFilter(event.target.value)}
-                    >
-                      {datedInquiryDateFilterOptions.map((option) => (
-                        <option value={option.value} key={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  {datedInquiryDateFilter === "custom" && (
-                    <div className="dated-inquiries-custom-range">
-                      <label className="dated-inquiries-filter-field">
-                        <span>From</span>
-
-                        <input
-                          type="date"
-                          value={datedInquiryCustomStartDate}
-                          onChange={(event) =>
-                            setDatedInquiryCustomStartDate(event.target.value)
-                          }
-                        />
-                      </label>
-
-                      <label className="dated-inquiries-filter-field">
-                        <span>To</span>
-
-                        <input
-                          type="date"
-                          value={datedInquiryCustomEndDate}
-                          onChange={(event) =>
-                            setDatedInquiryCustomEndDate(event.target.value)
-                          }
-                        />
-                      </label>
+                      <div>
+                        <strong>
+                          Nothing urgent is showing right now
+                        </strong>
+                        <p>
+                          Upcoming booking records have dates, housing,
+                          guest counts, and no outstanding contract flags.
+                        </p>
+                      </div>
                     </div>
                   )}
-                </div>
+                </article>
+
+                <article className="home-dashboard-card">
+                  <header className="home-dashboard-card-header home-dashboard-card-header-with-action">
+                    <div className="home-dashboard-card-heading">
+                      <span className="home-dashboard-card-icon home-dashboard-card-icon-blue">
+                        <FaSignInAlt />
+                      </span>
+
+                      <div>
+                        <span className="home-dashboard-section-label">
+                          Coming Up
+                        </span>
+                        <h2>Upcoming Arrivals</h2>
+                        <p>
+                          Groups scheduled to arrive during the next two weeks.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      className="home-dashboard-text-action"
+                      type="button"
+                      onClick={() =>
+                        handleActiveViewChange(
+                          "Calendar View"
+                        )
+                      }
+                    >
+                      View calendar
+                      <FaChevronRight />
+                    </button>
+                  </header>
+
+                  {dashboardUpcomingArrivals.length > 0 ? (
+                    <div className="home-dashboard-arrivals-list">
+                      {dashboardUpcomingArrivals.map(
+                        (booking) => {
+                          const startDate =
+                            getDashboardHomeBookingDate(
+                              booking.startDate
+                            );
+
+                          const dateTile =
+                            formatDashboardHomeDateTile(
+                              startDate
+                            );
+
+                          const guestCount =
+                            getDashboardHomeGuestCount(
+                              booking
+                            );
+
+                          const buildingTags =
+                            getDashboardHomeBuildingTags(
+                              booking
+                            );
+
+                          return (
+                            <button
+                              className="home-dashboard-arrival-row"
+                              type="button"
+                              key={booking.id}
+                              onClick={() =>
+                                openBookingDetail(
+                                  booking
+                                )
+                              }
+                            >
+                              <span className="home-dashboard-arrival-date">
+                                <small>
+                                  {dateTile.month}
+                                </small>
+                                <strong>
+                                  {dateTile.day}
+                                </strong>
+                              </span>
+
+                              <span className="home-dashboard-arrival-main">
+                                <strong>
+                                  {booking.organizationName ||
+                                    "Unnamed Organization"}
+                                </strong>
+
+                                <span>
+                                  {formatDateRange(
+                                    booking.startDate,
+                                    booking.endDate
+                                  )}
+                                </span>
+
+                                <small>
+                                  {guestCount > 0
+                                    ? `${guestCount} guest${
+                                        guestCount === 1
+                                          ? ""
+                                          : "s"
+                                      }`
+                                    : "Guest count not recorded"}
+                                  {booking.status
+                                    ? ` · ${booking.status}`
+                                    : ""}
+                                </small>
+                              </span>
+
+                              <span
+                                className="home-dashboard-building-pills"
+                                aria-label={`Lodging: ${buildingTags
+                                  .map(
+                                    (building) =>
+                                      building.label
+                                  )
+                                  .join(", ")}`}
+                              >
+                                {buildingTags.map(
+                                  (building) => (
+                                    <span
+                                      className={`home-dashboard-building-pill home-dashboard-building-pill-${building.key}`}
+                                      key={
+                                        building.key
+                                      }
+                                    >
+                                      {
+                                        building.label
+                                      }
+                                    </span>
+                                  )
+                                )}
+                              </span>
+
+                              <FaChevronRight className="home-dashboard-row-arrow" />
+                            </button>
+                          );
+                        }
+                      )}
+                    </div>
+                  ) : (
+                    <div className="home-dashboard-empty-state">
+                      <FaCalendarAlt />
+                      <strong>
+                        No arrivals in the next two weeks
+                      </strong>
+                      <p>
+                        Future groups will appear here automatically once they have dates.
+                      </p>
+                    </div>
+                  )}
+                </article>
               </div>
 
-              {datedInquirySettings.tintByRetreatType &&
-                datedInquirySettings.showRetreatTypeLegend && (
-                  <div className="dated-inquiries-type-legend">
-                    {RETREAT_TYPE_LEGEND_KEYS.map((key) => {
-                      const typeConfig = RETREAT_TYPE_CONFIG[key];
+              <aside className="home-dashboard-column">
+                <article className="home-dashboard-card home-dashboard-today-card">
+                  <header className="home-dashboard-card-header home-dashboard-card-header-with-action">
+                    <div className="home-dashboard-card-heading">
+                      <span className="home-dashboard-card-icon home-dashboard-card-icon-green">
+                        <FaHome />
+                      </span>
 
-                      return (
-                        <span
-                          className={`dated-inquiries-type-legend-pill ${typeConfig.className}`}
-                          key={key}
-                        >
-                          {typeConfig.label}
+                      <div>
+                        <span className="home-dashboard-section-label">
+                          Live Snapshot
                         </span>
-                      );
-                    })}
+                        <h2>Today at Camp</h2>
+                        <p>
+                          Groups whose stay includes today.
+                        </p>
+                      </div>
+                    </div>
+                  </header>
+
+                  {dashboardBookingsToday.length > 0 ? (
+                    <div className="home-dashboard-today-list">
+                      {dashboardBookingsToday
+                        .slice(0, 5)
+                        .map((booking) => {
+                          const guestCount =
+                            getDashboardHomeGuestCount(
+                              booking
+                            );
+
+                          return (
+                            <button
+                              className="home-dashboard-today-row"
+                              type="button"
+                              key={booking.id}
+                              onClick={() =>
+                                openBookingDetail(
+                                  booking
+                                )
+                              }
+                            >
+                              <span className="home-dashboard-today-dot" />
+
+                              <span className="home-dashboard-today-copy">
+                                <strong>
+                                  {booking.organizationName ||
+                                    "Unnamed Organization"}
+                                </strong>
+                                <small>
+                                  {getDashboardHomeHousingLabel(
+                                    booking
+                                  )}
+                                </small>
+                              </span>
+
+                              <span className="home-dashboard-today-guests">
+                                {guestCount > 0
+                                  ? `${guestCount} guest${
+                                      guestCount === 1
+                                        ? ""
+                                        : "s"
+                                    }`
+                                  : "Guests —"}
+                              </span>
+                            </button>
+                          );
+                        })}
+
+                      {dashboardBookingsToday.length > 5 && (
+                        <button
+                          className="home-dashboard-more-button"
+                          type="button"
+                          onClick={() =>
+                            handleActiveViewChange(
+                              "Calendar View"
+                            )
+                          }
+                        >
+                          +{dashboardBookingsToday.length - 5} more group
+                          {dashboardBookingsToday.length - 5 === 1
+                            ? ""
+                            : "s"}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="home-dashboard-empty-state home-dashboard-empty-state-compact">
+                      <FaHome />
+                      <strong>
+                        No groups are scheduled on site today
+                      </strong>
+                      <p>
+                        The next scheduled arrival will appear in the arrivals list.
+                      </p>
+                    </div>
+                  )}
+                </article>
+
+                <article className="home-dashboard-card">
+                  <header className="home-dashboard-card-header">
+                    <div className="home-dashboard-card-heading">
+                      <span className="home-dashboard-card-icon home-dashboard-card-icon-purple">
+                        <FaClock />
+                      </span>
+
+                      <div>
+                        <span className="home-dashboard-section-label">
+                          Shortcuts
+                        </span>
+                        <h2>Quick Actions</h2>
+                        <p>
+                          Jump directly into common staff workflows.
+                        </p>
+                      </div>
+                    </div>
+                  </header>
+
+                  <div className="home-dashboard-quick-actions">
+                    {dashboardQuickActions.map(
+                      (action) => {
+                        const Icon = action.icon;
+
+                        return (
+                          <button
+                            className="home-dashboard-quick-action"
+                            type="button"
+                            key={action.label}
+                            onClick={() => {
+                              if (
+                                action.view ===
+                                "Form"
+                              ) {
+                                setSelectedBooking(
+                                  null
+                                );
+                                setBookingFormSeed(
+                                  null
+                                );
+                                setGuestBookingSource(
+                                  null
+                                );
+                                setBookingDetailTab(
+                                  "Overview"
+                                );
+                                navigate("/form");
+                                return;
+                              }
+
+                              handleActiveViewChange(
+                                action.view
+                              );
+                            }}
+                          >
+                            <span>
+                              <Icon />
+                            </span>
+
+                            <div>
+                              <strong>
+                                {action.label}
+                              </strong>
+                              <small>
+                                {action.description}
+                              </small>
+                            </div>
+
+                            <FaChevronRight />
+                          </button>
+                        );
+                      }
+                    )}
                   </div>
-                )}
+                </article>
+              </aside>
+            </section>
 
-              {filteredDatedInquiries.length > 0 ? (
-                <div className="dated-inquiries-dashboard-list">
-                  {filteredDatedInquiries.map((inquiry) => {
-                    const guestCount = String(inquiry.attendeeCount || "").trim();
+            <article className="home-dashboard-card home-dashboard-week-card">
+              <header className="home-dashboard-card-header home-dashboard-card-header-with-action">
+                <div className="home-dashboard-card-heading">
+                  <span className="home-dashboard-card-icon home-dashboard-card-icon-purple">
+                    <FaCalendarAlt />
+                  </span>
 
-                    const guestLabel = guestCount
-                      ? `${guestCount} guest${guestCount === "1" ? "" : "s"}`
-                      : "No group size";
+                  <div>
+                    <span className="home-dashboard-section-label">
+                      Schedule
+                    </span>
+                    <h2>Next 7 Days</h2>
+                    <p>
+                      A compact look at arrivals and groups on site each day.
+                    </p>
+                  </div>
+                </div>
 
-                    const retreatType = getInquiryRetreatType(inquiry);
-                    const retreatTypeConfig = getRetreatTypeConfig(retreatType);
+                <button
+                  className="home-dashboard-text-action"
+                  type="button"
+                  onClick={() =>
+                    handleActiveViewChange(
+                      "Lodging Calendar"
+                    )
+                  }
+                >
+                  Check lodging
+                  <FaChevronRight />
+                </button>
+              </header>
 
-                    const inquiryCardClassName = [
-                      "dated-inquiry-dashboard-card",
-                      datedInquirySettings.tintByRetreatType
-                        ? "dated-inquiry-dashboard-card--tinted"
-                        : "",
-                      datedInquirySettings.tintByRetreatType
-                        ? retreatTypeConfig.className
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ");
+              <div className="home-dashboard-week-strip">
+                {dashboardWeekDays.map(
+                  (day) => {
+                    const isToday =
+                      isDashboardHomeSameDay(
+                        day.date,
+                        dashboardToday
+                      );
 
                     return (
-                      <button
-                        className={inquiryCardClassName}
-                        key={inquiry.id}
-                        type="button"
-                        onClick={() => openBookingDetail(inquiry)}
+                      <div
+                        className={`home-dashboard-day-card ${
+                          isToday
+                            ? "home-dashboard-day-card-today"
+                            : ""
+                        }`}
+                        key={day.date.toISOString()}
                       >
-                        <span className="dated-inquiry-dashboard-main">
-                          <strong>{inquiry.organizationName || "Unnamed Organization"}</strong>
-
-                          <span className="dated-inquiry-dashboard-date">
-                            {formatDateRange(inquiry.startDate, inquiry.endDate)}
+                        <div className="home-dashboard-day-heading">
+                          <span>
+                            {day.date.toLocaleDateString(
+                              "en-US",
+                              {
+                                weekday: "short",
+                              }
+                            )}
                           </span>
 
-                          <span className="dated-inquiry-dashboard-meta">
-                            {inquiry.retreatType || "No retreat type"} · {guestLabel}
-                          </span>
-                        </span>
+                          <strong>
+                            {day.date.getDate()}
+                          </strong>
 
-                        <span
-                          className={`dated-inquiry-dashboard-status ${getCalendarEventColor(
-                            inquiry.status
-                          )}`}
-                        >
-                          {inquiry.status || "Inquiry"}
-                        </span>
-                      </button>
+                          {isToday && (
+                            <small>Today</small>
+                          )}
+                        </div>
+
+                        <div className="home-dashboard-day-stats">
+                          <div>
+                            <span>
+                              <FaSignInAlt />
+                            </span>
+                            <strong>
+                              {day.arrivals.length}
+                            </strong>
+                            <small>
+                              arrival
+                              {day.arrivals.length === 1
+                                ? ""
+                                : "s"}
+                            </small>
+                          </div>
+
+                          <div>
+                            <span>
+                              <FaHome />
+                            </span>
+                            <strong>
+                              {day.onSite.length}
+                            </strong>
+                            <small>
+                              on site
+                            </small>
+                          </div>
+                        </div>
+
+                        <div className="home-dashboard-day-guests">
+                          <FaUsers />
+                          <span>
+                            {day.guests} recorded guest
+                            {day.guests === 1
+                              ? ""
+                              : "s"}
+                          </span>
+                        </div>
+                      </div>
                     );
-                  })}
-                </div>
-              ) : (
-              <div className="empty-state">
-                <strong>
-                  {datedInquiries.length > 0
-                    ? "No dated inquiries match this date range"
-                    : "No dated inquiries yet"}
-                </strong>
-
-                <p>
-                  {datedInquiries.length > 0
-                    ? "Try choosing a different date range to see more bookings."
-                    : "Inquiries will appear here once the form includes a start date."}
-                </p>
+                  }
+                )}
               </div>
-            )}
             </article>
-          </div>
-        </section>
-
-        <AvailabilityBoard
-          datedInquiries={datedInquiries}
-          selectedYear={selectedYear}
-          selectedMonth={selectedMonth}
-          goToPreviousMonth={goToPreviousMonth}
-          goToNextMonth={goToNextMonth}
-          getCalendarEventColor={getCalendarEventColor}
-        />
-
-          </>
+          </section>
         )}
 
 
