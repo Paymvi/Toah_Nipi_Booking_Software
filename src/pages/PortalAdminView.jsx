@@ -171,6 +171,96 @@ const PORTAL_DOCUMENT_OPTIONS = [
     documentType: "Information Sheet",
     audience: "general",
   },
+  {
+    id: "guest-cleanup-procedures-general",
+    title: "Guest Clean-Up Procedures",
+    fileName: "2026 TNCRC Guest Clean-Up Procedures.pdf",
+    documentType: "Policy Document",
+    audience: "general",
+  },
+  {
+    id: "intervarsity-welcome-reservation-information",
+    title: "Welcome & Reservation Information for IV Groups",
+    fileName: "Welcome & Reservation Information for IV Groups.docx.pdf",
+    documentType: "Information Sheet",
+    audience: "intervarsity",
+  },
+    {
+    id: "water-safety-policies",
+    title: "Water Safety Policies",
+    fileName: "2026 Toah Nipi CRC Water Safety Policies.pdf",
+    documentType: "Policy Document",
+    audience: "general",
+  },
+
+  {
+    id: "hiking-trails",
+    title: "Hiking Trails",
+    fileName: "Toah Nipi Hiking Trails Updated 4-2026.pdf",
+    documentType: "Information Sheet",
+    audience: "general",
+  },
+
+  {
+    id: "campus-map",
+    title: "Toah Nipi Campus Map",
+    fileName: "TN Campus Map.pdf",
+    documentType: "Map",
+    audience: "general",
+  },
+
+  {
+    id: "intervarsity-liability-insurance-details",
+    title: "InterVarsity Commercial General Liability Insurance Details",
+    fileName: "2026 IV Detail of Comm Gen Liability Insurance from Terms and Conditions.pdf",
+    documentType: "Insurance Information",
+    audience: "intervarsity",
+  },
+  {
+    id: "liability-insurance-details",
+    title: "Commercial General Liability Insurance Details",
+    fileName: "2026 Detail of Comm Gen Liability Insurance from Terms and Conditions.pdf",
+    documentType: "Insurance Information",
+    audience: "general",
+  },
+  {
+    id: "water-safety-policies",
+    title: "Water Safety Policies",
+    fileName: "2026 Toah Nipi CRC Water Safety Policies.pdf",
+    documentType: "Policy Document",
+    audience: "general",
+  },
+  {
+    id: "hiking-trails",
+    title: "Hiking Trails",
+    fileName: "Toah Nipi Hiking Trails Updated 4-2026.pdf",
+    documentType: "Information Sheet",
+    audience: "general",
+  },
+
+  {
+    id: "campus-map",
+    title: "Toah Nipi Campus Map",
+    fileName: "TN Campus Map.pdf",
+    documentType: "Map",
+    audience: "general",
+  },
+
+  {
+    id: "intervarsity-liability-insurance-details",
+    title: "InterVarsity Commercial General Liability Insurance Details",
+    fileName: "2026 IV Detail of Comm Gen Liability Insurance from Terms and Conditions.pdf",
+    documentType: "Insurance Information",
+    audience: "intervarsity",
+  },
+
+  {
+    id: "liability-insurance-details",
+    title: "Commercial General Liability Insurance Details",
+    fileName: "2026 Detail of Comm Gen Liability Insurance from Terms and Conditions.pdf",
+    documentType: "Insurance Information",
+    audience: "general",
+  },
 ];
 
 
