@@ -12,6 +12,7 @@ import "./styles/BackupView.css";
 import "./styles/Auth.css";
 import "./styles/PortalAdminView.css";
 import "./styles/GuestInquiriesView.css";
+import "./styles/LodgingCalendar.css";
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
