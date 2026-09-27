@@ -113,6 +113,10 @@ const PORTAL_TASK_OPTIONS = [
   },
 ];
 
+const PORTAL_TEXT_RESPONSE_ITEM_IDS = new Set([
+  "food-allergy-information",
+  "guest-count",
+]);
 
 /* =========================================================
    PORTAL DOCUMENT CATALOG
@@ -285,6 +289,7 @@ function normalizePortalChecklistItem(item) {
     dueDate: item.due_date || "",
     guestAction: item.guest_action || "none",
     uploadedFileName: item.uploaded_file_name || "",
+    responseText: item.response_text || "",
     lastChangedAt: item.last_changed_at || "",
     sortOrder: item.sort_order || 0,
   };
@@ -457,6 +462,7 @@ async function fetchPortalOverviewRecords() {
           due_date,
           guest_action,
           uploaded_file_name,
+          response_text,
           last_changed_at,
           sort_order
         ),
@@ -527,6 +533,10 @@ async function insertPortalChecklistItems(
             guest_action:
               item.guestAction,
 
+            response_text:
+              item.responseText ||
+              null,
+
             sort_order:
               item.sortOrder,
 
@@ -545,6 +555,7 @@ async function insertPortalChecklistItems(
         due_date,
         guest_action,
         uploaded_file_name,
+        response_text,
         last_changed_at,
         sort_order
       `);
@@ -772,12 +783,20 @@ function PortalAdminProgressBar({
 
 function PortalChecklistPreview({
   items,
+  confirmingItemId,
+  onConfirmItem,
 }) {
   const [
     isExpanded,
     setIsExpanded,
   ] =
     useState(false);
+
+  const [
+    expandedItemId,
+    setExpandedItemId,
+  ] =
+    useState("");
 
 
   useEffect(
@@ -825,41 +844,162 @@ function PortalChecklistPreview({
   return (
     <div className="portal-checklist-preview">
       {visibleItems.map(
-        (item) => (
-          <div
-            className={`portal-checklist-preview-row portal-item-${item.status}`}
-            key={
-              item.id
-            }
-          >
-            <span></span>
+        (item) => {
+          const hasResponse =
+            String(
+              item.responseText || ""
+            ).trim().length > 0;
 
-            <div>
-              <strong>
-                {
-                  item.title
-                }
-              </strong>
+          const isItemExpanded =
+            expandedItemId ===
+            item.id;
 
-              <small>
-                {item.status ===
-                "needsReview"
-                  ? "Needs staff review"
-                  : item.status ===
-                      "waitingOnGuest"
-                    ? "Waiting on guest"
-                    : item.status ===
-                        "completed"
-                      ? "Complete"
-                      : "Not started"}
+          const requiresTextResponse =
+            PORTAL_TEXT_RESPONSE_ITEM_IDS.has(
+              item.itemId
+            );
 
-                {item.dueDate
-                  ? ` · Due ${item.dueDate}`
-                  : ""}
-              </small>
+          const canConfirm =
+            item.status ===
+              "needsReview" &&
+            (
+              !requiresTextResponse ||
+              hasResponse
+            );
+
+          return (
+            <div
+              className={`portal-checklist-preview-entry portal-item-${item.status}`}
+              key={
+                item.id
+              }
+            >
+              <div className={`portal-checklist-preview-row portal-item-${item.status}`}>
+                <span></span>
+
+                <div className="portal-checklist-preview-copy">
+                  <strong>
+                    {
+                      item.title
+                    }
+                  </strong>
+
+                  <small>
+                    {item.status ===
+                    "needsReview"
+                      ? "Needs staff review"
+                      : item.status ===
+                          "waitingOnGuest"
+                        ? "Waiting on guest"
+                        : item.status ===
+                            "completed"
+                          ? "Complete"
+                          : "Not started"}
+
+                    {item.dueDate
+                      ? ` · Due ${item.dueDate}`
+                      : ""}
+                  </small>
+                </div>
+
+                <div className="portal-checklist-preview-actions">
+                  {hasResponse && (
+                    <button
+                      className="portal-checklist-info-button"
+                      type="button"
+                      aria-expanded={
+                        isItemExpanded
+                      }
+                      onClick={() =>
+                        setExpandedItemId(
+                          (current) =>
+                            current ===
+                            item.id
+                              ? ""
+                              : item.id
+                        )
+                      }
+                    >
+                      {isItemExpanded
+                        ? "Hide Info"
+                        : "View Info"}
+                    </button>
+                  )}
+
+                  {canConfirm && (
+                    <button
+                      className="portal-checklist-confirm-button"
+                      type="button"
+                      disabled={
+                        confirmingItemId ===
+                        item.id
+                      }
+                      onClick={() =>
+                        onConfirmItem(
+                          item
+                        )
+                      }
+                    >
+                      {confirmingItemId ===
+                      item.id
+                        ? "Confirming..."
+                        : "Confirm"}
+                    </button>
+                  )}
+
+                  {requiresTextResponse &&
+                    item.status ===
+                      "needsReview" &&
+                    !hasResponse && (
+                    <span className="portal-checklist-missing-label">
+                      Missing info
+                    </span>
+                  )}
+
+                  {item.status ===
+                    "completed" && (
+                    <span className="portal-checklist-confirmed-label">
+                      Confirmed
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {hasResponse &&
+                isItemExpanded && (
+                <div className="portal-checklist-response-review">
+                  <div>
+                    <small>
+                      Guest-provided information
+                    </small>
+
+                    <strong>
+                      {item.itemId ===
+                      "guest-count"
+                        ? "Final guest counts"
+                        : item.itemId ===
+                            "food-allergy-information"
+                          ? "Food allergy information"
+                          : "Checklist response"}
+                    </strong>
+                  </div>
+
+                  <p>
+                    {
+                      item.responseText
+                    }
+                  </p>
+
+                  {canConfirm && (
+                    <span>
+                      Review the information above, then click Confirm to mark this checklist item complete.
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
-        )
+          );
+        }
       )}
 
 
@@ -1940,6 +2080,8 @@ function PortalRecordCard({
   copiedBookingId,
   isAssigning,
   isAssigningDocuments,
+  confirmingItemId,
+  onConfirmChecklistItem,
   onCopyPortalLink,
   onOpenBooking,
   onAssignTasks,
@@ -2073,6 +2215,16 @@ function PortalRecordCard({
         <PortalChecklistPreview
           items={
             record.checklistItems
+          }
+          confirmingItemId={
+            confirmingItemId
+          }
+          onConfirmItem={
+            (item) =>
+              onConfirmChecklistItem(
+                record,
+                item
+              )
           }
         />
       </div>
@@ -2333,6 +2485,13 @@ export default function PortalAdminView({
   const [
     assigningDocumentBookingId,
     setAssigningDocumentBookingId,
+  ] =
+    useState("");
+
+
+  const [
+    confirmingChecklistItemId,
+    setConfirmingChecklistItemId,
   ] =
     useState("");
 
@@ -2674,6 +2833,76 @@ export default function PortalAdminView({
     openBookingDetail(
       booking
     );
+  }
+
+
+  async function handleConfirmChecklistItem(
+    record,
+    item
+  ) {
+    if (
+      !record?.id ||
+      !item?.id
+    ) {
+      return;
+    }
+
+    try {
+      setConfirmingChecklistItemId(
+        item.id
+      );
+
+      const {
+        error,
+      } =
+        await supabase
+          .from(
+            "portal_checklist_items"
+          )
+          .update({
+            status:
+              "completed",
+            last_changed_at:
+              new Date()
+                .toISOString(),
+            updated_at:
+              new Date()
+                .toISOString(),
+          })
+          .eq(
+            "id",
+            item.id
+          )
+          .eq(
+            "booking_id",
+            record.id
+          )
+          .eq(
+            "status",
+            "needsReview"
+          );
+
+      if (
+        error
+      ) {
+        throw error;
+      }
+
+      await loadPortalRecords();
+    } catch (error) {
+      console.error(
+        "Could not confirm portal checklist item:",
+        error
+      );
+
+      alert(
+        "Could not confirm this checklist item."
+      );
+    } finally {
+      setConfirmingChecklistItemId(
+        ""
+      );
+    }
   }
 
 
@@ -3020,6 +3249,12 @@ export default function PortalAdminView({
                 isAssigningDocuments={
                   assigningDocumentBookingId ===
                   record.id
+                }
+                confirmingItemId={
+                  confirmingChecklistItemId
+                }
+                onConfirmChecklistItem={
+                  handleConfirmChecklistItem
                 }
                 onCopyPortalLink={
                   handleCopyPortalLink
