@@ -4886,7 +4886,8 @@
 
 .booking-overview-guest-cards {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -4915,6 +4916,14 @@
   background: linear-gradient(
     180deg,
     #fbfcff 0%,
+    #ffffff 100%
+  );
+}
+
+.booking-overview-guest-card-teal {
+  background: linear-gradient(
+    180deg,
+    #f7fcfb 0%,
     #ffffff 100%
   );
 }
@@ -4967,6 +4976,11 @@
 .booking-overview-guest-card-blue .booking-overview-guest-card-icon {
   background: #eef3f9;
   color: #707d8d;
+}
+
+.booking-overview-guest-card-teal .booking-overview-guest-card-icon {
+  background: #eaf6f2;
+  color: #4f7e73;
 }
 
 .booking-overview-guest-card-sand .booking-overview-guest-card-icon {
@@ -5099,9 +5113,10 @@
    RESPONSIVE
 ========================================================= */
 
-@media (max-width: 1200px) {
+@media (max-width: 1250px) {
   .booking-overview-guest-cards {
-    grid-template-columns: 1fr;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
   }
 
   .booking-overview-guest-summary {
@@ -5727,7 +5742,8 @@
 
 .booking-overview-program-notes-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns:
+    repeat(auto-fit, minmax(260px, 1fr));
   gap: 22px;
 }
 
@@ -9504,3 +9520,334 @@
   }
 
 }
+
+
+
+/* =========================================================
+   BOOKING OVERVIEW — ACTIVITIES + FACILITIES
+   Structured read-only schedules from CreateBooking
+========================================================= */
+
+.booking-overview-schedule-showcase {
+  padding: 20px 22px 22px;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.booking-overview-schedule-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+
+  margin-bottom: 18px;
+}
+
+.booking-overview-schedule-header-icon {
+  width: 42px;
+  height: 42px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 42px;
+
+  border-radius: 12px;
+
+  background: #edf4ea;
+  color: #6f8157;
+
+  font-size: 1rem;
+}
+
+.booking-overview-schedule-header-icon-facilities {
+  background: #eef2f6;
+  color: #657789;
+}
+
+.booking-overview-schedule-header > div {
+  min-width: 0;
+}
+
+.booking-overview-schedule-header p {
+  margin: 0 0 3px;
+
+  color: #8b95a5;
+
+  font-size: 0.68rem;
+  font-weight: 700;
+
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.booking-overview-schedule-header h3 {
+  margin: 0 0 4px;
+
+  color: #1f2a3a;
+
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.booking-overview-schedule-header > div > span {
+  display: block;
+
+  color: #6f7c8f;
+
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   TABLES
+========================================================= */
+
+.booking-overview-schedule-table-wrap {
+  width: 100%;
+
+  overflow-x: auto;
+
+  border: 1px solid #e3e8ef;
+  border-radius: 14px;
+
+  background: #ffffff;
+}
+
+.booking-overview-schedule-table {
+  width: 100%;
+}
+
+.booking-overview-activity-table {
+  min-width: 620px;
+}
+
+.booking-overview-facility-table {
+  min-width: 980px;
+}
+
+.booking-overview-schedule-table-head,
+.booking-overview-schedule-row {
+  display: grid;
+  align-items: center;
+}
+
+.booking-overview-activity-table
+.booking-overview-schedule-table-head,
+.booking-overview-activity-table
+.booking-overview-schedule-row {
+  grid-template-columns:
+    minmax(150px, 0.8fr)
+    minmax(105px, 0.55fr)
+    minmax(280px, 1.8fr);
+}
+
+.booking-overview-facility-table
+.booking-overview-schedule-table-head,
+.booking-overview-facility-table
+.booking-overview-schedule-row {
+  grid-template-columns:
+    minmax(145px, 0.75fr)
+    minmax(100px, 0.5fr)
+    minmax(240px, 1.45fr)
+    minmax(160px, 0.95fr)
+    minmax(220px, 1.3fr);
+}
+
+.booking-overview-schedule-table-head {
+  border-bottom: 1px solid #e5eaf0;
+
+  background: #f8fafb;
+}
+
+.booking-overview-schedule-table-head > span {
+  min-width: 0;
+
+  padding: 11px 14px;
+
+  color: #7c8798;
+
+  font-size: 0.7rem;
+  font-weight: 700;
+
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.booking-overview-schedule-row {
+  min-height: 50px;
+
+  border-bottom: 1px solid #edf1f5;
+}
+
+.booking-overview-schedule-row:last-child {
+  border-bottom: 0;
+}
+
+.booking-overview-schedule-row > span,
+.booking-overview-schedule-row > strong {
+  min-width: 0;
+
+  padding: 12px 14px;
+
+  overflow-wrap: anywhere;
+
+  color: #4a5668;
+
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.booking-overview-schedule-row > strong {
+  color: #2b3647;
+  font-weight: 650;
+}
+
+.booking-overview-schedule-primary {
+  color: #253248 !important;
+  font-weight: 650;
+}
+
+
+/* =========================================================
+   LEGACY + NOTES
+========================================================= */
+
+.booking-overview-schedule-legacy {
+  padding: 16px 18px;
+
+  border: 1px solid #e3e8ef;
+  border-radius: 12px;
+
+  background: #fbfcfd;
+
+  color: #39475a;
+
+  font-size: 0.9rem;
+  line-height: 1.6;
+
+  white-space: pre-wrap;
+}
+
+.booking-overview-schedule-notes {
+  margin-top: 16px;
+  padding: 14px 16px;
+
+  border-left: 3px solid #82946b;
+  border-radius: 0 10px 10px 0;
+
+  background: #f7f9f5;
+}
+
+.booking-overview-schedule-notes > strong {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #5f7050;
+
+  font-size: 0.76rem;
+  font-weight: 700;
+
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.booking-overview-schedule-notes p {
+  margin: 0;
+
+  color: #3e4959;
+
+  font-size: 0.88rem;
+  line-height: 1.55;
+
+  white-space: pre-wrap;
+}
+
+
+/* =========================================================
+   EMPTY SCHEDULE STATES
+========================================================= */
+
+.booking-overview-schedule-empty {
+  min-height: 118px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+
+  padding: 24px 20px;
+
+  border: 1px dashed #d9e1e9;
+  border-radius: 14px;
+
+  background: #fbfcfd;
+  color: #7d8898;
+
+  text-align: left;
+}
+
+.booking-overview-schedule-empty > svg {
+  flex: 0 0 auto;
+
+  width: 22px;
+  height: 22px;
+
+  color: #81916d;
+}
+
+.booking-overview-schedule-empty-facilities > svg {
+  color: #718294;
+}
+
+.booking-overview-schedule-empty > div {
+  min-width: 0;
+}
+
+.booking-overview-schedule-empty strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #39465a;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.booking-overview-schedule-empty span {
+  display: block;
+
+  max-width: 620px;
+
+  color: #7d8898;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+  .booking-overview-guest-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .booking-overview-schedule-showcase {
+    padding: 18px 16px;
+  }
+
+  .booking-overview-schedule-header h3 {
+    font-size: 1.2rem;
+  }
+}
+

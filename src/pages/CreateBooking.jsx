@@ -236,7 +236,7 @@ const TEST_BOOKING_DATA = {
   childRateQuoted: "85",
 
   numberOfNights: "2",
-  numberOfMeals: "5",
+  numberOfMeals: "6",
 
   /* Booking Timeline */
   inquiryDate: "2026-09-03",
@@ -275,6 +275,7 @@ const TEST_BOOKING_DATA = {
       dinner: false,
     },
   },
+
   /* Day Campers */
   dayCamperCount: "6",
   dayCamperMeals: "2",
@@ -304,24 +305,67 @@ const TEST_BOOKING_DATA = {
   mealNotes:
     "Saturday dinner should be served at 5:30 PM instead of 6:00 PM.",
 
+  /* Activities */
+  activities: [
+    {
+      date: "2027-06-18",
+      time: "19:30",
+      activity: "Fire pit",
+    },
+    {
+      date: "2027-06-19",
+      time: "10:00",
+      activity: "Hebron: Rock Wall",
+    },
+    {
+      date: "2027-06-19",
+      time: "14:00",
+      activity: "Kayaking",
+    },
+  ],
+
+  activityNotes:
+    "Rock wall group should arrive 15 minutes early. Kayaking is weather dependent.",
+
+  /* Facilities */
+  facilities: [
+    {
+      date: "2027-06-18",
+      time: "14:30",
+      task: "Set up chairs and keyboard in Bethel meeting space",
+      assignedTo: "Program Staff",
+      notes: "Arrange 50 chairs in rows and confirm extension cords are available.",
+    },
+    {
+      date: "2027-06-19",
+      time: "17:00",
+      task: "Prepare fire pit area",
+      assignedTo: "Facilities Staff",
+      notes: "Set out firewood, benches, and water bucket before the evening program.",
+    },
+  ],
+
+  facilityNotes:
+    "Please complete Friday setup before the group arrives at 4:00 PM.",
+
   /* Lodging */
-  lodgingBethel: "20",
-  lodgingHebronThird: "10",
-  lodgingHebronBunks: "17",
-  lodgingDothan: "",
-  lodgingAjalon: "",
-  lodgingCapernaum: "",
-  lodgingGuestHouse: "",
+  lodgingBethel: "10",
+  lodgingHebronThird: "8",
+  lodgingHebronBunks: "8",
+  lodgingDothan: "6",
+  lodgingAjalon: "5",
+  lodgingCapernaum: "4",
+  lodgingGuestHouse: "6",
 
   /* Linens */
   linenOption: "Some",
   linenSets: "12",
+  linenPieces: "18",
 
   /* Notes */
   notes:
     "TEST BOOKING: youth retreat. Group would like an early check-in if possible. This record is only for software testing.",
 };
-
 
 function cleanInquiryPrefillValue(value) {
   const text = String(value ?? "").trim();

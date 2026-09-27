@@ -296,33 +296,36 @@ function parseBookingDietarySummary(summary = "") {
 
 function BookingMealsProgramOverview({ booking, details }) {
   const mealPlanText = getOverviewDisplayValue(
-    details?.meals,
     booking.meals
   );
 
   const dietaryText = getOverviewDisplayValue(
-    details?.foodAllergies,
     booking.foodAllergies
   );
 
   const mealNotesText = getOverviewDisplayValue(
-    details?.mealNotes,
-    booking.needToKnow
+    details?.mealNotes
   );
 
-  const programLogisticsText = getOverviewDisplayValue(
-    booking.activities,
-    booking.schedule,
-    mealPlanText
-  );
+  const needToKnowText =
+    String(booking.needToKnow || "").trim() !==
+    String(details?.mealNotes || "").trim()
+      ? getOverviewDisplayValue(
+          booking.needToKnow
+        )
+      : "";
 
-  const parsedMealSummary = parseBookingMealSummary(mealPlanText);
-  const parsedDietarySummary = parseBookingDietarySummary(dietaryText);
+  const parsedMealSummary =
+    parseBookingMealSummary(mealPlanText);
+
+  const parsedDietarySummary =
+    parseBookingDietarySummary(dietaryText);
 
   const totalMeals =
     getOverviewDisplayValue(
       details?.numberOfMeals,
-      parsedMealSummary.totalMeals
+      parsedMealSummary.totalMeals,
+      booking.mealCount
     ) || "—";
 
   const firstMeal =
@@ -345,7 +348,6 @@ function BookingMealsProgramOverview({ booking, details }) {
       )
     ) || "—";
 
-
   const lunchTime =
     formatBookingOverviewTime(
       getOverviewDisplayValue(
@@ -353,7 +355,6 @@ function BookingMealsProgramOverview({ booking, details }) {
         parsedMealSummary.lunchTime
       )
     ) || "—";
-
 
   const dinnerTime =
     formatBookingOverviewTime(
@@ -364,19 +365,27 @@ function BookingMealsProgramOverview({ booking, details }) {
     ) || "—";
 
   const breakfastCount =
-    getOverviewDisplayValue(parsedMealSummary.breakfastCount) || "0";
+    getOverviewDisplayValue(
+      parsedMealSummary.breakfastCount
+    ) || "0";
 
   const lunchCount =
-    getOverviewDisplayValue(parsedMealSummary.lunchCount) || "0";
+    getOverviewDisplayValue(
+      parsedMealSummary.lunchCount
+    ) || "0";
 
   const dinnerCount =
-    getOverviewDisplayValue(parsedMealSummary.dinnerCount) || "0";
+    getOverviewDisplayValue(
+      parsedMealSummary.dinnerCount
+    ) || "0";
 
   const hasAnyContent =
     hasOverviewDisplayValue(mealPlanText) ||
     hasOverviewDisplayValue(dietaryText) ||
     hasOverviewDisplayValue(mealNotesText) ||
-    hasOverviewDisplayValue(programLogisticsText);
+    hasOverviewDisplayValue(needToKnowText) ||
+    hasOverviewDisplayValue(details?.numberOfMeals) ||
+    hasOverviewDisplayValue(booking.mealCount);
 
   if (!hasAnyContent) {
     return null;
@@ -391,11 +400,11 @@ function BookingMealsProgramOverview({ booking, details }) {
           </span>
 
           <div>
-            <p>Program</p>
-            <h3>Meals & Program</h3>
+            <p>Food Service</p>
+            <h3>Meals</h3>
             <span>
-              Manage meal service details, schedule, dietary requirements,
-              and program logistics.
+              Meal schedule, service times, dietary requirements,
+              and food-service notes.
             </span>
           </div>
         </div>
@@ -476,7 +485,7 @@ function BookingMealsProgramOverview({ booking, details }) {
 
             <div>
               <h4>Meal Service Plan</h4>
-              <p>Detailed meal plan for your retreat.</p>
+              <p>Detailed meal plan for this retreat.</p>
             </div>
           </div>
 
@@ -584,46 +593,283 @@ function BookingMealsProgramOverview({ booking, details }) {
         </div>
       </div>
 
-      <div className="booking-overview-program-panel booking-overview-program-panel-notes">
-        <div className="booking-overview-program-panel-header">
-          <span className="booking-overview-program-panel-icon">
-            <FaStickyNote />
-          </span>
-
-          <div>
-            <h4>Notes & Logistics</h4>
-            <p>Important details for meal service and program coordination.</p>
-          </div>
-        </div>
-
-        <div className="booking-overview-program-notes-grid">
-          <div className="booking-overview-program-note-block">
-            <div className="booking-overview-program-note-heading">
+      {(mealNotesText || needToKnowText) && (
+        <div className="booking-overview-program-panel booking-overview-program-panel-notes">
+          <div className="booking-overview-program-panel-header">
+            <span className="booking-overview-program-panel-icon">
               <FaStickyNote />
-              <span>Meal Notes</span>
-            </div>
+            </span>
 
-            <p className="booking-overview-program-note-value">
-              {mealNotesText || "No meal notes added."}
-            </p>
+            <div>
+              <h4>Meal Notes</h4>
+              <p>Important details for food-service coordination.</p>
+            </div>
           </div>
 
-          <div className="booking-overview-program-note-block">
-            <div className="booking-overview-program-note-heading">
-              <FaClipboardList />
-              <span>Program Logistics</span>
-            </div>
+          <div className="booking-overview-program-notes-grid">
+            {mealNotesText && (
+              <div className="booking-overview-program-note-block">
+                <div className="booking-overview-program-note-heading">
+                  <FaStickyNote />
+                  <span>Meal Notes</span>
+                </div>
 
-            <p className="booking-overview-program-note-value">
-              {programLogisticsText || "No program logistics added."}
-            </p>
+                <p className="booking-overview-program-note-value">
+                  {mealNotesText}
+                </p>
+              </div>
+            )}
+
+            {needToKnowText && (
+              <div className="booking-overview-program-note-block">
+                <div className="booking-overview-program-note-heading">
+                  <FaInfoCircle />
+                  <span>Need To Know</span>
+                </div>
+
+                <p className="booking-overview-program-note-value">
+                  {needToKnowText}
+                </p>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
 
+
+function getBookingOverviewScheduleRows(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((entry) =>
+    entry &&
+    typeof entry === "object" &&
+    Object.values(entry).some((fieldValue) =>
+      hasBookingOverviewValue(fieldValue)
+    )
+  );
+}
+
+
+function BookingActivitiesOverview({
+  booking,
+  details,
+  dateSettings,
+}) {
+  const activities =
+    getBookingOverviewScheduleRows(
+      details?.activities
+    ).length > 0
+      ? getBookingOverviewScheduleRows(
+          details?.activities
+        )
+      : getBookingOverviewScheduleRows(
+          booking.activities
+        );
+
+  const legacyActivities =
+    !Array.isArray(booking.activities)
+      ? booking.activities
+      : "";
+
+  const activityNotes =
+    details?.activityNotes || "";
+
+  return (
+    <section className="booking-overview-card booking-overview-card-wide booking-overview-schedule-showcase">
+      <div className="booking-overview-schedule-header">
+        <span className="booking-overview-schedule-header-icon">
+          <FaHiking />
+        </span>
+
+        <div>
+          <p>Program</p>
+          <h3>Activities</h3>
+          <span>
+            Scheduled activity locations and program notes.
+          </span>
+        </div>
+      </div>
+
+      {activities.length > 0 ? (
+        <div className="booking-overview-schedule-table-wrap">
+          <div className="booking-overview-schedule-table booking-overview-activity-table">
+            <div className="booking-overview-schedule-table-head">
+              <span>Date</span>
+              <span>Time</span>
+              <span>Activity</span>
+            </div>
+
+            {activities.map((activity, index) => (
+              <div
+                className="booking-overview-schedule-row"
+                key={`${activity.date || "activity"}-${activity.time || "time"}-${index}`}
+              >
+                <strong>
+                  {activity.date
+                    ? formatBookingDetailDate(
+                        activity.date,
+                        dateSettings
+                      )
+                    : "—"}
+                </strong>
+
+                <span>
+                  {activity.time
+                    ? formatBookingOverviewTime(
+                        activity.time
+                      )
+                    : "—"}
+                </span>
+
+                <span className="booking-overview-schedule-primary">
+                  {activity.activity || "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : hasBookingOverviewValue(
+          legacyActivities
+        ) ? (
+        <div className="booking-overview-schedule-legacy">
+          {formatBookingOverviewValue(
+            legacyActivities
+          )}
+        </div>
+      ) : (
+        <div className="booking-overview-schedule-empty">
+          <FaHiking />
+
+          <div>
+            <strong>No activities scheduled yet</strong>
+            <span>
+              Activities added in Create Booking will appear here with their date and time.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {activityNotes && (
+        <div className="booking-overview-schedule-notes">
+          <strong>Activity Notes</strong>
+          <p>{activityNotes}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+
+function BookingFacilitiesOverview({
+  booking,
+  details,
+  dateSettings,
+}) {
+  const facilities =
+    getBookingOverviewScheduleRows(
+      details?.facilities
+    ).length > 0
+      ? getBookingOverviewScheduleRows(
+          details?.facilities
+        )
+      : getBookingOverviewScheduleRows(
+          booking.facilities
+        );
+
+  const facilityNotes =
+    details?.facilityNotes || "";
+
+  return (
+    <section className="booking-overview-card booking-overview-card-wide booking-overview-schedule-showcase">
+      <div className="booking-overview-schedule-header">
+        <span className="booking-overview-schedule-header-icon booking-overview-schedule-header-icon-facilities">
+          <FaBuilding />
+        </span>
+
+        <div>
+          <p>Operations</p>
+          <h3>Facilities</h3>
+          <span>
+            Facility preparation tasks, assignments, and setup notes.
+          </span>
+        </div>
+      </div>
+
+      {facilities.length > 0 ? (
+        <div className="booking-overview-schedule-table-wrap">
+          <div className="booking-overview-schedule-table booking-overview-facility-table">
+            <div className="booking-overview-schedule-table-head">
+              <span>Date</span>
+              <span>Time</span>
+              <span>Task</span>
+              <span>Assigned To</span>
+              <span>Notes</span>
+            </div>
+
+            {facilities.map((facility, index) => (
+              <div
+                className="booking-overview-schedule-row"
+                key={`${facility.date || "facility"}-${facility.time || "time"}-${index}`}
+              >
+                <strong>
+                  {facility.date
+                    ? formatBookingDetailDate(
+                        facility.date,
+                        dateSettings
+                      )
+                    : "—"}
+                </strong>
+
+                <span>
+                  {facility.time
+                    ? formatBookingOverviewTime(
+                        facility.time
+                      )
+                    : "—"}
+                </span>
+
+                <span className="booking-overview-schedule-primary">
+                  {facility.task || "—"}
+                </span>
+
+                <span>
+                  {facility.assignedTo || "—"}
+                </span>
+
+                <span>
+                  {facility.notes || "—"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="booking-overview-schedule-empty booking-overview-schedule-empty-facilities">
+          <FaBuilding />
+
+          <div>
+            <strong>No facility tasks scheduled yet</strong>
+            <span>
+              Facility tasks added in Create Booking will appear here with their assignments and notes.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {facilityNotes && (
+        <div className="booking-overview-schedule-notes">
+          <strong>Facility Notes</strong>
+          <p>{facilityNotes}</p>
+        </div>
+      )}
+    </section>
+  );
+}
 
 
 function getSavedInquiries() {
@@ -1167,7 +1413,11 @@ function normalizeInquiry(inquiry, index) {
     foodAllergies: inquiry.foodAllergies || "",
     needToKnow: inquiry.needToKnow || "",
     linenSets: inquiry.linenSets || "",
+    linenPieces: inquiry.linenPieces || "",
     activities: inquiry.activities || "",
+    facilities: Array.isArray(inquiry.facilities)
+      ? inquiry.facilities
+      : [],
 
     programLogisticsAssignments: Array.isArray(inquiry.programLogisticsAssignments)
       ? inquiry.programLogisticsAssignments
@@ -5103,6 +5353,7 @@ function BookingOverviewGuestShowcase({
   numberOfMeals,
   approximateGuestFields,
   actualGuestFields,
+  dayCamperFields,
   ratesAndStayFields,
   setActiveTab,
 }) {
@@ -5318,6 +5569,14 @@ function BookingOverviewGuestShowcase({
           fields={ratesAndStayFields}
           tone="sand"
         />
+
+        <BookingOverviewGuestCard
+          icon={FaUsers}
+          title="Day Campers"
+          subtitle="Day-use attendance and meal service."
+          fields={dayCamperFields}
+          tone="teal"
+        />
       </div>
 
     </section>
@@ -5442,33 +5701,108 @@ function BookingOverview({
       ])
     );
 
-  const actualChildren =
+  const approxChildrenUnder3 =
     firstBookingOverviewValue(
+      details.approxChildrenUnder3,
+
+      getBookingRawValue(booking, [
+        "Approx. # of Minors under 3",
+        "Approx # of Minors under 3",
+        "Estimated # of Minors under 3",
+      ])
+    );
+
+  const approxChildren3to17 =
+    firstBookingOverviewValue(
+      details.approxChildren3to17,
+      details.approxChildrenGuests,
+
+      getBookingRawValue(booking, [
+        "Approx. # of Minors 3 to 17",
+        "Approx # of Minors 3 to 17",
+        "Estimated # of Minors 3 to 17",
+      ])
+    );
+
+  const actualChildrenUnder3 =
+    firstBookingOverviewValue(
+      details.actualChildrenUnder3,
+
+      getBookingRawValue(booking, [
+        "Actual # of Minors under 3",
+        "Minors under 3",
+      ])
+    );
+
+  const actualChildren3to17 =
+    firstBookingOverviewValue(
+      details.actualChildren3to17,
       details.actualChildrenGuests,
 
       getBookingRawValue(booking, [
+        "Actual # of Minors 3 to 17",
+        "Minors 3 to 17",
         "Actual # of Children",
         "Actual Children",
       ])
     );
 
-  const minors3To17 =
-    getBookingRawValue(booking, [
-      "Actual # of Minors 3 to 17",
-      "Minors 3 to 17",
-    ]);
-
-  const minorsUnder3 =
-    getBookingRawValue(booking, [
-      "Actual # of Minors under 3",
-      "Minors under 3",
-    ]);
-
-  const dayUseGuests =
+  const importedDayUseGuests =
     getBookingRawValue(booking, [
       "Actual # of Day Use Guests",
       "Day Use Guests",
     ]);
+
+  const dayCamperCount =
+    firstBookingOverviewValue(
+      details.dayCamperCount,
+      importedDayUseGuests
+    );
+
+  const dayCamperMeals =
+    firstBookingOverviewValue(
+      details.dayCamperMeals
+    );
+
+  const parsedDayCamperCount =
+    parseBookingOverviewNumber(
+      dayCamperCount
+    );
+
+  const parsedDayCamperMeals =
+    parseBookingOverviewNumber(
+      dayCamperMeals
+    );
+
+  const dayCamperMealServings =
+    firstBookingOverviewValue(
+      details.dayCamperMealServings,
+
+      parsedDayCamperCount !== null &&
+      parsedDayCamperMeals !== null
+        ? String(
+            parsedDayCamperCount *
+            parsedDayCamperMeals
+          )
+        : ""
+    );
+
+  const parsedDayCamperMealServings =
+    parseBookingOverviewNumber(
+      dayCamperMealServings
+    );
+
+  const dayCamperCamperDays =
+    firstBookingOverviewValue(
+      details.dayCamperCamperDays,
+
+      parsedDayCamperMealServings !== null
+        ? String(
+            parsedDayCamperMealServings *
+            0.2
+          )
+        : ""
+    );
 
   const minimumGuarantee =
     firstBookingOverviewValue(
@@ -5558,32 +5892,73 @@ function BookingOverview({
     );
 
   const hasApproxAdults =
-    String(
-      details.approxAdultGuests || ""
-    ).trim() !== "";
+    hasBookingOverviewValue(
+      details.approxAdultGuests
+    );
 
-  const hasApproxChildren =
-    String(
-      details.approxChildrenGuests || ""
-    ).trim() !== "";
+  const hasApproxChildrenUnder3 =
+    hasBookingOverviewValue(
+      approxChildrenUnder3
+    );
+
+  const hasApproxChildren3to17 =
+    hasBookingOverviewValue(
+      approxChildren3to17
+    );
 
   const calculatedApproxTotal =
     hasApproxAdults ||
-    hasApproxChildren
+    hasApproxChildrenUnder3 ||
+    hasApproxChildren3to17
       ? String(
           Number(
             details.approxAdultGuests || 0
           ) +
           Number(
-            details.approxChildrenGuests || 0
+            approxChildrenUnder3 || 0
+          ) +
+          Number(
+            approxChildren3to17 || 0
           )
         )
       : "";
 
+  /*
+    Match CreateBooking's save behavior:
+    prefer the detailed adult/child breakdown when
+    one exists, then fall back to the original
+    estimated total from an inquiry/import.
+  */
   const estimatedGuests =
     firstBookingOverviewValue(
-      details.approxTotalGuests,
       calculatedApproxTotal,
+      details.approxTotalGuests,
+      summaryGuests
+    );
+
+  const hasActualAdults =
+    String(actualAdults || "").trim() !== "";
+
+  const hasActualChildrenUnder3 =
+    String(actualChildrenUnder3 || "").trim() !== "";
+
+  const hasActualChildren3to17 =
+    String(actualChildren3to17 || "").trim() !== "";
+
+  const calculatedActualTotal =
+    hasActualAdults ||
+    hasActualChildrenUnder3 ||
+    hasActualChildren3to17
+      ? String(
+          Number(actualAdults || 0) +
+          Number(actualChildrenUnder3 || 0) +
+          Number(actualChildren3to17 || 0)
+        )
+      : "";
+
+  const actualGuests =
+    firstBookingOverviewValue(
+      calculatedActualTotal,
       summaryGuests
     );
 
@@ -5606,20 +5981,28 @@ function BookingOverview({
   const approximateGuestFields = [
     {
       label: "Estimated Total Guests",
-      value: details.approxTotalGuests,
+      value: estimatedGuests,
       icon: FaUsers,
     },
 
     {
-      label: "Approx. Adults",
+      label: "Adults",
       value: details.approxAdultGuests,
       icon: FaUser,
     },
 
     {
-      label: "Approx. Children",
-      value: details.approxChildrenGuests,
+      label: "Under 3",
+      value: approxChildrenUnder3,
       icon: FaChild,
+      showEmpty: true,
+    },
+
+    {
+      label: "Ages 3–17",
+      value: approxChildren3to17,
+      icon: FaChild,
+      showEmpty: true,
     },
 
     {
@@ -5639,39 +6022,29 @@ function BookingOverview({
   const actualGuestFields = [
     {
       label: "Total / Recorded Guests",
-      value: summaryGuests,
+      value: actualGuests,
       showEmpty: true,
       icon: FaUsers,
     },
 
     {
-      label: "Actual Adults",
+      label: "Adults",
       value: actualAdults,
       icon: FaUser,
     },
 
     {
-      label: "Actual Children",
-      value: actualChildren,
+      label: "Under 3",
+      value: actualChildrenUnder3,
       icon: FaChild,
+      showEmpty: true,
     },
 
     {
-      label: "Minors Age 3–17",
-      value: minors3To17,
+      label: "Ages 3–17",
+      value: actualChildren3to17,
       icon: FaChild,
-    },
-
-    {
-      label: "Minors Under 3",
-      value: minorsUnder3,
-      icon: FaChild,
-    },
-
-    {
-      label: "Day-use Guests",
-      value: dayUseGuests,
-      icon: FaUsers,
+      showEmpty: true,
     },
 
     {
@@ -5688,6 +6061,38 @@ function BookingOverview({
     },
   ];
 
+
+  const dayCamperFields = [
+    {
+      label: "# of Day Campers",
+      value: dayCamperCount,
+      icon: FaUsers,
+    },
+
+    {
+      label: "Meals per Camper",
+      value: dayCamperMeals,
+      icon: FaUtensils,
+    },
+
+    {
+      label: "Day Camper Meal Servings",
+      value: dayCamperMealServings,
+      icon: FaUtensils,
+    },
+
+    {
+      label: "Camper Days from Day Campers",
+      value: hasBookingOverviewValue(
+        dayCamperCamperDays
+      )
+        ? Number(
+            dayCamperCamperDays
+          ).toFixed(3)
+        : "",
+      icon: FaCalendarAlt,
+    },
+  ];
 
   const ratesAndStayFields = [
     {
@@ -5818,6 +6223,42 @@ function BookingOverview({
   ];
 
 
+  const guestReportedDocumentFields = [
+    {
+      label: "Guest Reported Contract Returned",
+      value:
+        details.guestReportedContractReturnedDate
+          ? formatBookingDetailDate(
+              details.guestReportedContractReturnedDate,
+              dateSettings
+            )
+          : "",
+    },
+
+    {
+      label: "Guest Reported Deposit Sent",
+      value:
+        details.guestReportedDepositSentDate
+          ? formatBookingDetailDate(
+              details.guestReportedDepositSentDate,
+              dateSettings
+            )
+          : "",
+    },
+
+    {
+      label: "Guest Reported Insurance Sent",
+      value:
+        details.guestReportedInsuranceCertificateSentDate
+          ? formatBookingDetailDate(
+              details.guestReportedInsuranceCertificateSentDate,
+              dateSettings
+            )
+          : "",
+    },
+  ];
+
+
   const billingFields = [
     {
       label: "Expected Minimum Revenue",
@@ -5870,94 +6311,6 @@ function BookingOverview({
   ];
 
 
-  /* =====================================================
-    MEALS & PROGRAM
-  ===================================================== */
-
-  const mealPlanFields = [
-    {
-      label: "Meal Plan",
-      value: booking.meals,
-      multiline: true,
-    },
-
-    {
-      label: "# Meals",
-      value: numberOfMeals,
-    },
-
-    {
-      label: "First Meal",
-      value: details.firstMeal,
-    },
-
-    {
-      label: "Last Meal",
-      value: details.lastMeal,
-    },
-
-    {
-      label: "Breakfast Time",
-      value: details.breakfastTime,
-    },
-
-    {
-      label: "Lunch Time",
-      value: details.lunchTime,
-    },
-
-    {
-      label: "Dinner Time",
-      value: details.dinnerTime,
-    },
-  ];
-
-
-  const dietaryFields = [
-    {
-      label: "Food Allergies",
-      value: booking.foodAllergies,
-      multiline: true,
-      tone: "warning",
-    },
-
-    {
-      label: "Meal Notes",
-      value: details.mealNotes,
-      multiline: true,
-    },
-
-    {
-      label: "Need To Know",
-      value:
-        String(
-          booking.needToKnow || ""
-        ).trim() !==
-        String(
-          details.mealNotes || ""
-        ).trim()
-          ? booking.needToKnow
-          : "",
-      multiline: true,
-      tone: "warning",
-    },
-  ];
-
-
-  const activityFields = [
-    {
-      label: "Activities",
-      value: booking.activities,
-      multiline: true,
-    },
-
-    {
-      label: "Schedule",
-      value: booking.schedule,
-      multiline: true,
-    },
-  ];
-
 /* =====================================================
   LODGING & LINENS
 ===================================================== */
@@ -6002,7 +6355,7 @@ const lodgingOverviewRows = [
     id: "capernaum",
     name: "Capernaum",
     capacity: "5",
-    image: "/lodges/Capurnum.png",
+    image: "/lodges/Capurnum.webp",
     value: details?.lodgingCapernaum,
   },
   {
@@ -6245,7 +6598,7 @@ const overviewLinenSets =
 
             <strong>
               {formatBookingOverviewValue(
-                summaryGuests
+                actualGuests
               )}
             </strong>
           </div>
@@ -6328,13 +6681,14 @@ const overviewLinenSets =
 
           <BookingOverviewGuestShowcase
             estimatedGuests={estimatedGuests}
-            actualGuests={summaryGuests}
+            actualGuests={actualGuests}
             minimumGuarantee={minimumGuarantee}
             maximumGuarantee={maximumGuarantee}
             numberOfNights={numberOfNights}
             numberOfMeals={numberOfMeals}
             approximateGuestFields={approximateGuestFields}
             actualGuestFields={actualGuestFields}
+            dayCamperFields={dayCamperFields}
             ratesAndStayFields={ratesAndStayFields}
             setActiveTab={setActiveTab}
           />
@@ -6373,6 +6727,11 @@ const overviewLinenSets =
                 columns: 2,
               },
               {
+                title: "Guest-Reported Portal Dates",
+                fields: guestReportedDocumentFields,
+                columns: 2,
+              },
+              {
                 title: "Billing & Revenue",
                 fields: billingFields,
                 columns: 2,
@@ -6388,6 +6747,28 @@ const overviewLinenSets =
           <BookingMealsProgramOverview
             booking={booking}
             details={details}
+          />
+
+
+          {/* =====================================================
+              ACTIVITIES
+          ===================================================== */}
+
+          <BookingActivitiesOverview
+            booking={booking}
+            details={details}
+            dateSettings={dateSettings}
+          />
+
+
+          {/* =====================================================
+              FACILITIES
+          ===================================================== */}
+
+          <BookingFacilitiesOverview
+            booking={booking}
+            details={details}
+            dateSettings={dateSettings}
           />
 
 
