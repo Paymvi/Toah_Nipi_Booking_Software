@@ -17,6 +17,7 @@ import "./styles/BookingHousing.css";
 import "./styles/HomeDashboard.css";
 import "./styles/InquirySpreadsheet.css";
 import "./styles/InquiryDetail.css";
+import "./styles/StaffBookingDetails.css";
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
