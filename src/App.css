@@ -5615,3 +5615,82 @@
   }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================================================
+   PASS 1 — STANDARDIZED MEAL TIMES + ACTIVITIES
+========================================================= */
+
+.rental-controlled-meal-times {
+  align-items: start;
+}
+
+
+.rental-controlled-select-field select {
+  cursor: pointer;
+}
+
+
+.rental-controlled-field-help {
+  display: block;
+
+  margin-top: 7px;
+
+  color: #6f746c;
+
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+
+.rental-controlled-data-note {
+  margin:
+    8px
+    0
+    16px;
+
+  padding:
+    10px
+    12px;
+
+  border:
+    1px
+    solid
+    rgba(74, 94, 70, 0.16);
+
+  border-radius: 10px;
+
+  background:
+    rgba(74, 94, 70, 0.06);
+
+  color: #5f675d;
+
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+
+@media (max-width: 760px) {
+  .rental-controlled-field-help {
+    font-size: 0.76rem;
+  }
+
+  .rental-controlled-data-note {
+    margin-bottom: 14px;
+  }
+}

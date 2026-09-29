@@ -690,7 +690,7 @@ function BookingActivitiesOverview({
           <p>Program</p>
           <h3>Activities</h3>
           <span>
-            Scheduled activity locations and program notes.
+            Scheduled activities, locations, and program notes.
           </span>
         </div>
       </div>

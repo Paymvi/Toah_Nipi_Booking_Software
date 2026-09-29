@@ -109,7 +109,7 @@ import { MEAL_TYPES } from "../constants/mealConstants";
 
 const activityOptions = [
   "Hebron: Dining Hall",
-  "Hebron: Rock Wall",
+  "Hebron: Climbing Wall",
   "Hebron: OverFlow",
   "Hebron: Meeting Space",
 
@@ -120,12 +120,102 @@ const activityOptions = [
 
   "Fire pit",
   "Swimming",
-  "Kayaking",
-  "Fire pit",  
-  
-  "Other",
+  "Boating",
+  "Volleyball Court",
+  "Basketball Court",
 
+  "Other",
 ];
+
+
+function formatTimeOptionLabel(value) {
+  const match =
+    String(value || "").match(
+      /^(\d{1,2}):(\d{2})$/
+    );
+
+  if (!match) {
+    return String(value || "");
+  }
+
+  const hour24 =
+    Number(match[1]);
+
+  const minute =
+    match[2];
+
+  const period =
+    hour24 >= 12 ? "PM" : "AM";
+
+  const hour12 =
+    hour24 % 12 || 12;
+
+  return `${hour12}:${minute} ${period}`;
+}
+
+
+function buildTimeOptions(
+  startHour,
+  startMinute,
+  endHour,
+  endMinute
+) {
+  const options = [];
+
+  let currentMinutes =
+    startHour * 60 + startMinute;
+
+  const endMinutes =
+    endHour * 60 + endMinute;
+
+  while (currentMinutes <= endMinutes) {
+    const hour24 =
+      Math.floor(currentMinutes / 60);
+
+    const minute =
+      currentMinutes % 60;
+
+    const value =
+      `${String(hour24).padStart(2, "0")}:${String(
+        minute
+      ).padStart(2, "0")}`;
+
+    options.push({
+      value,
+      label: formatTimeOptionLabel(value),
+    });
+
+    currentMinutes += 15;
+  }
+
+  return options;
+}
+
+
+const breakfastTimeOptions =
+  buildTimeOptions(
+    6,
+    0,
+    9,
+    30
+  );
+
+const lunchTimeOptions =
+  buildTimeOptions(
+    11,
+    30,
+    13,
+    30
+  );
+
+const dinnerTimeOptions =
+  buildTimeOptions(
+    17,
+    0,
+    19,
+    0
+  );
+
 
 const paymentMethods = [
   "",
@@ -315,17 +405,17 @@ const TEST_BOOKING_DATA = {
     {
       date: "2027-06-19",
       time: "10:00",
-      activity: "Hebron: Rock Wall",
+      activity: "Hebron: Climbing Wall",
     },
     {
       date: "2027-06-19",
       time: "14:00",
-      activity: "Kayaking",
+      activity: "Boating",
     },
   ],
 
   activityNotes:
-    "Rock wall group should arrive 15 minutes early. Kayaking is weather dependent.",
+    "Climbing wall group should arrive 15 minutes early. Boating is weather dependent.",
 
   /* Facilities */
   facilities: [
@@ -3302,41 +3392,137 @@ export default function CreateBooking({
                 </div>
 
 
-                <div className="rental-field-grid rental-field-grid-3">
+                <div className="rental-field-grid rental-field-grid-3 rental-controlled-meal-times">
 
-                  <label className="rental-field">
+                  <label className="rental-field rental-controlled-select-field">
                     <span>Breakfast Time</span>
 
-                    <input
-                      type="time"
+                    <select
                       name="breakfastTime"
                       value={formData.breakfastTime}
                       onChange={handleChange}
-                    />
+                    >
+                      <option value="">
+                        Select breakfast time
+                      </option>
+
+                      {formData.breakfastTime &&
+                        !breakfastTimeOptions.some(
+                          (option) =>
+                            option.value ===
+                            formData.breakfastTime
+                        ) && (
+                          <option
+                            value={formData.breakfastTime}
+                          >
+                            Existing value:{" "}
+                            {formatTimeOptionLabel(
+                              formData.breakfastTime
+                            )}
+                          </option>
+                        )}
+
+                      {breakfastTimeOptions.map((option) => (
+                        <option
+                          key={option.value}
+                          value={option.value}
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <small className="rental-controlled-field-help">
+                      6:00 AM–9:30 AM in 15-minute increments
+                    </small>
                   </label>
 
 
-                  <label className="rental-field">
+                  <label className="rental-field rental-controlled-select-field">
                     <span>Lunch Time</span>
 
-                    <input
-                      type="time"
+                    <select
                       name="lunchTime"
                       value={formData.lunchTime}
                       onChange={handleChange}
-                    />
+                    >
+                      <option value="">
+                        Select lunch time
+                      </option>
+
+                      {formData.lunchTime &&
+                        !lunchTimeOptions.some(
+                          (option) =>
+                            option.value ===
+                            formData.lunchTime
+                        ) && (
+                          <option
+                            value={formData.lunchTime}
+                          >
+                            Existing value:{" "}
+                            {formatTimeOptionLabel(
+                              formData.lunchTime
+                            )}
+                          </option>
+                        )}
+
+                      {lunchTimeOptions.map((option) => (
+                        <option
+                          key={option.value}
+                          value={option.value}
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <small className="rental-controlled-field-help">
+                      11:30 AM–1:30 PM in 15-minute increments
+                    </small>
                   </label>
 
 
-                  <label className="rental-field">
+                  <label className="rental-field rental-controlled-select-field">
                     <span>Dinner Time</span>
 
-                    <input
-                      type="time"
+                    <select
                       name="dinnerTime"
                       value={formData.dinnerTime}
                       onChange={handleChange}
-                    />
+                    >
+                      <option value="">
+                        Select dinner time
+                      </option>
+
+                      {formData.dinnerTime &&
+                        !dinnerTimeOptions.some(
+                          (option) =>
+                            option.value ===
+                            formData.dinnerTime
+                        ) && (
+                          <option
+                            value={formData.dinnerTime}
+                          >
+                            Existing value:{" "}
+                            {formatTimeOptionLabel(
+                              formData.dinnerTime
+                            )}
+                          </option>
+                        )}
+
+                      {dinnerTimeOptions.map((option) => (
+                        <option
+                          key={option.value}
+                          value={option.value}
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <small className="rental-controlled-field-help">
+                      5:00 PM–7:00 PM in 15-minute increments
+                    </small>
                   </label>
 
                 </div>
@@ -3462,6 +3648,11 @@ export default function CreateBooking({
 
                 <span>Activity Schedule</span>
 
+                <p className="rental-controlled-data-note">
+                  Choose from the standardized activity list.
+                  Add another row when the group has more than one activity.
+                </p>
+
                 <div className="rental-allergy-headings">
                   <span>Date</span>
                   <span>Time</span>
@@ -3514,6 +3705,15 @@ export default function CreateBooking({
                         <option value="">
                           Select activity
                         </option>
+
+                        {activity.activity &&
+                          !activityOptions.includes(
+                            activity.activity
+                          ) && (
+                            <option value={activity.activity}>
+                              Existing value: {activity.activity}
+                            </option>
+                          )}
 
                         {activityOptions.map((option) => (
                           <option key={option} value={option}>
