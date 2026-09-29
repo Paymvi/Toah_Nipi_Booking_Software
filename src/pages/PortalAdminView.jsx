@@ -26,6 +26,69 @@ import {
 } from "../utils/dateUtils";
 
 
+const PORTAL_UPLOAD_BUCKET = "portal-uploads";
+
+
+function formatPortalUploadSize(bytes) {
+  const numericBytes = Number(bytes || 0);
+
+  if (!numericBytes) {
+    return "";
+  }
+
+  if (numericBytes < 1024) {
+    return `${numericBytes} B`;
+  }
+
+  if (numericBytes < 1024 * 1024) {
+    return `${Math.round(numericBytes / 1024)} KB`;
+  }
+
+  return `${(numericBytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+
+async function openPortalChecklistUpload(item) {
+  if (!item?.uploadedFilePath) {
+    return;
+  }
+
+  try {
+    const {
+      data,
+      error,
+    } = await supabase.storage
+      .from(PORTAL_UPLOAD_BUCKET)
+      .createSignedUrl(
+        item.uploadedFilePath,
+        10 * 60
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data?.signedUrl) {
+      throw new Error("Supabase did not return a file URL.");
+    }
+
+    window.open(
+      data.signedUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  } catch (error) {
+    console.error(
+      "Could not open guest portal upload:",
+      error
+    );
+
+    alert(
+      "Could not open this uploaded file. Please try again."
+    );
+  }
+}
+
 
 /* =========================================================
    PORTAL TASK CATALOG
@@ -289,6 +352,9 @@ function normalizePortalChecklistItem(item) {
     dueDate: item.due_date || "",
     guestAction: item.guest_action || "none",
     uploadedFileName: item.uploaded_file_name || "",
+    uploadedFilePath: item.uploaded_file_path || "",
+    uploadedFileMime: item.uploaded_file_mime || "",
+    uploadedFileSize: item.uploaded_file_size || 0,
     responseText: item.response_text || "",
     lastChangedAt: item.last_changed_at || "",
     sortOrder: item.sort_order || 0,
@@ -462,6 +528,9 @@ async function fetchPortalOverviewRecords() {
           due_date,
           guest_action,
           uploaded_file_name,
+          uploaded_file_path,
+          uploaded_file_mime,
+          uploaded_file_size,
           response_text,
           last_changed_at,
           sort_order
@@ -859,12 +928,31 @@ function PortalChecklistPreview({
               item.itemId
             );
 
+          const requiresUpload =
+            item.guestAction ===
+            "upload_file";
+
+          const hasUpload =
+            Boolean(
+              item.uploadedFileName &&
+              item.uploadedFilePath
+            );
+
+          const uploadSizeLabel =
+            formatPortalUploadSize(
+              item.uploadedFileSize
+            );
+
           const canConfirm =
             item.status ===
               "needsReview" &&
             (
               !requiresTextResponse ||
               hasResponse
+            ) &&
+            (
+              !requiresUpload ||
+              hasUpload
             );
 
           return (
@@ -900,9 +988,33 @@ function PortalChecklistPreview({
                       ? ` · Due ${item.dueDate}`
                       : ""}
                   </small>
+
+                  {item.uploadedFileName && (
+                    <span className="portal-checklist-upload-name">
+                      {item.uploadedFileName}
+
+                      {uploadSizeLabel
+                        ? ` · ${uploadSizeLabel}`
+                        : ""}
+                    </span>
+                  )}
                 </div>
 
                 <div className="portal-checklist-preview-actions">
+                  {hasUpload && (
+                    <button
+                      className="portal-checklist-file-button"
+                      type="button"
+                      onClick={() =>
+                        openPortalChecklistUpload(
+                          item
+                        )
+                      }
+                    >
+                      <FaExternalLinkAlt />
+                      Open Upload
+                    </button>
+                  )}
                   {hasResponse && (
                     <button
                       className="portal-checklist-info-button"
@@ -953,6 +1065,15 @@ function PortalChecklistPreview({
                     !hasResponse && (
                     <span className="portal-checklist-missing-label">
                       Missing info
+                    </span>
+                  )}
+
+                  {requiresUpload &&
+                    item.status ===
+                      "needsReview" &&
+                    !hasUpload && (
+                    <span className="portal-checklist-missing-label">
+                      Missing upload
                     </span>
                   )}
 
