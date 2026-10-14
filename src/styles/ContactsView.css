@@ -4,9 +4,6 @@
    column widths, click-to-copy cells, and contact row actions.
 ========================================================= */
 
-
-
-
 /* =========================================================
    Contacts View: Professional Polish
    Matches Spreadsheet View + Dashboard styling
@@ -313,7 +310,6 @@
   }
 }
 
-
 /* =========================================================
    Contacts View Column Widths
 ========================================================= */
@@ -521,16 +517,13 @@
   background: #fffaf0;
 }
 
-
 .contacts-view-table tbody tr.contacts-view-row-starred:hover td {
   background: #fff6e4;
 }
 
-
 .contacts-view-row-starred td:first-child {
   border-left: 4px solid #c98716;
 }
-
 
 /* Contact name cell */
 
@@ -558,7 +551,6 @@
   gap: 8px;
 }
 
-
 .contacts-view-actions .table-link {
   white-space: nowrap;
 }
@@ -573,9 +565,6 @@
     min-width: 980px;
   }
 }
-
-
-
 
 /* =========================================================
    OVERRIDE: Contacts View Star Column Width Fix
@@ -747,9 +736,6 @@
   max-width: 190px !important;
 }
 
-
-
-
 /* =========================================================
    Contacts View: Click Cell To Copy
 ========================================================= */
@@ -809,9 +795,6 @@
 .contacts-view-copy-cell .contacts-view-name-cell {
   max-width: 100%;
 }
-
-
-
 
 /* =========================================================
    Contacts View Loading Screen
@@ -940,12 +923,6 @@
   }
 }
 
-
-
-
-
-
-
 /* =========================================================
    FINAL OVERRIDE: Contacts View Compact Rows
    Shows more contacts at once without changing the data
@@ -1009,11 +986,6 @@
   font-size: 0.62rem;
 }
 
-
-
-
-
-
 /* =========================================================
    FINAL OVERRIDE: Contacts View Full Height
    Makes the contacts table area stretch lower like Spreadsheet View
@@ -1046,18 +1018,6 @@
   height: auto;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 /* =========================================================
    Contacts Search
 ========================================================= */
@@ -1066,7 +1026,6 @@
   flex: 1;
   max-width: 420px;
 }
-
 
 .contacts-view-search input {
   width: 100%;
@@ -1091,11 +1050,9 @@
     box-shadow 140ms ease;
 }
 
-
 .contacts-view-search input::placeholder {
   color: #9aa1ad;
 }
-
 
 .contacts-view-search input:focus {
   border-color: #443a9c;
@@ -1103,7 +1060,6 @@
   box-shadow:
     0 0 0 3px rgba(68, 58, 156, 0.12);
 }
-
 
 @media (max-width: 900px) {
 
@@ -1113,27 +1069,6 @@
   }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* =========================================================
    Expanded Contact Bookings
@@ -1220,18 +1155,14 @@
   flex-wrap: wrap;
 }
 
-
-
 /* =========================================================
    Contact Booking Cards
 ========================================================= */
-
 
 .contacts-bookings-expanded {
   padding: 16px 18px 18px;
   background: #f8fafc;
 }
-
 
 .contacts-bookings-header {
   display:flex;
@@ -1241,13 +1172,11 @@
   margin-bottom:12px;
 }
 
-
 .contacts-bookings-header strong {
   color:#252936;
   font-size:.86rem;
   font-weight:700;
 }
-
 
 .contacts-bookings-header span {
   padding:4px 10px;
@@ -1262,15 +1191,11 @@
   font-weight:650;
 }
 
-
-
 .contacts-bookings-list {
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
   gap:12px;
 }
-
-
 
 .contacts-booking-item {
 
@@ -1294,12 +1219,9 @@
 
 }
 
-
-
 .contacts-booking-main {
   min-width:0;
 }
-
 
 .contacts-booking-title-row {
 
@@ -1313,7 +1235,6 @@
 
 }
 
-
 .contacts-booking-title {
 
   color:#252936;
@@ -1323,8 +1244,6 @@
   font-weight:700;
 
 }
-
-
 
 .contacts-booking-info {
 
@@ -1342,8 +1261,6 @@
 
 }
 
-
-
 .contacts-booking-date::before {
 
   content:"📅";
@@ -1352,7 +1269,6 @@
 
 }
 
-
 .contacts-booking-guests::before {
 
   content:"👥";
@@ -1360,8 +1276,6 @@
   margin-right:5px;
 
 }
-
-
 
 /* status */
 
@@ -1377,8 +1291,6 @@
 
 }
 
-
-
 .contacts-booking-status-pill.is-confirmed {
 
   background:#e7f6ed;
@@ -1386,8 +1298,6 @@
   color:#1f7a46;
 
 }
-
-
 
 /* button */
 
@@ -1413,14 +1323,11 @@
 
 }
 
-
 .contacts-booking-open-button:hover {
 
   background:#f7f5ff;
 
 }
-
-
 
 @media(max-width:700px){
 
@@ -1433,7 +1340,6 @@
   }
 
 }
-
 
 @media (max-width: 900px) {
   .contacts-booking-item {
@@ -1454,7 +1360,6 @@
   }
 }
 
-
 @media(max-width:900px){
 
   .contacts-booking-item {
@@ -1465,17 +1370,6 @@
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
 .contacts-booking-title-group {
   display:flex;
   align-items:center;
@@ -1483,13 +1377,11 @@
   flex-wrap:wrap;
 }
 
-
 .contacts-booking-title {
   color:#252936;
   font-size:.92rem;
   font-weight:700;
 }
-
 
 .contacts-booking-type {
 
@@ -1510,17 +1402,6 @@
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
 /* =========================================================
    Contacts Name Sort Toggle
 ========================================================= */
@@ -1536,7 +1417,6 @@
   font-weight:600;
 
 }
-
 
 .contacts-view-name-sort button {
 
@@ -1560,13 +1440,11 @@
 
 }
 
-
 .contacts-view-name-sort button:hover {
 
   background:#f8fafc;
 
 }
-
 
 .contacts-view-name-sort button.active {
 
@@ -1578,19 +1456,6 @@
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* =========================================================
    APPROXIMATE GUESTS GRID FIX
 ========================================================= */
@@ -1601,11 +1466,9 @@
   gap: 18px;
 }
 
-
 .rental-approx-guests-grid .rental-field-full {
   grid-column: span 5;
 }
-
 
 @media (max-width: 1200px) {
   .rental-approx-guests-grid {
@@ -1617,7 +1480,6 @@
   }
 }
 
-
 @media (max-width: 800px) {
   .rental-approx-guests-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1628,7 +1490,6 @@
   }
 }
 
-
 @media (max-width: 550px) {
   .rental-approx-guests-grid {
     grid-template-columns: 1fr;
@@ -1636,5 +1497,187 @@
 
   .rental-approx-guests-grid .rental-field-full {
     grid-column: span 1;
+  }
+}
+/* =========================================================
+   Contacts View: Soft Delete / Restore
+   Deleted contacts are hidden from this view only.
+========================================================= */
+.contacts-view-deleted-toggle {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 10px;
+  border: 1px solid #dfe4ec;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 650;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+.contacts-view-deleted-toggle:hover,
+.contacts-view-deleted-toggle.active {
+  background: #fff5f5;
+  border-color: #efc8c8;
+  color: #b42318;
+}
+.contacts-view-deleted-panel {
+  flex: 0 0 auto;
+  padding: 14px 18px 16px;
+  background: #fffafa;
+  border-bottom: 1px solid #ecdada;
+}
+.contacts-view-deleted-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.contacts-view-deleted-panel-header > div {
+  min-width: 0;
+}
+.contacts-view-deleted-panel-header strong {
+  display: block;
+  color: #7f1d1d;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.contacts-view-deleted-panel-header p {
+  margin: 4px 0 0;
+  color: #8a5a5a;
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+.contacts-view-deleted-close {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid #e4caca;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #7f1d1d;
+  font-size: 0.74rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+.contacts-view-deleted-close:hover {
+  background: #fff1f1;
+}
+.contacts-view-deleted-list {
+  display: grid;
+  gap: 8px;
+}
+.contacts-view-deleted-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border: 1px solid #ecdada;
+  border-radius: 9px;
+  background: #ffffff;
+}
+.contacts-view-deleted-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.contacts-view-deleted-copy strong,
+.contacts-view-deleted-copy span,
+.contacts-view-deleted-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.contacts-view-deleted-copy strong {
+  color: #303442;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.contacts-view-deleted-copy span {
+  color: #5f6674;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.contacts-view-deleted-copy small {
+  color: #8a909c;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+.contacts-view-restore-button {
+  flex: 0 0 auto;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid #cadfcf;
+  border-radius: 7px;
+  background: #f4fbf6;
+  color: #2f6f46;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.contacts-view-restore-button:hover {
+  background: #eaf7ee;
+  border-color: #afd0b7;
+}
+.contacts-view-deleted-empty {
+  padding: 12px;
+  border: 1px dashed #e4caca;
+  border-radius: 8px;
+  color: #8a5a5a;
+  font-size: 0.76rem;
+  text-align: center;
+}
+.contact-delete-button {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #a3a8b1;
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+.contact-delete-button:hover {
+  background: #fff1f1;
+  border-color: #efc8c8;
+  color: #b42318;
+}
+.contact-delete-button:focus-visible,
+.contacts-view-deleted-toggle:focus-visible,
+.contacts-view-restore-button:focus-visible,
+.contacts-view-deleted-close:focus-visible {
+  outline: 3px solid rgba(180, 35, 24, 0.12);
+  outline-offset: 2px;
+}
+@media (max-width: 900px) {
+  .contacts-view-deleted-panel-header,
+  .contacts-view-deleted-item {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .contacts-view-deleted-close,
+  .contacts-view-restore-button {
+    width: 100%;
   }
 }

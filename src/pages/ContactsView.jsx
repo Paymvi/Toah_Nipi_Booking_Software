@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FaRegStar, FaStar, FaUsers } from "react-icons/fa";
+import { FaRegStar, FaStar, FaTrashAlt, FaUndo, FaUsers } from "react-icons/fa";
 
 import {
   CONTACTS_VIEW_STARRED_FIRST_STORAGE_KEY,
@@ -8,6 +8,8 @@ import {
 } from "../constants/dashboardConstants";
 
 const CONTACTS_RENDER_LOADING_MS = 140;
+const CONTACTS_VIEW_DELETED_STORAGE_KEY =
+  "toahNipiContactsViewDeletedContacts";
 
 function getSavedContactIdList(storageKey) {
   try {
@@ -31,6 +33,33 @@ function saveContactIdList(storageKey, contactIds) {
     localStorage.setItem(storageKey, JSON.stringify(contactIds));
   } catch (error) {
     console.error("Could not save contact preferences:", error);
+  }
+}
+
+function getSavedDeletedContacts() {
+  try {
+    const savedValue = localStorage.getItem(
+      CONTACTS_VIEW_DELETED_STORAGE_KEY
+    );
+    if (!savedValue) {
+      return [];
+    }
+    const parsedValue = JSON.parse(savedValue);
+    return Array.isArray(parsedValue) ? parsedValue : [];
+  } catch (error) {
+    console.error("Could not read deleted contacts:", error);
+    return [];
+  }
+}
+
+function saveDeletedContacts(deletedContacts) {
+  try {
+    localStorage.setItem(
+      CONTACTS_VIEW_DELETED_STORAGE_KEY,
+      JSON.stringify(deletedContacts)
+    );
+  } catch (error) {
+    console.error("Could not save deleted contacts:", error);
   }
 }
 
@@ -235,6 +264,12 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
     [inquiryBookings]
   );
 
+  const [deletedContacts, setDeletedContacts] = useState(() =>
+    getSavedDeletedContacts()
+  );
+
+  const [showDeletedContacts, setShowDeletedContacts] = useState(false);
+
   const [starredContactIds, setStarredContactIds] = useState(() =>
     getSavedContactIdList(CONTACTS_VIEW_STARRED_STORAGE_KEY)
   );
@@ -254,6 +289,10 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
   const [contactSearch, setContactSearch] = useState("");
 
   const [expandedContactId, setExpandedContactId] = useState(null);
+
+  useEffect(() => {
+    saveDeletedContacts(deletedContacts);
+  }, [deletedContacts]);
 
   useEffect(() => {
     saveContactIdList(CONTACTS_VIEW_STARRED_STORAGE_KEY, starredContactIds);
@@ -278,10 +317,23 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
     [starredContactIds]
   );
 
+  const deletedContactIdSet = useMemo(
+    () => new Set(deletedContacts.map((contact) => contact.id)),
+    [deletedContacts]
+  );
+
+  const visibleContacts = useMemo(
+    () =>
+      contacts.filter(
+        (contact) => !deletedContactIdSet.has(contact.id)
+      ),
+    [contacts, deletedContactIdSet]
+  );
+
   const sortedContacts = useMemo(() => {
     const searchValue = contactSearch.trim().toLowerCase();
 
-    return contacts
+    return visibleContacts
       .map((contact) => ({
         ...contact,
         isStarred: starredContactIdSet.has(contact.id),
@@ -322,7 +374,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
 
       });
   }, [
-    contacts,
+    visibleContacts,
     starredContactIdSet,
     showStarredFirst,
     contactSearch,
@@ -343,6 +395,53 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
 
       return [...currentIds, contactId];
     });
+  };
+
+  const deleteContact = (contact) => {
+    const confirmed = window.confirm(
+      `Remove ${contact.contactName} from Contacts View?\n\n` +
+        "This will NOT delete any booking records. The contact will be saved " +
+        "under Deleted Contacts so it can be restored later."
+    );
+    if (!confirmed) {
+      return;
+    }
+    const deletedContactSnapshot = {
+      id: contact.id,
+      contactName: contact.contactName,
+      organizationName: contact.organizationName,
+      email: contact.email,
+      phone: contact.phone,
+      bookingCount: contact.bookings.length,
+      bookingReferences: contact.bookings.map((booking) => ({
+        id: booking.id || "",
+        organizationName: booking.organizationName || "",
+        startDate: booking.startDate || "",
+        endDate: booking.endDate || "",
+        status: booking.status || "",
+      })),
+      deletedAt: new Date().toISOString(),
+    };
+    setDeletedContacts((currentContacts) => [
+      deletedContactSnapshot,
+      ...currentContacts.filter(
+        (savedContact) => savedContact.id !== contact.id
+      ),
+    ]);
+    setStarredContactIds((currentIds) =>
+      currentIds.filter((id) => id !== contact.id)
+    );
+    setExpandedContactId((currentId) =>
+      currentId === contact.id ? null : currentId
+    );
+  };
+
+  const restoreDeletedContact = (contactId) => {
+    setDeletedContacts((currentContacts) =>
+      currentContacts.filter(
+        (contact) => contact.id !== contactId
+      )
+    );
   };
 
   const copyContactCellValue = async (value, cellId) => {
@@ -459,7 +558,6 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
     return "is-default";
   }
 
-  
   return (
     <section className="contacts-view-page">
       <article className="dashboard-card contacts-view-card">
@@ -481,7 +579,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
 
           <div className="contacts-view-summary">
             <span>
-              <strong>{contacts.length}</strong>
+              <strong>{visibleContacts.length}</strong>
               Contacts
             </span>
 
@@ -528,7 +626,6 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
               First Name
             </button>
 
-
             <button
               type="button"
               className={
@@ -545,7 +642,6 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
 
           </div>
 
-
           <label className="contacts-view-pin-toggle">
             <input
               type="checkbox"
@@ -558,6 +654,20 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
             <span>Show starred contacts first</span>
           </label>
 
+          <button
+            className={`contacts-view-deleted-toggle ${
+              showDeletedContacts ? "active" : ""
+            }`}
+            type="button"
+            onClick={() =>
+              setShowDeletedContacts(
+                (currentValue) => !currentValue
+              )
+            }
+          >
+            <FaTrashAlt />
+            Deleted ({deletedContacts.length})
+          </button>
 
           <p>
             Star important contacts to highlight them. Turn this option on to
@@ -565,6 +675,71 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
           </p>
 
         </div>
+
+        {showDeletedContacts && (
+          <div className="contacts-view-deleted-panel">
+            <div className="contacts-view-deleted-panel-header">
+              <div>
+                <strong>Deleted Contacts</strong>
+                <p>
+                  These contacts are hidden from Contacts View only. Their
+                  booking records have not been deleted.
+                </p>
+              </div>
+              <button
+                className="contacts-view-deleted-close"
+                type="button"
+                onClick={() => setShowDeletedContacts(false)}
+              >
+                Close
+              </button>
+            </div>
+
+            {deletedContacts.length > 0 ? (
+              <div className="contacts-view-deleted-list">
+                {deletedContacts.map((contact) => (
+                  <div
+                    className="contacts-view-deleted-item"
+                    key={contact.id}
+                  >
+                    <div className="contacts-view-deleted-copy">
+                      <strong>{contact.contactName}</strong>
+                      <span>
+                        {contact.organizationName || "No organization"}
+                      </span>
+                      <small>
+                        {[contact.email, contact.phone]
+                          .filter(Boolean)
+                          .join(" · ") || "No email or phone"}
+                      </small>
+                      <small>
+                        {contact.bookingCount || 0} booking
+                        {contact.bookingCount === 1 ? "" : "s"} · Deleted{" "}
+                        {contact.deletedAt
+                          ? new Date(contact.deletedAt).toLocaleString()
+                          : "previously"}
+                      </small>
+                    </div>
+                    <button
+                      className="contacts-view-restore-button"
+                      type="button"
+                      onClick={() =>
+                        restoreDeletedContact(contact.id)
+                      }
+                    >
+                      <FaUndo />
+                      Restore
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="contacts-view-deleted-empty">
+                No deleted contacts.
+              </div>
+            )}
+          </div>
+        )}
 
         {sortedContacts.length > 0 ? (
           <div className="contacts-view-table-wrap">
@@ -675,10 +850,19 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                               ? "Hide Bookings"
                               : "View Bookings"}
                           </button>
+
+                          <button
+                            className="contact-delete-button"
+                            type="button"
+                            onClick={() => deleteContact(contact)}
+                            aria-label={`Delete ${contact.contactName}`}
+                            title="Delete contact"
+                          >
+                            <FaTrashAlt />
+                          </button>
                         </div>
                       </td>
                     </tr>
-
 
                     {expandedContactId === contact.id && (
                       <tr className="contacts-bookings-expanded-row">
@@ -696,7 +880,6 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                                 {contact.bookings.length === 1 ? "" : "s"}
                               </span>
                             </div>
-
 
                             <div className="contacts-bookings-list">
                               {[...contact.bookings]
@@ -727,7 +910,6 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                                               "Unnamed Booking"}
                                           </strong>
 
-
                                           {booking.retreatType && (
                                             <span className="contacts-booking-type">
                                               {booking.retreatType}
@@ -756,7 +938,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                                         </span>
 
                                       </div>
-                                      
+
                                     </div>
 
                                     <div className="contacts-booking-actions">
@@ -780,7 +962,6 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
 
                     </>
 
-                    
                   );
                 })}
               </tbody>
@@ -796,7 +977,9 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
             <p>
               {contactSearch
                 ? "Try adjusting your search terms."
-                : "Submit the public form or import a spreadsheet to build the contacts list."}
+                : deletedContacts.length > 0
+                  ? "All current contacts are hidden. Open Deleted Contacts to restore one."
+                  : "Submit the public form or import a spreadsheet to build the contacts list."}
             </p>
           </div>
         )}
