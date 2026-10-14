@@ -128,6 +128,80 @@ const activityOptions = [
 ];
 
 
+const allergyOptionGroups = [
+  {
+    label: "Common Food Allergies",
+    options: [
+      "Peanut allergy",
+      "Tree nut allergy",
+      "Milk / dairy allergy",
+      "Egg allergy",
+      "Wheat allergy",
+      "Soy allergy",
+      "Fish allergy",
+      "Shellfish allergy",
+      "Sesame allergy",
+      "Corn allergy",
+      "Coconut allergy",
+      "Strawberry allergy",
+    ],
+  },
+  {
+    label: "Nut Allergies",
+    options: [
+      "Almond allergy",
+      "Cashew allergy",
+      "Walnut allergy",
+      "Pecan allergy",
+      "Pistachio allergy",
+      "Hazelnut allergy",
+    ],
+  },
+  {
+    label: "Seafood Allergies",
+    options: [
+      "Shrimp allergy",
+      "Crab allergy",
+      "Lobster allergy",
+      "Clam allergy",
+      "Oyster allergy",
+      "Scallop allergy",
+    ],
+  },
+  {
+    label: "Dietary Restrictions / Intolerances",
+    options: [
+      "Gluten free",
+      "Celiac / strict gluten free",
+      "Dairy free",
+      "Lactose intolerant",
+      "Egg free",
+      "Soy free",
+      "Nut free",
+      "Low sodium",
+    ],
+  },
+  {
+    label: "Diet Preferences / Religious Restrictions",
+    options: [
+      "Vegetarian",
+      "Vegan",
+      "Pescatarian",
+      "No pork",
+      "Halal",
+      "Kosher",
+    ],
+  },
+  {
+    label: "Other",
+    options: [
+      "Other food allergy",
+      "Other dietary restriction",
+    ],
+  },
+];
+
+
 function formatTimeOptionLabel(value) {
   const match =
     String(value || "").match(
@@ -3630,8 +3704,7 @@ export default function CreateBooking({
                           placeholder="1"
                         />
 
-                        <input
-                          type="text"
+                        <select
                           value={allergy.name}
                           onChange={(event) =>
                             handleAllergyChange(
@@ -3640,8 +3713,39 @@ export default function CreateBooking({
                               event.target.value
                             )
                           }
-                          placeholder="Example: Peanuts / tree nuts"
-                        />
+                        >
+                          <option value="">
+                            Select allergy or dietary restriction
+                          </option>
+
+                          {allergy.name &&
+                            !allergyOptionGroups.some(
+                              (group) =>
+                                group.options.includes(
+                                  allergy.name
+                                )
+                            ) && (
+                              <option value={allergy.name}>
+                                Existing value: {allergy.name}
+                              </option>
+                            )}
+
+                          {allergyOptionGroups.map((group) => (
+                            <optgroup
+                              key={group.label}
+                              label={group.label}
+                            >
+                              {group.options.map((option) => (
+                                <option
+                                  key={option}
+                                  value={option}
+                                >
+                                  {option}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
 
                         <div className="rental-allergy-actions">
                           {formData.allergies.length > 1 && (
