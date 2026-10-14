@@ -483,6 +483,44 @@ function getInquiryDateInputValue(value) {
   return match ? match[1] : "";
 }
 
+
+function getPhoneDigits(value) {
+  let digits = String(value ?? "")
+    .replace(/\D/g, "");
+
+  /*
+    Accept pasted U.S. numbers that include
+    the leading country code, such as:
+      +1 (603) 555-0142
+
+    The form itself stores/displays the
+    standard 10-digit U.S. number.
+  */
+  if (
+    digits.length === 11 &&
+    digits.startsWith("1")
+  ) {
+    digits = digits.slice(1);
+  }
+
+  return digits.slice(0, 10);
+}
+
+
+function formatPhoneNumberInput(value) {
+  const digits = getPhoneDigits(value);
+
+  if (digits.length <= 3) {
+    return digits;
+  }
+
+  if (digits.length <= 6) {
+    return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  }
+
+  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+}
+
 function getInquiryPrefillAddress(inquiry) {
   if (!inquiry) {
     return "";
@@ -570,6 +608,19 @@ function validateRequiredBookingFields(formData) {
 
   if (!formData.contactName.trim()) {
     errors.push("Primary Contact is required.");
+  }
+
+
+  const phoneDigits =
+    getPhoneDigits(formData.phone);
+
+  if (
+    formData.phone &&
+    phoneDigits.length !== 10
+  ) {
+    errors.push(
+      "Phone number must contain exactly 10 digits."
+    );
   }
 
   if (!formData.startDate) {
@@ -871,8 +922,10 @@ function createInitialFormState(
       ),
 
     phone:
-      cleanInquiryPrefillValue(
-        initialInquiry.phone
+      formatPhoneNumberInput(
+        cleanInquiryPrefillValue(
+          initialInquiry.phone
+        )
       ),
 
     email:
@@ -1197,13 +1250,15 @@ function createExistingBookingFormState(booking) {
       "",
 
     phone:
-      details.phone ||
-      (
-        booking.phone === "No phone provided"
-          ? ""
-          : booking.phone
-      ) ||
-      "",
+      formatPhoneNumberInput(
+        details.phone ||
+        (
+          booking.phone === "No phone provided"
+            ? ""
+            : booking.phone
+        ) ||
+        ""
+      ),
 
     email:
       details.email ||
@@ -1776,6 +1831,20 @@ export default function CreateBooking({
 
       return updatedForm;
     });
+  };
+
+
+
+  const handlePhoneChange = (event) => {
+    const formattedPhone =
+      formatPhoneNumberInput(
+        event.target.value
+      );
+
+    setFormData((current) => ({
+      ...current,
+      phone: formattedPhone,
+    }));
   };
 
 
@@ -2663,8 +2732,12 @@ export default function CreateBooking({
                     type="tel"
                     name="phone"
                     value={formData.phone}
-                    onChange={handleChange}
+                    onChange={handlePhoneChange}
                     placeholder="XXX-XXX-XXXX"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                    title="Enter a 10-digit phone number"
                   />
                 </label>
 
