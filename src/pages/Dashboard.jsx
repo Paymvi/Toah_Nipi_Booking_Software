@@ -7019,7 +7019,7 @@ function BookingDetailView({
             key={tab}
             onClick={() => setActiveTab(tab)}
           >
-            {tab}
+            {tab === "Details" ? "Edit" : tab}
           </button>
         ))}
       </nav>
