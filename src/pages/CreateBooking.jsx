@@ -2724,6 +2724,40 @@ export default function CreateBooking({
                 </label>
 
 
+                <label className="rental-field">
+                  <span>Retreat Type *</span>
+
+                  <select
+                    name="retreatType"
+                    value={formData.retreatType}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">
+                      Select retreat type
+                    </option>
+
+                    {formData.retreatType &&
+                      !retreatTypes.includes(
+                        formData.retreatType
+                      ) && (
+                        <option value={formData.retreatType}>
+                          Existing value: {formData.retreatType}
+                        </option>
+                      )}
+
+                    {retreatTypes.map((retreatType) => (
+                      <option
+                        key={retreatType}
+                        value={retreatType}
+                      >
+                        {retreatType}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+
                 <div className="rental-stay-schedule rental-field-full">
 
                   {/* ARRIVAL */}
