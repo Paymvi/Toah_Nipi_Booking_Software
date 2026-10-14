@@ -1,5 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { FaRegStar, FaStar, FaTrashAlt, FaUndo, FaUsers } from "react-icons/fa";
+import { Fragment, useEffect, useMemo, useState } from "react";
+
+import {
+  FaRegStar,
+  FaStar,
+  FaTrashAlt,
+  FaUndo,
+  FaUsers,
+} from "react-icons/fa";
 
 import {
   CONTACTS_VIEW_STARRED_FIRST_STORAGE_KEY,
@@ -7,9 +14,11 @@ import {
   CONTACTS_VIEW_NAME_SORT_STORAGE_KEY,
 } from "../constants/dashboardConstants";
 
+
 const CONTACTS_RENDER_LOADING_MS = 140;
 const CONTACTS_VIEW_DELETED_STORAGE_KEY =
   "toahNipiContactsViewDeletedContacts";
+
 
 function getSavedContactIdList(storageKey) {
   try {
@@ -28,6 +37,7 @@ function getSavedContactIdList(storageKey) {
   }
 }
 
+
 function saveContactIdList(storageKey, contactIds) {
   try {
     localStorage.setItem(storageKey, JSON.stringify(contactIds));
@@ -36,21 +46,26 @@ function saveContactIdList(storageKey, contactIds) {
   }
 }
 
+
 function getSavedDeletedContacts() {
   try {
     const savedValue = localStorage.getItem(
       CONTACTS_VIEW_DELETED_STORAGE_KEY
     );
+
     if (!savedValue) {
       return [];
     }
+
     const parsedValue = JSON.parse(savedValue);
+
     return Array.isArray(parsedValue) ? parsedValue : [];
   } catch (error) {
     console.error("Could not read deleted contacts:", error);
     return [];
   }
 }
+
 
 function saveDeletedContacts(deletedContacts) {
   try {
@@ -62,6 +77,7 @@ function saveDeletedContacts(deletedContacts) {
     console.error("Could not save deleted contacts:", error);
   }
 }
+
 
 function getSavedContactsBoolean(storageKey, fallbackValue = true) {
   try {
@@ -78,6 +94,7 @@ function getSavedContactsBoolean(storageKey, fallbackValue = true) {
   }
 }
 
+
 function saveContactsBoolean(storageKey, value) {
   try {
     localStorage.setItem(storageKey, String(value));
@@ -86,54 +103,410 @@ function saveContactsBoolean(storageKey, value) {
   }
 }
 
+
+function cleanContactText(value) {
+  const text = String(value ?? "").trim();
+
+  if (
+    !text ||
+    text === "No contact name" ||
+    text === "No email provided" ||
+    text === "No phone provided" ||
+    text === "No organization" ||
+    text === "Unnamed Organization" ||
+    text === "Unassigned"
+  ) {
+    return "";
+  }
+
+  return text;
+}
+
+
+function getFirstContactValue(...values) {
+  for (const value of values) {
+    const cleanedValue = cleanContactText(value);
+
+    if (cleanedValue) {
+      return cleanedValue;
+    }
+  }
+
+  return "";
+}
+
+
+function getRentalFormDetails(booking) {
+  const details = booking?.rentalFormDetails;
+
+  if (
+    details &&
+    typeof details === "object" &&
+    !Array.isArray(details)
+  ) {
+    return details;
+  }
+
+  return {};
+}
+
+
+function getArchiveAddress(booking) {
+  const addressParts = [
+    booking?.archiveAddress,
+    booking?.archiveCity,
+    booking?.archiveState,
+    booking?.archiveZip,
+  ]
+    .map((value) => cleanContactText(value))
+    .filter(Boolean);
+
+  return addressParts.join(", ");
+}
+
+
+function normalizeEmailIdentity(value) {
+  return cleanContactText(value).toLowerCase();
+}
+
+
+function normalizePhoneIdentity(value) {
+  let digits = cleanContactText(value).replace(/\D/g, "");
+
+  if (digits.length === 11 && digits.startsWith("1")) {
+    digits = digits.slice(1);
+  }
+
+  return digits;
+}
+
+
+function normalizeNameIdentity(value) {
+  return cleanContactText(value)
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+
+function getBookingContactSnapshot(booking) {
+  const details = getRentalFormDetails(booking);
+
+  const contactName = getFirstContactValue(
+    details.contactName,
+    booking?.contactName,
+    booking?.name,
+    `${booking?.firstName || ""} ${booking?.lastName || ""}`
+  );
+
+  const organizationName = getFirstContactValue(
+    details.organizationName,
+    booking?.organizationName,
+    booking?.churchOrMinistry,
+    booking?.archiveGuestGroup
+  );
+
+  const email = getFirstContactValue(
+    details.email,
+    booking?.email
+  );
+
+  const phone = getFirstContactValue(
+    details.phone,
+    booking?.phone
+  );
+
+  const mailingAddress = getFirstContactValue(
+    details.mailingAddress,
+    booking?.inquiryAddress,
+    getArchiveAddress(booking)
+  );
+
+  const retreatType = getFirstContactValue(
+    details.retreatType,
+    booking?.retreatType
+  );
+
+  const sourceType = getFirstContactValue(
+    booking?.detectedImportType,
+    booking?.sourceType,
+    booking?.sourceSheet
+  );
+
+  return {
+    contactName,
+    organizationName,
+    email,
+    phone,
+    mailingAddress,
+    retreatType,
+    sourceType,
+  };
+}
+
+
+function getContactIdentityCandidates(snapshot) {
+  const emailKey = normalizeEmailIdentity(snapshot.email);
+  const phoneKey = normalizePhoneIdentity(snapshot.phone);
+  const nameKey = normalizeNameIdentity(snapshot.contactName);
+  const organizationKey = normalizeNameIdentity(snapshot.organizationName);
+
+  const identityCandidates = [];
+
+  if (emailKey) {
+    identityCandidates.push(`email:${emailKey}`);
+  }
+
+  if (phoneKey) {
+    identityCandidates.push(`phone:${phoneKey}`);
+  }
+
+  if (nameKey && organizationKey) {
+    identityCandidates.push(`name-org:${nameKey}|${organizationKey}`);
+  } else if (nameKey) {
+    identityCandidates.push(`name:${nameKey}`);
+  } else if (organizationKey) {
+    identityCandidates.push(`organization:${organizationKey}`);
+  }
+
+  return identityCandidates;
+}
+
+
+function getBookingChronologyValue(booking) {
+  const details = getRentalFormDetails(booking);
+
+  const dateCandidates = [
+    details.startDate,
+    booking?.startDate,
+    booking?.submittedAt,
+    booking?.updatedAt,
+  ];
+
+  for (const value of dateCandidates) {
+    const text = String(value || "").trim();
+
+    if (!text) {
+      continue;
+    }
+
+    const timestamp = /^\d{4}-\d{2}-\d{2}$/.test(text)
+      ? new Date(`${text}T12:00:00`).getTime()
+      : new Date(text).getTime();
+
+    if (!Number.isNaN(timestamp)) {
+      return timestamp;
+    }
+  }
+
+  return 0;
+}
+
+
+function buildStableContactId(contact) {
+  const emailIdentity = contact.emailIdentities
+    .filter(Boolean)
+    .sort()[0];
+
+  if (emailIdentity) {
+    return emailIdentity;
+  }
+
+  const phoneIdentity = contact.phoneIdentities
+    .filter(Boolean)
+    .sort()[0];
+
+  if (phoneIdentity) {
+    return phoneIdentity;
+  }
+
+  const nameIdentity = normalizeNameIdentity(contact.contactName);
+  const organizationIdentity = normalizeNameIdentity(
+    contact.organizationName
+  );
+
+  if (nameIdentity || organizationIdentity) {
+    return `${nameIdentity}-${organizationIdentity}`;
+  }
+
+  return `contact-${contact.recordIndex}`;
+}
+
+
 function getContactsFromBookings(bookings) {
-  const contactMap = new Map();
+  const contactRecords = [];
+  const identityToRecord = new Map();
 
   bookings.forEach((booking) => {
-    const contactName = String(
-      booking.contactName || booking.name || ""
-    ).trim();
+    const snapshot = getBookingContactSnapshot(booking);
+    const identityCandidates = getContactIdentityCandidates(snapshot);
 
-    const organizationName = String(
-      booking.organizationName || "No organization"
-    ).trim();
-
-    const emailValue = String(booking.email || "").trim();
-    const phoneValue = String(booking.phone || "").trim();
-
-    const email =
-      emailValue && emailValue !== "No email provided" ? emailValue : "";
-
-    const phone =
-      phoneValue && phoneValue !== "No phone provided" ? phoneValue : "";
-
-    if (!contactName && !email && !phone && !organizationName) {
+    if (identityCandidates.length === 0) {
       return;
     }
 
-    const contactKey =
-      email.toLowerCase() ||
-      phone ||
-      `${contactName.toLowerCase()}-${organizationName.toLowerCase()}`;
+    let contact = null;
 
-    if (!contactMap.has(contactKey)) {
-      contactMap.set(contactKey, {
-        id: contactKey,
-        contactName: contactName || "No contact name",
-        organizationName: organizationName || "No organization",
-        email,
-        phone,
-        bookings: [],
-      });
+    for (const identity of identityCandidates) {
+      const matchingContact = identityToRecord.get(identity);
+
+      if (matchingContact) {
+        contact = matchingContact;
+        break;
+      }
     }
 
-    contactMap.get(contactKey).bookings.push(booking);
+    if (!contact) {
+      contact = {
+        recordIndex: contactRecords.length,
+        contactName: "",
+        organizationName: "",
+        email: "",
+        phone: "",
+        mailingAddress: "",
+        latestBookingTimestamp: -1,
+        bookings: [],
+        contactNames: new Set(),
+        organizationNames: new Set(),
+        emails: new Set(),
+        phones: new Set(),
+        mailingAddresses: new Set(),
+        retreatTypes: new Set(),
+        sourceTypes: new Set(),
+        emailIdentities: [],
+        phoneIdentities: [],
+      };
+
+      contactRecords.push(contact);
+    }
+
+    identityCandidates.forEach((identity) => {
+      identityToRecord.set(identity, contact);
+    });
+
+    const emailIdentity = normalizeEmailIdentity(snapshot.email);
+    const phoneIdentity = normalizePhoneIdentity(snapshot.phone);
+
+    if (snapshot.contactName) {
+      contact.contactNames.add(snapshot.contactName);
+    }
+
+    if (snapshot.organizationName) {
+      contact.organizationNames.add(snapshot.organizationName);
+    }
+
+    if (snapshot.email) {
+      contact.emails.add(snapshot.email);
+    }
+
+    if (snapshot.phone) {
+      contact.phones.add(snapshot.phone);
+    }
+
+    if (snapshot.mailingAddress) {
+      contact.mailingAddresses.add(snapshot.mailingAddress);
+    }
+
+    if (snapshot.retreatType) {
+      contact.retreatTypes.add(snapshot.retreatType);
+    }
+
+    if (snapshot.sourceType) {
+      contact.sourceTypes.add(snapshot.sourceType);
+    }
+
+    if (emailIdentity) {
+      contact.emailIdentities.push(emailIdentity);
+    }
+
+    if (phoneIdentity) {
+      contact.phoneIdentities.push(phoneIdentity);
+    }
+
+    contact.bookings.push(booking);
+
+    const bookingTimestamp = getBookingChronologyValue(booking);
+
+    if (bookingTimestamp >= contact.latestBookingTimestamp) {
+      contact.latestBookingTimestamp = bookingTimestamp;
+
+      if (snapshot.contactName) {
+        contact.contactName = snapshot.contactName;
+      }
+
+      if (snapshot.organizationName) {
+        contact.organizationName = snapshot.organizationName;
+      }
+
+      if (snapshot.email) {
+        contact.email = snapshot.email;
+      }
+
+      if (snapshot.phone) {
+        contact.phone = snapshot.phone;
+      }
+
+      if (snapshot.mailingAddress) {
+        contact.mailingAddress = snapshot.mailingAddress;
+      }
+    }
   });
 
-  return Array.from(contactMap.values()).sort((a, b) =>
-    a.contactName.localeCompare(b.contactName)
-  );
+  return contactRecords
+    .map((contact) => {
+      const contactNames = Array.from(contact.contactNames);
+      const organizationNames = Array.from(contact.organizationNames);
+      const emails = Array.from(contact.emails);
+      const phones = Array.from(contact.phones);
+      const mailingAddresses = Array.from(contact.mailingAddresses);
+      const retreatTypes = Array.from(contact.retreatTypes);
+      const sourceTypes = Array.from(contact.sourceTypes);
+
+      const finalizedContact = {
+        ...contact,
+        contactName:
+          contact.contactName ||
+          contactNames[0] ||
+          "No contact name",
+        organizationName:
+          contact.organizationName ||
+          organizationNames[0] ||
+          "No organization",
+        email:
+          contact.email ||
+          emails[0] ||
+          "",
+        phone:
+          contact.phone ||
+          phones[0] ||
+          "",
+        mailingAddress:
+          contact.mailingAddress ||
+          mailingAddresses[0] ||
+          "",
+        contactNames,
+        organizationNames,
+        emails,
+        phones,
+        mailingAddresses,
+        retreatTypes,
+        sourceTypes,
+        bookings: [...contact.bookings].sort(
+          (a, b) =>
+            getBookingChronologyValue(b) -
+            getBookingChronologyValue(a)
+        ),
+      };
+
+      return {
+        ...finalizedContact,
+        id: buildStableContactId(finalizedContact),
+      };
+    })
+    .sort((a, b) =>
+      a.contactName.localeCompare(b.contactName)
+    );
 }
+
 
 function getLastName(fullName) {
   const parts = String(fullName || "")
@@ -146,6 +519,7 @@ function getLastName(fullName) {
 
   return parts[parts.length - 1];
 }
+
 
 async function copyTextToClipboard(text) {
   const textToCopy = String(text ?? "").trim();
@@ -173,6 +547,7 @@ async function copyTextToClipboard(text) {
   document.execCommand("copy");
   document.body.removeChild(textArea);
 }
+
 
 function ContactsViewLoadingScreen({ bookingRowCount }) {
   return (
@@ -235,6 +610,7 @@ function ContactsViewLoadingScreen({ bookingRowCount }) {
   );
 }
 
+
 function formatContactName(contactName, mode) {
   const name = String(contactName || "").trim();
 
@@ -258,6 +634,244 @@ function formatContactName(contactName, mode) {
   return `${lastName}, ${firstName}`;
 }
 
+
+function parseContactDate(value) {
+  const text = String(value || "").trim();
+
+  if (!text) {
+    return null;
+  }
+
+  const parsedDate = /^\d{4}-\d{2}-\d{2}$/.test(text)
+    ? new Date(`${text}T12:00:00`)
+    : new Date(text);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+
+  return parsedDate;
+}
+
+
+function formatBookingDate(dateValue) {
+  const parsedDate = parseContactDate(dateValue);
+
+  if (!parsedDate) {
+    return String(dateValue || "").trim();
+  }
+
+  return parsedDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+
+function getBookingStartDate(booking) {
+  const details = getRentalFormDetails(booking);
+
+  return getFirstContactValue(
+    details.startDate,
+    booking?.startDate
+  );
+}
+
+
+function getBookingEndDate(booking) {
+  const details = getRentalFormDetails(booking);
+
+  return getFirstContactValue(
+    details.endDate,
+    booking?.endDate
+  );
+}
+
+
+function getBookingDateRange(booking) {
+  const start = formatBookingDate(
+    getBookingStartDate(booking)
+  );
+
+  const end = formatBookingDate(
+    getBookingEndDate(booking)
+  );
+
+  if (start && end) {
+    return start === end
+      ? start
+      : `${start} – ${end}`;
+  }
+
+  if (start) {
+    return start;
+  }
+
+  if (end) {
+    return end;
+  }
+
+  return "No dates";
+}
+
+
+function getNumericGuestBreakdownTotal(...values) {
+  const populatedValues = values
+    .map((value) => String(value ?? "").trim())
+    .filter((value) => value !== "");
+
+  if (populatedValues.length === 0) {
+    return "";
+  }
+
+  if (
+    populatedValues.some(
+      (value) => !/^\d+$/.test(value)
+    )
+  ) {
+    return "";
+  }
+
+  return String(
+    populatedValues.reduce(
+      (total, value) => total + Number(value),
+      0
+    )
+  );
+}
+
+
+function getBookingGuestCount(booking) {
+  const details = getRentalFormDetails(booking);
+
+  const topLevelGuestCount = getFirstContactValue(
+    booking?.attendeeCount,
+    booking?.groupSize
+  );
+
+  if (topLevelGuestCount) {
+    return topLevelGuestCount;
+  }
+
+  const actualGuestCount = getNumericGuestBreakdownTotal(
+    details.actualAdultGuests,
+    details.actualChildrenUnder3,
+    details.actualChildren3to17 || details.actualChildrenGuests
+  );
+
+  if (actualGuestCount) {
+    return actualGuestCount;
+  }
+
+  const approximateTotal = getFirstContactValue(
+    details.approxTotalGuests
+  );
+
+  if (approximateTotal) {
+    return approximateTotal;
+  }
+
+  const approximateGuestCount = getNumericGuestBreakdownTotal(
+    details.approxAdultGuests,
+    details.approxChildrenUnder3,
+    details.approxChildren3to17 || details.approxChildrenGuests
+  );
+
+  return approximateGuestCount || "N/A";
+}
+
+
+function getBookingStatus(booking) {
+  const details = getRentalFormDetails(booking);
+
+  return getFirstContactValue(
+    booking?.status,
+    details.status,
+    booking?.stageOfGroup
+  ) || "Unknown";
+}
+
+
+function getBookingStatusClassName(statusValue) {
+  const normalizedStatus = String(statusValue || "")
+    .trim()
+    .toLowerCase();
+
+  if (normalizedStatus === "confirmed") {
+    return "is-confirmed";
+  }
+
+  if (normalizedStatus === "contract sent") {
+    return "is-contract-sent";
+  }
+
+  if (normalizedStatus === "inquiry") {
+    return "is-inquiry";
+  }
+
+  if (normalizedStatus === "cancelled") {
+    return "is-cancelled";
+  }
+
+  return "is-default";
+}
+
+
+function getBookingOrganizationName(booking) {
+  return getBookingContactSnapshot(booking).organizationName ||
+    "Unnamed Booking";
+}
+
+
+function getBookingRetreatType(booking) {
+  return getBookingContactSnapshot(booking).retreatType;
+}
+
+
+function getBookingSourceType(booking) {
+  return getBookingContactSnapshot(booking).sourceType;
+}
+
+
+function getContactSearchText(contact) {
+  const bookingSearchValues = contact.bookings.flatMap((booking) => {
+    const snapshot = getBookingContactSnapshot(booking);
+
+    return [
+      snapshot.contactName,
+      snapshot.organizationName,
+      snapshot.email,
+      snapshot.phone,
+      snapshot.mailingAddress,
+      snapshot.retreatType,
+      snapshot.sourceType,
+      getBookingStatus(booking),
+      getBookingDateRange(booking),
+    ];
+  });
+
+  return [
+    contact.contactName,
+    contact.organizationName,
+    contact.email,
+    contact.phone,
+    contact.mailingAddress,
+    ...contact.contactNames,
+    ...contact.organizationNames,
+    ...contact.emails,
+    ...contact.phones,
+    ...contact.mailingAddresses,
+    ...contact.retreatTypes,
+    ...contact.sourceTypes,
+    ...bookingSearchValues,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+
 function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
   const contacts = useMemo(
     () => getContactsFromBookings(inquiryBookings),
@@ -275,28 +889,42 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
   );
 
   const [showStarredFirst, setShowStarredFirst] = useState(() =>
-    getSavedContactsBoolean(CONTACTS_VIEW_STARRED_FIRST_STORAGE_KEY, false)
+    getSavedContactsBoolean(
+      CONTACTS_VIEW_STARRED_FIRST_STORAGE_KEY,
+      false
+    )
   );
 
-  const [nameSortMode, setNameSortMode] = useState(() =>
-    localStorage.getItem(
-      CONTACTS_VIEW_NAME_SORT_STORAGE_KEY
-    ) || "first"
-  );
+  const [nameSortMode, setNameSortMode] = useState(() => {
+    try {
+      return (
+        localStorage.getItem(
+          CONTACTS_VIEW_NAME_SORT_STORAGE_KEY
+        ) || "first"
+      );
+    } catch (error) {
+      console.error("Could not read contact sort setting:", error);
+      return "first";
+    }
+  });
 
   const [copiedContactCell, setCopiedContactCell] = useState("");
-
   const [contactSearch, setContactSearch] = useState("");
-
   const [expandedContactId, setExpandedContactId] = useState(null);
+
 
   useEffect(() => {
     saveDeletedContacts(deletedContacts);
   }, [deletedContacts]);
 
+
   useEffect(() => {
-    saveContactIdList(CONTACTS_VIEW_STARRED_STORAGE_KEY, starredContactIds);
+    saveContactIdList(
+      CONTACTS_VIEW_STARRED_STORAGE_KEY,
+      starredContactIds
+    );
   }, [starredContactIds]);
+
 
   useEffect(() => {
     saveContactsBoolean(
@@ -305,12 +933,18 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
     );
   }, [showStarredFirst]);
 
+
   useEffect(() => {
-    localStorage.setItem(
-      CONTACTS_VIEW_NAME_SORT_STORAGE_KEY,
-      nameSortMode
-    );
+    try {
+      localStorage.setItem(
+        CONTACTS_VIEW_NAME_SORT_STORAGE_KEY,
+        nameSortMode
+      );
+    } catch (error) {
+      console.error("Could not save contact sort setting:", error);
+    }
   }, [nameSortMode]);
+
 
   const starredContactIdSet = useMemo(
     () => new Set(starredContactIds),
@@ -318,7 +952,9 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
   );
 
   const deletedContactIdSet = useMemo(
-    () => new Set(deletedContacts.map((contact) => contact.id)),
+    () => new Set(
+      deletedContacts.map((contact) => contact.id)
+    ),
     [deletedContacts]
   );
 
@@ -328,6 +964,14 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
         (contact) => !deletedContactIdSet.has(contact.id)
       ),
     [contacts, deletedContactIdSet]
+  );
+
+  const visibleStarredCount = useMemo(
+    () =>
+      visibleContacts.filter((contact) =>
+        starredContactIdSet.has(contact.id)
+      ).length,
+    [visibleContacts, starredContactIdSet]
   );
 
   const sortedContacts = useMemo(() => {
@@ -343,26 +987,26 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
           return true;
         }
 
-        return (
-          contact.contactName.toLowerCase().includes(searchValue) ||
-          contact.organizationName.toLowerCase().includes(searchValue) ||
-          contact.email.toLowerCase().includes(searchValue) ||
-          contact.phone.toLowerCase().includes(searchValue)
-        );
+        return getContactSearchText(contact).includes(searchValue);
       })
       .sort((a, b) => {
-        if (showStarredFirst && a.isStarred !== b.isStarred) {
+        if (
+          showStarredFirst &&
+          a.isStarred !== b.isStarred
+        ) {
           return a.isStarred ? -1 : 1;
         }
 
         if (nameSortMode === "last") {
-          return getLastName(a.contactName)
-            .localeCompare(
-              getLastName(b.contactName)
-            );
+          const lastNameComparison = getLastName(a.contactName)
+            .localeCompare(getLastName(b.contactName));
+
+          if (lastNameComparison !== 0) {
+            return lastNameComparison;
+          }
         }
 
-        return formatContactName(
+        const nameComparison = formatContactName(
           a.contactName,
           nameSortMode
         ).localeCompare(
@@ -372,6 +1016,13 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
           )
         );
 
+        if (nameComparison !== 0) {
+          return nameComparison;
+        }
+
+        return a.organizationName.localeCompare(
+          b.organizationName
+        );
       });
   }, [
     visibleContacts,
@@ -381,11 +1032,13 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
     nameSortMode,
   ]);
 
+
   const toggleContactBookings = (contactId) => {
     setExpandedContactId((currentId) =>
       currentId === contactId ? null : contactId
     );
   };
+
 
   const toggleContactStar = (contactId) => {
     setStarredContactIds((currentIds) => {
@@ -397,44 +1050,55 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
     });
   };
 
+
   const deleteContact = (contact) => {
     const confirmed = window.confirm(
       `Remove ${contact.contactName} from Contacts View?\n\n` +
         "This will NOT delete any booking records. The contact will be saved " +
         "under Deleted Contacts so it can be restored later."
     );
+
     if (!confirmed) {
       return;
     }
+
     const deletedContactSnapshot = {
       id: contact.id,
       contactName: contact.contactName,
       organizationName: contact.organizationName,
       email: contact.email,
       phone: contact.phone,
+      mailingAddress: contact.mailingAddress,
       bookingCount: contact.bookings.length,
+      organizationNames: contact.organizationNames,
+      emails: contact.emails,
+      phones: contact.phones,
       bookingReferences: contact.bookings.map((booking) => ({
         id: booking.id || "",
-        organizationName: booking.organizationName || "",
-        startDate: booking.startDate || "",
-        endDate: booking.endDate || "",
-        status: booking.status || "",
+        organizationName: getBookingOrganizationName(booking),
+        startDate: getBookingStartDate(booking),
+        endDate: getBookingEndDate(booking),
+        status: getBookingStatus(booking),
       })),
       deletedAt: new Date().toISOString(),
     };
+
     setDeletedContacts((currentContacts) => [
       deletedContactSnapshot,
       ...currentContacts.filter(
         (savedContact) => savedContact.id !== contact.id
       ),
     ]);
+
     setStarredContactIds((currentIds) =>
       currentIds.filter((id) => id !== contact.id)
     );
+
     setExpandedContactId((currentId) =>
       currentId === contact.id ? null : currentId
     );
   };
+
 
   const restoreDeletedContact = (contactId) => {
     setDeletedContacts((currentContacts) =>
@@ -443,6 +1107,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
       )
     );
   };
+
 
   const copyContactCellValue = async (value, cellId) => {
     const textToCopy = String(value ?? "").trim();
@@ -466,19 +1131,45 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
     }
   };
 
-  function CopyableContactCell({ cellId, copyLabel, value, children }) {
+
+  function CopyableContactCell({
+    cellId,
+    copyLabel,
+    value,
+    children,
+  }) {
     const isCopied = copiedContactCell === cellId;
+    const hasCopyValue = String(value ?? "").trim() !== "";
 
     return (
       <td
-        className={`contacts-view-copy-cell ${isCopied ? "is-copied" : ""}`}
-        role="button"
-        tabIndex={0}
-        title={isCopied ? "Copied!" : `Click to copy ${copyLabel}`}
-        aria-label={`Copy ${copyLabel}`}
-        onClick={() => copyContactCellValue(value, cellId)}
+        className={`contacts-view-copy-cell ${
+          isCopied ? "is-copied" : ""
+        }`}
+        role={hasCopyValue ? "button" : undefined}
+        tabIndex={hasCopyValue ? 0 : undefined}
+        title={
+          hasCopyValue
+            ? isCopied
+              ? "Copied!"
+              : `Click to copy ${copyLabel}`
+            : undefined
+        }
+        aria-label={
+          hasCopyValue
+            ? `Copy ${copyLabel}`
+            : undefined
+        }
+        onClick={() => {
+          if (hasCopyValue) {
+            copyContactCellValue(value, cellId);
+          }
+        }}
         onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
+          if (
+            hasCopyValue &&
+            (event.key === "Enter" || event.key === " ")
+          ) {
             event.preventDefault();
             copyContactCellValue(value, cellId);
           }
@@ -489,74 +1180,14 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
         </div>
 
         {isCopied && (
-          <span className="contacts-view-copy-feedback">Copied</span>
+          <span className="contacts-view-copy-feedback">
+            Copied
+          </span>
         )}
       </td>
     );
   }
 
-  function formatBookingDate(dateValue) {
-    if (!dateValue) {
-      return "";
-    }
-
-    const parsedDate = new Date(`${dateValue}T00:00:00`);
-
-    if (Number.isNaN(parsedDate.getTime())) {
-      return dateValue;
-    }
-
-    return parsedDate.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  }
-
-  function getBookingDateRange(booking) {
-    const start = formatBookingDate(booking.startDate);
-    const end = formatBookingDate(booking.endDate);
-
-    if (start && end) {
-      return `${start} – ${end}`;
-    }
-
-    if (start) {
-      return start;
-    }
-
-    if (end) {
-      return end;
-    }
-
-    return "No dates";
-  }
-
-  function getBookingGuestCount(booking) {
-    return booking.attendeeCount || booking.groupSize || "N/A";
-  }
-
-  function getBookingStatusClassName(statusValue) {
-    const normalizedStatus = String(statusValue || "").trim().toLowerCase();
-
-    if (normalizedStatus === "confirmed") {
-      return "is-confirmed";
-    }
-
-    if (normalizedStatus === "contract sent") {
-      return "is-contract-sent";
-    }
-
-    if (normalizedStatus === "inquiry") {
-      return "is-inquiry";
-    }
-
-    if (normalizedStatus === "cancelled") {
-      return "is-cancelled";
-    }
-
-    return "is-default";
-  }
 
   return (
     <section className="contacts-view-page">
@@ -571,8 +1202,8 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
               <p className="dashboard-eyebrow">Rentals & Events</p>
               <h2>Contacts View</h2>
               <p>
-                A staff-friendly list of contacts pulled from booking inquiries
-                and imported spreadsheet rows.
+                A staff-friendly contact list built from the current booking
+                records, detailed rental forms, and imported spreadsheet data.
               </p>
             </div>
           </div>
@@ -589,28 +1220,27 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
             </span>
 
             <span>
-              <strong>{starredContactIds.length}</strong>
+              <strong>{visibleStarredCount}</strong>
               Starred
             </span>
           </div>
         </div>
 
-        <div className="contacts-view-toolbar">
 
+        <div className="contacts-view-toolbar">
           <div className="contacts-view-search">
             <input
               type="text"
-              placeholder="Search contacts, organizations, email, or phone..."
+              placeholder="Search contacts, groups, address, email, phone, status, or retreat type..."
               value={contactSearch}
-              onChange={(event) => setContactSearch(event.target.value)}
+              onChange={(event) =>
+                setContactSearch(event.target.value)
+              }
             />
           </div>
 
           <div className="contacts-view-name-sort">
-
-            <span>
-              Sort:
-            </span>
+            <span>Sort:</span>
 
             <button
               type="button"
@@ -619,9 +1249,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                   ? "active"
                   : ""
               }
-              onClick={() =>
-                setNameSortMode("first")
-              }
+              onClick={() => setNameSortMode("first")}
             >
               First Name
             </button>
@@ -633,13 +1261,10 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                   ? "active"
                   : ""
               }
-              onClick={() =>
-                setNameSortMode("last")
-              }
+              onClick={() => setNameSortMode("last")}
             >
               Last Name
             </button>
-
           </div>
 
           <label className="contacts-view-pin-toggle">
@@ -670,11 +1295,11 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
           </button>
 
           <p>
-            Star important contacts to highlight them. Turn this option on to
-            move starred contacts to the top.
+            Contacts are matched across booking history using known email,
+            phone, or the same contact name and organization.
           </p>
-
         </div>
+
 
         {showDeletedContacts && (
           <div className="contacts-view-deleted-panel">
@@ -686,6 +1311,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                   booking records have not been deleted.
                 </p>
               </div>
+
               <button
                 className="contacts-view-deleted-close"
                 type="button"
@@ -712,6 +1338,11 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                           .filter(Boolean)
                           .join(" · ") || "No email or phone"}
                       </small>
+
+                      {contact.mailingAddress && (
+                        <small>{contact.mailingAddress}</small>
+                      )}
+
                       <small>
                         {contact.bookingCount || 0} booking
                         {contact.bookingCount === 1 ? "" : "s"} · Deleted{" "}
@@ -720,6 +1351,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                           : "previously"}
                       </small>
                     </div>
+
                     <button
                       className="contacts-view-restore-button"
                       type="button"
@@ -741,6 +1373,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
           </div>
         )}
 
+
         {sortedContacts.length > 0 ? (
           <div className="contacts-view-table-wrap">
             <table className="contacts-view-table">
@@ -758,210 +1391,224 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
 
               <tbody>
                 {sortedContacts.map((contact) => {
-                  const latestBooking =
-                    contact.bookings[contact.bookings.length - 1];
-
                   const rowClassName = [
                     "contacts-view-row",
-                    contact.isStarred ? "contacts-view-row-starred" : "",
+                    contact.isStarred
+                      ? "contacts-view-row-starred"
+                      : "",
                   ]
                     .filter(Boolean)
                     .join(" ");
 
                   return (
-                  <>
-                    <tr className={rowClassName} key={contact.id}>
-                      <td className="contacts-view-favorite-cell">
-                        <button
-                          className={`contact-star-button ${
-                            contact.isStarred ? "active" : ""
-                          }`}
-                          type="button"
-                          onClick={() => toggleContactStar(contact.id)}
-                          aria-label={
-                            contact.isStarred
-                              ? `Unstar ${contact.contactName}`
-                              : `Star ${contact.contactName}`
-                          }
-                          title={contact.isStarred ? "Unstar" : "Star"}
-                        >
-                          {contact.isStarred ? <FaStar /> : <FaRegStar />}
-                        </button>
-                      </td>
-
-                      <CopyableContactCell
-                        cellId={`${contact.id}-contact-name`}
-                        copyLabel="contact name"
-                        value={formatContactName(
-                          contact.contactName,
-                          nameSortMode
-                        )}
-                      >
-                        <div className="contacts-view-name-cell">
-                          <strong>
-                            {formatContactName(
-                              contact.contactName,
-                              nameSortMode
+                    <Fragment key={contact.id}>
+                      <tr className={rowClassName}>
+                        <td className="contacts-view-favorite-cell">
+                          <button
+                            className={`contact-star-button ${
+                              contact.isStarred ? "active" : ""
+                            }`}
+                            type="button"
+                            onClick={() =>
+                              toggleContactStar(contact.id)
+                            }
+                            aria-label={
+                              contact.isStarred
+                                ? `Unstar ${contact.contactName}`
+                                : `Star ${contact.contactName}`
+                            }
+                            title={
+                              contact.isStarred
+                                ? "Unstar"
+                                : "Star"
+                            }
+                          >
+                            {contact.isStarred ? (
+                              <FaStar />
+                            ) : (
+                              <FaRegStar />
                             )}
-                          </strong>
-                        </div>
-                      </CopyableContactCell>
-
-                      <CopyableContactCell
-                        cellId={`${contact.id}-organization`}
-                        copyLabel="organization"
-                        value={contact.organizationName}
-                      >
-                        {contact.organizationName}
-                      </CopyableContactCell>
-
-                      <CopyableContactCell
-                        cellId={`${contact.id}-email`}
-                        copyLabel="email"
-                        value={contact.email || "N/A"}
-                      >
-                        {contact.email || "N/A"}
-                      </CopyableContactCell>
-
-                      <CopyableContactCell
-                        cellId={`${contact.id}-phone`}
-                        copyLabel="phone"
-                        value={contact.phone || "N/A"}
-                      >
-                        {contact.phone || "N/A"}
-                      </CopyableContactCell>
-
-                      <CopyableContactCell
-                        cellId={`${contact.id}-bookings`}
-                        copyLabel="booking count"
-                        value={contact.bookings.length}
-                      >
-                        {contact.bookings.length}
-                      </CopyableContactCell>
-
-                      <td>
-                        <div className="contacts-view-actions">
-                          <button
-                            className="table-link"
-                            type="button"
-                            onClick={() => toggleContactBookings(contact.id)}
-                          >
-                            {expandedContactId === contact.id
-                              ? "Hide Bookings"
-                              : "View Bookings"}
                           </button>
+                        </td>
 
-                          <button
-                            className="contact-delete-button"
-                            type="button"
-                            onClick={() => deleteContact(contact)}
-                            aria-label={`Delete ${contact.contactName}`}
-                            title="Delete contact"
-                          >
-                            <FaTrashAlt />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-
-                    {expandedContactId === contact.id && (
-                      <tr className="contacts-bookings-expanded-row">
-                        <td colSpan="7">
-
-                          <div className="contacts-bookings-expanded">
-
-                            <div className="contacts-bookings-header">
-                              <strong>
-                                Booking History
-                              </strong>
-
-                              <span>
-                                {contact.bookings.length} booking
-                                {contact.bookings.length === 1 ? "" : "s"}
-                              </span>
-                            </div>
-
-                            <div className="contacts-bookings-list">
-                              {[...contact.bookings]
-                                .sort((a, b) => {
-                                  const aTime = a.startDate
-                                    ? new Date(`${a.startDate}T00:00:00`).getTime()
-                                    : 0;
-
-                                  const bTime = b.startDate
-                                    ? new Date(`${b.startDate}T00:00:00`).getTime()
-                                    : 0;
-
-                                  return bTime - aTime;
-                                })
-                                .map((booking, index) => (
-                                  <div
-                                    className="contacts-booking-item"
-                                    key={booking.id || `${contact.id}-booking-${index}`}
-                                  >
-                                    <div className="contacts-booking-main">
-                                      <div className="contacts-booking-title-row">
-                                        <div className="contacts-booking-title-group">
-
-                                          <strong className="contacts-booking-title">
-                                            {booking.eventName ||
-                                              booking.organizationName ||
-                                              booking.retreatName ||
-                                              "Unnamed Booking"}
-                                          </strong>
-
-                                          {booking.retreatType && (
-                                            <span className="contacts-booking-type">
-                                              {booking.retreatType}
-                                            </span>
-                                          )}
-
-                                        </div>
-
-                                        <span
-                                          className={`contacts-booking-status-pill ${getBookingStatusClassName(
-                                            booking.status
-                                          )}`}
-                                        >
-                                          {booking.status || "Unknown"}
-                                        </span>
-                                      </div>
-
-                                      <div className="contacts-booking-info">
-
-                                        <span className="contacts-booking-date">
-                                          {getBookingDateRange(booking)}
-                                        </span>
-
-                                        <span className="contacts-booking-guests">
-                                          {getBookingGuestCount(booking)} Guests
-                                        </span>
-
-                                      </div>
-
-                                    </div>
-
-                                    <div className="contacts-booking-actions">
-                                      <button
-                                        className="contacts-booking-open-button"
-                                        type="button"
-                                        onClick={() => openBookingDetail(booking)}
-                                      >
-                                        Open Booking
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-
+                        <CopyableContactCell
+                          cellId={`${contact.id}-contact-name`}
+                          copyLabel="contact name"
+                          value={formatContactName(
+                            contact.contactName,
+                            nameSortMode
+                          )}
+                        >
+                          <div className="contacts-view-name-cell">
+                            <strong>
+                              {formatContactName(
+                                contact.contactName,
+                                nameSortMode
+                              )}
+                            </strong>
                           </div>
+                        </CopyableContactCell>
 
+                        <CopyableContactCell
+                          cellId={`${contact.id}-organization`}
+                          copyLabel="organization"
+                          value={contact.organizationName}
+                        >
+                          <div className="contacts-view-name-cell">
+                            <strong>{contact.organizationName}</strong>
+
+                            {contact.mailingAddress && (
+                              <span>{contact.mailingAddress}</span>
+                            )}
+                          </div>
+                        </CopyableContactCell>
+
+                        <CopyableContactCell
+                          cellId={`${contact.id}-email`}
+                          copyLabel="email"
+                          value={contact.email}
+                        >
+                          {contact.email || "N/A"}
+                        </CopyableContactCell>
+
+                        <CopyableContactCell
+                          cellId={`${contact.id}-phone`}
+                          copyLabel="phone"
+                          value={contact.phone}
+                        >
+                          {contact.phone || "N/A"}
+                        </CopyableContactCell>
+
+                        <CopyableContactCell
+                          cellId={`${contact.id}-bookings`}
+                          copyLabel="booking count"
+                          value={contact.bookings.length}
+                        >
+                          {contact.bookings.length}
+                        </CopyableContactCell>
+
+                        <td>
+                          <div className="contacts-view-actions">
+                            <button
+                              className="table-link"
+                              type="button"
+                              onClick={() =>
+                                toggleContactBookings(contact.id)
+                              }
+                            >
+                              {expandedContactId === contact.id
+                                ? "Hide Bookings"
+                                : "View Bookings"}
+                            </button>
+
+                            <button
+                              className="contact-delete-button"
+                              type="button"
+                              onClick={() => deleteContact(contact)}
+                              aria-label={`Delete ${contact.contactName}`}
+                              title="Delete contact"
+                            >
+                              <FaTrashAlt />
+                            </button>
+                          </div>
                         </td>
                       </tr>
-                    )}
 
-                    </>
 
+                      {expandedContactId === contact.id && (
+                        <tr className="contacts-bookings-expanded-row">
+                          <td colSpan="7">
+                            <div className="contacts-bookings-expanded">
+                              <div className="contacts-bookings-header">
+                                <strong>Booking History</strong>
+
+                                <span>
+                                  {contact.bookings.length} booking
+                                  {contact.bookings.length === 1 ? "" : "s"}
+                                </span>
+                              </div>
+
+                              <div className="contacts-bookings-list">
+                                {contact.bookings.map((booking, index) => {
+                                  const bookingStatus =
+                                    getBookingStatus(booking);
+
+                                  const retreatType =
+                                    getBookingRetreatType(booking);
+
+                                  const sourceType =
+                                    getBookingSourceType(booking);
+
+                                  return (
+                                    <div
+                                      className="contacts-booking-item"
+                                      key={
+                                        booking.id ||
+                                        `${contact.id}-booking-${index}`
+                                      }
+                                    >
+                                      <div className="contacts-booking-main">
+                                        <div className="contacts-booking-title-row">
+                                          <div className="contacts-booking-title-group">
+                                            <strong className="contacts-booking-title">
+                                              {getBookingOrganizationName(
+                                                booking
+                                              )}
+                                            </strong>
+
+                                            {retreatType && (
+                                              <span className="contacts-booking-type">
+                                                {retreatType}
+                                              </span>
+                                            )}
+
+                                            {sourceType && (
+                                              <span className="contacts-booking-type">
+                                                {sourceType}
+                                              </span>
+                                            )}
+                                          </div>
+
+                                          <span
+                                            className={`contacts-booking-status-pill ${getBookingStatusClassName(
+                                              bookingStatus
+                                            )}`}
+                                          >
+                                            {bookingStatus}
+                                          </span>
+                                        </div>
+
+                                        <div className="contacts-booking-info">
+                                          <span className="contacts-booking-date">
+                                            {getBookingDateRange(booking)}
+                                          </span>
+
+                                          <span className="contacts-booking-guests">
+                                            {getBookingGuestCount(booking)} Guests
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      <div className="contacts-booking-actions">
+                                        <button
+                                          className="contacts-booking-open-button"
+                                          type="button"
+                                          onClick={() =>
+                                            openBookingDetail?.(booking)
+                                          }
+                                        >
+                                          Open Booking
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   );
                 })}
               </tbody>
@@ -974,12 +1621,13 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                 ? "No matching contacts"
                 : "No contacts yet"}
             </strong>
+
             <p>
               {contactSearch
                 ? "Try adjusting your search terms."
                 : deletedContacts.length > 0
                   ? "All current contacts are hidden. Open Deleted Contacts to restore one."
-                  : "Submit the public form or import a spreadsheet to build the contacts list."}
+                  : "Create or import a booking to build the contacts list."}
             </p>
           </div>
         )}
@@ -988,47 +1636,53 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
   );
 }
 
-export default function ContactsView({ inquiryBookings = [], openBookingDetail }) {
-    const [shouldRenderContacts, setShouldRenderContacts] = useState(false);
 
-    useEffect(() => {
-      setShouldRenderContacts(false);
+export default function ContactsView({
+  inquiryBookings = [],
+  openBookingDetail,
+}) {
+  const [shouldRenderContacts, setShouldRenderContacts] = useState(false);
 
-      let firstFrameId = 0;
-      let secondFrameId = 0;
-      let loadingTimerId = 0;
+  useEffect(() => {
+    setShouldRenderContacts(false);
 
-      firstFrameId = window.requestAnimationFrame(() => {
-        secondFrameId = window.requestAnimationFrame(() => {
-          loadingTimerId = window.setTimeout(() => {
-            setShouldRenderContacts(true);
-          }, CONTACTS_RENDER_LOADING_MS);
-        });
+    let firstFrameId = 0;
+    let secondFrameId = 0;
+    let loadingTimerId = 0;
+
+    firstFrameId = window.requestAnimationFrame(() => {
+      secondFrameId = window.requestAnimationFrame(() => {
+        loadingTimerId = window.setTimeout(() => {
+          setShouldRenderContacts(true);
+        }, CONTACTS_RENDER_LOADING_MS);
       });
+    });
 
-      return () => {
-        window.cancelAnimationFrame(firstFrameId);
+    return () => {
+      window.cancelAnimationFrame(firstFrameId);
 
-        if (secondFrameId) {
-          window.cancelAnimationFrame(secondFrameId);
-        }
+      if (secondFrameId) {
+        window.cancelAnimationFrame(secondFrameId);
+      }
 
-        if (loadingTimerId) {
-          window.clearTimeout(loadingTimerId);
-        }
-      };
-    }, [inquiryBookings.length]);
+      if (loadingTimerId) {
+        window.clearTimeout(loadingTimerId);
+      }
+    };
+  }, [inquiryBookings]);
 
-    if (!shouldRenderContacts) {
-      return (
-        <ContactsViewLoadingScreen bookingRowCount={inquiryBookings.length} />
-      );
-    }
-
+  if (!shouldRenderContacts) {
     return (
-      <ContactsViewContent
-        inquiryBookings={inquiryBookings}
-        openBookingDetail={openBookingDetail}
+      <ContactsViewLoadingScreen
+        bookingRowCount={inquiryBookings.length}
       />
     );
   }
+
+  return (
+    <ContactsViewContent
+      inquiryBookings={inquiryBookings}
+      openBookingDetail={openBookingDetail}
+    />
+  );
+}
