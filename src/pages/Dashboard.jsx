@@ -73,6 +73,7 @@ import StaffSignOutButton from "../components/StaffSignOutButton";
 
 import PortalAdminView from "../pages/PortalAdminView";
 
+
 import {
   markGuestInquiryConverted,
 } from "../services/guestInquiryService";
@@ -7754,8 +7755,9 @@ export default function Dashboard() {
     [SPREADSHEET_VIEW_NAME]: "/master-spreadsheet",
     [INQUIRY_SPREADSHEET_VIEW_NAME]: "/inquiry-spreadsheet",
     "Contacts View": "/contacts",
-    
+
     Reports: "/reports",
+    Backup: "/backup",
 
     "User Admin": "/user-admin",
     Jobs: "/jobs",
@@ -9459,26 +9461,31 @@ export default function Dashboard() {
       ],
     },
     {
-      label: "Other",
-      items: [
-        {
-          ...sidebarItemLookup["User Admin"],
-          label: "User Admin",
-          view: "User Admin",
-          icon:
-            sidebarItemLookup["User Admin"]?.icon ||
-            FaUserShield,
-        },
-        {
-          ...sidebarItemLookup["Jobs"],
-          label: "Jobs",
-          view: "Jobs",
-          icon:
-            sidebarItemLookup["Jobs"]?.icon ||
-            FaClipboardList,
-        },
-      ],
-    },
+  label: "Other",
+    items: [
+      {
+        ...sidebarItemLookup["User Admin"],
+        label: "User Admin",
+        view: "User Admin",
+        icon:
+          sidebarItemLookup["User Admin"]?.icon ||
+          FaUserShield,
+      },
+      {
+        ...sidebarItemLookup["Jobs"],
+        label: "Jobs",
+        view: "Jobs",
+        icon:
+          sidebarItemLookup["Jobs"]?.icon ||
+          FaClipboardList,
+      },
+      {
+        label: "Backup",
+        view: "Backup",
+        icon: FaShieldAlt,
+      },
+    ],
+  },
   ];
 
 
@@ -9837,6 +9844,13 @@ export default function Dashboard() {
             onCreateBooking={
               startBookingFromGuestInquiry
             }
+          />
+
+        ) : activeView === "Backup" ? (
+          <DashboardBackups
+            onRestoreComplete={() => {
+              loadBookingsFromSupabase();
+            }}
           />
 
         ) : activeView === "Reports" ? (

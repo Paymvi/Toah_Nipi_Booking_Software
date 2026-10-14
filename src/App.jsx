@@ -18,6 +18,7 @@ import "./styles/HomeDashboard.css";
 import "./styles/InquirySpreadsheet.css";
 import "./styles/InquiryDetail.css";
 import "./styles/StaffBookingDetails.css";
+import "./styles/DashboardBackups.css";
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
@@ -115,6 +116,8 @@ export default function App() {
             path="*" 
             element={<Navigate to="/dashboard" replace />} 
           />
+
+          <Route path="/backup" element={<Dashboard />} />
 
         </Routes>
 

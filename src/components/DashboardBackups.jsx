@@ -1,3343 +1,1481 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-
 import {
+  FaArchive,
   FaCheckCircle,
+  FaCloudDownloadAlt,
   FaDatabase,
   FaDownload,
-  FaInfoCircle,
+  FaExclamationTriangle,
+  FaFileAlt,
+  FaHistory,
+  FaLock,
+  FaRedoAlt,
+  FaShieldAlt,
   FaTimes,
   FaTrashAlt,
   FaUpload,
 } from "react-icons/fa";
 
 import {
+  deleteAllBookings,
   fetchBookings,
   upsertBookings,
-  deleteAllBookings,
-  deleteBooking,
 } from "../services/bookingService";
 
-import {
-  DATED_INQUIRY_SETTINGS_STORAGE_KEY,
-  DATED_INQUIRY_DATE_FILTER_STORAGE_KEY,
-  DATED_INQUIRY_CUSTOM_START_STORAGE_KEY,
-  DATED_INQUIRY_CUSTOM_END_STORAGE_KEY,
-  BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY,
-  REPORTS_VIEW_SETTINGS_STORAGE_KEY,
-  SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY,
-  SPREADSHEET_VIEW_STARRED_STORAGE_KEY,
-} from "../constants/dashboardConstants";
 
-/* =========================================================
-   BACKUP CONFIGURATION
-========================================================= */
 
-const STAFF_USERS_STORAGE_KEY = "toahNipiStaffUsers";
-const CURRENT_STAFF_USER_STORAGE_KEY = "toahNipiCurrentStaffUserId";
+const BACKUP_FORMAT = "toah-nipi-booking-backup";
+const BACKUP_SCHEMA_VERSION = 1;
+const LAST_BACKUP_STORAGE_KEY = "toahNipiLastManualBackup";
+const MAX_BACKUP_FILE_BYTES = 25 * 1024 * 1024;
+const UPSERT_CHUNK_SIZE = 150;
 
-const LEGACY_BOOKINGS_STORAGE_KEY = "toahNipiPublicInquiries";
-
-const DASHBOARD_BACKUP_HISTORY_STORAGE_KEY =
-  "toahNipiDashboardBackupHistory";
-
-const DASHBOARD_BACKUP_VERSION = 2;
-
-/*
-  A full database snapshot can be considerably larger than the
-  old localStorage-only backup. Keep only a few convenient browser
-  snapshots and rely on the downloaded JSON file as the durable copy.
-*/
-const MAX_DASHBOARD_BACKUPS_TO_KEEP = 4;
-const MAX_BACKUP_HISTORY_BYTES = 3_800_000;
-
-const DASHBOARD_BACKUP_CORE_KEYS = [
-  STAFF_USERS_STORAGE_KEY,
-  CURRENT_STAFF_USER_STORAGE_KEY,
-
-  DATED_INQUIRY_SETTINGS_STORAGE_KEY,
-  DATED_INQUIRY_DATE_FILTER_STORAGE_KEY,
-  DATED_INQUIRY_CUSTOM_START_STORAGE_KEY,
-  DATED_INQUIRY_CUSTOM_END_STORAGE_KEY,
-
-  BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY,
-  REPORTS_VIEW_SETTINGS_STORAGE_KEY,
-
-  SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY,
-  SPREADSHEET_VIEW_STARRED_STORAGE_KEY,
-];
-
-const DASHBOARD_BACKUP_KEY_LABELS = {
-  [STAFF_USERS_STORAGE_KEY]: "Staff users",
-  [CURRENT_STAFF_USER_STORAGE_KEY]: "Current staff user",
-
-  [DATED_INQUIRY_SETTINGS_STORAGE_KEY]:
-    "Dated inquiry display settings",
-
-  [DATED_INQUIRY_DATE_FILTER_STORAGE_KEY]:
-    "Dated inquiry date filter",
-
-  [DATED_INQUIRY_CUSTOM_START_STORAGE_KEY]:
-    "Dated inquiry custom start date",
-
-  [DATED_INQUIRY_CUSTOM_END_STORAGE_KEY]:
-    "Dated inquiry custom end date",
-
-  [BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY]:
-    "Booking detail date settings",
-
-  [REPORTS_VIEW_SETTINGS_STORAGE_KEY]:
-    "Reports settings",
-
-  [SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY]:
-    "Spreadsheet view settings",
-
-  [SPREADSHEET_VIEW_STARRED_STORAGE_KEY]:
-    "Spreadsheet starred rows",
-};
-
-/* =========================================================
-   BASIC HELPERS
-========================================================= */
-
-function createDashboardBackupId() {
-  return `backup-${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
-}
-
-function safeParseJson(value, fallbackValue = null) {
-  try {
-    return JSON.parse(value);
-  } catch {
-    return fallbackValue;
-  }
-}
-
-function formatBackupDate(value) {
-  if (!value) {
-    return "Unknown date";
-  }
+function formatDateTime(value) {
+  if (!value) return "Never";
 
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "Unknown date";
+    return String(value);
   }
 
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
-function formatBackupStorageSize(value) {
-  if (value === null || value === undefined) {
-    return "0 B";
-  }
-
-  const bytes = new Blob([String(value)]).size;
-
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-
-  if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  }
-
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
-
-function getReadableBackupValue(value) {
-  if (value === null || value === undefined || value === "") {
-    return "Not set";
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "On" : "Off";
-  }
-
-  if (Array.isArray(value)) {
-    return `${value.length} item${value.length === 1 ? "" : "s"}`;
-  }
-
-  if (typeof value === "object") {
-    const count = Object.keys(value).length;
-
-    return `${count} saved setting${count === 1 ? "" : "s"}`;
-  }
-
-  return String(value);
-}
-
-function getReadableBackupSettingName(key) {
-  const labels = {
-    dateFormat: "Date format",
-    includeWeekday: "Show weekday",
-
-    tintByRetreatType:
-      "Color cards by retreat type",
-
-    showRetreatTypeLegend:
-      "Show retreat type legend",
-
-    dateRange: "Report date range",
-    customStartDate: "Custom start date",
-    customEndDate: "Custom end date",
-    status: "Status filter",
-    retreatType: "Retreat type filter",
-    sourceMode: "Source filter",
-
-    showStarredOnly: "Show starred only",
-    searchText: "Search text",
-    sortKey: "Sorted column",
-    sortDirection: "Sort direction",
-    columnColorMode: "Column colors",
-    rowColorMode: "Row colors",
-    showHoverPreview: "Row hover preview",
-    density: "Row density",
-    pageSize: "Rows per page",
-  };
-
-  if (labels[key]) {
-    return labels[key];
-  }
-
-  return String(key)
-    .replace(/([A-Z])/g, " $1")
-    .replace(/[-_]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/^./, (letter) =>
-      letter.toUpperCase()
-    );
-}
-
-function getObjectPreviewItems(
-  objectValue,
-  limit = 8
-) {
-  if (
-    !objectValue ||
-    typeof objectValue !== "object" ||
-    Array.isArray(objectValue)
-  ) {
-    return [];
-  }
-
-  return Object.entries(objectValue)
-    .slice(0, limit)
-    .map(([key, value]) => ({
-      label:
-        getReadableBackupSettingName(key),
-
-      value:
-        getReadableBackupValue(value),
-    }));
-}
-
-function getArrayCountFromStorageValue(value) {
-  const parsedValue =
-    safeParseJson(value, []);
-
-  return Array.isArray(parsedValue)
-    ? parsedValue.length
-    : 0;
-}
-
-function getParsedStorageValue(
-  storageData,
-  key,
-  fallbackValue
-) {
-  const rawValue =
-    storageData?.[key];
-
-  if (
-    rawValue === null ||
-    rawValue === undefined ||
-    rawValue === ""
-  ) {
-    return fallbackValue;
-  }
-
-  const parsedValue =
-    safeParseJson(
-      rawValue,
-      fallbackValue
-    );
-
-  return parsedValue === null ||
-    parsedValue === undefined
-    ? fallbackValue
-    : parsedValue;
-}
-
-function getBackupHasAnyValue(
-  storageData,
-  keys
-) {
-  return keys.some((key) => {
-    const value =
-      storageData?.[key];
-
-    return (
-      value !== null &&
-      value !== undefined &&
-      value !== ""
-    );
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   });
 }
 
-/* =========================================================
-   CURRENT DATABASE + LEGACY BACKUP SUPPORT
-========================================================= */
+function formatFileSize(bytes = 0) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 KB";
+
+  const units = ["B", "KB", "MB", "GB"];
+  let value = bytes;
+  let unitIndex = 0;
+
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+
+  return `${value.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+}
+
+function getSafeFileDate(date = new Date()) {
+  return date
+    .toISOString()
+    .replace(/:/g, "-")
+    .replace(/\.\d{3}Z$/, "Z");
+}
+
+function createBackupFilename(date = new Date(), prefix = "toah-nipi-backup") {
+  return `${prefix}-${getSafeFileDate(date)}.json`;
+}
+
+function downloadJsonFile(data, filename) {
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
+  window.setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 0);
+
+  return blob.size;
+}
+
+async function sha256Text(value) {
+  if (!window.crypto?.subtle) {
+    throw new Error(
+      "This browser does not support the integrity-check feature required for backups."
+    );
+  }
+
+  const encoded = new TextEncoder().encode(value);
+  const digest = await window.crypto.subtle.digest("SHA-256", encoded);
+
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function createBackupEnvelope(bookings, reason = "manual") {
+  const createdAt = new Date().toISOString();
+
+  const payload = {
+    bookings,
+  };
+
+  const checksum = await sha256Text(JSON.stringify(payload));
+
+  return {
+    format: BACKUP_FORMAT,
+    schemaVersion: BACKUP_SCHEMA_VERSION,
+    createdAt,
+    reason,
+    application: "Toah Nipi Booking Software",
+    summary: {
+      bookingCount: bookings.length,
+    },
+    integrity: {
+      algorithm: "SHA-256",
+      checksum,
+    },
+    payload,
+  };
+}
 
 function getBackupBookings(backup) {
-  /*
-    Version 2:
-    bookings are a top-level database snapshot.
-  */
-  if (
-    Array.isArray(backup?.bookings)
-  ) {
-    return backup.bookings;
-  }
-
-  /*
-    Version 1:
-    bookings lived in the old localStorage key.
-  */
-  const legacyValue =
-    backup?.storageData?.[
-      LEGACY_BOOKINGS_STORAGE_KEY
-    ];
-
-  if (!legacyValue) {
-    return [];
-  }
-
-  const parsedLegacyBookings =
-    safeParseJson(
-      legacyValue,
-      []
-    );
-
-  return Array.isArray(
-    parsedLegacyBookings
-  )
-    ? parsedLegacyBookings
+  return Array.isArray(backup?.payload?.bookings)
+    ? backup.payload.bookings
     : [];
 }
 
-function normalizeImportedDashboardBackup(
-  rawBackup
-) {
-  if (
-    !rawBackup ||
-    typeof rawBackup !== "object"
-  ) {
-    return null;
-  }
+function getDuplicateBookingIds(bookings) {
+  const seen = new Set();
+  const duplicateIds = new Set();
 
-  const rawStorageData =
-    rawBackup.storageData ||
-    rawBackup.localStorageData ||
-    {};
+  bookings.forEach((booking) => {
+    const id = String(booking?.id || "").trim();
 
-  const storageData =
-    rawStorageData &&
-    typeof rawStorageData === "object" &&
-    !Array.isArray(rawStorageData)
-      ? { ...rawStorageData }
-      : {};
+    if (!id) return;
 
-  let bookings = [];
-
-  if (
-    Array.isArray(
-      rawBackup.bookings
-    )
-  ) {
-    bookings =
-      rawBackup.bookings;
-  } else {
-    const legacyValue =
-      storageData[
-        LEGACY_BOOKINGS_STORAGE_KEY
-      ];
-
-    const parsedLegacyBookings =
-      safeParseJson(
-        legacyValue,
-        []
-      );
-
-    if (
-      Array.isArray(
-        parsedLegacyBookings
-      )
-    ) {
-      bookings =
-        parsedLegacyBookings;
-    }
-  }
-
-  /*
-    Version 2 no longer treats the browser as the booking database.
-  */
-  delete storageData[
-    LEGACY_BOOKINGS_STORAGE_KEY
-  ];
-
-  const hasAnyData =
-    bookings.length > 0 ||
-    Object.keys(storageData).length >
-      0;
-
-  if (!hasAnyData) {
-    return null;
-  }
-
-  const sourceVersion =
-    Number(rawBackup.version) || 1;
-
-  const normalizedBackup = {
-    id:
-      rawBackup.id ||
-      createDashboardBackupId(),
-
-    appName:
-      rawBackup.appName ||
-      "Toah Nipi Staff Dashboard",
-
-    backupType:
-      "database-and-browser-settings",
-
-    version:
-      DASHBOARD_BACKUP_VERSION,
-
-    sourceVersion,
-
-    migratedFromLegacy:
-      sourceVersion <
-      DASHBOARD_BACKUP_VERSION,
-
-    createdAt:
-      rawBackup.createdAt ||
-      new Date().toISOString(),
-
-    importedAt:
-      new Date().toISOString(),
-
-    bookings,
-    storageData,
-  };
-
-  return {
-    ...normalizedBackup,
-    stats:
-      getBackupStats(
-        normalizedBackup
-      ),
-  };
-}
-
-/* =========================================================
-   BROWSER STORAGE SNAPSHOT
-========================================================= */
-
-function getDashboardBackupKeys() {
-  const backupKeys =
-    new Set(
-      DASHBOARD_BACKUP_CORE_KEYS
-    );
-
-  try {
-    for (
-      let index = 0;
-      index < localStorage.length;
-      index += 1
-    ) {
-      const key =
-        localStorage.key(index);
-
-      if (
-        key &&
-        key.startsWith("toahNipi") &&
-        key !==
-          DASHBOARD_BACKUP_HISTORY_STORAGE_KEY &&
-        key !==
-          LEGACY_BOOKINGS_STORAGE_KEY
-      ) {
-        backupKeys.add(key);
-      }
-    }
-  } catch (error) {
-    console.error(
-      "Could not scan dashboard storage keys:",
-      error
-    );
-  }
-
-  return Array.from(
-    backupKeys
-  ).sort((a, b) =>
-    a.localeCompare(b)
-  );
-}
-
-function getBackupStorageData() {
-  const storageData = {};
-
-  getDashboardBackupKeys().forEach(
-    (key) => {
-      storageData[key] =
-        localStorage.getItem(key);
-    }
-  );
-
-  return storageData;
-}
-
-/* =========================================================
-   BACKUP HISTORY
-========================================================= */
-
-function getDashboardBackupHistory() {
-  try {
-    const savedBackups =
-      localStorage.getItem(
-        DASHBOARD_BACKUP_HISTORY_STORAGE_KEY
-      );
-
-    if (!savedBackups) {
-      return [];
+    if (seen.has(id)) {
+      duplicateIds.add(id);
+      return;
     }
 
-    const parsedBackups =
-      JSON.parse(savedBackups);
-
-    if (
-      !Array.isArray(
-        parsedBackups
-      )
-    ) {
-      return [];
-    }
-
-    return parsedBackups
-      .filter(
-        (backup) =>
-          backup &&
-          backup.id &&
-          backup.createdAt
-      )
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt) -
-          new Date(a.createdAt)
-      );
-  } catch (error) {
-    console.error(
-      "Could not read dashboard backup history:",
-      error
-    );
-
-    return [];
-  }
-}
-
-function saveDashboardBackupHistory(
-  backups
-) {
-  try {
-    let backupsToSave =
-      [...backups]
-        .filter(
-          (backup) =>
-            backup &&
-            backup.id
-        )
-        .filter(
-          (backup, index, array) =>
-            array.findIndex(
-              (candidate) =>
-                candidate.id ===
-                backup.id
-            ) === index
-        )
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt) -
-            new Date(a.createdAt)
-        )
-        .slice(
-          0,
-          MAX_DASHBOARD_BACKUPS_TO_KEEP
-        );
-
-    /*
-      localStorage commonly has a small quota.
-      Remove the oldest browser-history snapshot until
-      the backup history fits under our conservative cap.
-    */
-    while (
-      backupsToSave.length > 0
-    ) {
-      const serialized =
-        JSON.stringify(
-          backupsToSave
-        );
-
-      const byteSize =
-        new Blob([
-          serialized,
-        ]).size;
-
-      if (
-        byteSize <=
-        MAX_BACKUP_HISTORY_BYTES
-      ) {
-        break;
-      }
-
-      backupsToSave =
-        backupsToSave.slice(
-          0,
-          -1
-        );
-    }
-
-    localStorage.setItem(
-      DASHBOARD_BACKUP_HISTORY_STORAGE_KEY,
-      JSON.stringify(
-        backupsToSave
-      )
-    );
-
-    return backupsToSave;
-  } catch (error) {
-    console.error(
-      "Could not save dashboard backup history:",
-      error
-    );
-
-    return [];
-  }
-}
-
-/* =========================================================
-   BACKUP CREATION + DOWNLOAD
-========================================================= */
-
-function getBackupStats(backup) {
-  const storageData =
-    backup?.storageData || {};
-
-  const bookings =
-    getBackupBookings(backup);
-
-  const staffCount =
-    getArrayCountFromStorageValue(
-      storageData[
-        STAFF_USERS_STORAGE_KEY
-      ]
-    );
-
-  const starredCount =
-    getArrayCountFromStorageValue(
-      storageData[
-        SPREADSHEET_VIEW_STARRED_STORAGE_KEY
-      ]
-    );
-
-  const savedKeysCount =
-    Object.values(
-      storageData
-    ).filter(
-      (value) =>
-        value !== null &&
-        value !== undefined
-    ).length;
-
-  return {
-    bookingCount:
-      bookings.length,
-
-    staffCount,
-    starredCount,
-    savedKeysCount,
-  };
-}
-
-async function createDashboardBackupSnapshot() {
-  const createdAt =
-    new Date().toISOString();
-
-  /*
-    This is the authoritative booking source used by the
-    current dashboard.
-  */
-  const bookings =
-    await fetchBookings();
-
-  const storageData =
-    getBackupStorageData();
-
-  const backup = {
-    id:
-      createDashboardBackupId(),
-
-    appName:
-      "Toah Nipi Staff Dashboard",
-
-    backupType:
-      "database-and-browser-settings",
-
-    version:
-      DASHBOARD_BACKUP_VERSION,
-
-    createdAt,
-
-    bookings:
-      Array.isArray(bookings)
-        ? bookings
-        : [],
-
-    storageData,
-  };
-
-  return {
-    ...backup,
-    stats:
-      getBackupStats(backup),
-  };
-}
-
-function downloadDashboardBackupFile(
-  backup
-) {
-  const fileDate =
-    new Date(
-      backup.createdAt
-    )
-      .toISOString()
-      .slice(0, 19)
-      .replace(/[:T]/g, "-");
-
-  const blob =
-    new Blob(
-      [
-        JSON.stringify(
-          backup,
-          null,
-          2
-        ),
-      ],
-      {
-        type: "application/json",
-      }
-    );
-
-  const url =
-    URL.createObjectURL(blob);
-
-  const link =
-    document.createElement("a");
-
-  link.href = url;
-
-  link.download =
-    `toah-nipi-dashboard-backup-${fileDate}.json`;
-
-  document.body.appendChild(
-    link
-  );
-
-  link.click();
-
-  document.body.removeChild(
-    link
-  );
-
-  URL.revokeObjectURL(url);
-}
-
-/* =========================================================
-   FRIENDLY BACKUP DETAILS
-========================================================= */
-
-function getCountByField(
-  items,
-  fieldName,
-  fallbackLabel = "Blank"
-) {
-  return items.reduce(
-    (counts, item) => {
-      const label =
-        String(
-          item?.[fieldName] ||
-            fallbackLabel
-        ).trim() ||
-        fallbackLabel;
-
-      counts[label] =
-        (counts[label] || 0) +
-        1;
-
-      return counts;
-    },
-    {}
-  );
-}
-
-function getTopCounts(
-  counts,
-  limit = 4
-) {
-  return Object.entries(counts)
-    .sort(
-      ([, aCount], [, bCount]) =>
-        bCount - aCount
-    )
-    .slice(0, limit)
-    .map(
-      ([label, count]) => ({
-        label,
-        value:
-          `${count} booking${
-            count === 1
-              ? ""
-              : "s"
-          }`,
-      })
-    );
-}
-
-function getFriendlyDateFilterLabel(
-  value
-) {
-  const labels = {
-    thisMonth: "This Month",
-    nextMonth: "Next Month",
-    pastMonth: "Past Month",
-    past90Days: "Past 90 Days",
-    next90Days: "Next 90 Days",
-    thisYear: "This Year",
-    nextYear: "Next Year",
-    allTime: "All Time",
-    custom: "Custom Date Range",
-  };
-
-  return (
-    labels[value] ||
-    value ||
-    "Not set"
-  );
-}
-
-function getFriendlySourceModeLabel(
-  value
-) {
-  const labels = {
-    all: "Forms + Imports",
-    forms: "Forms Only",
-    imports: "Imports Only",
-  };
-
-  return (
-    labels[value] ||
-    value ||
-    "Not set"
-  );
-}
-
-function bookingHasHousing(
-  booking
-) {
-  const buildingsRooms =
-    String(
-      booking?.buildingsRooms ||
-        ""
-    ).trim();
-
-  const roomName =
-    String(
-      booking?.roomName || ""
-    )
-      .trim()
-      .toLowerCase();
-
-  return Boolean(
-    buildingsRooms ||
-      (roomName &&
-        roomName !==
-          "unassigned")
-  );
-}
-
-function bookingHasMeals(booking) {
-  const meals =
-    String(
-      booking?.meals || ""
-    ).trim();
-
-  const form =
-    booking?.rentalFormDetails;
-
-  const mealSchedule =
-    form?.mealSchedule;
-
-  return Boolean(
-    meals ||
-      (mealSchedule &&
-        typeof mealSchedule ===
-          "object" &&
-        Object.keys(
-          mealSchedule
-        ).length > 0)
-  );
-}
-
-function bookingHasProgram(
-  booking
-) {
-  const activities =
-    String(
-      booking?.activities || ""
-    ).trim();
-
-  const assignments =
-    booking
-      ?.programLogisticsAssignments;
-
-  return Boolean(
-    activities ||
-      (Array.isArray(
-        assignments
-      ) &&
-        assignments.length >
-          0)
-  );
-}
-
-function getBackupDetailGroups(backup) {
-  const storageData =
-    backup?.storageData || {};
-
-  const bookings =
-    getBackupBookings(backup);
-
-  const staffUsers =
-    getParsedStorageValue(
-      storageData,
-      STAFF_USERS_STORAGE_KEY,
-      []
-    );
-
-  const currentStaffUserId =
-    storageData[
-      CURRENT_STAFF_USER_STORAGE_KEY
-    ] || "";
-
-  const currentStaffUser =
-    Array.isArray(staffUsers) &&
-    currentStaffUserId
-      ? staffUsers.find(
-          (user) =>
-            user.id ===
-            currentStaffUserId
-        )
-      : null;
-
-  const spreadsheetSettings =
-    getParsedStorageValue(
-      storageData,
-      SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY,
-      {}
-    );
-
-  const spreadsheetStarredRows =
-    getParsedStorageValue(
-      storageData,
-      SPREADSHEET_VIEW_STARRED_STORAGE_KEY,
-      []
-    );
-
-  const bookingDetailDateSettings =
-    getParsedStorageValue(
-      storageData,
-      BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY,
-      {}
-    );
-
-  const datedInquirySettings =
-    getParsedStorageValue(
-      storageData,
-      DATED_INQUIRY_SETTINGS_STORAGE_KEY,
-      {}
-    );
-
-  const reportsSettings =
-    getParsedStorageValue(
-      storageData,
-      REPORTS_VIEW_SETTINGS_STORAGE_KEY,
-      {}
-    );
-
-  const bookingCount =
-    bookings.length;
-
-  const staffCount =
-    Array.isArray(staffUsers)
-      ? staffUsers.length
-      : 0;
-
-  const activeStaffCount =
-    Array.isArray(staffUsers)
-      ? staffUsers.filter(
-          (user) =>
-            user.active
-        ).length
-      : 0;
-
-  const starredCount =
-    Array.isArray(
-      spreadsheetStarredRows
-    )
-      ? spreadsheetStarredRows.length
-      : 0;
-
-  const missingDatesCount =
-    bookings.filter(
-      (booking) =>
-        !booking.startDate
-    ).length;
-
-  const missingContactCount =
-    bookings.filter(
-      (booking) =>
-        !booking.email &&
-        !booking.phone
-    ).length;
-
-  const housingCount =
-    bookings.filter(
-      bookingHasHousing
-    ).length;
-
-  const mealsCount =
-    bookings.filter(
-      bookingHasMeals
-    ).length;
-
-  const programCount =
-    bookings.filter(
-      bookingHasProgram
-    ).length;
-
-  const checklistsCount =
-    bookings.filter(
-      (booking) =>
-        Array.isArray(
-          booking?.checklists
-        ) &&
-        booking.checklists.length >
-          0
-    ).length;
-
-  const incidentNotesCount =
-    bookings.filter(
-      (booking) =>
-        Boolean(
-          String(
-            booking
-              ?.rentalFormDetails
-              ?.incidentNotes ||
-              ""
-          ).trim()
-        )
-    ).length;
-
-  const fullFormCount =
-    bookings.filter(
-      (booking) =>
-        booking
-          ?.rentalFormDetails &&
-        typeof booking
-          .rentalFormDetails ===
-          "object" &&
-        Object.keys(
-          booking.rentalFormDetails
-        ).length > 0
-    ).length;
-
-  const statusItems =
-    getTopCounts(
-      getCountByField(
-        bookings,
-        "status"
-      ),
-      4
-    );
-
-  const sourceItems =
-    getTopCounts(
-      getCountByField(
-        bookings,
-        "sourceType"
-      ),
-      4
-    );
-
-  const spreadsheetSettingItems =
-    getObjectPreviewItems(
-      spreadsheetSettings,
-      8
-    );
-
-  const displaySettingItems = [
-    ...getObjectPreviewItems(
-      bookingDetailDateSettings,
-      6
-    ),
-
-    ...getObjectPreviewItems(
-      datedInquirySettings,
-      6
-    ),
-  ];
-
-  const reportsSettingItems =
-    reportsSettings &&
-    typeof reportsSettings ===
-      "object"
-      ? [
-          {
-            label: "Date range",
-            value:
-              getFriendlyDateFilterLabel(
-                reportsSettings.dateRange
-              ),
-          },
-
-          {
-            label: "Status",
-            value:
-              reportsSettings.status ||
-              "All statuses",
-          },
-
-          {
-            label: "Retreat type",
-            value:
-              reportsSettings.retreatType ||
-              "All retreat types",
-          },
-
-          {
-            label: "Source",
-            value:
-              getFriendlySourceModeLabel(
-                reportsSettings.sourceMode
-              ),
-          },
-
-          {
-            label: "Custom start",
-            value:
-              reportsSettings.customStartDate ||
-              "Not set",
-          },
-
-          {
-            label: "Custom end",
-            value:
-              reportsSettings.customEndDate ||
-              "Not set",
-          },
-        ]
-      : [];
-
-  const dashboardFilterItems = [
-    {
-      label:
-        "Dated inquiry date range",
-
-      value:
-        getFriendlyDateFilterLabel(
-          storageData[
-            DATED_INQUIRY_DATE_FILTER_STORAGE_KEY
-          ]
-        ),
-    },
-
-    {
-      label:
-        "Custom start date",
-
-      value:
-        storageData[
-          DATED_INQUIRY_CUSTOM_START_STORAGE_KEY
-        ] || "Not set",
-    },
-
-    {
-      label:
-        "Custom end date",
-
-      value:
-        storageData[
-          DATED_INQUIRY_CUSTOM_END_STORAGE_KEY
-        ] || "Not set",
-    },
-  ];
-
-  const knownKeys =
-    new Set(
-      DASHBOARD_BACKUP_CORE_KEYS
-    );
-
-  const extraSavedKeys =
-    Object.entries(
-      storageData
-    ).filter(
-      ([key, value]) =>
-        !knownKeys.has(key) &&
-        value !== null &&
-        value !== undefined &&
-        value !== ""
-    );
-
-  return [
-    {
-      id:
-        "booking-database",
-
-      title:
-        "Booking database",
-
-      status:
-        bookingCount > 0
-          ? `${bookingCount} database record${
-              bookingCount === 1
-                ? ""
-                : "s"
-            }`
-          : "No booking records saved",
-
-      description:
-        "Current booking records, including dates, contacts, lodging, meals, program information, checklists, notes, and form details.",
-
-      hasValue:
-        bookingCount > 0,
-
-      tone:
-        "green",
-
-      items: [
-        {
-          label:
-            "Total bookings",
-          value:
-            bookingCount,
-        },
-
-        {
-          label:
-            "Housing planned",
-          value:
-            housingCount,
-        },
-
-        {
-          label:
-            "Meal information",
-          value:
-            mealsCount,
-        },
-
-        {
-          label:
-            "Program information",
-          value:
-            programCount,
-        },
-
-        {
-          label:
-            "Checklists",
-          value:
-            checklistsCount,
-        },
-
-        {
-          label:
-            "Incident notes",
-          value:
-            incidentNotesCount,
-        },
-
-        {
-          label:
-            "Full booking forms",
-          value:
-            fullFormCount,
-        },
-
-        {
-          label:
-            "Missing dates",
-          value:
-            missingDatesCount,
-        },
-
-        {
-          label:
-            "Missing email + phone",
-          value:
-            missingContactCount,
-        },
-
-        ...statusItems.map(
-          (item) => ({
-            label:
-              `Status: ${item.label}`,
-            value:
-              item.value,
-          })
-        ),
-
-        ...sourceItems.map(
-          (item) => ({
-            label:
-              `Source: ${item.label}`,
-            value:
-              item.value,
-          })
-        ),
-      ],
-    },
-
-    {
-      id:
-        "staff-setup",
-
-      title:
-        "Staff setup",
-
-      status:
-        staffCount > 0
-          ? `${staffCount} staff member${
-              staffCount === 1
-                ? ""
-                : "s"
-            } saved`
-          : "No staff users saved",
-
-      description:
-        "Staff users, roles, active status, and current staff selection.",
-
-      hasValue:
-        getBackupHasAnyValue(
-          storageData,
-          [
-            STAFF_USERS_STORAGE_KEY,
-            CURRENT_STAFF_USER_STORAGE_KEY,
-          ]
-        ),
-
-      tone:
-        "blue",
-
-      items: [
-        {
-          label:
-            "Total staff",
-          value:
-            staffCount,
-        },
-
-        {
-          label:
-            "Active staff",
-          value:
-            activeStaffCount,
-        },
-
-        {
-          label:
-            "Current staff user",
-          value:
-            currentStaffUser?.name ||
-            "Not selected",
-        },
-
-        {
-          label:
-            "Saved staff names",
-
-          value:
-            Array.isArray(
-              staffUsers
-            ) &&
-            staffUsers.length > 0
-              ? staffUsers
-                  .map(
-                    (user) =>
-                      user.name
-                  )
-                  .join(", ")
-              : "None",
-        },
-      ],
-    },
-
-    {
-      id:
-        "spreadsheet-preferences",
-
-      title:
-        "Spreadsheet preferences",
-
-      status:
-        spreadsheetSettingItems.length >
-          0 ||
-        starredCount > 0
-          ? `${spreadsheetSettingItems.length} setting${
-              spreadsheetSettingItems.length ===
-              1
-                ? ""
-                : "s"
-            } · ${starredCount} starred row${
-              starredCount === 1
-                ? ""
-                : "s"
-            }`
-          : "No spreadsheet preferences saved",
-
-      description:
-        "Spreadsheet layout, filters, saved display choices, and starred rows.",
-
-      hasValue:
-        getBackupHasAnyValue(
-          storageData,
-          [
-            SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY,
-            SPREADSHEET_VIEW_STARRED_STORAGE_KEY,
-          ]
-        ),
-
-      tone:
-        "purple",
-
-      items: [
-        {
-          label:
-            "Starred rows",
-          value:
-            starredCount,
-        },
-
-        ...spreadsheetSettingItems,
-      ],
-    },
-
-    {
-      id:
-        "dashboard-filters",
-
-      title:
-        "Dashboard filters",
-
-      status:
-        getBackupHasAnyValue(
-          storageData,
-          [
-            DATED_INQUIRY_DATE_FILTER_STORAGE_KEY,
-            DATED_INQUIRY_CUSTOM_START_STORAGE_KEY,
-            DATED_INQUIRY_CUSTOM_END_STORAGE_KEY,
-          ]
-        )
-          ? "Saved dashboard filter choices"
-          : "No dashboard filters saved",
-
-      description:
-        "Date-range choices used by the dashboard's dated-booking displays.",
-
-      hasValue:
-        getBackupHasAnyValue(
-          storageData,
-          [
-            DATED_INQUIRY_DATE_FILTER_STORAGE_KEY,
-            DATED_INQUIRY_CUSTOM_START_STORAGE_KEY,
-            DATED_INQUIRY_CUSTOM_END_STORAGE_KEY,
-          ]
-        ),
-
-      tone:
-        "gold",
-
-      items:
-        dashboardFilterItems,
-    },
-
-    {
-      id:
-        "display-settings",
-
-      title:
-        "Display settings",
-
-      status:
-        displaySettingItems.length >
-          0
-          ? `${displaySettingItems.length} display setting${
-              displaySettingItems.length ===
-              1
-                ? ""
-                : "s"
-            } saved`
-          : "No display settings saved",
-
-      description:
-        "Booking date formatting and dated-inquiry display choices.",
-
-      hasValue:
-        getBackupHasAnyValue(
-          storageData,
-          [
-            BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY,
-            DATED_INQUIRY_SETTINGS_STORAGE_KEY,
-          ]
-        ),
-
-      tone:
-        "teal",
-
-      items:
-        displaySettingItems,
-    },
-
-    {
-      id:
-        "reports-settings",
-
-      title:
-        "Reports settings",
-
-      status:
-        reportsSettingItems.length >
-          0
-          ? `${reportsSettingItems.length} report setting${
-              reportsSettingItems.length ===
-              1
-                ? ""
-                : "s"
-            } saved`
-          : "No report settings saved",
-
-      description:
-        "Reports filters such as date range, booking status, retreat type, and source.",
-
-      hasValue:
-        getBackupHasAnyValue(
-          storageData,
-          [
-            REPORTS_VIEW_SETTINGS_STORAGE_KEY,
-          ]
-        ),
-
-      tone:
-        "indigo",
-
-      items:
-        reportsSettingItems,
-    },
-
-    {
-      id:
-        "other-app-data",
-
-      title:
-        "Other browser data",
-
-      status:
-        extraSavedKeys.length >
-          0
-          ? `${extraSavedKeys.length} additional saved area${
-              extraSavedKeys.length ===
-              1
-                ? ""
-                : "s"
-            }`
-          : "No additional browser data",
-
-      description:
-        "Additional Toah Nipi settings added by newer or future dashboard features.",
-
-      hasValue:
-        extraSavedKeys.length >
-        0,
-
-      tone:
-        "gray",
-
-      items:
-        extraSavedKeys.length >
-        0
-          ? extraSavedKeys.map(
-              ([key, value]) => ({
-                label:
-                  key,
-
-                value:
-                  getReadableBackupValue(
-                    safeParseJson(
-                      value,
-                      value
-                    )
-                  ),
-              })
-            )
-          : [
-              {
-                label:
-                  "Additional browser data",
-                value:
-                  "None",
-              },
-            ],
-    },
-  ];
-}
-
-/* =========================================================
-   TECHNICAL BACKUP DETAILS
-========================================================= */
-
-function getBackupTechnicalCategory(
-  key
-) {
-  if (
-    key ===
-      STAFF_USERS_STORAGE_KEY ||
-    key ===
-      CURRENT_STAFF_USER_STORAGE_KEY
-  ) {
-    return "Staff data";
-  }
-
-  if (
-    key ===
-      SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY ||
-    key ===
-      SPREADSHEET_VIEW_STARRED_STORAGE_KEY
-  ) {
-    return "Spreadsheet";
-  }
-
-  if (
-    key ===
-    REPORTS_VIEW_SETTINGS_STORAGE_KEY
-  ) {
-    return "Reports";
-  }
-
-  if (
-    key ===
-      DATED_INQUIRY_SETTINGS_STORAGE_KEY ||
-    key ===
-      DATED_INQUIRY_DATE_FILTER_STORAGE_KEY ||
-    key ===
-      DATED_INQUIRY_CUSTOM_START_STORAGE_KEY ||
-    key ===
-      DATED_INQUIRY_CUSTOM_END_STORAGE_KEY ||
-    key ===
-      BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY
-  ) {
-    return "Dashboard settings";
-  }
-
-  return "Other browser data";
-}
-
-function getTechnicalValueInfo(
-  value
-) {
-  if (
-    value === null ||
-    value === undefined ||
-    value === ""
-  ) {
-    return {
-      hasValue: false,
-      typeLabel: "Empty",
-      summary: "No saved value",
-      parsedValue: null,
-    };
-  }
-
-  const textValue =
-    String(value);
-
-  let parsedValue;
-
-  try {
-    parsedValue =
-      JSON.parse(textValue);
-  } catch {
-    return {
-      hasValue: true,
-      typeLabel: "Plain text",
-      summary:
-        textValue,
-      parsedValue:
-        textValue,
-    };
-  }
-
-  if (
-    Array.isArray(
-      parsedValue
-    )
-  ) {
-    return {
-      hasValue: true,
-      typeLabel: "JSON array",
-      summary:
-        `${parsedValue.length} item${
-          parsedValue.length ===
-          1
-            ? ""
-            : "s"
-        }`,
-      parsedValue,
-    };
-  }
-
-  if (
-    parsedValue &&
-    typeof parsedValue ===
-      "object"
-  ) {
-    const keyCount =
-      Object.keys(
-        parsedValue
-      ).length;
-
-    return {
-      hasValue: true,
-      typeLabel: "JSON object",
-      summary:
-        `${keyCount} field${
-          keyCount === 1
-            ? ""
-            : "s"
-        }`,
-      parsedValue,
-    };
-  }
-
-  return {
-    hasValue: true,
-    typeLabel:
-      typeof parsedValue,
-
-    summary:
-      String(parsedValue),
-
-    parsedValue,
-  };
-}
-
-function getTechnicalCompactPreview(
-  value
-) {
-  const info =
-    getTechnicalValueInfo(
-      value
-    );
-
-  if (!info.hasValue) {
-    return "null";
-  }
-
-  const parsedValue =
-    info.parsedValue;
-
-  if (
-    Array.isArray(
-      parsedValue
-    )
-  ) {
-    if (
-      parsedValue.length ===
-      0
-    ) {
-      return "[]";
-    }
-
-    const firstItem =
-      parsedValue[0];
-
-    if (
-      firstItem &&
-      typeof firstItem ===
-        "object" &&
-      !Array.isArray(
-        firstItem
-      )
-    ) {
-      const keys =
-        Object.keys(
-          firstItem
-        );
-
-      return `[${parsedValue.length} object${
-        parsedValue.length ===
-        1
-          ? ""
-          : "s"
-      } · fields: ${keys
-        .slice(0, 6)
-        .join(", ")}${
-        keys.length > 6
-          ? ", …"
-          : ""
-      }]`;
-    }
-  }
-
-  if (
-    parsedValue &&
-    typeof parsedValue ===
-      "object"
-  ) {
-    const keys =
-      Object.keys(
-        parsedValue
-      );
-
-    return `{ ${keys
-      .slice(0, 8)
-      .join(", ")}${
-      keys.length > 8
-        ? ", …"
-        : ""
-    } }`;
-  }
-
-  const text =
-    typeof parsedValue ===
-    "string"
-      ? parsedValue
-      : JSON.stringify(
-          parsedValue
-        );
-
-  return text.length > 180
-    ? `${text.slice(
-        0,
-        180
-      )}…`
-    : text;
-}
-
-function getTechnicalRawPreview(
-  value
-) {
-  if (
-    value === null ||
-    value === undefined ||
-    value === ""
-  ) {
-    return "No saved value";
-  }
-
-  let previewText;
-
-  try {
-    previewText =
-      JSON.stringify(
-        JSON.parse(
-          String(value)
-        ),
-        null,
-        2
-      );
-  } catch {
-    previewText =
-      String(value);
-  }
-
-  if (
-    previewText.length >
-    1200
-  ) {
-    return `${previewText.slice(
-      0,
-      1200
-    )}\n...`;
-  }
-
-  return previewText;
-}
-
-function getBackupTechnicalRows(
-  backup
-) {
-  const storageData =
-    backup?.storageData || {};
-
-  const bookings =
-    getBackupBookings(backup);
-
-  const bookingJson =
-    JSON.stringify(bookings);
-
-  const databaseRow = {
-    key:
-      "bookings",
-
-    path:
-      "bookings",
-
-    label:
-      "Booking database records",
-
-    category:
-      "Database",
-
-    hasValue:
-      bookings.length > 0,
-
-    typeLabel:
-      "JSON array",
-
-    summary:
-      `${bookings.length} booking${
-        bookings.length === 1
-          ? ""
-          : "s"
-      }`,
-
-    sizeLabel:
-      formatBackupStorageSize(
-        bookingJson
-      ),
-
-    compactPreview:
-      getTechnicalCompactPreview(
-        bookingJson
-      ),
-
-    preview:
-      getTechnicalRawPreview(
-        bookingJson
-      ),
-  };
-
-  const browserRows =
-    Object.entries(
-      storageData
-    ).map(
-      ([key, value]) => {
-        const valueInfo =
-          getTechnicalValueInfo(
-            value
-          );
-
-        return {
-          key,
-
-          path:
-            `storageData.${key}`,
-
-          label:
-            DASHBOARD_BACKUP_KEY_LABELS[
-              key
-            ] || key,
-
-          category:
-            getBackupTechnicalCategory(
-              key
-            ),
-
-          hasValue:
-            valueInfo.hasValue,
-
-          typeLabel:
-            valueInfo.typeLabel,
-
-          summary:
-            valueInfo.summary,
-
-          sizeLabel:
-            formatBackupStorageSize(
-              value
-            ),
-
-          compactPreview:
-            getTechnicalCompactPreview(
-              value
-            ),
-
-          preview:
-            getTechnicalRawPreview(
-              value
-            ),
-        };
-      }
-    );
-
-  return [
-    databaseRow,
-    ...browserRows,
-  ].sort((a, b) => {
-    if (
-      a.category ===
-      "Database"
-    ) {
-      return -1;
-    }
-
-    if (
-      b.category ===
-      "Database"
-    ) {
-      return 1;
-    }
-
-    if (
-      a.hasValue !==
-      b.hasValue
-    ) {
-      return a.hasValue
-        ? -1
-        : 1;
-    }
-
-    return (
-      a.category.localeCompare(
-        b.category
-      ) ||
-      a.label.localeCompare(
-        b.label
-      )
-    );
+    seen.add(id);
   });
+
+  return [...duplicateIds];
 }
 
-/* =========================================================
-   TOOLBAR
-========================================================= */
+function getMissingIdCount(bookings) {
+  return bookings.filter((booking) => !String(booking?.id || "").trim()).length;
+}
 
-function DashboardBackupControls({
-  onExportBackup,
-  onOpenBackupModal,
-  isBusy,
-}) {
-  return (
-    <section
-      className="dashboard-backup-toolbar"
-      aria-label="Dashboard backups"
-    >
-      <div className="dashboard-backup-toolbar-copy">
-        <p className="dashboard-eyebrow">
-          Backups
-        </p>
+function getStatusBreakdown(bookings) {
+  const counts = {};
 
-        <strong>
-          Database + dashboard backup
-        </strong>
+  bookings.forEach((booking) => {
+    const status = String(booking?.status || "No Status").trim() || "No Status";
+    counts[status] = (counts[status] || 0) + 1;
+  });
 
-        <span>
-          Export live booking records together with staff,
-          spreadsheet, report, and browser settings.
-        </span>
-      </div>
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([status, count]) => ({ status, count }));
+}
 
-      <div className="dashboard-backup-toolbar-actions">
-        <button
-          className="secondary-dashboard-button"
-          type="button"
-          onClick={
-            onOpenBackupModal
-          }
-          disabled={isBusy}
-        >
-          <FaUpload />
-          Import / Restore
-        </button>
+function getBookingDateRange(bookings) {
+  const dateValues = bookings
+    .flatMap((booking) => [booking?.startDate, booking?.endDate])
+    .filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || "")))
+    .sort();
 
-        <button
-          className="primary-dashboard-button"
-          type="button"
-          onClick={
-            onExportBackup
-          }
-          disabled={isBusy}
-        >
-          <FaDownload />
+  if (dateValues.length === 0) {
+    return {
+      first: "—",
+      last: "—",
+    };
+  }
 
-          {isBusy
-            ? "Working..."
-            : "Export Backup"}
-        </button>
-      </div>
-    </section>
+  const format = (value) => {
+    const [year, month, day] = value.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  return {
+    first: format(dateValues[0]),
+    last: format(dateValues[dateValues.length - 1]),
+  };
+}
+
+function getLastBackupMetadata() {
+  try {
+    const saved = localStorage.getItem(LAST_BACKUP_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : null;
+  } catch (error) {
+    console.error("Could not read last backup metadata:", error);
+    return null;
+  }
+}
+
+function saveLastBackupMetadata(metadata) {
+  try {
+    localStorage.setItem(LAST_BACKUP_STORAGE_KEY, JSON.stringify(metadata));
+  } catch (error) {
+    console.error("Could not save last backup metadata:", error);
+  }
+}
+
+async function upsertInChunks(bookings, onProgress) {
+  let restored = 0;
+
+  for (let index = 0; index < bookings.length; index += UPSERT_CHUNK_SIZE) {
+    const chunk = bookings.slice(index, index + UPSERT_CHUNK_SIZE);
+    const saved = await upsertBookings(chunk);
+
+    restored += saved.length;
+
+    if (onProgress) {
+      onProgress(restored, bookings.length);
+    }
+  }
+
+  return restored;
+}
+
+function validateBasicBackupShape(backup) {
+  const errors = [];
+  const warnings = [];
+
+  if (!backup || typeof backup !== "object" || Array.isArray(backup)) {
+    errors.push("The selected file is not a valid backup object.");
+    return { errors, warnings };
+  }
+
+  if (backup.format !== BACKUP_FORMAT) {
+    errors.push(
+      "This file is not recognized as a Toah Nipi booking-system backup."
+    );
+  }
+
+  if (backup.schemaVersion !== BACKUP_SCHEMA_VERSION) {
+    errors.push(
+      `Unsupported backup schema version: ${String(
+        backup.schemaVersion ?? "missing"
+      )}. This version of the app expects schema version ${BACKUP_SCHEMA_VERSION}.`
+    );
+  }
+
+  const bookings = getBackupBookings(backup);
+
+  if (!Array.isArray(backup?.payload?.bookings)) {
+    errors.push("The backup does not contain a bookings array.");
+  }
+
+  const missingIds = getMissingIdCount(bookings);
+  const duplicateIds = getDuplicateBookingIds(bookings);
+
+  if (missingIds > 0) {
+    errors.push(
+      `${missingIds} booking record${missingIds === 1 ? " is" : "s are"} missing an ID.`
+    );
+  }
+
+  if (duplicateIds.length > 0) {
+    errors.push(
+      `${duplicateIds.length} duplicate booking ID${
+        duplicateIds.length === 1 ? " was" : "s were"
+      } found inside the backup.`
+    );
+  }
+
+  if (bookings.length === 0) {
+    warnings.push("This backup contains zero booking records.");
+  }
+
+  if (!backup?.integrity?.checksum) {
+    errors.push("The backup is missing its integrity checksum.");
+  }
+
+  return { errors, warnings };
+}
+
+async function verifyBackupIntegrity(backup) {
+  const expectedChecksum = String(backup?.integrity?.checksum || "").trim();
+
+  if (!expectedChecksum) {
+    return {
+      ok: false,
+      actualChecksum: "",
+      expectedChecksum: "",
+    };
+  }
+
+  const actualChecksum = await sha256Text(
+    JSON.stringify({
+      bookings: getBackupBookings(backup),
+    })
   );
+
+  return {
+    ok: actualChecksum === expectedChecksum,
+    actualChecksum,
+    expectedChecksum,
+  };
 }
 
-/* =========================================================
-   FRIENDLY CARD
-========================================================= */
-
-function BackupFriendlyCard({
-  group,
-  isExpanded,
-  onToggle,
-}) {
+function BackupMetric({ label, value, helper, icon: Icon }) {
   return (
-    <article
-      className={[
-        "dashboard-backup-friendly-card",
-        `dashboard-backup-friendly-card-${group.tone}`,
-        isExpanded
-          ? "dashboard-backup-friendly-card-expanded"
-          : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <button
-        className="dashboard-backup-friendly-card-button"
-        type="button"
-        onClick={onToggle}
-        aria-expanded={
-          isExpanded
-        }
-      >
-        <span className="dashboard-backup-friendly-icon">
-          <FaCheckCircle />
-        </span>
+    <article className="backup-metric-card">
+      <span className="backup-metric-icon">
+        <Icon />
+      </span>
 
-        <span className="dashboard-backup-friendly-main">
-          <span className="dashboard-backup-friendly-title">
-            {group.title}
-          </span>
-
-          <strong>
-            {group.status}
-          </strong>
-
-          <span className="dashboard-backup-friendly-description">
-            {group.description}
-          </span>
-        </span>
-
-        <span className="dashboard-backup-friendly-expand-label">
-          {isExpanded
-            ? "Hide"
-            : "Details"}
-        </span>
-      </button>
-
-      {isExpanded && (
-        <div className="dashboard-backup-friendly-quick-details">
-          {group.items.map(
-            (item, index) => (
-              <div
-                key={`${group.id}-${item.label}-${index}`}
-              >
-                <span>
-                  {item.label}
-                </span>
-
-                <strong>
-                  {String(
-                    item.value
-                  )}
-                </strong>
-              </div>
-            )
-          )}
-        </div>
-      )}
+      <div>
+        <small>{label}</small>
+        <strong>{value}</strong>
+        {helper && <p>{helper}</p>}
+      </div>
     </article>
   );
 }
 
-/* =========================================================
-   TECHNICAL PANEL
-========================================================= */
-
-function BackupTechnicalPanel({
-  backup,
-}) {
-  const technicalRows =
-    useMemo(
-      () =>
-        getBackupTechnicalRows(
-          backup
-        ),
-      [backup]
-    );
-
-  const savedRows =
-    technicalRows.filter(
-      (row) =>
-        row.hasValue
-    );
-
-  const emptyRows =
-    technicalRows.filter(
-      (row) =>
-        !row.hasValue
-    );
-
-  const totalSize =
-    formatBackupStorageSize(
-      JSON.stringify({
-        bookings:
-          getBackupBookings(
-            backup
-          ),
-
-        storageData:
-          backup.storageData ||
-          {},
-      })
-    );
-
+function BackupNotice({ tone = "info", icon: Icon, title, children }) {
   return (
-    <div className="dashboard-backup-technical-panel">
-      <div className="dashboard-backup-technical-manifest-top">
-        <div>
-          <strong>
-            Backup manifest
-          </strong>
+    <div className={`backup-notice backup-notice-${tone}`}>
+      <span className="backup-notice-icon">
+        <Icon />
+      </span>
 
-          <span>
-            Exact database and browser-storage areas stored in this backup.
-          </span>
-        </div>
-
-        <code>
-          version:{" "}
-          {backup.version ||
-            DASHBOARD_BACKUP_VERSION}
-        </code>
-      </div>
-
-      <div className="dashboard-backup-technical-compact-summary">
-        <span>
-          <strong>
-            {technicalRows.length}
-          </strong>
-          areas
-        </span>
-
-        <span>
-          <strong>
-            {savedRows.length}
-          </strong>
-          saved
-        </span>
-
-        <span>
-          <strong>
-            {emptyRows.length}
-          </strong>
-          empty
-        </span>
-
-        <span>
-          <strong>
-            {totalSize}
-          </strong>
-          total
-        </span>
-      </div>
-
-      <div
-        className="dashboard-backup-technical-manifest"
-        aria-label="Technical backup manifest"
-      >
-        <div className="dashboard-backup-technical-manifest-heading">
-          <span>Key</span>
-          <span>Area</span>
-          <span>Type</span>
-          <span>Summary</span>
-          <span>Size</span>
-        </div>
-
-        {technicalRows.map(
-          (row) => (
-            <details
-              className={[
-                "dashboard-backup-technical-manifest-row",
-
-                !row.hasValue
-                  ? "is-empty"
-                  : "",
-
-                row.category ===
-                "Database"
-                  ? "is-database"
-                  : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              key={row.key}
-            >
-              <summary>
-                <span className="dashboard-backup-technical-key-cell">
-                  <code>
-                    {row.key}
-                  </code>
-
-                  <small>
-                    {row.label}
-                  </small>
-                </span>
-
-                <span>
-                  {row.category}
-                </span>
-
-                <span>
-                  {row.typeLabel}
-                </span>
-
-                <span>
-                  {row.summary}
-                </span>
-
-                <span>
-                  {row.sizeLabel}
-                </span>
-              </summary>
-
-              <div className="dashboard-backup-technical-manifest-preview">
-                <div>
-                  <small>
-                    Path
-                  </small>
-
-                  <code>
-                    {row.path}
-                  </code>
-                </div>
-
-                <div>
-                  <small>
-                    Compact value
-                  </small>
-
-                  <code>
-                    {row.compactPreview}
-                  </code>
-                </div>
-
-                <details className="dashboard-backup-technical-raw-preview">
-                  <summary>
-                    Show raw preview
-                  </summary>
-
-                  <pre>
-                    {row.preview}
-                  </pre>
-                </details>
-              </div>
-            </details>
-          )
-        )}
+      <div>
+        <strong>{title}</strong>
+        <p>{children}</p>
       </div>
     </div>
   );
 }
 
-/* =========================================================
-   BACKUP MODAL
-========================================================= */
+export default function DashboardBackups({ onRestoreComplete }) {
+  const fileInputRef = useRef(null);
 
-function DashboardBackupModal({
-  backupHistory,
-  onClose,
-  onRestoreBackup,
-  onDeleteBackup,
-  onImportBackupFile,
-  busyAction,
-}) {
-  const backupFileInputRef =
-    useRef(null);
+  const [liveBookings, setLiveBookings] = useState([]);
+  const [isLoadingLiveData, setIsLoadingLiveData] = useState(true);
+  const [liveDataError, setLiveDataError] = useState("");
 
-  const [
-    expandedBackupId,
-    setExpandedBackupId,
-  ] = useState(
-    backupHistory[0]?.id || ""
+  const [isCreatingBackup, setIsCreatingBackup] = useState(false);
+  const [lastBackup, setLastBackup] = useState(() => getLastBackupMetadata());
+
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedBackup, setSelectedBackup] = useState(null);
+  const [backupValidation, setBackupValidation] = useState(null);
+  const [isReadingBackup, setIsReadingBackup] = useState(false);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+
+  const [restoreMode, setRestoreMode] = useState("merge");
+  const [replaceConfirmation, setReplaceConfirmation] = useState("");
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [restoreProgress, setRestoreProgress] = useState({
+    current: 0,
+    total: 0,
+    label: "",
+  });
+  const [restoreResult, setRestoreResult] = useState(null);
+
+  const liveStatusBreakdown = useMemo(
+    () => getStatusBreakdown(liveBookings),
+    [liveBookings]
   );
 
-  const [
-    detailMode,
-    setDetailMode,
-  ] = useState("friendly");
+  const liveDateRange = useMemo(
+    () => getBookingDateRange(liveBookings),
+    [liveBookings]
+  );
 
-  const [
-    expandedFriendlyGroupId,
-    setExpandedFriendlyGroupId,
-  ] = useState("");
+  const backupBookings = useMemo(
+    () => getBackupBookings(selectedBackup),
+    [selectedBackup]
+  );
 
-  useEffect(() => {
-    if (
-      !expandedBackupId &&
-      backupHistory[0]?.id
-    ) {
-      setExpandedBackupId(
-        backupHistory[0].id
-      );
+  const backupStatusBreakdown = useMemo(
+    () => getStatusBreakdown(backupBookings),
+    [backupBookings]
+  );
+
+  const backupDateRange = useMemo(
+    () => getBookingDateRange(backupBookings),
+    [backupBookings]
+  );
+
+  const comparison = useMemo(() => {
+    if (!selectedBackup || !backupValidation?.valid) {
+      return null;
     }
-  }, [
-    backupHistory,
-    expandedBackupId,
-  ]);
+
+    const liveIds = new Set(
+      liveBookings
+        .map((booking) => String(booking?.id || "").trim())
+        .filter(Boolean)
+    );
+
+    let newRecords = 0;
+    let matchingRecords = 0;
+
+    backupBookings.forEach((booking) => {
+      const id = String(booking?.id || "").trim();
+
+      if (liveIds.has(id)) {
+        matchingRecords += 1;
+      } else {
+        newRecords += 1;
+      }
+    });
+
+    const backupIds = new Set(
+      backupBookings.map((booking) => String(booking?.id || "").trim())
+    );
+
+    const onlyInCurrentDatabase = liveBookings.filter(
+      (booking) => !backupIds.has(String(booking?.id || "").trim())
+    ).length;
+
+    return {
+      newRecords,
+      matchingRecords,
+      onlyInCurrentDatabase,
+    };
+  }, [backupBookings, backupValidation?.valid, liveBookings, selectedBackup]);
+
+  const canRestore =
+    Boolean(selectedBackup) &&
+    Boolean(backupValidation?.valid) &&
+    !isRestoring &&
+    (restoreMode === "merge" || replaceConfirmation.trim() === "RESTORE");
+
+  const loadLiveDatabaseSummary = async () => {
+    try {
+      setIsLoadingLiveData(true);
+      setLiveDataError("");
+
+      const bookings = await fetchBookings();
+      setLiveBookings(Array.isArray(bookings) ? bookings : []);
+    } catch (error) {
+      console.error("Could not load live database for backup page:", error);
+      setLiveDataError(error?.message || "Could not load the live booking database.");
+    } finally {
+      setIsLoadingLiveData(false);
+    }
+  };
 
   useEffect(() => {
-    setExpandedFriendlyGroupId(
-      ""
+    loadLiveDatabaseSummary();
+  }, []);
+
+  const handleCreateBackup = async () => {
+    try {
+      setIsCreatingBackup(true);
+      setRestoreResult(null);
+
+      const bookings = await fetchBookings();
+      const backup = await createBackupEnvelope(bookings, "manual");
+      const filename = createBackupFilename(new Date(backup.createdAt));
+      const fileSize = downloadJsonFile(backup, filename);
+
+      const metadata = {
+        createdAt: backup.createdAt,
+        filename,
+        bookingCount: bookings.length,
+        fileSize,
+        checksum: backup.integrity.checksum,
+      };
+
+      saveLastBackupMetadata(metadata);
+      setLastBackup(metadata);
+      setLiveBookings(bookings);
+
+      setRestoreResult({
+        tone: "success",
+        title: "Backup created",
+        message: `${bookings.length} booking record${
+          bookings.length === 1 ? " was" : "s were"
+        } exported successfully. Store the downloaded file somewhere outside this computer as well.`,
+      });
+    } catch (error) {
+      console.error("Could not create backup:", error);
+      setRestoreResult({
+        tone: "error",
+        title: "Backup failed",
+        message: error?.message || "The backup file could not be created.",
+      });
+    } finally {
+      setIsCreatingBackup(false);
+    }
+  };
+
+  const resetSelectedBackup = () => {
+    setSelectedFile(null);
+    setSelectedBackup(null);
+    setBackupValidation(null);
+    setRestoreMode("merge");
+    setReplaceConfirmation("");
+    setRestoreProgress({ current: 0, total: 0, label: "" });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const readBackupFile = async (file) => {
+    if (!file) return;
+
+    try {
+      setIsReadingBackup(true);
+      setRestoreResult(null);
+      setSelectedFile(file);
+      setSelectedBackup(null);
+      setBackupValidation(null);
+      setReplaceConfirmation("");
+
+      if (file.size > MAX_BACKUP_FILE_BYTES) {
+        throw new Error(
+          `That file is ${formatFileSize(
+            file.size
+          )}. Backup files larger than ${formatFileSize(
+            MAX_BACKUP_FILE_BYTES
+          )} are blocked on this page.`
+        );
+      }
+
+      const text = await file.text();
+      let parsedBackup;
+
+      try {
+        parsedBackup = JSON.parse(text);
+      } catch {
+        throw new Error("The selected file is not valid JSON.");
+      }
+
+      const shapeValidation = validateBasicBackupShape(parsedBackup);
+      let integrity = {
+        ok: false,
+        actualChecksum: "",
+        expectedChecksum: String(parsedBackup?.integrity?.checksum || ""),
+      };
+
+      if (shapeValidation.errors.length === 0) {
+        integrity = await verifyBackupIntegrity(parsedBackup);
+
+        if (!integrity.ok) {
+          shapeValidation.errors.push(
+            "The integrity check failed. The backup may have been edited, corrupted, or only partially copied."
+          );
+        }
+      }
+
+      const validation = {
+        valid: shapeValidation.errors.length === 0 && integrity.ok,
+        errors: shapeValidation.errors,
+        warnings: shapeValidation.warnings,
+        integrity,
+      };
+
+      setSelectedBackup(parsedBackup);
+      setBackupValidation(validation);
+    } catch (error) {
+      console.error("Could not read backup file:", error);
+
+      setSelectedBackup(null);
+      setBackupValidation({
+        valid: false,
+        errors: [error?.message || "The backup file could not be read."],
+        warnings: [],
+        integrity: null,
+      });
+    } finally {
+      setIsReadingBackup(false);
+    }
+  };
+
+  const handleFileInputChange = (event) => {
+    const [file] = Array.from(event.target.files || []);
+    readBackupFile(file);
+  };
+
+  const handleDrop = (event) => {
+    event.preventDefault();
+    setIsDraggingFile(false);
+
+    const [file] = Array.from(event.dataTransfer.files || []);
+    readBackupFile(file);
+  };
+
+  const downloadSafetySnapshot = async (bookings) => {
+    const safetyBackup = await createBackupEnvelope(bookings, "pre-restore-safety");
+    const filename = createBackupFilename(
+      new Date(safetyBackup.createdAt),
+      "toah-nipi-pre-restore-safety"
     );
-  }, [
-    expandedBackupId,
-    detailMode,
-  ]);
+
+    downloadJsonFile(safetyBackup, filename);
+
+    return {
+      backup: safetyBackup,
+      filename,
+    };
+  };
+
+  const verifyReplaceRestore = async (expectedBookings) => {
+    const restoredBookings = await fetchBookings();
+    const expectedIds = new Set(expectedBookings.map((booking) => String(booking.id)));
+    const restoredIds = new Set(restoredBookings.map((booking) => String(booking.id)));
+
+    const missingIds = [...expectedIds].filter((id) => !restoredIds.has(id));
+    const unexpectedIds = [...restoredIds].filter((id) => !expectedIds.has(id));
+
+    return {
+      ok:
+        restoredBookings.length === expectedBookings.length &&
+        missingIds.length === 0 &&
+        unexpectedIds.length === 0,
+      restoredBookings,
+      missingIds,
+      unexpectedIds,
+    };
+  };
+
+  const handleRestore = async () => {
+    if (!canRestore) return;
+
+    const bookingsToRestore = getBackupBookings(selectedBackup);
+    let originalBookings = [];
+    let safetyFilename = "";
+    let destructiveStepStarted = false;
+
+    try {
+      setIsRestoring(true);
+      setRestoreResult(null);
+      setRestoreProgress({
+        current: 0,
+        total: bookingsToRestore.length,
+        label: "Preparing restore…",
+      });
+
+      originalBookings = await fetchBookings();
+
+      if (restoreMode === "replace") {
+        setRestoreProgress({
+          current: 0,
+          total: bookingsToRestore.length,
+          label: "Creating pre-restore safety backup…",
+        });
+
+        const safetySnapshot = await downloadSafetySnapshot(originalBookings);
+        safetyFilename = safetySnapshot.filename;
+
+        setRestoreProgress({
+          current: 0,
+          total: bookingsToRestore.length,
+          label: "Clearing the current booking database…",
+        });
+
+        destructiveStepStarted = true;
+        await deleteAllBookings();
+      }
+
+      setRestoreProgress({
+        current: 0,
+        total: bookingsToRestore.length,
+        label:
+          restoreMode === "replace"
+            ? "Restoring backup records…"
+            : "Merging backup records…",
+      });
+
+      await upsertInChunks(bookingsToRestore, (current, total) => {
+        setRestoreProgress({
+          current,
+          total,
+          label:
+            restoreMode === "replace"
+              ? "Restoring backup records…"
+              : "Merging backup records…",
+        });
+      });
+
+      setRestoreProgress({
+        current: bookingsToRestore.length,
+        total: bookingsToRestore.length,
+        label: "Verifying restored data…",
+      });
+
+      const liveAfterRestore = await fetchBookings();
+
+      if (restoreMode === "replace") {
+        const verification = await verifyReplaceRestore(bookingsToRestore);
+
+        if (!verification.ok) {
+          throw new Error(
+            `Restore verification failed. Missing IDs: ${verification.missingIds.length}. Unexpected IDs: ${verification.unexpectedIds.length}.`
+          );
+        }
+
+        setLiveBookings(verification.restoredBookings);
+      } else {
+        const restoredIds = new Set(
+          liveAfterRestore.map((booking) => String(booking?.id || ""))
+        );
+
+        const missingAfterMerge = bookingsToRestore.filter(
+          (booking) => !restoredIds.has(String(booking?.id || ""))
+        );
+
+        if (missingAfterMerge.length > 0) {
+          throw new Error(
+            `Merge verification failed. ${missingAfterMerge.length} backup record${
+              missingAfterMerge.length === 1 ? " is" : "s are"
+            } still missing from the live database.`
+          );
+        }
+
+        setLiveBookings(liveAfterRestore);
+      }
+
+      setRestoreProgress({
+        current: bookingsToRestore.length,
+        total: bookingsToRestore.length,
+        label: "Restore complete",
+      });
+
+      setRestoreResult({
+        tone: "success",
+        title: restoreMode === "replace" ? "Backup restored" : "Backup merged",
+        message:
+          restoreMode === "replace"
+            ? `${bookingsToRestore.length} booking record${
+                bookingsToRestore.length === 1 ? " was" : "s were"
+              } restored and verified. A pre-restore safety backup was downloaded as “${safetyFilename}”.`
+            : `${bookingsToRestore.length} backup record${
+                bookingsToRestore.length === 1 ? " was" : "s were"
+              } merged into the live database and verified. Records that existed only in the current database were left untouched.`,
+      });
+
+      setReplaceConfirmation("");
+
+      if (onRestoreComplete) {
+        onRestoreComplete();
+      }
+    } catch (error) {
+      console.error("Backup restore failed:", error);
+
+      let rollbackMessage = "";
+
+      if (restoreMode === "replace" && destructiveStepStarted) {
+        try {
+          setRestoreProgress({
+            current: 0,
+            total: originalBookings.length,
+            label: "Restore failed. Attempting automatic rollback…",
+          });
+
+          await deleteAllBookings();
+          await upsertInChunks(originalBookings, (current, total) => {
+            setRestoreProgress({
+              current,
+              total,
+              label: "Restore failed. Rolling back previous database…",
+            });
+          });
+
+          const rolledBackBookings = await fetchBookings();
+          setLiveBookings(rolledBackBookings);
+          rollbackMessage =
+            " The previous booking database was restored automatically from the in-memory safety copy.";
+        } catch (rollbackError) {
+          console.error("Automatic rollback also failed:", rollbackError);
+          rollbackMessage =
+            " Automatic rollback also failed. Use the pre-restore safety backup that was downloaded before replacement began.";
+        }
+      }
+
+      setRestoreResult({
+        tone: "error",
+        title: "Restore failed",
+        message: `${error?.message || "The backup could not be restored."}${rollbackMessage}`,
+      });
+    } finally {
+      setIsRestoring(false);
+    }
+  };
+
+  const progressPercent = restoreProgress.total
+    ? Math.min(
+        100,
+        Math.round((restoreProgress.current / restoreProgress.total) * 100)
+      )
+    : 0;
 
   return (
-    <div
-      className="dashboard-backup-backdrop"
-      role="presentation"
-    >
-      <section
-        className="dashboard-backup-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Dashboard backup library"
-      >
-        <header className="dashboard-backup-modal-header">
-          <div className="dashboard-backup-modal-heading">
-            <span className="dashboard-backup-modal-icon">
-              <FaDatabase />
-            </span>
+    <main className="backups-page">
+      <section className="backups-hero">
+        <div className="backups-hero-copy">
+          <span className="backups-eyebrow">
+            <FaShieldAlt />
+            Data Protection
+          </span>
 
-            <div>
-              <p className="dashboard-eyebrow">
-                Backup Library
-              </p>
-
-              <h3>
-                Restore Dashboard Backup
-              </h3>
-
-              <span>
-                Backups contain live booking data plus this browser's
-                dashboard settings. Older Version 1 backups are supported.
-              </span>
-            </div>
-          </div>
-
-          <button
-            className="dashboard-backup-close-button"
-            type="button"
-            onClick={onClose}
-            aria-label="Close backup modal"
-            disabled={Boolean(
-              busyAction
-            )}
-          >
-            <FaTimes />
-          </button>
-        </header>
-
-        <div className="dashboard-backup-modal-actions">
-          <button
-            className="secondary-dashboard-button"
-            type="button"
-            onClick={() =>
-              backupFileInputRef.current?.click()
-            }
-            disabled={Boolean(
-              busyAction
-            )}
-          >
-            <FaUpload />
-
-            {busyAction ===
-            "import"
-              ? "Importing..."
-              : "Upload Backup File"}
-          </button>
-
-          <input
-            ref={
-              backupFileInputRef
-            }
-            className="dashboard-file-input"
-            type="file"
-            accept="application/json,.json"
-            onChange={
-              onImportBackupFile
-            }
-          />
+          <h1>Backups & Restore</h1>
 
           <p>
-            Uploading a JSON file adds it here for review before anything is restored.
+            Create a portable snapshot of the live booking database, inspect a
+            backup before using it, and restore records with safeguards against
+            accidental data loss.
           </p>
         </div>
 
-        <div className="dashboard-backup-modal-body">
-          {backupHistory.length >
-          0 ? (
-            <div className="dashboard-backup-list">
-              {backupHistory.map(
-                (
-                  backup,
-                  index
-                ) => {
-                  const stats =
-                    backup.stats ||
-                    getBackupStats(
-                      backup
-                    );
-
-                  const isExpanded =
-                    expandedBackupId ===
-                    backup.id;
-
-                  const detailGroups =
-                    getBackupDetailGroups(
-                      backup
-                    );
-
-                  const savedGroups =
-                    detailGroups.filter(
-                      (group) =>
-                        group.hasValue
-                    );
-
-                  const emptyGroups =
-                    detailGroups.filter(
-                      (group) =>
-                        !group.hasValue
-                    );
-
-                  return (
-                    <article
-                      className={[
-                        "dashboard-backup-card",
-
-                        index === 0
-                          ? "dashboard-backup-card-latest"
-                          : "",
-                      ]
-                        .filter(
-                          Boolean
-                        )
-                        .join(" ")}
-                      key={
-                        backup.id
-                      }
-                    >
-                      <div className="dashboard-backup-card-main">
-                        <div>
-                          <div className="dashboard-backup-title-row">
-                            <h4>
-                              {index ===
-                              0
-                                ? "Most Recent Backup"
-                                : "Saved Backup"}
-                            </h4>
-
-                            {backup.importedAt && (
-                              <span className="dashboard-backup-pill">
-                                Imported file
-                              </span>
-                            )}
-
-                            {backup.migratedFromLegacy && (
-                              <span className="dashboard-backup-pill dashboard-backup-pill-legacy">
-                                Legacy backup migrated
-                              </span>
-                            )}
-                          </div>
-
-                          <p>
-                            {formatBackupDate(
-                              backup.createdAt
-                            )}
-                          </p>
-                        </div>
-
-                        <div className="dashboard-backup-stats">
-                          <span>
-                            <strong>
-                              {
-                                stats.bookingCount
-                              }
-                            </strong>
-                            Bookings
-                          </span>
-
-                          <span>
-                            <strong>
-                              {
-                                stats.staffCount
-                              }
-                            </strong>
-                            Staff
-                          </span>
-
-                          <span>
-                            <strong>
-                              {
-                                stats.starredCount
-                              }
-                            </strong>
-                            Starred
-                          </span>
-
-                          <span>
-                            <strong>
-                              {
-                                stats.savedKeysCount
-                              }
-                            </strong>
-                            Browser areas
-                          </span>
-                        </div>
-                      </div>
-
-                      <aside className="dashboard-backup-card-actions">
-                        <button
-                          className="secondary-dashboard-button"
-                          type="button"
-                          onClick={() =>
-                            setExpandedBackupId(
-                              isExpanded
-                                ? ""
-                                : backup.id
-                            )
-                          }
-                          disabled={Boolean(
-                            busyAction
-                          )}
-                        >
-                          <FaInfoCircle />
-
-                          {isExpanded
-                            ? "Hide Details"
-                            : "View Details"}
-                        </button>
-
-                        <button
-                          className="primary-dashboard-button"
-                          type="button"
-                          onClick={() =>
-                            onRestoreBackup(
-                              backup
-                            )
-                          }
-                          disabled={Boolean(
-                            busyAction
-                          )}
-                        >
-                          {busyAction ===
-                          `restore:${backup.id}`
-                            ? "Restoring..."
-                            : "Restore"}
-                        </button>
-
-                        <button
-                          className="dashboard-backup-delete-button"
-                          type="button"
-                          onClick={() =>
-                            onDeleteBackup(
-                              backup.id
-                            )
-                          }
-                          aria-label="Delete backup"
-                          disabled={Boolean(
-                            busyAction
-                          )}
-                        >
-                          <FaTrashAlt />
-                        </button>
-                      </aside>
-
-                      {isExpanded && (
-                        <div className="dashboard-backup-details">
-                          <div className="dashboard-backup-details-header">
-                            <div>
-                              <strong>
-                                Backup contents
-                              </strong>
-
-                              <p>
-                                Review the snapshot before restoring it.
-                              </p>
-                            </div>
-
-                            <span>
-                              {
-                                savedGroups.length
-                              }{" "}
-                              active area
-                              {savedGroups.length ===
-                              1
-                                ? ""
-                                : "s"}
-                            </span>
-                          </div>
-
-                          <div
-                            className="dashboard-backup-detail-mode-toggle"
-                            role="tablist"
-                            aria-label="Backup detail display mode"
-                          >
-                            <button
-                              className={
-                                detailMode ===
-                                "friendly"
-                                  ? "active"
-                                  : ""
-                              }
-                              type="button"
-                              onClick={() =>
-                                setDetailMode(
-                                  "friendly"
-                                )
-                              }
-                            >
-                              Friendly
-                            </button>
-
-                            <button
-                              className={
-                                detailMode ===
-                                "technical"
-                                  ? "active"
-                                  : ""
-                              }
-                              type="button"
-                              onClick={() =>
-                                setDetailMode(
-                                  "technical"
-                                )
-                              }
-                            >
-                              Technical
-                            </button>
-                          </div>
-
-                          {detailMode ===
-                          "friendly" ? (
-                            <>
-                              <div className="dashboard-backup-friendly-list">
-                                {savedGroups.map(
-                                  (
-                                    group
-                                  ) => (
-                                    <BackupFriendlyCard
-                                      key={
-                                        group.id
-                                      }
-                                      group={
-                                        group
-                                      }
-                                      isExpanded={
-                                        expandedFriendlyGroupId ===
-                                        group.id
-                                      }
-                                      onToggle={() =>
-                                        setExpandedFriendlyGroupId(
-                                          expandedFriendlyGroupId ===
-                                            group.id
-                                            ? ""
-                                            : group.id
-                                        )
-                                      }
-                                    />
-                                  )
-                                )}
-                              </div>
-
-                              {emptyGroups.length >
-                                0 && (
-                                <details className="dashboard-backup-empty-details">
-                                  <summary>
-                                    Show areas that were not saved in this backup
-                                  </summary>
-
-                                  <div className="dashboard-backup-empty-detail-list">
-                                    {emptyGroups.map(
-                                      (
-                                        group
-                                      ) => (
-                                        <div
-                                          key={
-                                            group.id
-                                          }
-                                        >
-                                          <span>
-                                            {
-                                              group.title
-                                            }
-                                          </span>
-
-                                          <small>
-                                            {
-                                              group.status
-                                            }
-                                          </small>
-                                        </div>
-                                      )
-                                    )}
-                                  </div>
-                                </details>
-                              )}
-                            </>
-                          ) : (
-                            <BackupTechnicalPanel
-                              backup={
-                                backup
-                              }
-                            />
-                          )}
-                        </div>
-                      )}
-                    </article>
-                  );
-                }
-              )}
-            </div>
-          ) : (
-            <div className="dashboard-backup-empty">
-              <FaDatabase />
-
-              <strong>
-                No backups saved yet
-              </strong>
-
-              <p>
-                Export a backup to create a JSON snapshot of the live booking database and dashboard settings.
-              </p>
-            </div>
-          )}
-        </div>
-
-        <footer className="dashboard-backup-modal-footer">
+        <div className="backups-hero-actions">
           <button
-            className="secondary-dashboard-button"
+            className="backup-primary-button"
             type="button"
-            onClick={onClose}
-            disabled={Boolean(
-              busyAction
-            )}
+            onClick={handleCreateBackup}
+            disabled={isCreatingBackup || isRestoring || isLoadingLiveData}
           >
-            Done
+            {isCreatingBackup ? <FaRedoAlt className="backup-spin" /> : <FaDownload />}
+            {isCreatingBackup ? "Creating Backup…" : "Create Backup Now"}
           </button>
-        </footer>
+
+          <button
+            className="backup-secondary-button"
+            type="button"
+            onClick={loadLiveDatabaseSummary}
+            disabled={isLoadingLiveData || isRestoring}
+          >
+            <FaRedoAlt className={isLoadingLiveData ? "backup-spin" : ""} />
+            Refresh Status
+          </button>
+        </div>
       </section>
-    </div>
-  );
-}
 
-/* =========================================================
-   MAIN COMPONENT
-========================================================= */
-
-export default function DashboardBackups({
-  onRestoreComplete,
-}) {
-  const [
-    isBackupModalOpen,
-    setIsBackupModalOpen,
-  ] = useState(false);
-
-  const [
-    backupHistory,
-    setBackupHistory,
-  ] = useState(() =>
-    getDashboardBackupHistory()
-  );
-
-  const [
-    busyAction,
-    setBusyAction,
-  ] = useState("");
-
-  const isBusy =
-    Boolean(busyAction);
-
-  /* ---------------------------------------------------------
-     EXPORT CURRENT DATABASE + SETTINGS
-  --------------------------------------------------------- */
-
-  const exportDashboardBackup =
-    async () => {
-      if (isBusy) {
-        return;
-      }
-
-      setBusyAction("export");
-
-      try {
-        const backup =
-          await createDashboardBackupSnapshot();
-
-        const persistedHistory =
-          saveDashboardBackupHistory([
-            backup,
-            ...backupHistory,
-          ]);
-
-        const wasSavedToHistory =
-          persistedHistory.some(
-            (savedBackup) =>
-              savedBackup.id ===
-              backup.id
-          );
-
-        /*
-          Keep the new backup visible in this session even if it was
-          too large for localStorage history.
-        */
-        setBackupHistory(
-          wasSavedToHistory
-            ? persistedHistory
-            : [
-                backup,
-                ...persistedHistory,
-              ]
-        );
-
-        downloadDashboardBackupFile(
-          backup
-        );
-
-        if (
-          wasSavedToHistory
-        ) {
-          alert(
-            `Backup complete.\n\n${backup.stats.bookingCount} booking record${
-              backup.stats.bookingCount ===
-              1
-                ? ""
-                : "s"
-            } were exported with dashboard settings.`
-          );
-        } else {
-          alert(
-            `Backup complete.\n\n${backup.stats.bookingCount} booking record${
-              backup.stats.bookingCount ===
-              1
-                ? ""
-                : "s"
-            } were exported.\n\nThis snapshot was too large to keep in browser backup history, so keep the downloaded JSON file.`
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Could not export dashboard backup:",
-          error
-        );
-
-        alert(
-          "Sorry, the backup could not be created. No booking data was changed."
-        );
-      } finally {
-        setBusyAction("");
-      }
-    };
-
-  /* ---------------------------------------------------------
-     EXACT SNAPSHOT RESTORE
-  --------------------------------------------------------- */
-
-  const restoreDashboardBackup =
-    async (backup) => {
-      if (isBusy) {
-        return;
-      }
-
-      const backupBookings =
-        getBackupBookings(
-          backup
-        );
-
-      const confirmed =
-        window.confirm(
-          `Restore this backup?\n\nIt contains ${backupBookings.length} booking record${
-            backupBookings.length ===
-            1
-              ? ""
-              : "s"
-          }.\n\nThe live booking database and dashboard settings will be returned to this snapshot.`
-        );
-
-      if (!confirmed) {
-        return;
-      }
-
-      setBusyAction(
-        `restore:${backup.id}`
-      );
-
-      try {
-        const bookingsMissingIds =
-          backupBookings.filter(
-            (booking) =>
-              !booking?.id
-          );
-
-        if (
-          bookingsMissingIds.length >
-          0
-        ) {
-          throw new Error(
-            `${bookingsMissingIds.length} backup booking(s) are missing IDs.`
-          );
-        }
-
-        const currentBookings =
-          await fetchBookings();
-
-        if (
-          backupBookings.length >
-          0
-        ) {
-          /*
-            Safety order:
-            1. Write/update the snapshot records.
-            2. Only after that succeeds, remove records that did
-               not exist in the backup.
-          */
-          await upsertBookings(
-            backupBookings
-          );
-
-          const backupIds =
-            new Set(
-              backupBookings.map(
-                (booking) =>
-                  String(
-                    booking.id
-                  )
-              )
-            );
-
-          const extraCurrentBookings =
-            (
-              Array.isArray(
-                currentBookings
-              )
-                ? currentBookings
-                : []
-            ).filter(
-              (booking) =>
-                booking?.id &&
-                !backupIds.has(
-                  String(
-                    booking.id
-                  )
-                )
-            );
-
-          for (
-            const booking of
-            extraCurrentBookings
-          ) {
-            await deleteBooking(
-              booking.id
-            );
-          }
-        } else {
-          await deleteAllBookings();
-        }
-
-        /*
-          Restore browser settings as an exact snapshot too,
-          while preserving the backup library itself.
-        */
-        const backupStorageData =
-          backup.storageData ||
-          {};
-
-        const currentRestorableKeys =
-          getDashboardBackupKeys();
-
-        const allRestorableKeys =
-          Array.from(
-            new Set([
-              ...currentRestorableKeys,
-              ...Object.keys(
-                backupStorageData
-              ),
-            ])
-          );
-
-        allRestorableKeys.forEach(
-          (key) => {
-            if (
-              key ===
-                DASHBOARD_BACKUP_HISTORY_STORAGE_KEY ||
-              key ===
-                LEGACY_BOOKINGS_STORAGE_KEY
-            ) {
-              return;
-            }
-
-            const hasBackupValue =
-              Object.prototype.hasOwnProperty.call(
-                backupStorageData,
-                key
-              ) &&
-              backupStorageData[
-                key
-              ] !== null &&
-              backupStorageData[
-                key
-              ] !== undefined;
-
-            if (
-              hasBackupValue
-            ) {
-              localStorage.setItem(
-                key,
-                backupStorageData[
-                  key
-                ]
-              );
-            } else {
-              localStorage.removeItem(
-                key
-              );
-            }
-          }
-        );
-
-        /*
-          Remove the obsolete local booking cache so it cannot
-          compete with the current database-backed system.
-        */
-        localStorage.removeItem(
-          LEGACY_BOOKINGS_STORAGE_KEY
-        );
-
-        onRestoreComplete?.();
-
-        alert(
-          `Backup restored successfully.\n\n${backupBookings.length} booking record${
-            backupBookings.length ===
-            1
-              ? ""
-              : "s"
-          } restored. The dashboard will now reload.`
-        );
-
-        window.location.reload();
-      } catch (error) {
-        console.error(
-          "Could not restore dashboard backup:",
-          error
-        );
-
-        alert(
-          `Sorry, the backup could not be completely restored.\n\n${
-            error?.message ||
-            "Unknown restore error"
-          }`
-        );
-      } finally {
-        setBusyAction("");
-      }
-    };
-
-  /* ---------------------------------------------------------
-     DELETE BROWSER-HISTORY COPY
-  --------------------------------------------------------- */
-
-  const deleteDashboardBackup =
-    (backupId) => {
-      if (isBusy) {
-        return;
-      }
-
-      const confirmed =
-        window.confirm(
-          "Delete this saved backup from browser history?"
-        );
-
-      if (!confirmed) {
-        return;
-      }
-
-      const nextHistory =
-        backupHistory.filter(
-          (backup) =>
-            backup.id !==
-            backupId
-        );
-
-      const persistedHistory =
-        saveDashboardBackupHistory(
-          nextHistory
-        );
-
-      setBackupHistory(
-        persistedHistory
-      );
-    };
-
-  /* ---------------------------------------------------------
-     IMPORT JSON FILE
-  --------------------------------------------------------- */
-
-  const importDashboardBackupFile =
-    async (event) => {
-      const file =
-        event.target.files?.[0];
-
-      if (!file || isBusy) {
-        return;
-      }
-
-      setBusyAction("import");
-
-      try {
-        const fileText =
-          await file.text();
-
-        const parsedBackup =
-          JSON.parse(fileText);
-
-        const normalizedBackup =
-          normalizeImportedDashboardBackup(
-            parsedBackup
-          );
-
-        if (
-          !normalizedBackup
-        ) {
-          alert(
-            "That file does not look like a valid Toah Nipi dashboard backup."
-          );
-
-          return;
-        }
-
-        const persistedHistory =
-          saveDashboardBackupHistory([
-            normalizedBackup,
-            ...backupHistory,
-          ]);
-
-        const wasSaved =
-          persistedHistory.some(
-            (backup) =>
-              backup.id ===
-              normalizedBackup.id
-          );
-
-        setBackupHistory(
-          wasSaved
-            ? persistedHistory
-            : [
-                normalizedBackup,
-                ...persistedHistory,
-              ]
-        );
-
-        if (wasSaved) {
-          alert(
-            `Backup file imported.\n\n${normalizedBackup.stats.bookingCount} booking record${
-              normalizedBackup.stats.bookingCount ===
-              1
-                ? ""
-                : "s"
-            } detected. Review the backup before restoring it.`
-          );
-        } else {
-          alert(
-            `Backup file imported for this session.\n\n${normalizedBackup.stats.bookingCount} booking record${
-              normalizedBackup.stats.bookingCount ===
-              1
-                ? ""
-                : "s"
-            } detected.\n\nIt is too large to keep permanently in browser backup history, but you can still review and restore it now.`
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Could not import dashboard backup file:",
-          error
-        );
-
-        alert(
-          "Sorry, that backup file could not be imported."
-        );
-      } finally {
-        event.target.value =
-          "";
-
-        setBusyAction("");
-      }
-    };
-
-  return (
-    <>
-      <DashboardBackupControls
-        onExportBackup={
-          exportDashboardBackup
-        }
-        onOpenBackupModal={() => {
-          setBackupHistory(
-            getDashboardBackupHistory()
-          );
-
-          setIsBackupModalOpen(
-            true
-          );
-        }}
-        isBusy={isBusy}
-      />
-
-      {isBackupModalOpen && (
-        <DashboardBackupModal
-          backupHistory={
-            backupHistory
-          }
-          onClose={() =>
-            setIsBackupModalOpen(
-              false
-            )
-          }
-          onRestoreBackup={
-            restoreDashboardBackup
-          }
-          onDeleteBackup={
-            deleteDashboardBackup
-          }
-          onImportBackupFile={
-            importDashboardBackupFile
-          }
-          busyAction={
-            busyAction
+      {restoreResult && (
+        <BackupNotice
+          tone={restoreResult.tone}
+          icon={restoreResult.tone === "success" ? FaCheckCircle : FaExclamationTriangle}
+          title={restoreResult.title}
+        >
+          {restoreResult.message}
+        </BackupNotice>
+      )}
+
+      {liveDataError && (
+        <BackupNotice
+          tone="error"
+          icon={FaExclamationTriangle}
+          title="Could not read the live database"
+        >
+          {liveDataError}
+        </BackupNotice>
+      )}
+
+      <section className="backup-overview-grid">
+        <BackupMetric
+          icon={FaDatabase}
+          label="Live Records"
+          value={isLoadingLiveData ? "…" : liveBookings.length.toLocaleString()}
+          helper="Booking records currently stored in Supabase"
+        />
+
+        <BackupMetric
+          icon={FaHistory}
+          label="Last Manual Backup"
+          value={lastBackup ? formatDateTime(lastBackup.createdAt) : "Not recorded"}
+          helper={
+            lastBackup
+              ? `${lastBackup.bookingCount} records · ${formatFileSize(lastBackup.fileSize)}`
+              : "Create your first downloadable snapshot"
           }
         />
-      )}
-    </>
+
+        <BackupMetric
+          icon={FaArchive}
+          label="Live Date Range"
+          value={
+            liveDateRange.first === "—"
+              ? "No dated records"
+              : `${liveDateRange.first} – ${liveDateRange.last}`
+          }
+          helper="Based on booking start and end dates"
+        />
+      </section>
+
+      <section className="backup-workspace-grid">
+        <article className="backup-panel backup-create-panel">
+          <header className="backup-panel-header">
+            <span className="backup-panel-icon backup-panel-icon-green">
+              <FaCloudDownloadAlt />
+            </span>
+
+            <div>
+              <p className="backup-panel-eyebrow">Export</p>
+              <h2>Create a fresh backup</h2>
+              <span>
+                Downloads the live booking database as a validated JSON snapshot.
+              </span>
+            </div>
+          </header>
+
+          <div className="backup-coverage-card">
+            <div className="backup-coverage-heading">
+              <div>
+                <span className="backup-coverage-kicker">Included in this backup</span>
+                <strong>Booking database records</strong>
+              </div>
+
+              <span className="backup-covered-pill">
+                <FaCheckCircle />
+                Covered
+              </span>
+            </div>
+
+            <div className="backup-coverage-list">
+              <span><FaCheckCircle /> Core booking fields</span>
+              <span><FaCheckCircle /> Imported spreadsheet source data</span>
+              <span><FaCheckCircle /> Rental form details</span>
+              <span><FaCheckCircle /> Activities, facilities & assignments</span>
+              <span><FaCheckCircle /> Checklists and booking-level metadata</span>
+              <span><FaCheckCircle /> Stable booking IDs used for restore</span>
+            </div>
+          </div>
+
+          <div className="backup-snapshot-summary">
+            <div>
+              <small>Records ready to back up</small>
+              <strong>{liveBookings.length.toLocaleString()}</strong>
+            </div>
+
+            <div>
+              <small>Status categories</small>
+              <strong>{liveStatusBreakdown.length}</strong>
+            </div>
+
+            <div>
+              <small>Integrity protection</small>
+              <strong>SHA-256</strong>
+            </div>
+          </div>
+
+          {liveStatusBreakdown.length > 0 && (
+            <div className="backup-status-strip">
+              {liveStatusBreakdown.slice(0, 6).map(({ status, count }) => (
+                <span key={status}>
+                  <strong>{count}</strong>
+                  {status}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <BackupNotice
+            tone="info"
+            icon={FaLock}
+            title="The backup file does not contain your Supabase login credentials"
+          >
+            It exports the booking records returned by your existing booking service.
+            Keep the file private anyway because booking records can contain guest
+            names, contact information, notes, and operational details.
+          </BackupNotice>
+
+          <button
+            className="backup-large-action backup-large-action-create"
+            type="button"
+            onClick={handleCreateBackup}
+            disabled={isCreatingBackup || isRestoring || isLoadingLiveData}
+          >
+            <span>
+              {isCreatingBackup ? (
+                <FaRedoAlt className="backup-spin" />
+              ) : (
+                <FaDownload />
+              )}
+            </span>
+
+            <div>
+              <strong>{isCreatingBackup ? "Building snapshot…" : "Download Backup"}</strong>
+              <small>
+                {isCreatingBackup
+                  ? "Reading the live database and calculating its checksum"
+                  : "Create a timestamped .json file from the live database"}
+              </small>
+            </div>
+          </button>
+        </article>
+
+        <article className="backup-panel backup-history-panel">
+          <header className="backup-panel-header">
+            <span className="backup-panel-icon backup-panel-icon-slate">
+              <FaHistory />
+            </span>
+
+            <div>
+              <p className="backup-panel-eyebrow">Backup Routine</p>
+              <h2>Keep more than one copy</h2>
+              <span>
+                A downloaded backup only helps if it survives a lost laptop or bad
+                deployment.
+              </span>
+            </div>
+          </header>
+
+          <div className="backup-routine-list">
+            <div className="backup-routine-item">
+              <span>1</span>
+              <div>
+                <strong>Create a backup before major imports</strong>
+                <p>
+                  Especially before replacing spreadsheet data or making broad record
+                  changes.
+                </p>
+              </div>
+            </div>
+
+            <div className="backup-routine-item">
+              <span>2</span>
+              <div>
+                <strong>Keep a second copy off this computer</strong>
+                <p>
+                  Put one copy in a restricted cloud folder or other organization-owned
+                  storage.
+                </p>
+              </div>
+            </div>
+
+            <div className="backup-routine-item">
+              <span>3</span>
+              <div>
+                <strong>Periodically test a backup file here</strong>
+                <p>
+                  Loading a file into the restore preview verifies its format and checksum
+                  without changing live data.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {lastBackup ? (
+            <div className="backup-last-file-card">
+              <span className="backup-last-file-icon">
+                <FaFileAlt />
+              </span>
+
+              <div>
+                <small>Last backup created from this browser</small>
+                <strong>{lastBackup.filename}</strong>
+                <p>
+                  {lastBackup.bookingCount} records · {formatFileSize(lastBackup.fileSize)} ·{" "}
+                  {formatDateTime(lastBackup.createdAt)}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="backup-empty-history">
+              <FaArchive />
+              <strong>No manual backup recorded yet</strong>
+              <p>Your first successful download will appear here.</p>
+            </div>
+          )}
+        </article>
+      </section>
+
+      <section className="backup-restore-section">
+        <header className="backup-section-heading">
+          <div>
+            <span className="backup-section-heading-icon">
+              <FaUpload />
+            </span>
+
+            <div>
+              <p className="backup-panel-eyebrow">Recovery</p>
+              <h2>Restore from a backup</h2>
+              <span>
+                Select a backup file. Nothing is written to the database until you review
+                the preview and press Restore.
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {!selectedBackup && !backupValidation ? (
+          <div
+            className={`backup-dropzone ${isDraggingFile ? "backup-dropzone-dragging" : ""}`}
+            onDragEnter={(event) => {
+              event.preventDefault();
+              setIsDraggingFile(true);
+            }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setIsDraggingFile(true);
+            }}
+            onDragLeave={(event) => {
+              event.preventDefault();
+              setIsDraggingFile(false);
+            }}
+            onDrop={handleDrop}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,application/json"
+              onChange={handleFileInputChange}
+            />
+
+            <span className="backup-dropzone-icon">
+              {isReadingBackup ? <FaRedoAlt className="backup-spin" /> : <FaUpload />}
+            </span>
+
+            <h3>{isReadingBackup ? "Reading backup…" : "Drop a backup file here"}</h3>
+            <p>or select a .json backup from your computer</p>
+
+            <button
+              className="backup-secondary-button"
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isReadingBackup}
+            >
+              <FaFileAlt />
+              Choose Backup File
+            </button>
+
+            <small>Maximum file size: {formatFileSize(MAX_BACKUP_FILE_BYTES)}</small>
+          </div>
+        ) : (
+          <div className="backup-restore-workspace">
+            <div className="backup-selected-file-bar">
+              <div>
+                <span className="backup-selected-file-icon">
+                  <FaFileAlt />
+                </span>
+
+                <div>
+                  <small>Selected backup</small>
+                  <strong>{selectedFile?.name || "Backup file"}</strong>
+                  <p>{selectedFile ? formatFileSize(selectedFile.size) : ""}</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="backup-icon-button"
+                onClick={resetSelectedBackup}
+                disabled={isRestoring}
+                aria-label="Remove selected backup"
+              >
+                <FaTimes />
+              </button>
+            </div>
+
+            {backupValidation?.valid ? (
+              <BackupNotice
+                tone="success"
+                icon={FaCheckCircle}
+                title="Backup file passed validation"
+              >
+                The file format, schema version, record IDs, duplicate check, and SHA-256
+                integrity checksum all passed.
+              </BackupNotice>
+            ) : (
+              <BackupNotice
+                tone="error"
+                icon={FaExclamationTriangle}
+                title="This backup cannot be restored"
+              >
+                Fix or replace the file before continuing. No live data has been changed.
+              </BackupNotice>
+            )}
+
+            {backupValidation?.errors?.length > 0 && (
+              <div className="backup-validation-list backup-validation-list-error">
+                <strong>Validation errors</strong>
+                <ul>
+                  {backupValidation.errors.map((error, index) => (
+                    <li key={`${error}-${index}`}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {backupValidation?.warnings?.length > 0 && (
+              <div className="backup-validation-list backup-validation-list-warning">
+                <strong>Warnings</strong>
+                <ul>
+                  {backupValidation.warnings.map((warning, index) => (
+                    <li key={`${warning}-${index}`}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {selectedBackup && (
+              <>
+                <div className="backup-preview-grid">
+                  <div>
+                    <small>Created</small>
+                    <strong>{formatDateTime(selectedBackup.createdAt)}</strong>
+                  </div>
+
+                  <div>
+                    <small>Records</small>
+                    <strong>{backupBookings.length.toLocaleString()}</strong>
+                  </div>
+
+                  <div>
+                    <small>Schema</small>
+                    <strong>Version {selectedBackup.schemaVersion ?? "—"}</strong>
+                  </div>
+
+                  <div>
+                    <small>Integrity</small>
+                    <strong>
+                      {backupValidation?.integrity?.ok ? "Verified" : "Failed"}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <small>Earliest booking date</small>
+                    <strong>{backupDateRange.first}</strong>
+                  </div>
+
+                  <div>
+                    <small>Latest booking date</small>
+                    <strong>{backupDateRange.last}</strong>
+                  </div>
+                </div>
+
+                {backupStatusBreakdown.length > 0 && (
+                  <div className="backup-preview-statuses">
+                    <div className="backup-subheading-row">
+                      <div>
+                        <strong>Backup contents by status</strong>
+                        <span>Quick check before restore</span>
+                      </div>
+                    </div>
+
+                    <div className="backup-preview-status-grid">
+                      {backupStatusBreakdown.map(({ status, count }) => (
+                        <div key={status}>
+                          <strong>{count}</strong>
+                          <span>{status}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {comparison && (
+                  <div className="backup-comparison-card">
+                    <div className="backup-subheading-row">
+                      <div>
+                        <strong>Compared with the live database</strong>
+                        <span>Matched by stable booking ID</span>
+                      </div>
+                    </div>
+
+                    <div className="backup-comparison-grid">
+                      <div className="backup-comparison-new">
+                        <small>New from backup</small>
+                        <strong>{comparison.newRecords}</strong>
+                      </div>
+
+                      <div className="backup-comparison-match">
+                        <small>IDs already live</small>
+                        <strong>{comparison.matchingRecords}</strong>
+                      </div>
+
+                      <div className="backup-comparison-current">
+                        <small>Only in current database</small>
+                        <strong>{comparison.onlyInCurrentDatabase}</strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {backupValidation?.valid && (
+                  <div className="backup-restore-options">
+                    <div className="backup-subheading-row">
+                      <div>
+                        <strong>Choose restore mode</strong>
+                        <span>Pick how the backup should interact with current data.</span>
+                      </div>
+                    </div>
+
+                    <div className="backup-mode-grid">
+                      <label
+                        className={`backup-mode-card ${
+                          restoreMode === "merge" ? "backup-mode-card-active" : ""
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="backupRestoreMode"
+                          value="merge"
+                          checked={restoreMode === "merge"}
+                          onChange={() => {
+                            setRestoreMode("merge");
+                            setReplaceConfirmation("");
+                          }}
+                        />
+
+                        <span className="backup-mode-radio" />
+
+                        <div>
+                          <span className="backup-mode-icon backup-mode-icon-safe">
+                            <FaArchive />
+                          </span>
+
+                          <strong>Safe Merge</strong>
+                          <p>
+                            Adds missing backup records and updates records with matching
+                            IDs. Current records that are not in the backup stay untouched.
+                          </p>
+
+                          <em>Recommended for most recoveries</em>
+                        </div>
+                      </label>
+
+                      <label
+                        className={`backup-mode-card backup-mode-card-danger ${
+                          restoreMode === "replace" ? "backup-mode-card-active" : ""
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="backupRestoreMode"
+                          value="replace"
+                          checked={restoreMode === "replace"}
+                          onChange={() => setRestoreMode("replace")}
+                        />
+
+                        <span className="backup-mode-radio" />
+
+                        <div>
+                          <span className="backup-mode-icon backup-mode-icon-danger">
+                            <FaTrashAlt />
+                          </span>
+
+                          <strong>Full Replace</strong>
+                          <p>
+                            Replaces the entire current booking database with exactly what
+                            is in this backup.
+                          </p>
+
+                          <em>Use only when rolling the database back</em>
+                        </div>
+                      </label>
+                    </div>
+
+                    {restoreMode === "replace" && (
+                      <div className="backup-danger-confirmation">
+                        <div className="backup-danger-confirmation-heading">
+                          <FaExclamationTriangle />
+                          <div>
+                            <strong>Full Replace is destructive</strong>
+                            <p>
+                              The app will automatically download a safety backup of the
+                              current database before deletion begins. It will also attempt
+                              an automatic rollback if the restore fails.
+                            </p>
+                          </div>
+                        </div>
+
+                        <label>
+                          <span>
+                            Type <strong>RESTORE</strong> to enable Full Replace
+                          </span>
+                          <input
+                            type="text"
+                            value={replaceConfirmation}
+                            onChange={(event) =>
+                              setReplaceConfirmation(event.target.value)
+                            }
+                            placeholder="RESTORE"
+                            autoComplete="off"
+                          />
+                        </label>
+                      </div>
+                    )}
+
+                    {isRestoring && (
+                      <div className="backup-progress-card">
+                        <div className="backup-progress-heading">
+                          <div>
+                            <FaRedoAlt className="backup-spin" />
+                            <strong>{restoreProgress.label}</strong>
+                          </div>
+
+                          {restoreProgress.total > 0 && (
+                            <span>
+                              {restoreProgress.current} / {restoreProgress.total}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="backup-progress-track">
+                          <span style={{ width: `${progressPercent}%` }} />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="backup-restore-footer">
+                      <div>
+                        <FaShieldAlt />
+                        <span>
+                          Restore uses the same Supabase booking service as the rest of the
+                          dashboard.
+                        </span>
+                      </div>
+
+                      <button
+                        className={`backup-primary-button ${
+                          restoreMode === "replace" ? "backup-danger-button" : ""
+                        }`}
+                        type="button"
+                        onClick={handleRestore}
+                        disabled={!canRestore}
+                      >
+                        {isRestoring ? (
+                          <FaRedoAlt className="backup-spin" />
+                        ) : restoreMode === "replace" ? (
+                          <FaExclamationTriangle />
+                        ) : (
+                          <FaUpload />
+                        )}
+
+                        {isRestoring
+                          ? "Restoring…"
+                          : restoreMode === "replace"
+                            ? "Replace Database From Backup"
+                            : "Merge Backup Into Database"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </section>
+
+      <section className="backup-limitations-card">
+        <span className="backup-limitations-icon">
+          <FaShieldAlt />
+        </span>
+
+        <div>
+          <strong>What this version protects</strong>
+          <p>
+            This backup system protects the booking records exposed by your existing
+            <code> bookingService </code>. Separate Supabase tables or Storage buckets—such
+            as uploaded portal files or a separate public-inquiry table—need their own
+            backup endpoint before they can be safely included here. The page deliberately
+            does not pretend those are covered when they are not.
+          </p>
+        </div>
+      </section>
+    </main>
   );
 }
