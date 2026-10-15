@@ -17,6 +17,7 @@ import {
   FaPlus,
   FaChevronDown,
   FaChevronUp,
+  FaUpload,
 } from "react-icons/fa";
 
 import { supabase } from "../lib/supabaseClient";
@@ -27,6 +28,137 @@ import {
 
 
 const PORTAL_UPLOAD_BUCKET = "portal-uploads";
+const STAFF_PORTAL_DOCUMENT_FOLDER = "staff-documents";
+const PORTAL_STAFF_DOCUMENT_MAX_BYTES = 10 * 1024 * 1024;
+
+const PORTAL_STAFF_DOCUMENT_MIME_BY_EXTENSION = {
+  pdf: "application/pdf",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  heic: "image/heic",
+  txt: "text/plain",
+};
+
+const PORTAL_STAFF_DOCUMENT_ACCEPT = Object.keys(
+  PORTAL_STAFF_DOCUMENT_MIME_BY_EXTENSION
+)
+  .map((extension) => `.${extension}`)
+  .join(",");
+
+
+function getPortalDocumentExtension(fileName) {
+  return String(fileName || "")
+    .trim()
+    .toLowerCase()
+    .split(".")
+    .pop();
+}
+
+
+function getPortalStaffDocumentMimeType(file) {
+  const extension =
+    getPortalDocumentExtension(
+      file?.name
+    );
+
+  const inferredMimeType =
+    PORTAL_STAFF_DOCUMENT_MIME_BY_EXTENSION[
+      extension
+    ] || "";
+
+  const browserMimeType =
+    String(file?.type || "")
+      .trim()
+      .toLowerCase();
+
+  if (
+    browserMimeType &&
+    Object.values(
+      PORTAL_STAFF_DOCUMENT_MIME_BY_EXTENSION
+    ).includes(
+      browserMimeType
+    )
+  ) {
+    return browserMimeType;
+  }
+
+  return inferredMimeType;
+}
+
+
+function sanitizePortalDocumentFileName(fileName) {
+  const cleanedName =
+    String(fileName || "upload")
+      .trim()
+      .replace(/[\/\\]+/g, "-")
+      .replace(/[^a-zA-Z0-9._() -]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .slice(0, 140);
+
+  return cleanedName || "upload";
+}
+
+
+function validatePortalStaffDocument(file) {
+  if (!file) {
+    return "Choose a file to upload.";
+  }
+
+  if (file.size <= 0) {
+    return "That file is empty. Please choose a different file.";
+  }
+
+  if (
+    file.size >
+    PORTAL_STAFF_DOCUMENT_MAX_BYTES
+  ) {
+    return "That file is larger than 10 MB. Please choose a smaller file.";
+  }
+
+  if (
+    !getPortalStaffDocumentMimeType(
+      file
+    )
+  ) {
+    return "Please upload a PDF, Word document, Excel file, PNG, JPG, HEIC, or TXT file.";
+  }
+
+  return "";
+}
+
+
+function buildStaffPortalDocumentStoragePath(
+  portalToken,
+  documentId,
+  fileName
+) {
+  const cleanedToken =
+    String(portalToken || "")
+      .trim();
+
+  const cleanedDocumentId =
+    String(documentId || "")
+      .trim();
+
+  if (
+    !cleanedToken ||
+    !cleanedDocumentId ||
+    cleanedToken.includes("/") ||
+    cleanedDocumentId.includes("/")
+  ) {
+    return "";
+  }
+
+  return `${cleanedToken}/${STAFF_PORTAL_DOCUMENT_FOLDER}/${cleanedDocumentId}/${sanitizePortalDocumentFileName(
+    fileName
+  )}`;
+}
 
 
 function formatPortalUploadSize(bytes) {
@@ -368,6 +500,7 @@ function normalizePortalDocument(document) {
     title: document.title || "Untitled document",
     documentType: document.document_type || "Document",
     fileName: document.file_name || "",
+    note: document.note || "",
     status: document.status || "ready",
     uploadedByGuest: Boolean(document.uploaded_by_guest),
     lastChangedAt: document.last_changed_at || document.created_at || "",
@@ -540,6 +673,7 @@ async function fetchPortalOverviewRecords() {
           title,
           document_type,
           file_name,
+          note,
           status,
           uploaded_by_guest,
           last_changed_at,
@@ -668,6 +802,10 @@ async function insertPortalDocuments(
             file_name:
               document.fileName,
 
+            note:
+              document.note ||
+              null,
+
             status:
               "ready",
 
@@ -685,6 +823,7 @@ async function insertPortalDocuments(
         title,
         document_type,
         file_name,
+        note,
         status,
         uploaded_by_guest,
         last_changed_at,
@@ -699,6 +838,72 @@ async function insertPortalDocuments(
     data || []
   ).map(
     normalizePortalDocument
+  );
+}
+
+
+async function insertCustomPortalDocument(
+  bookingId,
+  document
+) {
+  const now =
+    new Date()
+      .toISOString();
+
+  const {
+    data,
+    error,
+  } =
+    await supabase
+      .from(
+        "portal_documents"
+      )
+      .insert({
+        booking_id:
+          bookingId,
+
+        title:
+          document.title,
+
+        document_type:
+          document.documentType ||
+          "Staff Document",
+
+        file_name:
+          document.fileName,
+
+        note:
+          document.note ||
+          null,
+
+        status:
+          "ready",
+
+        uploaded_by_guest:
+          false,
+
+        last_changed_at:
+          now,
+      })
+      .select(`
+        id,
+        title,
+        document_type,
+        file_name,
+        note,
+        status,
+        uploaded_by_guest,
+        last_changed_at,
+        created_at
+      `)
+      .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return normalizePortalDocument(
+    data
   );
 }
 
@@ -1751,7 +1956,9 @@ function createDocumentAssignmentDraft(
 function PortalDocumentAssignmentPanel({
   record,
   isAssigning,
+  isUploadingCustomDocument,
   onAssignDocuments,
+  onUploadCustomDocument,
   onClose,
 }) {
   const [
@@ -1770,6 +1977,50 @@ function PortalDocumentAssignmentPanel({
     setAssignmentError,
   ] =
     useState("");
+
+  const [
+    customTitle,
+    setCustomTitle,
+  ] =
+    useState("");
+
+  const [
+    customDocumentType,
+    setCustomDocumentType,
+  ] =
+    useState(
+      "Staff Document"
+    );
+
+  const [
+    customNote,
+    setCustomNote,
+  ] =
+    useState("");
+
+  const [
+    customFile,
+    setCustomFile,
+  ] =
+    useState(null);
+
+  const [
+    customUploadError,
+    setCustomUploadError,
+  ] =
+    useState("");
+
+  const [
+    customUploadSuccess,
+    setCustomUploadSuccess,
+  ] =
+    useState("");
+
+  const [
+    fileInputKey,
+    setFileInputKey,
+  ] =
+    useState(0);
 
 
   useEffect(
@@ -1857,6 +2108,145 @@ function PortalDocumentAssignmentPanel({
   }
 
 
+  function handleCustomFileChange(
+    event
+  ) {
+    const file =
+      event.target.files?.[0] ||
+      null;
+
+    setCustomFile(
+      file
+    );
+
+    setCustomUploadError(
+      ""
+    );
+
+    setCustomUploadSuccess(
+      ""
+    );
+
+    if (
+      file &&
+      !customTitle.trim()
+    ) {
+      const suggestedTitle =
+        String(file.name || "")
+          .replace(
+            /\.[^.]+$/,
+            ""
+          )
+          .replace(
+            /[-_]+/g,
+            " "
+          )
+          .trim();
+
+      setCustomTitle(
+        suggestedTitle ||
+          file.name
+      );
+    }
+  }
+
+
+  async function handleUploadCustom() {
+    const cleanedTitle =
+      customTitle
+        .trim();
+
+    const cleanedDocumentType =
+      customDocumentType
+        .trim() ||
+      "Staff Document";
+
+    const cleanedNote =
+      customNote
+        .trim();
+
+    if (!cleanedTitle) {
+      setCustomUploadError(
+        "Enter a title for the document."
+      );
+
+      return;
+    }
+
+    const validationError =
+      validatePortalStaffDocument(
+        customFile
+      );
+
+    if (validationError) {
+      setCustomUploadError(
+        validationError
+      );
+
+      return;
+    }
+
+    try {
+      setCustomUploadError(
+        ""
+      );
+
+      setCustomUploadSuccess(
+        ""
+      );
+
+      await onUploadCustomDocument(
+        record,
+        {
+          title:
+            cleanedTitle,
+          documentType:
+            cleanedDocumentType,
+          note:
+            cleanedNote,
+          file:
+            customFile,
+        }
+      );
+
+      setCustomTitle(
+        ""
+      );
+
+      setCustomDocumentType(
+        "Staff Document"
+      );
+
+      setCustomNote(
+        ""
+      );
+
+      setCustomFile(
+        null
+      );
+
+      setFileInputKey(
+        (current) =>
+          current + 1
+      );
+
+      setCustomUploadSuccess(
+        "Custom document added to this group’s portal."
+      );
+    } catch (error) {
+      console.error(
+        "Could not upload custom portal document:",
+        error
+      );
+
+      setCustomUploadError(
+        error?.message ||
+          "Could not upload this document."
+      );
+    }
+  }
+
+
   async function handleAssignSelected() {
     const selectedDocuments =
       PORTAL_DOCUMENT_OPTIONS.filter(
@@ -1916,17 +2306,17 @@ function PortalDocumentAssignmentPanel({
           </p>
 
           <h4>
-            Assign documents to{" "}
+            Manage documents for{" "}
             {
               record.organizationName
             }
           </h4>
 
           <span>
-            Choose which standard
-            documents should appear
-            in this group&apos;s
-            Documents tab.
+            Assign a standard document
+            or upload a custom file with
+            an optional note for the
+            group leader.
           </span>
         </div>
 
@@ -1942,6 +2332,214 @@ function PortalDocumentAssignmentPanel({
       </div>
 
 
+      <section className="portal-custom-document-upload">
+        <div className="portal-custom-document-upload-heading">
+          <span className="portal-custom-document-upload-icon">
+            <FaUpload />
+          </span>
+
+          <div>
+            <p>
+              Custom Staff Document
+            </p>
+
+            <h5>
+              Upload a file just for this group
+            </h5>
+
+            <span>
+              The file will appear in the group leader&apos;s Documents tab. Add a note when you want to explain what the file is or what they should do with it.
+            </span>
+          </div>
+        </div>
+
+
+        <div className="portal-custom-document-fields">
+          <label>
+            <span>
+              Document title
+            </span>
+
+            <input
+              type="text"
+              value={
+                customTitle
+              }
+              placeholder="Example: Updated Retreat Schedule"
+              disabled={
+                isUploadingCustomDocument
+              }
+              onChange={(
+                event
+              ) =>
+                setCustomTitle(
+                  event.target.value
+                )
+              }
+            />
+          </label>
+
+          <label>
+            <span>
+              Document type
+            </span>
+
+            <input
+              type="text"
+              value={
+                customDocumentType
+              }
+              placeholder="Staff Document"
+              disabled={
+                isUploadingCustomDocument
+              }
+              onChange={(
+                event
+              ) =>
+                setCustomDocumentType(
+                  event.target.value
+                )
+              }
+            />
+          </label>
+        </div>
+
+
+        <label className="portal-custom-document-file-field">
+          <span>
+            File
+          </span>
+
+          <input
+            key={
+              fileInputKey
+            }
+            type="file"
+            accept={
+              PORTAL_STAFF_DOCUMENT_ACCEPT
+            }
+            disabled={
+              isUploadingCustomDocument
+            }
+            onChange={
+              handleCustomFileChange
+            }
+          />
+
+          <small>
+            PDF, Word, Excel, PNG, JPG, HEIC, or TXT · maximum 10 MB
+          </small>
+        </label>
+
+
+        <label className="portal-custom-document-note-field">
+          <span>
+            Note for group leader
+            <em>
+              Optional
+            </em>
+          </span>
+
+          <textarea
+            value={
+              customNote
+            }
+            placeholder="Example: Please review this updated schedule before your arrival."
+            disabled={
+              isUploadingCustomDocument
+            }
+            onChange={(
+              event
+            ) =>
+              setCustomNote(
+                event.target.value
+              )
+            }
+          />
+        </label>
+
+
+        {customFile && (
+          <div className="portal-custom-document-selected-file">
+            <FaFileAlt />
+
+            <div>
+              <strong>
+                {
+                  customFile.name
+                }
+              </strong>
+
+              <span>
+                {
+                  formatPortalUploadSize(
+                    customFile.size
+                  )
+                }
+              </span>
+            </div>
+          </div>
+        )}
+
+
+        {customUploadError && (
+          <div className="portal-custom-document-message error">
+            <FaExclamationTriangle />
+
+            <span>
+              {
+                customUploadError
+              }
+            </span>
+          </div>
+        )}
+
+
+        {customUploadSuccess && (
+          <div className="portal-custom-document-message success">
+            <FaCheckCircle />
+
+            <span>
+              {
+                customUploadSuccess
+              }
+            </span>
+          </div>
+        )}
+
+
+        <div className="portal-custom-document-upload-footer">
+          <span>
+            Stored privately and opened through a temporary signed link on the guest portal.
+          </span>
+
+          <button
+            className="primary-dashboard-button"
+            type="button"
+            disabled={
+              isUploadingCustomDocument
+            }
+            onClick={
+              handleUploadCustom
+            }
+          >
+            <FaUpload />
+
+            {isUploadingCustomDocument
+              ? "Uploading..."
+              : "Upload to Portal"}
+          </button>
+        </div>
+      </section>
+
+
+      <div className="portal-standard-document-divider">
+        <span>
+          Standard Documents
+        </span>
+      </div>
+
+
       {availableCount ===
       0 ? (
         <div className="portal-document-assignment-complete">
@@ -1949,14 +2547,12 @@ function PortalDocumentAssignmentPanel({
 
           <div>
             <strong>
-              Every available document
+              Every available standard document
               is already assigned
             </strong>
 
             <span>
-              This group already has
-              the full standard
-              document set.
+              You can still upload additional custom documents above.
             </span>
           </div>
         </div>
@@ -2149,7 +2745,7 @@ function PortalDocumentAssignmentPanel({
             <span>
               {selectedCount ===
               0
-                ? "Select one or more documents."
+                ? "Select one or more standard documents."
                 : `${selectedCount} document${
                     selectedCount ===
                     1
@@ -2191,7 +2787,6 @@ function PortalDocumentAssignmentPanel({
   );
 }
 
-
 /* =========================================================
    PORTAL RECORD CARD
 ========================================================= */
@@ -2201,12 +2796,14 @@ function PortalRecordCard({
   copiedBookingId,
   isAssigning,
   isAssigningDocuments,
+  isUploadingCustomDocument,
   confirmingItemId,
   onConfirmChecklistItem,
   onCopyPortalLink,
   onOpenBooking,
   onAssignTasks,
   onAssignDocuments,
+  onUploadCustomDocument,
 }) {
   const [
     openManager,
@@ -2538,8 +3135,14 @@ function PortalRecordCard({
           isAssigning={
             isAssigningDocuments
           }
+          isUploadingCustomDocument={
+            isUploadingCustomDocument
+          }
           onAssignDocuments={
             onAssignDocuments
+          }
+          onUploadCustomDocument={
+            onUploadCustomDocument
           }
           onClose={() =>
             setOpenManager(
@@ -2606,6 +3209,12 @@ export default function PortalAdminView({
   const [
     assigningDocumentBookingId,
     setAssigningDocumentBookingId,
+  ] =
+    useState("");
+
+  const [
+    uploadingDocumentBookingId,
+    setUploadingDocumentBookingId,
   ] =
     useState("");
 
@@ -3164,6 +3773,181 @@ export default function PortalAdminView({
   }
 
 
+  async function handleUploadCustomDocument(
+    record,
+    document
+  ) {
+    if (
+      !record?.id ||
+      !record?.portalToken
+    ) {
+      throw new Error(
+        "This booking needs a portal token before a custom document can be uploaded."
+      );
+    }
+
+    const cleanedTitle =
+      String(
+        document?.title ||
+          ""
+      )
+        .trim();
+
+    if (!cleanedTitle) {
+      throw new Error(
+        "Enter a title for the document."
+      );
+    }
+
+    const file =
+      document?.file;
+
+    const validationError =
+      validatePortalStaffDocument(
+        file
+      );
+
+    if (validationError) {
+      throw new Error(
+        validationError
+      );
+    }
+
+    let insertedDocument =
+      null;
+
+    let uploadedStoragePath =
+      "";
+
+    try {
+      setUploadingDocumentBookingId(
+        record.id
+      );
+
+      insertedDocument =
+        await insertCustomPortalDocument(
+          record.id,
+          {
+            title:
+              cleanedTitle,
+            documentType:
+              String(
+                document.documentType ||
+                  "Staff Document"
+              )
+                .trim() ||
+              "Staff Document",
+            fileName:
+              String(
+                file.name ||
+                  "upload"
+              ).trim(),
+            note:
+              String(
+                document.note ||
+                  ""
+              ).trim(),
+          }
+        );
+
+      const storagePath =
+        buildStaffPortalDocumentStoragePath(
+          record.portalToken,
+          insertedDocument.id,
+          file.name
+        );
+
+      if (!storagePath) {
+        throw new Error(
+          "Could not build a safe storage path for this document."
+        );
+      }
+
+      uploadedStoragePath =
+        storagePath;
+
+      const mimeType =
+        getPortalStaffDocumentMimeType(
+          file
+        );
+
+      const {
+        error: uploadError,
+      } =
+        await supabase.storage
+          .from(
+            PORTAL_UPLOAD_BUCKET
+          )
+          .upload(
+            storagePath,
+            file,
+            {
+              cacheControl:
+                "3600",
+              contentType:
+                mimeType,
+              upsert:
+                false,
+            }
+          );
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      await loadPortalRecords();
+    } catch (error) {
+      if (uploadedStoragePath) {
+        try {
+          await supabase.storage
+            .from(
+              PORTAL_UPLOAD_BUCKET
+            )
+            .remove([
+              uploadedStoragePath,
+            ]);
+        } catch (storageCleanupError) {
+          console.error(
+            "Could not clean up failed custom portal document file:",
+            storageCleanupError
+          );
+        }
+      }
+
+      if (
+        insertedDocument?.id
+      ) {
+        try {
+          await supabase
+            .from(
+              "portal_documents"
+            )
+            .delete()
+            .eq(
+              "id",
+              insertedDocument.id
+            )
+            .eq(
+              "booking_id",
+              record.id
+            );
+        } catch (cleanupError) {
+          console.error(
+            "Could not clean up failed custom portal document row:",
+            cleanupError
+          );
+        }
+      }
+
+      throw error;
+    } finally {
+      setUploadingDocumentBookingId(
+        ""
+      );
+    }
+  }
+
+
   return (
     <section className="portal-admin-page">
       <article className="dashboard-card portal-admin-hero-card">
@@ -3371,6 +4155,10 @@ export default function PortalAdminView({
                   assigningDocumentBookingId ===
                   record.id
                 }
+                isUploadingCustomDocument={
+                  uploadingDocumentBookingId ===
+                  record.id
+                }
                 confirmingItemId={
                   confirmingChecklistItemId
                 }
@@ -3388,6 +4176,9 @@ export default function PortalAdminView({
                 }
                 onAssignDocuments={
                   handleAssignDocuments
+                }
+                onUploadCustomDocument={
+                  handleUploadCustomDocument
                 }
               />
             )
