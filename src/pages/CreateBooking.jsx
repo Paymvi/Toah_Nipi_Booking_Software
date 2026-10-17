@@ -382,6 +382,11 @@ const TEST_BOOKING_DATA = {
   phone: "603-555-0142",
   email: "jordan.test@example.com",
 
+  /* Optional Secondary Contact */
+  secondaryContactName: "Taylor Test",
+  secondaryContactPhone: "603-555-0187",
+  secondaryContactEmail: "taylor.test@example.com",
+
   /* Guest Information */
   approxTotalGuests: "50",
   approxAdultGuests: "12",
@@ -697,6 +702,19 @@ function validateRequiredBookingFields(formData) {
     );
   }
 
+  const secondaryContactPhone = String(
+    formData.secondaryContactPhone ?? ""
+  ).trim();
+
+  if (
+    secondaryContactPhone &&
+    getPhoneDigits(secondaryContactPhone).length !== 10
+  ) {
+    errors.push(
+      "Secondary contact phone number must contain exactly 10 digits."
+    );
+  }
+
   if (!formData.startDate) {
     errors.push("Arrival date is required.");
   }
@@ -774,6 +792,11 @@ function createInitialFormState(
     contactName: "",
     phone: "",
     email: "",
+
+    /* Optional Secondary Contact */
+    secondaryContactName: "",
+    secondaryContactPhone: "",
+    secondaryContactEmail: "",
 
     /* Guest Information */
     approxTotalGuests: "",
@@ -1005,6 +1028,29 @@ function createInitialFormState(
     email:
       cleanInquiryPrefillValue(
         initialInquiry.email
+      ),
+
+    secondaryContactName:
+      cleanInquiryPrefillValue(
+        initialInquiry.rentalFormDetails?.secondaryContactName ??
+        initialInquiry.secondaryContactName ??
+        guestDetails.secondaryContactName
+      ),
+
+    secondaryContactPhone:
+      formatPhoneNumberInput(
+        cleanInquiryPrefillValue(
+          initialInquiry.rentalFormDetails?.secondaryContactPhone ??
+          initialInquiry.secondaryContactPhone ??
+          guestDetails.secondaryContactPhone
+        )
+      ),
+
+    secondaryContactEmail:
+      cleanInquiryPrefillValue(
+        initialInquiry.rentalFormDetails?.secondaryContactEmail ??
+        initialInquiry.secondaryContactEmail ??
+        guestDetails.secondaryContactEmail
       ),
 
     mailingAddress:
@@ -1342,6 +1388,29 @@ function createExistingBookingFormState(booking) {
           : booking.email
       ) ||
       "",
+
+
+    /*
+      Saved detail fields take precedence, including empty strings,
+      so removing a secondary contact does not restore older values.
+    */
+    secondaryContactName:
+      cleanInquiryPrefillValue(
+        details.secondaryContactName ??
+        booking.secondaryContactName
+      ),
+
+    secondaryContactPhone:
+      formatPhoneNumberInput(
+        details.secondaryContactPhone ??
+        booking.secondaryContactPhone
+      ),
+
+    secondaryContactEmail:
+      cleanInquiryPrefillValue(
+        details.secondaryContactEmail ??
+        booking.secondaryContactEmail
+      ),
 
 
     /* =====================================================
@@ -1910,14 +1979,14 @@ export default function CreateBooking({
 
 
   const handlePhoneChange = (event) => {
+    const { name, value } = event.target;
+
     const formattedPhone =
-      formatPhoneNumberInput(
-        event.target.value
-      );
+      formatPhoneNumberInput(value);
 
     setFormData((current) => ({
       ...current,
-      phone: formattedPhone,
+      [name]: formattedPhone,
     }));
   };
 
@@ -2413,6 +2482,16 @@ export default function CreateBooking({
           */
           ...formData,
 
+          /* Optional secondary contact, saved with the booking details. */
+          secondaryContactName:
+            formData.secondaryContactName.trim(),
+
+          secondaryContactPhone:
+            formData.secondaryContactPhone.trim(),
+
+          secondaryContactEmail:
+            formData.secondaryContactEmail.trim(),
+
           /*
             Simple day-camper inputs. The derived values are stored
             for reporting, but are not shown in this form.
@@ -2875,6 +2954,54 @@ export default function CreateBooking({
                   />
                 </label>
 
+              </div>
+
+              <div className="rental-subsection">
+                <h3>Secondary Contact (Optional)</h3>
+
+                <div className="rental-field-grid">
+                  <label className="rental-field rental-field-full">
+                    <span>Secondary Contact Name</span>
+
+                    <input
+                      type="text"
+                      name="secondaryContactName"
+                      value={formData.secondaryContactName}
+                      onChange={handleChange}
+                      autoComplete="section-secondary name"
+                      placeholder="Additional contact person's name"
+                    />
+                  </label>
+
+                  <label className="rental-field">
+                    <span>Secondary Contact Phone</span>
+
+                    <input
+                      type="tel"
+                      name="secondaryContactPhone"
+                      value={formData.secondaryContactPhone}
+                      onChange={handlePhoneChange}
+                      placeholder="XXX-XXX-XXXX"
+                      inputMode="numeric"
+                      autoComplete="section-secondary tel"
+                      pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                      title="Enter a 10-digit phone number"
+                    />
+                  </label>
+
+                  <label className="rental-field">
+                    <span>Secondary Contact Email</span>
+
+                    <input
+                      type="email"
+                      name="secondaryContactEmail"
+                      value={formData.secondaryContactEmail}
+                      onChange={handleChange}
+                      autoComplete="section-secondary email"
+                      placeholder="name@example.com"
+                    />
+                  </label>
+                </div>
               </div>
             </div>
           </section>

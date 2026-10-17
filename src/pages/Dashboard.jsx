@@ -15,7 +15,6 @@ import {
   FaBed,
   FaEnvelopeOpenText,
   FaFilter,
-  FaPaperPlane,
   FaKey,
   FaTimes,
   FaTrashAlt,
@@ -1384,6 +1383,7 @@ function normalizeInquiry(inquiry, index) {
     contactName,
     email: inquiry.email || "No email provided",
     phone: inquiry.phone || "No phone provided",
+    ...getSecondaryContact(inquiry),
 
     startDate: inquiry.startDate || "",
     endDate: inquiry.endDate || "",
@@ -3131,6 +3131,55 @@ function AvailabilityBoard({
 }
 
 
+function getSecondaryContact(booking) {
+  const details = booking?.rentalFormDetails || {};
+  const rawData = booking?.rawSpreadsheetData || {};
+
+  /* Empty saved strings intentionally override older/imported values. */
+  const readValue = (fieldName, columnNames) =>
+    String(
+      details[fieldName] ??
+      booking?.[fieldName] ??
+      readSpreadsheetCell(rawData, columnNames) ??
+      ""
+    ).trim();
+
+  return {
+    secondaryContactName: readValue("secondaryContactName", [
+      "Secondary Contact Name",
+      "Secondary Contact",
+      "Secondary Name",
+    ]),
+    secondaryContactPhone: readValue("secondaryContactPhone", [
+      "Secondary Contact Phone",
+      "Secondary Phone Number",
+      "Secondary Phone",
+    ]),
+    secondaryContactEmail: readValue("secondaryContactEmail", [
+      "Secondary Contact Email",
+      "Secondary Email Address",
+      "Secondary Email",
+    ]),
+  };
+}
+
+function formatSecondaryContactPhone(value) {
+  let digits = String(value ?? "").replace(/\D/g, "");
+
+  if (digits.length === 11 && digits.startsWith("1")) {
+    digits = digits.slice(1);
+  }
+
+  digits = digits.slice(0, 10);
+
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) {
+    return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  }
+
+  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
+
 function getBookingContacts(booking) {
   if (!booking) {
     return [];
@@ -3149,26 +3198,52 @@ function getBookingContacts(booking) {
         ? booking.phone
         : "",
     contactTypes: ["Primary"],
+    booking,
   };
 
-  return [primaryContact];
+  const secondaryContact = getSecondaryContact(booking);
+
+  if (!Object.values(secondaryContact).some(Boolean)) {
+    return [primaryContact];
+  }
+
+  return [
+    primaryContact,
+    {
+      id: `${booking.id}-secondary-contact`,
+      contactName: secondaryContact.secondaryContactName || "Secondary contact",
+      companyName: primaryContact.companyName,
+      email: secondaryContact.secondaryContactEmail,
+      phone: secondaryContact.secondaryContactPhone,
+      contactTypes: ["Secondary"],
+      booking,
+    },
+  ];
 }
 
-function BookingContactsSection({ booking }) {
-  const contacts = getBookingContacts(booking);
+function BookingContactsSection({
+  booking,
+  bookings,
+  secondaryOnly = false,
+  onOpenBooking,
+}) {
+  const contacts = (bookings || (booking ? [booking] : []))
+    .flatMap(getBookingContacts)
+    .filter((contact) =>
+      !secondaryOnly || contact.contactTypes.includes("Secondary")
+    );
 
   return (
     <section className="dashboard-card booking-contacts-card">
       <div className="booking-contacts-header">
         <div>
-          <h3>Contacts</h3>
-          <p>*must add a primary contact of an organization</p>
+          <h3>{secondaryOnly ? "Secondary Contacts" : "Contacts"}</h3>
+          <p>
+            {secondaryOnly
+              ? "Optional additional contacts saved with guest group bookings."
+              : "Primary and optional secondary contacts for this booking."}
+          </p>
         </div>
-
-        <button className="primary-dashboard-button" type="button">
-          <FaPlus />
-          Add Contact
-        </button>
       </div>
 
       <div className="booking-contacts-table-wrap">
@@ -3178,64 +3253,69 @@ function BookingContactsSection({ booking }) {
               <th>Contact Name</th>
               <th>Company Name</th>
               <th>Email</th>
-              <th>Primary Phone</th>
+              <th>Phone</th>
               <th>Contact Type</th>
               <th aria-label="Actions"></th>
             </tr>
           </thead>
 
           <tbody>
+            {contacts.length === 0 && (
+              <tr>
+                <td colSpan={6}>No secondary contacts have been added.</td>
+              </tr>
+            )}
+
             {contacts.map((contact) => (
               <tr key={contact.id}>
                 <td>
-                  <button className="booking-contact-name-button" type="button">
-                    {contact.contactName}
-                  </button>
+                  {onOpenBooking ? (
+                    <button
+                      className="booking-contact-name-button"
+                      type="button"
+                      onClick={() => onOpenBooking(contact.booking)}
+                    >
+                      {contact.contactName}
+                    </button>
+                  ) : contact.contactName}
                 </td>
 
                 <td>{contact.companyName}</td>
 
                 <td>
                   {contact.email ? (
-                    <div className="booking-contact-email-row">
-                      <span>{contact.email}</span>
-
-                      <button className="contact-small-action" type="button">
-                        <FaKey />
-                        Reset Password
-                      </button>
-                    </div>
-                  ) : (
-                    <button className="contact-invite-button" type="button">
-                      <FaPaperPlane />
-                      Invite
-                    </button>
-                  )}
+                    <a href={`mailto:${contact.email}`}>{contact.email}</a>
+                  ) : "—"}
                 </td>
 
-                <td>{contact.phone || "—"}</td>
+                <td>
+                  {contact.phone ? (
+                    <a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}>
+                      {contact.phone}
+                    </a>
+                  ) : "—"}
+                </td>
 
                 <td>
                   <div className="contact-type-list">
                     {contact.contactTypes.map((type) => (
                       <span className="contact-type-pill" key={type}>
                         {type}
-                        <button type="button" aria-label={`Remove ${type}`}>
-                          <FaTimes />
-                        </button>
                       </span>
                     ))}
-
-                    <button className="contact-type-add-button" type="button">
-                      <FaPlus />
-                    </button>
                   </div>
                 </td>
 
                 <td>
-                  <button className="contact-delete-button" type="button">
-                    <FaTrashAlt />
-                  </button>
+                  {onOpenBooking && (
+                    <button
+                      className="secondary-dashboard-button"
+                      type="button"
+                      onClick={() => onOpenBooking(contact.booking)}
+                    >
+                      View Booking
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -3503,7 +3583,13 @@ function BookingIncidentNotesCard({ booking, onSaveBooking }) {
 }
 
 function createBookingEditFormState(booking) {
+  const secondaryContact = getSecondaryContact(booking);
+
   return {
+    ...secondaryContact,
+    secondaryContactPhone: formatSecondaryContactPhone(
+      secondaryContact.secondaryContactPhone
+    ),
     organizationName: booking.organizationName || "",
     contactName: booking.contactName === "No contact name" ? "" : booking.contactName || "",
     email: booking.email === "No email provided" ? "" : booking.email || "",
@@ -3549,6 +3635,11 @@ function BookingEditField({
   type = "text",
   multiline = false,
   options,
+  name,
+  inputMode,
+  autoComplete,
+  pattern,
+  title,
 }) {
   return (
     <label className="booking-edit-field">
@@ -3576,6 +3667,11 @@ function BookingEditField({
       ) : (
         <input
           type={type}
+          name={name}
+          inputMode={inputMode}
+          autoComplete={autoComplete}
+          pattern={pattern}
+          title={title}
           value={value || ""}
           readOnly={!isEditing}
           onChange={(event) => onChange(event.target.value)}
@@ -3628,6 +3724,13 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
 
       email: formData.email.trim(),
       phone: formData.phone.trim(),
+
+      rentalFormDetails: {
+        ...(booking.rentalFormDetails || {}),
+        secondaryContactName: formData.secondaryContactName.trim(),
+        secondaryContactPhone: formData.secondaryContactPhone.trim(),
+        secondaryContactEmail: formData.secondaryContactEmail.trim(),
+      },
 
       startDate: formData.startDate,
       endDate: formData.endDate,
@@ -3743,6 +3846,53 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
               value={formData.phone}
               isEditing={isEditing}
               onChange={(value) => updateField("phone", value)}
+            />
+          </div>
+        </section>
+
+        <section className="booking-details-edit-section">
+          <div className="booking-edit-section-header">
+            <FaUserPlus />
+            <div>
+              <h4>Secondary Contact (Optional)</h4>
+              <p>All three fields can be left blank.</p>
+            </div>
+          </div>
+
+          <div className="booking-edit-grid">
+            <BookingEditField
+              label="Secondary Contact Name"
+              name="secondaryContactName"
+              autoComplete="section-secondary name"
+              value={formData.secondaryContactName}
+              isEditing={isEditing}
+              onChange={(value) => updateField("secondaryContactName", value)}
+            />
+
+            <BookingEditField
+              label="Secondary Contact Phone"
+              name="secondaryContactPhone"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="section-secondary tel"
+              pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+              title="Enter a 10-digit phone number"
+              value={formData.secondaryContactPhone}
+              isEditing={isEditing}
+              onChange={(value) => updateField(
+                "secondaryContactPhone",
+                formatSecondaryContactPhone(value)
+              )}
+            />
+
+            <BookingEditField
+              label="Secondary Contact Email"
+              name="secondaryContactEmail"
+              type="email"
+              autoComplete="section-secondary email"
+              value={formData.secondaryContactEmail}
+              isEditing={isEditing}
+              onChange={(value) => updateField("secondaryContactEmail", value)}
             />
           </div>
         </section>
@@ -5525,6 +5675,10 @@ function BookingOverview({
   const details =
     booking.rentalFormDetails || {};
 
+  const secondaryContact = getSecondaryContact(booking);
+  const hasSecondaryContact =
+    Object.values(secondaryContact).some(Boolean);
+
   const sourceType =
     booking.detectedImportType ||
     booking.sourceType ||
@@ -6490,6 +6644,35 @@ const overviewLinenPieces =
           )}
 
         </div>
+
+
+        {hasSecondaryContact && (
+          <div className="booking-overview-sidebar-section">
+            <div className="booking-overview-sidebar-heading">
+              <FaUserPlus />
+              <span>Secondary Contact</span>
+            </div>
+
+            {secondaryContact.secondaryContactName && (
+              <strong>{secondaryContact.secondaryContactName}</strong>
+            )}
+
+            {secondaryContact.secondaryContactEmail && (
+              <a href={`mailto:${secondaryContact.secondaryContactEmail}`}>
+                {secondaryContact.secondaryContactEmail}
+              </a>
+            )}
+
+            {secondaryContact.secondaryContactPhone && (
+              <a
+                className="booking-overview-sidebar-contact-line"
+                href={`tel:${secondaryContact.secondaryContactPhone.replace(/[^\d+]/g, "")}`}
+              >
+                {secondaryContact.secondaryContactPhone}
+              </a>
+            )}
+          </div>
+        )}
 
 
         <div className="booking-overview-sidebar-stats">
@@ -9221,6 +9404,9 @@ export default function Dashboard() {
       { header: "Contact Name", key: "contactName", width: 24 },
       { header: "Email Address", key: "email", width: 30 },
       { header: "Phone Number", key: "phone", width: 18 },
+      { header: "Secondary Contact Name", key: "secondaryContactName", width: 24 },
+      { header: "Secondary Contact Phone", key: "secondaryContactPhone", width: 22 },
+      { header: "Secondary Contact Email", key: "secondaryContactEmail", width: 30 },
       { header: "Guest Group Name", key: "guestGroupName", width: 30 },
       { header: "Size", key: "size", width: 10 },
       { header: "Desired Dates", key: "desiredDates", width: 28 },
@@ -9234,6 +9420,7 @@ export default function Dashboard() {
         contactName: inquiry.contactName,
         email: inquiry.email === "No email provided" ? "" : inquiry.email,
         phone: inquiry.phone === "No phone provided" ? "" : inquiry.phone,
+        ...getSecondaryContact(inquiry),
         guestGroupName: inquiry.organizationName,
         size: inquiry.attendeeCount || "",
         desiredDates:
@@ -9819,10 +10006,18 @@ export default function Dashboard() {
                   }
                 />
               ) : activeView === "Contacts View" ? (
-                <ContactsView
-            inquiryBookings={inquiryBookings}
-            openBookingDetail={openBookingDetail}
-          />
+          <>
+            <ContactsView
+              inquiryBookings={inquiryBookings}
+              openBookingDetail={openBookingDetail}
+            />
+
+            <BookingContactsSection
+              bookings={inquiryBookings}
+              secondaryOnly
+              onOpenBooking={openBookingDetail}
+            />
+          </>
         ) : activeView === "Inquiry Pipeline" ? (
           <InquiryPipelineView
             inquiryBookings={inquiryBookings}
