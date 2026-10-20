@@ -8243,18 +8243,33 @@ export default function Dashboard() {
         return;
       }
 
+      const existingBookings = await fetchBookings();
+      const existingBookingIds = new Set(
+        existingBookings.map((booking) => booking.id)
+      );
+
       let rowsToSave = allImportedRows;
       let masterImportSummary = "";
+      let newRecordCount = allImportedRows.filter(
+        (booking) => !existingBookingIds.has(booking.id)
+      ).length;
+
       if (requestedMasterType) {
-        // Fetch current records immediately before matching, including older imports.
+        // Match against the latest database records immediately before importing.
         const prepared = prepareMasterImportUpdates(
           allImportedRows,
-          await fetchBookings()
+          existingBookings
         );
+
         rowsToSave = prepared.rows;
+        newRecordCount = prepared.rows.filter(
+          (booking) => !existingBookingIds.has(booking.id)
+        ).length;
+
         const reviewCount = prepared.rows.filter(
           (booking) => booking.rentalFormDetails?.importWarnings?.length
         ).length;
+
         masterImportSummary =
           `\nNew bookings: ${prepared.added}` +
           `\nExisting bookings updated: ${prepared.updated}` +
@@ -8266,10 +8281,14 @@ export default function Dashboard() {
 
         const confirmed = window.confirm(
           `Import ${requestedMasterType}?\n${masterImportSummary}\n\n` +
+          (newRecordCount === 0
+            ? `NO NEW BOOKINGS DETECTED\nAll matching bookings are already in the database. Existing matching records will still be refreshed from the spreadsheet.\n\n`
+            : `New bookings that will be added: ${newRecordCount}\n\n`) +
           `Matching uses the group name and stay dates. Existing booking IDs and staff-only fields are retained. ` +
           `Repeated spreadsheet rows use the first occurrence. When several existing records match, one record is updated. ` +
           `Bookings absent from this spreadsheet are kept. Review notes will appear in each booking's Notes section.`
         );
+
         if (!confirmed) return;
       }
 
@@ -8283,8 +8302,14 @@ export default function Dashboard() {
       const skippedMessage = skippedSheets.length
         ? `\n\nSkipped sheets: ${skippedSheets.join(", ")}`
         : "";
+
+      const noNewRecordsMessage = newRecordCount === 0
+        ? `\n\nNo new records were added. Everything in this import already matched records in the database.`
+        : `\n\nNew records added: ${newRecordCount}`;
+
       alert(
-        `Imported ${savedRows.length} ${importTypeLabel} row(s).${masterImportSummary}${skippedMessage}`
+        `Imported ${savedRows.length} ${importTypeLabel} row(s).` +
+        `${noNewRecordsMessage}${masterImportSummary}${skippedMessage}`
       );
     } catch (error) {
       console.error(`Could not import ${importTypeLabel} spreadsheet:`, error);
@@ -8590,12 +8615,29 @@ export default function Dashboard() {
         return;
       }
 
+      const existingBookings = await fetchBookings();
+      const existingBookingIds = new Set(
+        existingBookings.map((booking) => booking.id)
+      );
+
       const hasMasterRows = allImportedRows.some((booking) =>
         getMasterImportIdentity(booking)
       );
+
       const prepared = hasMasterRows
-        ? prepareMasterImportUpdates(allImportedRows, await fetchBookings())
-        : { rows: allImportedRows, added: 0, updated: 0, duplicateRowsSkipped: 0, duplicateExistingRecords: 0 };
+        ? prepareMasterImportUpdates(allImportedRows, existingBookings)
+        : {
+            rows: allImportedRows,
+            added: 0,
+            updated: 0,
+            duplicateRowsSkipped: 0,
+            duplicateExistingRecords: 0,
+          };
+
+      const newRecordCount = prepared.rows.filter(
+        (booking) => !existingBookingIds.has(booking.id)
+      ).length;
+
       // Report the rows that will be saved, after duplicate Master rows are skipped.
       Object.keys(importCounts).forEach((type) => {
         importCounts[type] = prepared.rows.filter((booking) => booking.sourceType === type).length;
@@ -8630,6 +8672,9 @@ export default function Dashboard() {
           `${prepared.rows.length} row(s)\n\n` +
 
           masterImportSummary +
+          (newRecordCount === 0
+            ? `NO NEW RECORDS DETECTED\nEverything in this workbook already matches records in the database. Existing matching records can still be refreshed by continuing.\n\n`
+            : `New records that will be added: ${newRecordCount}\n\n`) +
           `Matching Master bookings retain their IDs and staff-only fields. Bookings absent from this workbook are kept.\n` +
           `Repeated Master rows use the first occurrence. When several existing records match, one record is updated.\n` +
           `Other worksheet types will be skipped.`
@@ -8669,7 +8714,11 @@ export default function Dashboard() {
           `2026: ${importCounts["Guest Group Inquiry 2026"]}\n` +
           `2027: ${importCounts["Guest Group Inquiry 2027"]}\n\n` +
 
-          `Total imported: ${savedRows.length}\n\n` +
+          `Total imported: ${savedRows.length}\n` +
+          `New records added: ${newRecordCount}\n\n` +
+          (newRecordCount === 0
+            ? `No new records were added. Everything in this workbook already matched records in the database.\n\n`
+            : "") +
           masterImportSummary +
           `${sheetSummaries.join("\n")}`
       );
