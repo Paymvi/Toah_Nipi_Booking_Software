@@ -379,8 +379,7 @@ export default function InquiryRecordDetailView({
           "Unnamed Inquiry",
 
         contactName:
-          formData.contactName.trim() ||
-          "No contact name",
+          formData.contactName.trim(),
 
         name:
           formData.contactName.trim(),
@@ -716,7 +715,8 @@ export default function InquiryRecordDetailView({
                 icon={FaUser}
                 label="Contact Name"
                 value={
-                  booking.contactName
+                  booking.contactName ||
+                  "No contact name"
                 }
               />
 
@@ -724,14 +724,20 @@ export default function InquiryRecordDetailView({
               <InquiryValue
                 icon={FaEnvelope}
                 label="Email"
-                value={booking.email}
+                value={
+                  booking.email ||
+                  "No email provided"
+                }
               />
 
 
               <InquiryValue
                 icon={FaPhone}
                 label="Phone"
-                value={booking.phone}
+                value={
+                  booking.phone ||
+                  "No phone provided"
+                }
               />
 
 

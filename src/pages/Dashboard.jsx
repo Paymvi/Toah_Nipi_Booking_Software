@@ -1368,7 +1368,7 @@ function normalizeInquiry(inquiry, index) {
     inquiry.contactName ||
     inquiry.name ||
     `${inquiry.firstName || ""} ${inquiry.lastName || ""}`.trim() ||
-    "No contact name";
+    "";
 
   return {
     id: inquiry.id || `${inquiry.submittedAt || "inquiry"}-${index}`,
@@ -1381,8 +1381,9 @@ function normalizeInquiry(inquiry, index) {
 
     organizationName,
     contactName,
-    email: inquiry.email || "No email provided",
-    phone: inquiry.phone || "No phone provided",
+    /* Keep empty values empty; placeholders are added only when rendering. */
+    email: inquiry.email || "",
+    phone: inquiry.phone || "",
     ...getSecondaryContact(inquiry),
 
     startDate: inquiry.startDate || "",
@@ -1885,7 +1886,7 @@ function normalizeMasterImportRow(row, index, year) {
     sourceSheet: row.sourceSheet || "", sourceRowNumber: row.sourceRowNumber || index + 2,
     rawSpreadsheetData: { ...row }, rentalFormDetails: details,
     submittedAt: new Date().toISOString(), organizationName,
-    name: contactName, contactName: contactName || "No contact name", email, phone,
+    name: contactName, contactName: contactName || "", email, phone,
     startDate: arrival.date, endDate: departure.date,
     desiredDatesText: [arrival.date, departure.date].filter(Boolean).join(" - "),
     attendeeCount, groupSize: attendeeCount, retreatType: details.retreatType,
@@ -2175,7 +2176,7 @@ function normalizeArchiveSpreadsheetRow(row, index) {
     name: contactName,
     firstName: String(firstName || "").trim(),
     lastName: String(lastName || "").trim(),
-    contactName: contactName || "No contact name",
+    contactName: contactName || "",
 
     email: String(email || "").trim(),
     phone: String(phone || "").trim(),
@@ -2364,7 +2365,7 @@ function normalizeGenericSpreadsheetRow(row, index) {
 
     organizationName: String(groupName || "").trim() || "Unnamed Imported Row",
     name: String(contactName || "").trim(),
-    contactName: String(contactName || "").trim() || "No contact name",
+    contactName: String(contactName || "").trim(),
     email: String(email || "").trim(),
     phone: String(phone || "").trim(),
 
@@ -2727,7 +2728,7 @@ function normalizeGuestGroupInquirySpreadsheetRow(
     organizationName: cleanGroupName || "Unnamed Inquiry",
 
     name: cleanContactName,
-    contactName: cleanContactName || "No contact name",
+    contactName: cleanContactName,
 
     email: cleanGuestGroupInquiryText(email),
     phone: cleanGuestGroupInquiryText(phone),
@@ -3719,7 +3720,7 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
       organizationName:
         formData.organizationName.trim() || "Unnamed Organization",
 
-      contactName: formData.contactName.trim() || "No contact name",
+      contactName: formData.contactName.trim(),
       name: formData.contactName.trim(),
 
       email: formData.email.trim(),
@@ -9659,7 +9660,7 @@ export default function Dashboard() {
       items: [
         {
           ...sidebarItemLookup["Master Spreadsheet"],
-          label: "Master Spreadhsheet",
+          label: "Master Spreadsheet",
           view: SPREADSHEET_VIEW_NAME,
           icon:
             sidebarItemLookup["Master Spreadsheet"]?.icon ||

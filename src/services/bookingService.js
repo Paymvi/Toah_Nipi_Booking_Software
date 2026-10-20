@@ -14,7 +14,33 @@ function cleanArray(value) {
   return Array.isArray(value) ? value : [];
 }
 
-export function bookingToDbRow(booking) {
+/*
+  Display-only placeholders. Older code saved these as real contact
+  data, so they are treated as empty when reading and never written.
+*/
+const CONTACT_PLACEHOLDER_VALUES = new Set([
+  "no contact name",
+  "no email provided",
+  "no phone provided",
+]);
+
+export function cleanContactPlaceholder(value) {
+  const text = String(value ?? "").trim();
+
+  return CONTACT_PLACEHOLDER_VALUES.has(text.toLowerCase())
+    ? ""
+    : value || "";
+}
+
+export function bookingToDbRow(inputBooking) {
+  const booking = {
+    ...inputBooking,
+    contactName: cleanContactPlaceholder(inputBooking.contactName),
+    name: cleanContactPlaceholder(inputBooking.name),
+    email: cleanContactPlaceholder(inputBooking.email),
+    phone: cleanContactPlaceholder(inputBooking.phone),
+  };
+
   return {
     id: booking.id,
 
@@ -107,11 +133,11 @@ export function dbRowToBooking(row) {
     detectedImportType: row.detected_import_type || "",
 
     organizationName: row.organization_name || "Unnamed Organization",
-    contactName: row.contact_name || "No contact name",
-    name: row.contact_name || "",
+    contactName: cleanContactPlaceholder(row.contact_name),
+    name: cleanContactPlaceholder(row.contact_name),
 
-    email: row.email || "",
-    phone: row.phone || "",
+    email: cleanContactPlaceholder(row.email),
+    phone: cleanContactPlaceholder(row.phone),
 
     startDate: row.start_date || "",
     endDate: row.end_date || "",
