@@ -213,17 +213,43 @@ export function dbRowToBooking(row) {
   };
 }
 
-export async function fetchBookings() {
-  const { data, error } = await supabase
-    .from("bookings")
-    .select("*")
-    .order("start_date", { ascending: true, nullsFirst: false });
+/*
+  Supabase caps each response (max_rows, 1,000 by default), so bookings are
+  read page by page. The id tiebreaker keeps rows from shifting between pages
+  when many bookings share a start date.
+*/
+const FETCH_BOOKINGS_PAGE_SIZE = 1000;
+const FETCH_BOOKINGS_MAX_PAGES = 1000;
 
-  if (error) {
-    throw error;
+export async function fetchBookings() {
+  const rows = [];
+
+  for (let page = 0; page < FETCH_BOOKINGS_MAX_PAGES; page += 1) {
+    const { data, error } = await supabase
+      .from("bookings")
+      .select("*")
+      .order("start_date", { ascending: true, nullsFirst: false })
+      .order("id", { ascending: true })
+      .range(rows.length, rows.length + FETCH_BOOKINGS_PAGE_SIZE - 1);
+
+    if (error) {
+      throw error;
+    }
+
+    /*
+      Stop only on an empty page. A short page is not treated as the end,
+      because a server row limit below the page size also returns short pages.
+    */
+    if (!data || data.length === 0) {
+      return rows.map(dbRowToBooking);
+    }
+
+    rows.push(...data);
   }
 
-  return data.map(dbRowToBooking);
+  throw new Error(
+    `Stopped loading bookings after ${FETCH_BOOKINGS_MAX_PAGES} pages. The booking list may be incomplete.`
+  );
 }
 
 export async function upsertBooking(booking) {
