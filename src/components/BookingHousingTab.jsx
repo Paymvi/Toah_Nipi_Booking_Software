@@ -918,11 +918,23 @@ export default function BookingHousingTab({
     ) {
       return;
     }
+    /* Keep the building total in sync so other views read the room sum. */
     setHousingValues(
-      (currentValues)=>({
-        ...currentValues,
-        [roomField]:value
-      })
+      (currentValues)=>{
+        const nextValues = {
+          ...currentValues,
+          [roomField]:value
+        };
+        const roomTotal =
+          Array.isArray(row.floors)
+            ? getFloorTotal(row, nextValues)
+            : getRoomTotal(row, nextValues);
+        nextValues[row.field] =
+          rowHasFloorBreakdown(row, nextValues)
+            ? String(roomTotal)
+            : "";
+        return nextValues;
+      }
     );
     const numericValue =
       Number(value);
@@ -991,7 +1003,7 @@ export default function BookingHousingTab({
                 nextValues[room.field] = "";
               });
             }
-            row.floors.forEach((floor)=>{
+            row.floors?.forEach((floor)=>{
               if(floor.rooms){
                 floor.rooms.forEach((room)=>{
                   nextValues[room.field] = "";
