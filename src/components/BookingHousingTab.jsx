@@ -90,6 +90,11 @@ const housingRows = [
             label: "Room 10",
             field: "lodgingBethelLowerRoom10",
           },
+          {
+            id: "room-11",
+            label: "Room 11",
+            field: "lodgingBethelLowerRoom11",
+          },
         ],
       },
     ],
@@ -1093,6 +1098,8 @@ export default function BookingHousingTab({
             housingValues.lodgingBethelLowerRoom9 || "",
           lodgingBethelLowerRoom10:
             housingValues.lodgingBethelLowerRoom10 || "",
+          lodgingBethelLowerRoom11:
+            housingValues.lodgingBethelLowerRoom11 || "",
       lodgingHebronThird:
         housingValues.lodgingHebronThird || "",
       lodgingHebronBunks:
