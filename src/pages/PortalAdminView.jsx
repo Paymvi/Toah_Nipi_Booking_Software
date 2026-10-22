@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -415,44 +416,6 @@ const PORTAL_DOCUMENT_OPTIONS = [
     documentType: "Insurance Information",
     audience: "intervarsity",
   },
-  {
-    id: "liability-insurance-details",
-    title: "Commercial General Liability Insurance Details",
-    fileName: "2026 Detail of Comm Gen Liability Insurance from Terms and Conditions.pdf",
-    documentType: "Insurance Information",
-    audience: "general",
-  },
-  {
-    id: "water-safety-policies",
-    title: "Water Safety Policies",
-    fileName: "2026 Toah Nipi CRC Water Safety Policies.pdf",
-    documentType: "Policy Document",
-    audience: "general",
-  },
-  {
-    id: "hiking-trails",
-    title: "Hiking Trails",
-    fileName: "Toah Nipi Hiking Trails Updated 4-2026.pdf",
-    documentType: "Information Sheet",
-    audience: "general",
-  },
-
-  {
-    id: "campus-map",
-    title: "Toah Nipi Campus Map",
-    fileName: "TN Campus Map.pdf",
-    documentType: "Map",
-    audience: "general",
-  },
-
-  {
-    id: "intervarsity-liability-insurance-details",
-    title: "InterVarsity Commercial General Liability Insurance Details",
-    fileName: "2026 IV Detail of Comm Gen Liability Insurance from Terms and Conditions.pdf",
-    documentType: "Insurance Information",
-    audience: "intervarsity",
-  },
-
   {
     id: "liability-insurance-details",
     title: "Commercial General Liability Insurance Details",
@@ -1896,31 +1859,39 @@ function PortalTaskAssignmentPanel({
    DOCUMENT ASSIGNMENT
 ========================================================= */
 
+/* A standard document is assigned when a staff-side row carries
+   its catalog file name. Guest uploads and custom-document titles
+   are not catalog assignments. */
+function normalizePortalDocumentFileName(fileName) {
+  return String(fileName || "")
+    .trim()
+    .toLowerCase();
+}
+
+
+function getAssignedStandardFileNames(record) {
+  return new Set(
+    record.documents
+      .filter(
+        (document) =>
+          !document.uploadedByGuest
+      )
+      .map(
+        (document) =>
+          normalizePortalDocumentFileName(
+            document.fileName
+          )
+      )
+  );
+}
+
+
 function createDocumentAssignmentDraft(
   record
 ) {
   const assignedFileNames =
-    new Set(
-      record.documents.map(
-        (document) =>
-          String(
-            document.fileName || ""
-          )
-            .trim()
-            .toLowerCase()
-      )
-    );
-
-  const assignedTitles =
-    new Set(
-      record.documents.map(
-        (document) =>
-          String(
-            document.title || ""
-          )
-            .trim()
-            .toLowerCase()
-      )
+    getAssignedStandardFileNames(
+      record
     );
 
   return Object.fromEntries(
@@ -1928,14 +1899,9 @@ function createDocumentAssignmentDraft(
       (document) => {
         const alreadyAssigned =
           assignedFileNames.has(
-            document.fileName
-              .trim()
-              .toLowerCase()
-          ) ||
-          assignedTitles.has(
-            document.title
-              .trim()
-              .toLowerCase()
+            normalizePortalDocumentFileName(
+              document.fileName
+            )
           );
 
         return [
@@ -2282,6 +2248,32 @@ function PortalDocumentAssignmentPanel({
       await onAssignDocuments(
         record,
         selectedDocuments
+      );
+
+      // Lock what was just assigned even if the follow-up reload failed,
+      // so a second click cannot insert the same rows again.
+      setDocumentDrafts(
+        (currentDrafts) => {
+          const nextDrafts = {
+            ...currentDrafts,
+          };
+
+          selectedDocuments.forEach(
+            (document) => {
+              nextDrafts[
+                document.id
+              ] = {
+                selected:
+                  false,
+
+                alreadyAssigned:
+                  true,
+              };
+            }
+          );
+
+          return nextDrafts;
+        }
       );
     } catch (error) {
       console.error(
@@ -3226,7 +3218,19 @@ export default function PortalAdminView({
     useState("");
 
 
+  const latestLoadRequestRef =
+    useRef(0);
+
+
   async function loadPortalRecords() {
+    // Overlapping reloads can resolve out of order; only the newest
+    // request may update state.
+    const requestId =
+      latestLoadRequestRef.current + 1;
+
+    latestLoadRequestRef.current =
+      requestId;
+
     try {
       setIsLoading(
         true
@@ -3239,10 +3243,24 @@ export default function PortalAdminView({
       const records =
         await fetchPortalOverviewRecords();
 
+      if (
+        requestId !==
+        latestLoadRequestRef.current
+      ) {
+        return;
+      }
+
       setPortalRecords(
         records
       );
     } catch (error) {
+      if (
+        requestId !==
+        latestLoadRequestRef.current
+      ) {
+        return;
+      }
+
       console.error(
         "Could not load portal overview:",
         error
@@ -3252,9 +3270,14 @@ export default function PortalAdminView({
         "Could not load portal information. Check the console."
       );
     } finally {
-      setIsLoading(
-        false
-      );
+      if (
+        requestId ===
+        latestLoadRequestRef.current
+      ) {
+        setIsLoading(
+          false
+        );
+      }
     }
   }
 
@@ -3706,43 +3729,17 @@ export default function PortalAdminView({
     documents
   ) {
     const existingFileNames =
-      new Set(
-        record.documents.map(
-          (document) =>
-            String(
-              document.fileName ||
-                ""
-            )
-              .trim()
-              .toLowerCase()
-        )
-      );
-
-    const existingTitles =
-      new Set(
-        record.documents.map(
-          (document) =>
-            String(
-              document.title ||
-                ""
-            )
-              .trim()
-              .toLowerCase()
-        )
+      getAssignedStandardFileNames(
+        record
       );
 
     const safeDocuments =
       documents.filter(
         (document) =>
           !existingFileNames.has(
-            document.fileName
-              .trim()
-              .toLowerCase()
-          ) &&
-          !existingTitles.has(
-            document.title
-              .trim()
-              .toLowerCase()
+            normalizePortalDocumentFileName(
+              document.fileName
+            )
           )
       );
 
@@ -4124,7 +4121,9 @@ export default function PortalAdminView({
       )}
 
 
-      {isLoading ? (
+      {isLoading &&
+      portalRecords.length ===
+        0 ? (
         <section className="dashboard-card portal-admin-loading">
           <FaClock />
 
