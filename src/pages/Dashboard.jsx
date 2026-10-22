@@ -7980,6 +7980,8 @@ export default function Dashboard() {
   ] = useState(null);
 
   const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
+  // Dev Mode lives here so it survives view changes; resets on page reload.
+  const [isDevMode, setIsDevMode] = useState(false);
   const [isDatedInquirySettingsOpen, setIsDatedInquirySettingsOpen] =
     useState(false);
 
@@ -9912,6 +9914,8 @@ export default function Dashboard() {
               importDropdownRef={importDropdownRef}
               isImportMenuOpen={isImportMenuOpen}
               setIsImportMenuOpen={setIsImportMenuOpen}
+              isDevMode={isDevMode}
+              setIsDevMode={setIsDevMode}
               handleImportMasterSpreadsheet={handleImportMasterSpreadsheet}
               handleImportMaster2026Spreadsheet={handleImportMaster2026Spreadsheet}
               handleImportMaster2027Spreadsheet={handleImportMaster2027Spreadsheet}

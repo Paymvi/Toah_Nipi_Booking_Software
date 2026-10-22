@@ -771,6 +771,166 @@
   font-size: 0.72rem;
 }
 
+/* Dev Mode toggle */
+
+.dashboard-actions .dev-mode-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: #858c9b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dashboard-actions .dev-mode-toggle.is-on {
+  color: #443a9c;
+}
+
+.dev-mode-toggle-track {
+  position: relative;
+  width: 30px;
+  height: 17px;
+  border-radius: 999px;
+  background: #d6dae3;
+  transition: background 160ms ease;
+}
+
+.dev-mode-toggle.is-on .dev-mode-toggle-track {
+  background: #443a9c;
+}
+
+.dev-mode-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(28, 35, 52, 0.2);
+  transition: transform 160ms ease;
+}
+
+.dev-mode-toggle.is-on .dev-mode-toggle-thumb {
+  transform: translateX(13px);
+}
+
+.dev-mode-toggle:focus-visible {
+  outline: 2px solid #9f98d4;
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Dev Mode password dialog (matches the checklist modal) */
+
+.dev-mode-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(20, 23, 34, 0.52);
+}
+
+.dev-mode-dialog {
+  width: min(400px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #dfe4ec;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.25);
+}
+
+.dev-mode-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dev-mode-dialog-header h3 {
+  margin: 0;
+  color: #252936;
+  font-size: 1.08rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.dev-mode-dialog-header p {
+  margin: 5px 0 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+}
+
+.dev-mode-dialog-close {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  display: inline-grid;
+  place-items: center;
+  background: #ffffff;
+  color: #687083;
+  cursor: pointer;
+}
+
+.dev-mode-dialog-close:hover {
+  background: #f6f7f9;
+  color: #252936;
+}
+
+.dev-mode-dialog-field {
+  display: grid;
+  gap: 6px;
+  color: #4b5060;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.dev-mode-dialog-field input {
+  min-height: 38px;
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #252936;
+  font: inherit;
+  font-weight: 400;
+}
+
+.dev-mode-dialog-field input:focus {
+  outline: none;
+  border-color: #9f98d4;
+  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+}
+
+.dev-mode-dialog-error {
+  margin: -4px 0 0;
+  color: #9f2f2f;
+  font-size: 0.8rem;
+}
+
+.dev-mode-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.dev-mode-dialog-footer button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .dashboard-card-header {
   padding: 18px 18px 14px;
 }

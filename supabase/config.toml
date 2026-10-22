@@ -424,3 +424,10 @@ entrypoint = "./functions/submit-guest-inquiry/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/submit-guest-inquiry/*.html" ]
+
+# The function checks the user's session itself, so the gateway JWT check is off
+# (this also lets the browser's CORS preflight through).
+[functions.verify-dev-mode]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/verify-dev-mode/index.ts"

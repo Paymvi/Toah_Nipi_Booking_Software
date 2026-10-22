@@ -24,6 +24,7 @@ into this component as props.
 -------------------------------------------------------------------------------
 */
 
+import { useState } from "react";
 import {
   FaSyncAlt,
   FaFileImport,
@@ -33,6 +34,7 @@ import {
   FaRegCalendarCheck,
   FaUsers,
 } from "react-icons/fa";
+import DevModePasswordDialog from "./DevModePasswordDialog";
 
 export default function DashboardTopbar({
   activeView,
@@ -48,6 +50,10 @@ export default function DashboardTopbar({
   importDropdownRef,
   isImportMenuOpen,
   setIsImportMenuOpen,
+
+  // Owned by Dashboard.jsx so it persists across view changes
+  isDevMode,
+  setIsDevMode,
 
   handleImportMasterSpreadsheet,
   handleImportMaster2026Spreadsheet,
@@ -69,6 +75,19 @@ export default function DashboardTopbar({
   refreshInquiries,
   deleteAllInquiries,
 }) {
+  const [isDevModeDialogOpen, setIsDevModeDialogOpen] = useState(false);
+
+  // Turning on needs the password; turning off does not.
+  const toggleDevMode = () => {
+    if (isDevMode) {
+      setIsImportMenuOpen(false);
+      setIsDevMode(false);
+      return;
+    }
+
+    setIsDevModeDialogOpen(true);
+  };
+
   return (
     <header className="dashboard-topbar">
       {/* Page title area */}
@@ -79,6 +98,30 @@ export default function DashboardTopbar({
 
       {/* Main dashboard action buttons */}
       <div className="dashboard-actions">
+
+        {/* Dev Mode toggle: shows Import and Delete All when on */}
+        <button
+          className={`dev-mode-toggle ${isDevMode ? "is-on" : ""}`}
+          type="button"
+          role="switch"
+          aria-checked={isDevMode}
+          onClick={toggleDevMode}
+        >
+          <span className="dev-mode-toggle-track" aria-hidden="true">
+            <span className="dev-mode-toggle-thumb" />
+          </span>
+          Dev Mode
+        </button>
+
+        {isDevModeDialogOpen && (
+          <DevModePasswordDialog
+            onCancel={() => setIsDevModeDialogOpen(false)}
+            onUnlock={() => {
+              setIsDevModeDialogOpen(false);
+              setIsDevMode(true);
+            }}
+          />
+        )}
 
         {/* Hidden file input for importing any workbook */}
         <input
@@ -135,6 +178,7 @@ export default function DashboardTopbar({
         />
 
         {/* Import dropdown */}
+        {isDevMode && (
         <div className="import-dropdown" ref={importDropdownRef}>
           <button
             className={`secondary-dashboard-button import-dropdown-button ${
@@ -244,6 +288,7 @@ export default function DashboardTopbar({
             </div>
           )}
         </div>
+        )}
 
         {/* Export */}
         <button
@@ -266,6 +311,7 @@ export default function DashboardTopbar({
         </button>
 
         {/* Delete */}
+        {isDevMode && (
         <button
           className="danger-dashboard-button"
           type="button"
@@ -274,6 +320,7 @@ export default function DashboardTopbar({
           <FaTrashAlt />
           Delete All
         </button>
+        )}
       </div>
     </header>
   );
