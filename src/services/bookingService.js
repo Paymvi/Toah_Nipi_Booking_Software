@@ -32,6 +32,46 @@ export function cleanContactPlaceholder(value) {
     : value || "";
 }
 
+/*
+  Edit forms expose Status and Waitlist separately. On save, the field the
+  user changed wins: a changed (or unchanged) Status sets Waitlist to match;
+  a change to Waitlist alone sets the Status. Leaving the waitlist restores
+  the stage the contract dates support. Contract dates are never cleared.
+*/
+export function getConsistentWaitlistState(previousBooking, nextBooking) {
+  const status = String(nextBooking?.status || "").trim() || "Inquiry";
+  const isWaitlistStatus = status.toLowerCase().includes("wait");
+  const wantsWaitlist =
+    String(nextBooking?.waitlist || "").trim().toLowerCase() === "yes";
+  const wasWaitlist =
+    String(previousBooking?.waitlist || "").trim().toLowerCase() === "yes";
+  const statusChanged =
+    status !== (String(previousBooking?.status || "").trim() || "Inquiry");
+
+  if (statusChanged || wantsWaitlist === wasWaitlist) {
+    return { status, waitlist: isWaitlistStatus ? "Yes" : "No" };
+  }
+
+  if (wantsWaitlist) {
+    return { status: "Waitlist", waitlist: "Yes" };
+  }
+
+  if (!isWaitlistStatus) {
+    return { status, waitlist: "No" };
+  }
+
+  const details = nextBooking?.rentalFormDetails || {};
+
+  return {
+    status: details.contractReturnedDate
+      ? "Confirmed"
+      : details.contractSentDate
+        ? "Contract Sent"
+        : "Inquiry",
+    waitlist: "No",
+  };
+}
+
 export function bookingToDbRow(inputBooking) {
   const booking = {
     ...inputBooking,

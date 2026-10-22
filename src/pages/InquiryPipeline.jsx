@@ -796,12 +796,21 @@ export default function InquiryPipelineView({
     );
   };
 
+  /*
+    Contract dates are cleared too; otherwise the card lands in
+    Contract Sent / Confirmed and the Dashboard still sees a contract out.
+  */
   const returnToInquiry = (booking) => {
     updatePipelineBooking(
       booking,
       "Inquiry",
       {
         waitlist: "No",
+        rentalFormDetails: {
+          contractSentDate: "",
+          returnContractByDate: "",
+          contractReturnedDate: "",
+        },
       }
     );
   };

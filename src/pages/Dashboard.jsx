@@ -54,6 +54,7 @@ import {
   upsertBookings,
   deleteAllBookings,
   deleteBooking,
+  getConsistentWaitlistState,
 } from "../services/bookingService";
 
 
@@ -120,6 +121,7 @@ import {
   getLocalDate,
   formatExcelDateValue,
   parseDesiredDateRange,
+  getBookingInquiryDateValue,
 } from "../utils/dateUtils";
 
 
@@ -144,6 +146,7 @@ import InquirySpreadsheetView from "../pages/InquirySpreadsheetView";
 import ContactsView from "../pages/ContactsView";
 import InquiryPipelineView, {
   getInquiryPipelineColumnKey,
+  getInquiryPipelineRecords,
 } from "../pages/InquiryPipeline";
 import ReportsView from "../pages/ReportsView";
 import JobsView, {
@@ -3766,6 +3769,12 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
       notes: formData.notes.trim(),
       updatedAt: new Date().toISOString(),
     };
+
+    // Status and Waitlist are edited separately; save one consistent pair.
+    Object.assign(
+      updatedBooking,
+      getConsistentWaitlistState(booking, updatedBooking)
+    );
 
     onSaveBooking(updatedBooking);
     setIsEditing(false);
@@ -7658,10 +7667,125 @@ function isDashboardHomeInactiveBooking(booking) {
     .trim()
     .toLowerCase();
 
+  const waitlist = String(
+    booking?.waitlist || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const cancellationDate = String(
+    booking?.dateOfCancellation || ""
+  ).trim();
+
+  // Same cancel / waitlist signals the Inquiry Pipeline uses.
   return (
     status.includes("cancel") ||
     status.includes("archive") ||
-    status.includes("waitlist")
+    status.includes("wait") ||
+    waitlist === "yes" ||
+    (cancellationDate !== "" &&
+      !masterImportUnknown(cancellationDate))
+  );
+}
+
+function dashboardHomeHasValue(value) {
+  const text = String(value ?? "").trim();
+
+  return text !== "" && !masterImportUnknown(text);
+}
+
+/*
+  Mirrors the Inquiry Pipeline's contract stages: a returned date or a
+  Confirmed/Booked status means returned; a sent date or a Contract
+  status means sent.
+*/
+function dashboardHomeContractAwaitingReturn(booking) {
+  const details =
+    booking?.rentalFormDetails || {};
+
+  const status = String(
+    booking?.status || ""
+  ).toLowerCase();
+
+  const isReturned =
+    dashboardHomeHasValue(
+      details.contractReturnedDate
+    ) ||
+    status.includes("confirm") ||
+    status.includes("booked");
+
+  const isSent =
+    dashboardHomeHasValue(
+      details.contractSentDate
+    ) ||
+    status.includes("contract");
+
+  return isSent && !isReturned;
+}
+
+/*
+  Plain inquiry stage: status is still Inquiry and no contract has been
+  sent or returned. Lodging and guest counts are not expected yet.
+  Staff Booking records are real retreats created in Create Booking,
+  which saves "Inquiry" until a contract date exists, so they never count.
+*/
+function isDashboardHomePlainInquiry(booking) {
+  if (isStaffBookingRecord(booking)) {
+    return false;
+  }
+
+  const status = String(
+    booking?.status || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (status && status !== "inquiry") {
+    return false;
+  }
+
+  const details =
+    booking?.rentalFormDetails || {};
+
+  return (
+    !dashboardHomeHasValue(
+      details.contractSentDate
+    ) &&
+    !dashboardHomeHasValue(
+      details.contractReturnedDate
+    )
+  );
+}
+
+/*
+  Explicit zero nights (kept in sync with the dates by Create Booking,
+  read from or calculated by Master imports) or a Day Use type means
+  no overnight lodging.
+*/
+function isDashboardHomeDayUseBooking(booking) {
+  const nightsText = String(
+    booking?.nights ||
+      booking?.rentalFormDetails
+        ?.numberOfNights ||
+      ""
+  ).trim();
+
+  if (
+    /^\d+(?:\.\d+)?$/.test(nightsText) &&
+    Number(nightsText) === 0
+  ) {
+    return true;
+  }
+
+  const retreatType = String(
+    booking?.retreatType || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  return (
+    retreatType.includes("day use") ||
+    retreatType.includes("day-use")
   );
 }
 
@@ -7834,25 +7958,24 @@ function getDashboardHomeBuildingTags(booking) {
 
 
 function dashboardHomeBookingNeedsHousing(booking) {
-  const retreatType = String(
-    booking?.retreatType || ""
-  )
-    .trim()
-    .toLowerCase();
-
-  if (
-    retreatType.includes("day use") ||
-    retreatType.includes("day-use")
-  ) {
+  if (isDashboardHomeDayUseBooking(booking)) {
     return false;
   }
 
+  /*
+    roomName defaults to "Unassigned" on every staff booking, so the
+    placeholder is dropped per value instead of matched in joined text.
+  */
   const housingText = [
     booking?.roomName,
     booking?.buildingsRooms,
   ]
     .map((value) => String(value || "").trim())
-    .filter(Boolean)
+    .filter(
+      (value) =>
+        value &&
+        value.toLowerCase() !== "unassigned"
+    )
     .join(" ")
     .toLowerCase();
 
@@ -7864,11 +7987,32 @@ function dashboardHomeBookingNeedsHousing(booking) {
     return false;
   }
 
-  return (
-    !housingText ||
-    housingText === "unassigned" ||
-    housingText.includes("unassigned")
+  if (housingText) {
+    return false;
+  }
+
+  // Lodging saved by the form or Housing tab only in rentalFormDetails.
+  const details =
+    booking?.rentalFormDetails || {};
+
+  const hasDetailedLodging = [
+    ...DASHBOARD_HOME_BUILDINGS.flatMap(
+      (building) => building.detailFields
+    ),
+    "lodgingCamping",
+    "lodgingCampingTent",
+    "lodgingCampingRV",
+  ].some((fieldName) =>
+    dashboardHomeHasLodgingValue(
+      details[fieldName]
+    )
   );
+
+  const hasMarkedUsage = Object.values(
+    details.housingUsage || {}
+  ).some((value) => value === true);
+
+  return !hasDetailedLodging && !hasMarkedUsage;
 }
 
 function getDashboardHomeStatusTone(status) {
@@ -9089,10 +9233,33 @@ export default function Dashboard() {
   const dashboardNinetyDaysAgo =
     addDays(dashboardToday, -90);
 
+  /*
+    An inquiry converted into a staff booking stays in the table; the
+    staff booking (sourceInquiryId) represents it, as in the Pipeline.
+  */
+  const dashboardConvertedInquiryIds =
+    getInquiryPipelineRecords(
+      inquiryBookings
+    ).convertedInquiryIds;
+
+  const dashboardActiveBookings =
+    inquiryBookings.filter(
+      (booking) =>
+        !isDashboardHomeInactiveBooking(
+          booking
+        ) &&
+        !dashboardConvertedInquiryIds.has(
+          String(booking.id || "").trim()
+        )
+    );
+
+  const dashboardActiveBookingSet =
+    new Set(dashboardActiveBookings);
+
   const dashboardScheduledBookings =
     datedInquiries.filter(
       (booking) =>
-        !isDashboardHomeInactiveBooking(
+        dashboardActiveBookingSet.has(
           booking
         )
     );
@@ -9175,30 +9342,23 @@ export default function Dashboard() {
     );
 
   const dashboardMissingDates =
-    inquiryBookings.filter(
+    dashboardActiveBookings.filter(
       (booking) => {
-        if (
-          booking.startDate ||
-          isDashboardHomeInactiveBooking(
-            booking
-          )
-        ) {
+        if (booking.startDate) {
           return false;
         }
 
-        const submittedDate =
-          booking.submittedAt
-            ? new Date(
-                booking.submittedAt
-              )
-            : null;
+        // No genuine inquiry date means the record is not "recent".
+        const inquiryDate =
+          getDashboardHomeBookingDate(
+            getBookingInquiryDateValue(
+              booking
+            )
+          );
 
         return (
-          submittedDate &&
-          !Number.isNaN(
-            submittedDate.getTime()
-          ) &&
-          submittedDate >=
+          inquiryDate &&
+          inquiryDate >=
             dashboardNinetyDaysAgo
         );
       }
@@ -9216,6 +9376,9 @@ export default function Dashboard() {
           startDate &&
           startDate >= dashboardToday &&
           startDate <= dashboardNinetyDaysOut &&
+          !isDashboardHomePlainInquiry(
+            booking
+          ) &&
           dashboardHomeBookingNeedsHousing(
             booking
           )
@@ -9231,29 +9394,31 @@ export default function Dashboard() {
             booking.startDate
           );
 
-        const hasGuestCount = Boolean(
-          String(
-            booking.attendeeCount ||
-              booking.persons ||
-              ""
-          ).trim()
-        );
+        // "N/A", "TBD", "?" etc. are not a recorded group size.
+        const hasGuestCount =
+          dashboardHomeHasValue(
+            booking.attendeeCount
+          ) ||
+          dashboardHomeHasValue(
+            booking.persons
+          );
 
         return (
           startDate &&
           startDate >= dashboardToday &&
           startDate <= dashboardNinetyDaysOut &&
+          !isDashboardHomePlainInquiry(
+            booking
+          ) &&
           !hasGuestCount
         );
       }
     );
 
+  // Undated bookings are included; past stays are not.
   const dashboardContractsAwaitingReturn =
-    dashboardScheduledBookings.filter(
+    dashboardActiveBookings.filter(
       (booking) => {
-        const details =
-          booking.rentalFormDetails || {};
-
         const endDate =
           getDashboardHomeBookingDate(
             booking.endDate ||
@@ -9261,8 +9426,9 @@ export default function Dashboard() {
           );
 
         return (
-          details.contractSentDate &&
-          !details.contractReturnedDate &&
+          dashboardHomeContractAwaitingReturn(
+            booking
+          ) &&
           (!endDate ||
             endDate >= dashboardToday)
         );

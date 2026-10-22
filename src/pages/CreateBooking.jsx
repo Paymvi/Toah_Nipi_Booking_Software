@@ -13,10 +13,14 @@ import {
   FaInfoCircle,
 } from "react-icons/fa";
 
-import { upsertBooking } from "../services/bookingService";
+import {
+  upsertBooking,
+  getConsistentWaitlistState,
+} from "../services/bookingService";
 
 import {
   parseDesiredDateRange,
+  getBookingInquiryDateValue,
 } from "../utils/dateUtils";
 import {
  parseDateInputAsUTC,
@@ -549,17 +553,6 @@ function cleanInquiryPrefillValue(value) {
   }
 
   return text;
-}
-
-
-function getInquiryDateInputValue(value) {
-  const text = String(value || "").trim();
-
-  const match = text.match(
-    /^(\d{4}-\d{2}-\d{2})/
-  );
-
-  return match ? match[1] : "";
 }
 
 
@@ -1174,8 +1167,8 @@ function createInitialFormState(
 
 
     inquiryDate:
-      getInquiryDateInputValue(
-        initialInquiry.submittedAt
+      getBookingInquiryDateValue(
+        initialInquiry
       ) ||
       baseState.inquiryDate,
 
@@ -1486,12 +1479,12 @@ function createExistingBookingFormState(booking) {
        BOOKING TIMELINE
     ===================================================== */
 
+    /*
+      Left blank when unknown: an import timestamp or today's date
+      would otherwise be saved as the real inquiry date.
+    */
     inquiryDate:
-      details.inquiryDate ||
-      getInquiryDateInputValue(
-        booking.submittedAt
-      ) ||
-      getTodayInputValue(),
+      getBookingInquiryDateValue(booking),
 
     contractSentDate:
       details.contractSentDate ||
@@ -2521,6 +2514,28 @@ export default function CreateBooking({
             mealScheduleBounds.lastMeal,
         },
       };
+
+      /*
+        Status and Waitlist are edited separately; save one
+        consistent pair (also mirrored in rentalFormDetails).
+      */
+      if (isEditMode) {
+        const workflowState =
+          getConsistentWaitlistState(
+            existingBooking,
+            bookingToSave
+          );
+
+        Object.assign(
+          bookingToSave,
+          workflowState
+        );
+
+        Object.assign(
+          bookingToSave.rentalFormDetails,
+          workflowState
+        );
+      }
 
 
       let savedBooking;

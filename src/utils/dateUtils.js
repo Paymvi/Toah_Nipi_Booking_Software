@@ -96,6 +96,50 @@ export function getLocalDate(dateString) {
   return new Date(`${dateString}T00:00:00`);
 }
 
+// Returns a booking's genuine inquiry date as YYYY-MM-DD, or "".
+// Master, generic spreadsheet and archive imports stamp submittedAt with
+// the import time, so for those only rentalFormDetails.inquiryDate counts.
+export function getBookingInquiryDateValue(booking) {
+  const savedInquiryDate = String(
+    booking?.rentalFormDetails?.inquiryDate || ""
+  ).trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(savedInquiryDate)) {
+    return savedInquiryDate;
+  }
+
+  const sourceText = [booking?.sourceType, booking?.detectedImportType]
+    .map((value) => String(value || "").toLowerCase())
+    .join(" ");
+
+  if (
+    sourceText.includes("master") ||
+    sourceText.includes("generic spreadsheet") ||
+    sourceText.includes("archive")
+  ) {
+    return "";
+  }
+
+  const submittedAt = String(booking?.submittedAt || "").trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(submittedAt)) {
+    return submittedAt;
+  }
+
+  // Timestamps are converted to the local (Eastern) calendar day.
+  const submittedDate = new Date(submittedAt);
+
+  if (!submittedAt || Number.isNaN(submittedDate.getTime())) {
+    return "";
+  }
+
+  const year = submittedDate.getFullYear();
+  const month = String(submittedDate.getMonth() + 1).padStart(2, "0");
+  const day = String(submittedDate.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 // Returns a new Date with a certain number of days added.
 // This does not mutate the original date.
 export function addDays(date, amount) {
