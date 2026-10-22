@@ -18,7 +18,6 @@
   --home-dashboard-border: #e2e5ec;
   --home-dashboard-panel: #ffffff;
   --home-dashboard-background: #f6f7f9;
-
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -33,20 +32,15 @@
 .home-dashboard-hero {
   position: relative;
   overflow: hidden;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 28px;
-
   min-height: 174px;
   padding: 28px 30px;
-
   border: 1px solid var(--home-dashboard-border);
   border-radius: 20px;
-
-  background:
-    radial-gradient(
+  background: radial-gradient(
       circle at 88% 18%,
       rgba(67, 56, 143, 0.10),
       transparent 32%
@@ -56,9 +50,7 @@
       #ffffff 0%,
       #f8f7fd 100%
     );
-
-  box-shadow:
-    0 12px 32px rgba(31, 35, 53, 0.055);
+  box-shadow: 0 12px 32px rgba(31, 35, 53, 0.055);
 }
 
 .home-dashboard-hero::after {
@@ -83,7 +75,6 @@
 .home-dashboard-section-label {
   display: block;
   margin: 0 0 7px;
-
   color: var(--home-dashboard-purple);
   font-size: 12px;
   font-weight: 700;
@@ -93,7 +84,6 @@
 
 .home-dashboard-hero h1 {
   margin: 0;
-
   color: var(--home-dashboard-text);
   font-size: clamp(30px, 3vw, 44px);
   font-weight: 700;
@@ -104,7 +94,6 @@
 .home-dashboard-hero p {
   max-width: 650px;
   margin: 11px 0 0;
-
   color: var(--home-dashboard-muted);
   font-size: 15px;
   line-height: 1.6;
@@ -113,7 +102,6 @@
 .home-dashboard-hero-actions {
   position: relative;
   z-index: 1;
-
   display: flex;
   align-items: center;
   gap: 10px;
@@ -131,20 +119,15 @@
 .home-dashboard-secondary-action {
   min-height: 44px;
   padding: 0 16px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-
   border-radius: 10px;
   cursor: pointer;
-
   font-size: 14px;
   font-weight: 700;
-
-  transition:
-    transform 160ms ease,
+  transition: transform 160ms ease,
     box-shadow 160ms ease,
     background-color 160ms ease,
     border-color 160ms ease;
@@ -190,18 +173,14 @@
 .home-dashboard-metric {
   position: relative;
   overflow: hidden;
-
   min-height: 126px;
   padding: 20px;
-
   display: flex;
   align-items: center;
   gap: 15px;
-
   border: 1px solid var(--home-dashboard-border);
   border-radius: 16px;
   background: var(--home-dashboard-panel);
-
   box-shadow: 0 8px 22px rgba(31, 35, 53, 0.04);
 }
 
@@ -217,12 +196,10 @@
 .home-dashboard-metric-icon {
   width: 46px;
   height: 46px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-
   border-radius: 13px;
   font-size: 18px;
 }
@@ -234,7 +211,6 @@
 .home-dashboard-metric > div > span {
   display: block;
   margin-bottom: 4px;
-
   color: var(--home-dashboard-muted);
   font-size: 11px;
   font-weight: 700;
@@ -300,8 +276,7 @@
 
 .home-dashboard-main-grid {
   display: grid;
-  grid-template-columns:
-    minmax(0, 1.55fr)
+  grid-template-columns: minmax(0, 1.55fr)
     minmax(320px, 0.78fr);
   gap: 18px;
   align-items: start;
@@ -344,12 +319,10 @@
 .home-dashboard-card-icon {
   width: 42px;
   height: 42px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-
   border-radius: 12px;
   font-size: 16px;
 }
@@ -396,17 +369,14 @@
 
 .home-dashboard-text-action {
   padding: 7px 0;
-
   display: inline-flex;
   align-items: center;
   gap: 7px;
   flex-shrink: 0;
-
   border: 0;
   background: transparent;
   color: var(--home-dashboard-purple);
   cursor: pointer;
-
   font-size: 13px;
   font-weight: 700;
 }
@@ -434,20 +404,16 @@
   width: 100%;
   min-height: 78px;
   padding: 13px 18px;
-
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr) auto 16px;
   align-items: center;
   gap: 12px;
-
   border: 0;
   border-bottom: 1px solid #eff0f4;
   background: #ffffff;
   cursor: pointer;
   text-align: left;
-
-  transition:
-    background-color 150ms ease,
+  transition: background-color 150ms ease,
     transform 150ms ease;
 }
 
@@ -495,11 +461,9 @@
   min-width: 34px;
   height: 30px;
   padding: 0 9px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   border-radius: 999px;
   font-size: 13px;
   font-weight: 700;
@@ -538,7 +502,6 @@
 .home-dashboard-all-clear {
   min-height: 142px;
   padding: 28px 24px;
-
   display: flex;
   align-items: center;
   gap: 15px;
@@ -585,18 +548,15 @@
   width: 100%;
   min-height: 88px;
   padding: 13px 18px;
-
   display: grid;
   grid-template-columns: 54px minmax(0, 1fr) auto 14px;
   align-items: center;
   gap: 13px;
-
   border: 0;
   border-bottom: 1px solid #eff0f4;
   background: #ffffff;
   cursor: pointer;
   text-align: left;
-
   transition: background-color 150ms ease;
 }
 
@@ -612,12 +572,10 @@
   width: 50px;
   height: 56px;
   padding: 6px 4px;
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
   border: 1px solid #e4e5ee;
   border-radius: 11px;
   background: #f9f9fc;
@@ -673,34 +631,6 @@
   white-space: nowrap;
 }
 
-.home-dashboard-status {
-  padding: 6px 9px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.home-dashboard-status-confirmed {
-  background: var(--home-dashboard-green-soft);
-  color: var(--home-dashboard-green);
-}
-
-.home-dashboard-status-contract {
-  background: var(--home-dashboard-purple-soft);
-  color: var(--home-dashboard-purple);
-}
-
-.home-dashboard-status-inquiry {
-  background: var(--home-dashboard-gold-soft);
-  color: var(--home-dashboard-gold);
-}
-
-.home-dashboard-status-neutral {
-  background: #f0f1f4;
-  color: #686f7f;
-}
-
 
 /* =========================================================
    TODAY AT CAMP
@@ -714,17 +644,14 @@
   width: 100%;
   min-height: 66px;
   padding: 11px 18px;
-
   display: grid;
   grid-template-columns: 10px minmax(0, 1fr) auto;
   align-items: center;
   gap: 11px;
-
   border: 0;
   background: #ffffff;
   cursor: pointer;
   text-align: left;
-
   transition: background-color 150ms ease;
 }
 
@@ -778,13 +705,11 @@
   width: calc(100% - 36px);
   margin: 4px 18px 12px;
   padding: 10px 12px;
-
   border: 1px dashed #d9dbe5;
   border-radius: 9px;
   background: #fafafd;
   color: var(--home-dashboard-purple);
   cursor: pointer;
-
   font-size: 12px;
   font-weight: 700;
 }
@@ -809,17 +734,14 @@
   width: 100%;
   min-height: 62px;
   padding: 10px 18px;
-
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr) 14px;
   align-items: center;
   gap: 11px;
-
   border: 0;
   background: #ffffff;
   cursor: pointer;
   text-align: left;
-
   transition: background-color 150ms ease;
 }
 
@@ -881,7 +803,6 @@
 .home-dashboard-day-card {
   min-width: 145px;
   padding: 14px;
-
   border: 1px solid #e6e8ee;
   border-radius: 13px;
   background: #fbfbfd;
@@ -889,8 +810,7 @@
 
 .home-dashboard-day-card-today {
   border-color: #c9c3ec;
-  background:
-    linear-gradient(
+  background: linear-gradient(
       180deg,
       #f6f4ff 0%,
       #fbfbfd 100%
@@ -971,11 +891,9 @@
 .home-dashboard-day-guests {
   margin-top: 10px;
   padding-top: 10px;
-
   display: flex;
   align-items: center;
   gap: 6px;
-
   border-top: 1px solid #eceef2;
   color: #737a8b;
   font-size: 10px;
@@ -995,7 +913,6 @@
 .home-dashboard-empty-state {
   min-height: 190px;
   padding: 30px 24px;
-
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1038,8 +955,7 @@
   }
 
   .home-dashboard-main-grid {
-    grid-template-columns:
-      minmax(0, 1.35fr)
+    grid-template-columns: minmax(0, 1.35fr)
       minmax(300px, 0.75fr);
   }
 }
@@ -1112,23 +1028,10 @@
     height: 52px;
   }
 
-  .home-dashboard-status {
-    display: none;
-  }
-
   .home-dashboard-quick-actions {
     grid-template-columns: 1fr;
   }
 }
-
-
-
-
-
-
-
-
-
 
 
 /* =========================================================
@@ -1140,7 +1043,6 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 6px;
-
   max-width: 260px;
 }
 
@@ -1148,19 +1050,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   min-height: 30px;
   padding: 6px 11px;
-
   border: 1px solid transparent;
   border-radius: 999px;
-
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
 }
-
 
 /* Bethel — green */
 
@@ -1170,7 +1068,6 @@
   color: #44735f;
 }
 
-
 /* Hebron — blue */
 
 .home-dashboard-building-pill-hebron {
@@ -1178,7 +1075,6 @@
   border-color: #d8def3;
   color: #4459ad;
 }
-
 
 /* Dothan — orange */
 
@@ -1188,7 +1084,6 @@
   color: #b8742c;
 }
 
-
 /* Ajalon — purple */
 
 .home-dashboard-building-pill-ajalon {
@@ -1196,7 +1091,6 @@
   border-color: #e6dcef;
   color: #845d98;
 }
-
 
 /* Capernaum — teal */
 
@@ -1206,7 +1100,6 @@
   color: #4f817b;
 }
 
-
 /* Guest House — rose */
 
 .home-dashboard-building-pill-guest-house {
@@ -1214,7 +1107,6 @@
   border-color: #eadbe1;
   color: #965e73;
 }
-
 
 /* Unassigned — gray */
 
@@ -1230,9 +1122,7 @@
 ========================================================= */
 
 @media (max-width: 720px) {
-
   .home-dashboard-building-pills {
     display: none;
   }
-
 }

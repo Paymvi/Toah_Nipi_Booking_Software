@@ -4,8 +4,9 @@
    column widths, click-to-copy cells, and contact row actions.
 ========================================================= */
 
+
 /* =========================================================
-   Contacts View: Professional Polish
+   Contacts View: Base Styles
    Matches Spreadsheet View + Dashboard styling
 ========================================================= */
 
@@ -13,18 +14,20 @@
   display: grid;
   gap: 16px;
   min-width: 0;
+  min-height: calc(100vh - 120px);
 }
 
 /* Main card */
 
 .contacts-view-card {
   overflow: hidden;
-
   background: #ffffff;
   border: 1px solid #dfe4ec;
   border-radius: 10px;
-
   box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+  min-height: calc(100vh - 115px);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Header */
@@ -34,7 +37,6 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
-
   padding: 18px;
   background: #ffffff;
   border-bottom: 1px solid #edf0f4;
@@ -47,7 +49,6 @@
 .contacts-view-header h2 {
   margin: 0;
   color: #252936;
-
   font-size: 1.12rem;
   font-weight: 650;
   letter-spacing: -0.015em;
@@ -57,7 +58,6 @@
 .contacts-view-header p:not(.dashboard-eyebrow) {
   max-width: 720px;
   margin: 5px 0 0;
-
   color: #858c9b;
   font-size: 0.84rem;
   font-weight: 400;
@@ -70,10 +70,8 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-
   background: #eef1ea;
   color: #5c6f46;
-
   font-size: 0.9rem;
 }
 
@@ -84,23 +82,18 @@
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 10px;
-
   flex: 0 0 auto;
 }
 
 .contacts-view-summary span {
   min-width: 106px;
-
   display: grid;
   gap: 4px;
-
   padding: 10px 12px;
-
   background: #fbfcfd;
   border: 1px solid #dfe4ec;
   border-left: 4px solid #443a9c;
   border-radius: 8px;
-
   color: #6f7687;
   font-size: 0.68rem;
   font-weight: 650;
@@ -115,11 +108,9 @@
 
 .contacts-view-summary strong {
   color: #252936;
-
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1;
-
   letter-spacing: normal;
   text-transform: none;
 }
@@ -129,41 +120,39 @@
 .contacts-view-table-wrap {
   width: 100%;
   max-width: 100%;
-  max-height: calc(100vh - 250px);
-
   overflow: auto;
   background: #ffffff;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  height: auto;
 }
 
 /* Table */
 
 .contacts-view-table {
   width: 100%;
-  min-width: 880px;
-
   border-collapse: separate;
   border-spacing: 0;
+  table-layout: fixed;
+  min-width: 980px;
 }
 
 .contacts-view-table th {
   position: sticky;
   top: 0;
   z-index: 2;
-
-  padding: 11px 14px;
-
   background: #f6f7f9;
   color: #565d6b;
-
   border-bottom: 1px solid #dfe4ec;
   border-right: 1px solid #e8ebf1;
-
   text-align: left;
-  font-size: 0.68rem;
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.045em;
-  white-space: nowrap;
+  padding: 8px 12px !important;
+  font-size: 0.66rem;
+  line-height: 1.15;
 }
 
 .contacts-view-table th:last-child {
@@ -171,20 +160,16 @@
 }
 
 .contacts-view-table td {
-  padding: 12px 14px;
-
   background: #ffffff;
   color: #3f4351;
-
   border-bottom: 1px solid #edf0f4;
   border-right: 1px solid #f1f3f6;
-
-  font-size: 0.84rem;
   font-weight: 400;
-  line-height: 1.4;
   vertical-align: middle;
-
-  white-space: nowrap;
+  max-width: 260px;
+  padding: 7px 12px !important;
+  font-size: 0.8rem;
+  line-height: 1.25;
 }
 
 .contacts-view-table td:last-child {
@@ -208,24 +193,14 @@
 .contacts-view-table td strong {
   display: inline-block;
   max-width: 240px;
-
   color: #303442;
-  font-size: 0.88rem;
   font-weight: 650;
-  line-height: 1.3;
-
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 /* Make emails / organizations not explode the row */
-
-.contacts-view-table td {
-  max-width: 260px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 /* Booking count cell */
 
@@ -253,7 +228,6 @@
 .contacts-view-card .empty-state {
   margin: 18px;
   padding: 18px;
-
   border-radius: 8px;
   background: #fbfcfd;
   border-color: #cfd6e1;
@@ -282,10 +256,6 @@
   .contacts-view-summary {
     justify-content: flex-start;
   }
-
-  .contacts-view-table {
-    min-width: 780px;
-  }
 }
 
 @media (max-width: 720px) {
@@ -310,64 +280,20 @@
   }
 }
 
-/* =========================================================
-   Contacts View Column Widths
-========================================================= */
-
-.contacts-view-table {
-  table-layout: fixed;
-  min-width: 920px;
-}
-
 /* Contact Name - a bit smaller */
-.contacts-view-table th:nth-child(1),
-.contacts-view-table td:nth-child(1) {
-  width: 190px;
-  max-width: 190px;
-}
 
 /* Organization - gets more breathing room */
-.contacts-view-table th:nth-child(2),
-.contacts-view-table td:nth-child(2) {
-  width: 270px;
-  max-width: 270px;
-}
 
 /* Email - still roomy */
-.contacts-view-table th:nth-child(3),
-.contacts-view-table td:nth-child(3) {
-  width: 300px;
-  max-width: 300px;
-}
 
 /* Phone - much shorter */
-.contacts-view-table th:nth-child(4),
-.contacts-view-table td:nth-child(4) {
-  width: 130px;
-  max-width: 130px;
-}
 
 /* Bookings */
-.contacts-view-table th:nth-child(5),
-.contacts-view-table td:nth-child(5) {
-  width: 50px;
-  max-width: 50px;
-}
 
 /* Action column */
-.contacts-view-table th:nth-child(6),
-.contacts-view-table td:nth-child(6) {
-  width: 120px;
-  max-width: 120px;
-}
 
 /* Keep long values clean instead of stretching columns */
-.contacts-view-table th,
-.contacts-view-table td {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+
 
 /* =========================================================
    Contacts View - Starred
@@ -377,11 +303,9 @@
   display: flex;
   align-items: center;
   gap: 14px;
-
-  padding: 10px 18px;
-
   background: #fbfcfd;
   border-bottom: 1px solid #edf0f4;
+  padding: 7px 14px;
 }
 
 .contacts-view-toolbar p {
@@ -394,20 +318,18 @@
 .contacts-view-pin-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-
   color: #3f4351;
-  font-size: 0.8rem;
   font-weight: 600;
-
   cursor: pointer;
   white-space: nowrap;
+  gap: 7px;
+  font-size: 0.78rem;
 }
 
 .contacts-view-pin-toggle input {
-  width: 15px;
-  height: 15px;
   accent-color: #443a9c;
+  width: 14px;
+  height: 14px;
 }
 
 .contacts-view-summary span:nth-child(3) {
@@ -418,55 +340,7 @@
   border-left-color: #443a9c;
 }
 
-/* Table layout after adding Star column */
-
-.contacts-view-table {
-  table-layout: fixed;
-  min-width: 980px;
-}
-
-.contacts-view-favorite-column,
-.contacts-view-favorite-cell {
-  width: 70px;
-  max-width: 70px;
-  text-align: center;
-}
-
-.contacts-view-table th:nth-child(2),
-.contacts-view-table td:nth-child(2) {
-  width: 190px;
-  max-width: 190px;
-}
-
-.contacts-view-table th:nth-child(3),
-.contacts-view-table td:nth-child(3) {
-  width: 260px;
-  max-width: 260px;
-}
-
-.contacts-view-table th:nth-child(4),
-.contacts-view-table td:nth-child(4) {
-  width: 290px;
-  max-width: 290px;
-}
-
-.contacts-view-table th:nth-child(5),
-.contacts-view-table td:nth-child(5) {
-  width: 130px;
-  max-width: 130px;
-}
-
-.contacts-view-table th:nth-child(6),
-.contacts-view-table td:nth-child(6) {
-  width: 90px;
-  max-width: 90px;
-}
-
-.contacts-view-table th:nth-child(7),
-.contacts-view-table td:nth-child(7) {
-  width: 190px;
-  max-width: 190px;
-}
+/* Table layout with the Star column */
 
 .contacts-view-table th,
 .contacts-view-table td {
@@ -478,23 +352,14 @@
 /* Star button */
 
 .contact-star-button {
-  width: 30px;
-  height: 30px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   border: 1px solid transparent;
-  border-radius: 7px;
   background: transparent;
   color: #a2a8b3;
-
-  font-size: 0.9rem;
   cursor: pointer;
-
-  transition:
-    background-color 140ms ease,
+  transition: background-color 140ms ease,
     border-color 140ms ease,
     color 140ms ease;
 }
@@ -513,23 +378,10 @@
 
 /* Pinned / starred row states */
 
-.contacts-view-table tbody tr.contacts-view-row-starred td {
-  background: #fffaf0;
-}
-
-.contacts-view-table tbody tr.contacts-view-row-starred:hover td {
-  background: #fff6e4;
-}
-
-.contacts-view-row-starred td:first-child {
-  border-left: 4px solid #c98716;
-}
-
 /* Contact name cell */
 
 .contacts-view-name-cell {
   min-width: 0;
-
   display: flex;
   align-items: center;
   gap: 8px;
@@ -537,7 +389,6 @@
 
 .contacts-view-name-cell strong {
   min-width: 0;
-
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -566,92 +417,33 @@
   }
 }
 
+
 /* =========================================================
    OVERRIDE: Contacts View Star Column Width Fix
 ========================================================= */
 
-/* Make the whole contacts table a little tighter after adding Star */
-.contacts-view-table {
-  table-layout: fixed;
-  min-width: 900px;
-}
+/* Tighter table spacing to fit the Star column */
 
 /* Star column - compact */
-.contacts-view-table th:nth-child(1),
-.contacts-view-table td:nth-child(1),
-.contacts-view-favorite-column,
-.contacts-view-favorite-cell {
-  width: 46px !important;
-  min-width: 46px !important;
-  max-width: 46px !important;
-  padding-left: 6px !important;
-  padding-right: 6px !important;
-  text-align: center;
-}
 
 /* Contact Name */
-.contacts-view-table th:nth-child(2),
-.contacts-view-table td:nth-child(2) {
-  width: 180px !important;
-  max-width: 180px !important;
-}
 
 /* Organization */
-.contacts-view-table th:nth-child(3),
-.contacts-view-table td:nth-child(3) {
-  width: 250px !important;
-  max-width: 250px !important;
-}
 
 /* Email */
-.contacts-view-table th:nth-child(4),
-.contacts-view-table td:nth-child(4) {
-  width: 280px !important;
-  max-width: 280px !important;
-}
 
 /* Phone */
-.contacts-view-table th:nth-child(5),
-.contacts-view-table td:nth-child(5) {
-  width: 125px !important;
-  max-width: 125px !important;
-}
 
 /* Bookings */
-.contacts-view-table th:nth-child(6),
-.contacts-view-table td:nth-child(6) {
-  width: 80px !important;
-  max-width: 80px !important;
-  text-align: center;
-}
 
 /* Actions */
-.contacts-view-table th:nth-child(7),
-.contacts-view-table td:nth-child(7) {
-  width: 140px !important;
-  max-width: 140px !important;
-}
 
 /* Smaller star button so it doesn't feel like a giant cell */
-.contacts-view-favorite-cell .contact-star-button {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  font-size: 0.82rem;
-}
 
 /* Keep the starred row left stripe without making the star column wider */
-.contacts-view-row-starred td:first-child {
-  border-left: 3px solid #c98716;
-}
-
-/* Keep contacts table reasonable, but give star column spreadsheet spacing */
-.contacts-view-table {
-  table-layout: fixed;
-  min-width: 980px;
-}
 
 /* Star column - match Spreadsheet View */
+
 .contacts-view-table th:nth-child(1),
 .contacts-view-table td:nth-child(1),
 .contacts-view-favorite-column,
@@ -659,32 +451,28 @@
   width: 58px !important;
   min-width: 58px !important;
   max-width: 58px !important;
-
   padding-left: 8px !important;
   padding-right: 8px !important;
-
   text-align: center;
   border-right: 1px solid #dfe4ec;
 }
 
 /* Header should feel like the spreadsheet star header */
+
 .contacts-view-table th.contacts-view-favorite-column {
   background: #eef0f5;
   color: #303442;
 }
 
 /* Restore the normal star button size used by spreadsheet */
+
 .contacts-view-favorite-cell .contact-star-button,
 .contacts-view-favorite-cell .spreadsheet-star-button {
-  width: 30px !important;
-  height: 30px !important;
   margin: 0 auto;
-
-  border-radius: 7px;
-  font-size: 0.9rem;
 }
 
 /* Keep row tint matching the spreadsheet starred-row feel */
+
 .contacts-view-table tbody tr.contacts-view-row-starred td {
   background: #fffaf0;
 }
@@ -694,11 +482,13 @@
 }
 
 /* Match spreadsheet's left gold stripe size */
+
 .contacts-view-row-starred td:first-child {
   border-left: 4px solid #c98716 !important;
 }
 
 /* Shift the rest of the contact columns back to sane widths */
+
 .contacts-view-table th:nth-child(2),
 .contacts-view-table td:nth-child(2) {
   width: 190px !important;
@@ -735,6 +525,7 @@
   width: 190px !important;
   max-width: 190px !important;
 }
+
 
 /* =========================================================
    Contacts View: Click Cell To Copy
@@ -776,25 +567,23 @@
   top: 50%;
   right: 8px;
   transform: translateY(-50%);
-
-  min-height: 22px;
   display: inline-flex;
   align-items: center;
-
-  padding: 0 7px;
   border-radius: 999px;
   background: #443a9c;
   color: #ffffff;
-
-  font-size: 0.66rem;
   font-weight: 650;
   line-height: 1;
   pointer-events: none;
+  min-height: 19px;
+  padding: 0 6px;
+  font-size: 0.62rem;
 }
 
 .contacts-view-copy-cell .contacts-view-name-cell {
   max-width: 100%;
 }
+
 
 /* =========================================================
    Contacts View Loading Screen
@@ -814,10 +603,8 @@
 .contacts-loading-icon {
   width: 52px;
   height: 52px;
-
   display: grid;
   place-items: center;
-
   border-radius: 16px;
   background: #eef4ec;
   color: #4f6f3f;
@@ -840,11 +627,9 @@
 .contacts-loading-spinner {
   width: 30px;
   height: 30px;
-
   border: 3px solid #e2e7ee;
   border-top-color: #4f6f3f;
   border-radius: 999px;
-
   animation: contacts-loading-spin 0.85s linear infinite;
 }
 
@@ -852,21 +637,17 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-
   margin: 8px 0 18px;
 }
 
 .contacts-loading-summary span {
   padding: 14px;
-
   border: 1px solid #e2e7ee;
   border-radius: 14px;
   background: #fbfcfd;
-
   display: flex;
   flex-direction: column;
   gap: 4px;
-
   color: #667085;
   font-size: 0.82rem;
 }
@@ -923,46 +704,16 @@
   }
 }
 
+
 /* =========================================================
-   FINAL OVERRIDE: Contacts View Compact Rows
+   Contacts View: Compact Rows (overrides earlier row rules)
    Shows more contacts at once without changing the data
 ========================================================= */
 
 /* Let the table area use a little more vertical space */
-.contacts-view-table-wrap {
-  max-height: calc(100vh - 205px);
-}
-
-/* Tighten the starred-first toolbar */
-.contacts-view-toolbar {
-  padding: 7px 14px;
-}
-
-.contacts-view-pin-toggle {
-  gap: 7px;
-  font-size: 0.78rem;
-}
-
-.contacts-view-pin-toggle input {
-  width: 14px;
-  height: 14px;
-}
-
-/* Tighten table header */
-.contacts-view-table th {
-  padding: 8px 12px !important;
-  font-size: 0.66rem;
-  line-height: 1.15;
-}
-
-/* Tighten table rows */
-.contacts-view-table td {
-  padding: 7px 12px !important;
-  font-size: 0.8rem;
-  line-height: 1.25;
-}
 
 /* Make names less tall */
+
 .contacts-view-table td strong,
 .contacts-view-name-cell strong {
   font-size: 0.84rem;
@@ -970,6 +721,7 @@
 }
 
 /* Keep the star column from forcing row height */
+
 .contact-star-button,
 .contacts-view-favorite-cell .contact-star-button,
 .contacts-view-favorite-cell .spreadsheet-star-button {
@@ -979,44 +731,19 @@
   font-size: 0.8rem !important;
 }
 
-/* Keep copy feedback from making cells feel chunky */
-.contacts-view-copy-feedback {
-  min-height: 19px;
-  padding: 0 6px;
-  font-size: 0.62rem;
-}
 
 /* =========================================================
-   FINAL OVERRIDE: Contacts View Full Height
+   Contacts View: Full Height (overrides earlier height rules)
    Makes the contacts table area stretch lower like Spreadsheet View
 ========================================================= */
 
-.contacts-view-page {
-  min-height: calc(100vh - 120px);
-}
-
-.contacts-view-card {
-  min-height: calc(100vh - 115px);
-
-  display: flex;
-  flex-direction: column;
-}
-
 /* Header and toolbar stay their normal size */
+
 .contacts-view-header,
 .contacts-view-toolbar {
   flex: 0 0 auto;
 }
 
-/* This is the important part:
-   the table area now fills the remaining screen height */
-.contacts-view-table-wrap {
-  flex: 1 1 auto;
-  min-height: 0;
-
-  max-height: none;
-  height: auto;
-}
 
 /* =========================================================
    Contacts Search
@@ -1029,24 +756,15 @@
 
 .contacts-view-search input {
   width: 100%;
-
   height: 34px;
-
   padding: 0 12px;
-
   border-radius: 8px;
   border: 1px solid #dfe4ec;
-
   background: #ffffff;
-
   color: #303442;
-
   font-size: 0.82rem;
-
   outline: none;
-
-  transition:
-    border-color 140ms ease,
+  transition: border-color 140ms ease,
     box-shadow 140ms ease;
 }
 
@@ -1056,19 +774,16 @@
 
 .contacts-view-search input:focus {
   border-color: #443a9c;
-
-  box-shadow:
-    0 0 0 3px rgba(68, 58, 156, 0.12);
+  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
 }
 
 @media (max-width: 900px) {
-
   .contacts-view-search {
     width: 100%;
     max-width: none;
   }
-
 }
+
 
 /* =========================================================
    Expanded Contact Bookings
@@ -1081,23 +796,17 @@
 }
 
 .contacts-bookings-expanded {
-  padding: 14px 18px 18px;
-  background: #f8fafc;
   border-top: 1px solid #e2e8f0;
+  padding: 16px 18px 18px;
+  background: #f8fafc;
 }
 
 .contacts-bookings-header {
+  gap: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
   margin-bottom: 12px;
-}
-
-.contacts-bookings-header strong {
-  color: #1f2937;
-  font-size: 0.9rem;
-  font-weight: 700;
 }
 
 .contacts-bookings-header span {
@@ -1107,244 +816,122 @@
   border-radius: 999px;
   background: #eef2f7;
   color: #64748b;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: .72rem;
+  font-weight: 650;
+}
+
+.contacts-booking-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.contacts-booking-title-row {
+  flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.contacts-booking-title {
+  line-height: 1.2;
+  color: #252936;
+  font-size: .92rem;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   Contact Booking Cards
+========================================================= */
+
+.contacts-bookings-header strong {
+  color: #252936;
+  font-size: .86rem;
+  font-weight: 700;
 }
 
 .contacts-bookings-list {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
+  gap: 12px;
 }
 
 .contacts-booking-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 16px;
   padding: 14px 16px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.contacts-booking-main {
-  min-width: 0;
-  flex: 1;
-}
-
-.contacts-booking-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-}
-
-.contacts-booking-title {
-  color: #1f2937;
-  font-size: 0.9rem;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.contacts-booking-meta {
-  display: flex;
-  align-items: flex-start;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-/* =========================================================
-   Contact Booking Cards
-========================================================= */
-
-.contacts-bookings-expanded {
-  padding: 16px 18px 18px;
-  background: #f8fafc;
-}
-
-.contacts-bookings-header {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-
-  margin-bottom:12px;
-}
-
-.contacts-bookings-header strong {
-  color:#252936;
-  font-size:.86rem;
-  font-weight:700;
-}
-
-.contacts-bookings-header span {
-  padding:4px 10px;
-
-  border-radius:999px;
-
-  background:#eef2f7;
-
-  color:#64748b;
-
-  font-size:.72rem;
-  font-weight:650;
-}
-
-.contacts-bookings-list {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-  gap:12px;
-}
-
-.contacts-booking-item {
-
-  display:flex;
-
-  align-items:center;
-
-  justify-content:space-between;
-
-  gap:16px;
-
-  padding:14px 16px;
-
-  background:#ffffff;
-
-  border:1px solid #e2e8f0;
-
-  border-radius:12px;
-
-  box-shadow:0 2px 6px rgba(15,23,42,.04);
-
-}
-
-.contacts-booking-main {
-  min-width:0;
-}
-
-.contacts-booking-title-row {
-
-  display:flex;
-
-  align-items:center;
-
-  gap:10px;
-
-  margin-bottom:8px;
-
-}
-
-.contacts-booking-title {
-
-  color:#252936;
-
-  font-size:.92rem;
-
-  font-weight:700;
-
+  box-shadow: 0 2px 6px rgba(15,23,42,.04);
 }
 
 .contacts-booking-info {
-
-  display:flex;
-
-  align-items:center;
-
-  gap:16px;
-
-  color:#64748b;
-
-  font-size:.78rem;
-
-  font-weight:550;
-
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #64748b;
+  font-size: .78rem;
+  font-weight: 550;
 }
 
 .contacts-booking-date::before {
-
-  content:"📅";
-
-  margin-right:5px;
-
+  content: "📅";
+  margin-right: 5px;
 }
 
 .contacts-booking-guests::before {
-
-  content:"👥";
-
-  margin-right:5px;
-
+  content: "👥";
+  margin-right: 5px;
 }
 
 /* status */
 
 .contacts-booking-status-pill {
-
-  padding:4px 10px;
-
-  border-radius:999px;
-
-  font-size:.7rem;
-
-  font-weight:700;
-
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: .7rem;
+  font-weight: 700;
 }
 
 .contacts-booking-status-pill.is-confirmed {
-
-  background:#e7f6ed;
-
-  color:#1f7a46;
-
+  background: #e7f6ed;
+  color: #1f7a46;
 }
 
 /* button */
 
 .contacts-booking-open-button {
-
-  height:32px;
-
-  padding:0 12px;
-
-  border-radius:8px;
-
-  border:1px solid #dbe2ea;
-
-  background:white;
-
-  color:#443a9c;
-
-  font-size:.76rem;
-
-  font-weight:650;
-
-  cursor:pointer;
-
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #dbe2ea;
+  background: white;
+  color: #443a9c;
+  font-size: .76rem;
+  font-weight: 650;
+  cursor: pointer;
 }
 
 .contacts-booking-open-button:hover {
-
-  background:#f7f5ff;
-
+  background: #f7f5ff;
 }
 
-@media(max-width:700px){
-
+@media (max-width: 700px) {
   .contacts-booking-item {
-
-    flex-direction:column;
-
-    align-items:flex-start;
-
+    flex-direction: column;
+    align-items: flex-start;
   }
-
 }
 
 @media (max-width: 900px) {
   .contacts-booking-item {
     flex-direction: column;
     align-items: stretch;
+    grid-template-columns: 1fr;
   }
 
   .contacts-booking-actions {
@@ -1354,155 +941,71 @@
   .contacts-booking-open-button {
     width: 100%;
   }
-
-  .contacts-booking-meta {
-    gap: 16px;
-  }
 }
 
-@media(max-width:900px){
-
-  .contacts-booking-item {
-
-    grid-template-columns:1fr;
-
-  }
-
+@media (max-width: 900px) {
 }
 
 .contacts-booking-title-group {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
-}
-
-.contacts-booking-title {
-  color:#252936;
-  font-size:.92rem;
-  font-weight:700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .contacts-booking-type {
-
-  display:inline-flex;
-  align-items:center;
-
-  padding:3px 9px;
-
-  border-radius:999px;
-
-  background:#f1f5f9;
-
-  color:#64748b;
-
-  font-size:.7rem;
-
-  font-weight:650;
-
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: .7rem;
+  font-weight: 650;
 }
+
 
 /* =========================================================
    Contacts Name Sort Toggle
 ========================================================= */
 
 .contacts-view-name-sort {
-
-  display:flex;
-  align-items:center;
-  gap:6px;
-
-  color:#64748b;
-  font-size:.78rem;
-  font-weight:600;
-
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: .78rem;
+  font-weight: 600;
 }
 
 .contacts-view-name-sort button {
-
-  height:30px;
-
-  padding:0 10px;
-
-  border-radius:7px;
-
-  border:1px solid #dfe4ec;
-
-  background:#ffffff;
-
-  color:#475569;
-
-  font-size:.76rem;
-
-  font-weight:600;
-
-  cursor:pointer;
-
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 7px;
+  border: 1px solid #dfe4ec;
+  background: #ffffff;
+  color: #475569;
+  font-size: .76rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .contacts-view-name-sort button:hover {
-
-  background:#f8fafc;
-
+  background: #f8fafc;
 }
 
 .contacts-view-name-sort button.active {
-
-  background:#443a9c;
-
-  border-color:#443a9c;
-
-  color:#ffffff;
-
+  background: #443a9c;
+  border-color: #443a9c;
+  color: #ffffff;
 }
 
-/* =========================================================
-   APPROXIMATE GUESTS GRID FIX
-========================================================= */
 
-.rental-approx-guests-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 18px;
-}
-
-.rental-approx-guests-grid .rental-field-full {
-  grid-column: span 5;
-}
-
-@media (max-width: 1200px) {
-  .rental-approx-guests-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .rental-approx-guests-grid .rental-field-full {
-    grid-column: span 3;
-  }
-}
-
-@media (max-width: 800px) {
-  .rental-approx-guests-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .rental-approx-guests-grid .rental-field-full {
-    grid-column: span 2;
-  }
-}
-
-@media (max-width: 550px) {
-  .rental-approx-guests-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .rental-approx-guests-grid .rental-field-full {
-    grid-column: span 1;
-  }
-}
 /* =========================================================
    Contacts View: Soft Delete / Restore
    Deleted contacts are hidden from this view only.
 ========================================================= */
+
 .contacts-view-deleted-toggle {
   min-height: 32px;
   display: inline-flex;
@@ -1518,23 +1021,25 @@
   font-weight: 650;
   cursor: pointer;
   white-space: nowrap;
-  transition:
-    background-color 140ms ease,
+  transition: background-color 140ms ease,
     border-color 140ms ease,
     color 140ms ease;
 }
+
 .contacts-view-deleted-toggle:hover,
 .contacts-view-deleted-toggle.active {
   background: #fff5f5;
   border-color: #efc8c8;
   color: #b42318;
 }
+
 .contacts-view-deleted-panel {
   flex: 0 0 auto;
   padding: 14px 18px 16px;
   background: #fffafa;
   border-bottom: 1px solid #ecdada;
 }
+
 .contacts-view-deleted-panel-header {
   display: flex;
   align-items: flex-start;
@@ -1542,21 +1047,25 @@
   gap: 16px;
   margin-bottom: 12px;
 }
+
 .contacts-view-deleted-panel-header > div {
   min-width: 0;
 }
+
 .contacts-view-deleted-panel-header strong {
   display: block;
   color: #7f1d1d;
   font-size: 0.9rem;
   font-weight: 700;
 }
+
 .contacts-view-deleted-panel-header p {
   margin: 4px 0 0;
   color: #8a5a5a;
   font-size: 0.76rem;
   line-height: 1.4;
 }
+
 .contacts-view-deleted-close {
   flex: 0 0 auto;
   min-height: 30px;
@@ -1569,13 +1078,16 @@
   font-weight: 650;
   cursor: pointer;
 }
+
 .contacts-view-deleted-close:hover {
   background: #fff1f1;
 }
+
 .contacts-view-deleted-list {
   display: grid;
   gap: 8px;
 }
+
 .contacts-view-deleted-item {
   display: flex;
   align-items: center;
@@ -1586,11 +1098,13 @@
   border-radius: 9px;
   background: #ffffff;
 }
+
 .contacts-view-deleted-copy {
   min-width: 0;
   display: grid;
   gap: 2px;
 }
+
 .contacts-view-deleted-copy strong,
 .contacts-view-deleted-copy span,
 .contacts-view-deleted-copy small {
@@ -1598,21 +1112,25 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .contacts-view-deleted-copy strong {
   color: #303442;
   font-size: 0.82rem;
   font-weight: 700;
 }
+
 .contacts-view-deleted-copy span {
   color: #5f6674;
   font-size: 0.76rem;
   font-weight: 600;
 }
+
 .contacts-view-deleted-copy small {
   color: #8a909c;
   font-size: 0.7rem;
   font-weight: 500;
 }
+
 .contacts-view-restore-button {
   flex: 0 0 auto;
   min-height: 32px;
@@ -1629,10 +1147,12 @@
   font-weight: 700;
   cursor: pointer;
 }
+
 .contacts-view-restore-button:hover {
   background: #eaf7ee;
   border-color: #afd0b7;
 }
+
 .contacts-view-deleted-empty {
   padding: 12px;
   border: 1px dashed #e4caca;
@@ -1641,6 +1161,7 @@
   font-size: 0.76rem;
   text-align: center;
 }
+
 .contact-delete-button {
   width: 28px;
   height: 28px;
@@ -1653,16 +1174,17 @@
   color: #a3a8b1;
   font-size: 0.76rem;
   cursor: pointer;
-  transition:
-    background-color 140ms ease,
+  transition: background-color 140ms ease,
     border-color 140ms ease,
     color 140ms ease;
 }
+
 .contact-delete-button:hover {
   background: #fff1f1;
   border-color: #efc8c8;
   color: #b42318;
 }
+
 .contact-delete-button:focus-visible,
 .contacts-view-deleted-toggle:focus-visible,
 .contacts-view-restore-button:focus-visible,
@@ -1670,12 +1192,14 @@
   outline: 3px solid rgba(180, 35, 24, 0.12);
   outline-offset: 2px;
 }
+
 @media (max-width: 900px) {
   .contacts-view-deleted-panel-header,
   .contacts-view-deleted-item {
     align-items: stretch;
     flex-direction: column;
   }
+
   .contacts-view-deleted-close,
   .contacts-view-restore-button {
     width: 100%;

@@ -1,0 +1,1307 @@
+/* =========================================================
+   GUEST GROUP BOOKING FORM
+   Styled after the original rental form UI
+========================================================= */
+
+.rental-page {
+  min-height: 100vh;
+  padding: 44px 20px;
+  background: var(--page-bg, #f6f7f9);
+}
+
+
+/* =========================================================
+   Main Card
+========================================================= */
+
+.rental-card {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 36px 40px 38px;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border, #dde2e8);
+  border-radius: 14px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+}
+
+
+/* =========================================================
+   Header
+========================================================= */
+
+.rental-header {
+  margin-bottom: 30px;
+}
+
+.rental-eyebrow {
+  margin: 0 0 7px;
+  color: #6c7b70;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.rental-header h1 {
+  margin: 0;
+  color: var(--text-main, #252936);
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  font-weight: 600;
+}
+
+.rental-header p {
+  max-width: 620px;
+  margin: 10px 0 0;
+  color: var(--text-muted);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.rental-header > p:last-child {
+  max-width: 680px;
+  margin: 10px 0 0;
+  color: var(--text-muted, #7c8492);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   Messages
+========================================================= */
+
+.success-message,
+.rental-error-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 26px;
+  padding: 14px 16px;
+  border-radius: 10px;
+}
+
+.success-message {
+  border: 1px solid var(--success-border, #c6dfcd);
+  background: var(--success-bg, #edf7f0);
+  color: var(--success-text, #306342);
+}
+
+@media (max-width: 780px) {
+  .success-message {
+    flex-direction: column;
+  }
+}
+
+.rental-error-message {
+  border: 1px solid #e6c7c7;
+  background: #fff2f2;
+  color: #913737;
+}
+
+.success-message svg,
+.rental-error-message svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.success-message > div,
+.rental-error-message > div {
+  display: grid;
+  gap: 3px;
+}
+
+.success-message strong,
+.rental-error-message strong {
+  font-weight: 600;
+}
+
+.success-message span,
+.rental-error-message span {
+  font-size: 0.88rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   Form Layout
+========================================================= */
+
+.rental-form {
+  width: 100%;
+  display: grid;
+  gap: 24px;
+}
+
+
+/* =========================================================
+   Sections
+========================================================= */
+
+.rental-form-section {
+  overflow: hidden;
+  border: 1px solid var(--border, #dde2e8);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+
+/* =========================================================
+   Section Header
+========================================================= */
+
+.rental-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 18px;
+  border-bottom: 1px solid #dce5dc;
+  background: #f4f7f3;
+}
+
+.rental-section-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d2dfd0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #5f735f;
+  font-size: 0.85rem;
+}
+
+.rental-section-header h2 {
+  margin: 0;
+  color: var(--text-main, #252936);
+  font-size: 0.98rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.rental-section-header p {
+  margin: 3px 0 0;
+  color: var(--text-muted, #858c9b);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   Section Body
+========================================================= */
+
+.rental-section-body {
+  display: grid;
+  gap: 24px;
+  padding: 22px;
+}
+
+
+/* =========================================================
+   Field Grids
+========================================================= */
+
+.rental-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 34px;
+  row-gap: 24px;
+}
+
+.rental-field-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 24px;
+}
+
+.rental-field-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 20px;
+}
+
+.rental-field-full {
+  grid-column: 1 / -1;
+}
+
+
+/* =========================================================
+   Fields
+========================================================= */
+
+.rental-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.rental-field > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #4c5562;
+  font-size: 0.93rem;
+  font-weight: 550;
+}
+
+.rental-field > span small {
+  color: #9ca3af;
+  font-size: 0.74rem;
+  font-weight: 400;
+}
+
+.rental-field input,
+.rental-field select,
+.rental-field textarea {
+  width: 100%;
+  border: 1px solid var(--border, #d6dbe2);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--text-main, #252936);
+  padding: 13px 15px;
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 170ms ease,
+    box-shadow 170ms ease,
+    background-color 170ms ease;
+}
+
+.rental-field input,
+.rental-field select {
+  min-height: 48px;
+}
+
+.rental-field textarea {
+  min-height: 120px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.rental-field input::placeholder,
+.rental-field textarea::placeholder {
+  color: #b8bec8;
+  opacity: 1;
+}
+
+.rental-field select {
+  cursor: pointer;
+}
+
+.rental-field input:focus,
+.rental-field select:focus,
+.rental-field textarea:focus {
+  border-color: var(--focus, #718b76);
+  box-shadow: 0 0 0 4px
+    var(--focus-soft, rgba(91, 119, 98, 0.11));
+  background: #ffffff;
+}
+
+.rental-field input:disabled {
+  background: #f4f5f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   Subsections
+========================================================= */
+
+.rental-subsection {
+  display: grid;
+  gap: 18px;
+}
+
+.rental-subsection + .rental-subsection {
+  padding-top: 22px;
+  border-top: 1px solid #e3e9e2;
+}
+
+.rental-subsection h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: #4d5561;
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.rental-subsection h3 svg {
+  color: #6b7e6e;
+}
+
+
+/* =========================================================
+   Timeline + Payments Columns
+========================================================= */
+
+.rental-form-two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  align-items: start;
+}
+
+
+/* =========================================================
+   Lodging
+========================================================= */
+
+.rental-lodging-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.rental-lodging-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 72px;
+  padding: 12px;
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
+  background: #fafbfc;
+}
+
+.rental-lodging-field > span {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rental-lodging-field strong {
+  color: #3f4651;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.rental-lodging-field small {
+  color: #8c94a1;
+  font-size: 0.72rem;
+}
+
+.rental-lodging-field input {
+  width: 65px;
+  height: 42px;
+  flex: 0 0 65px;
+  border: 1px solid var(--border, #d6dbe2);
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 0 8px;
+  color: var(--text-main, #252936);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: center;
+  outline: none;
+}
+
+.rental-lodging-field input:focus {
+  border-color: var(--focus, #718b76);
+  box-shadow: 0 0 0 4px
+    var(--focus-soft, rgba(91, 119, 98, 0.11));
+}
+
+
+/* =========================================================
+   Save Button
+   Matches original form
+========================================================= */
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+.form-actions button {
+  min-width: 185px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--button, #4f46c7);
+  color: #ffffff;
+  padding: 14px 28px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 170ms ease,
+    transform 170ms ease,
+    box-shadow 170ms ease;
+}
+
+.form-actions button:hover {
+  background: var(--button-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(79, 70, 199, 0.22);
+}
+
+.form-actions button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.form-actions button:hover:not(:disabled) {
+  background: var(--button-hover, #4338b3);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px rgba(79, 70, 199, 0.22);
+}
+
+.form-actions button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.form-actions button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+
+/* =========================================================
+   Responsive
+========================================================= */
+
+@media (max-width: 1000px) {
+  .rental-form-two-column {
+    grid-template-columns: 1fr;
+  }
+
+  .rental-field-grid-4,
+  .rental-lodging-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 780px) {
+  .rental-page {
+    padding: 24px 14px;
+  }
+
+  .rental-card {
+    padding: 26px 18px 28px;
+    border-radius: 12px;
+  }
+
+  .rental-form {
+    gap: 20px;
+  }
+
+  .rental-section-body {
+    padding: 18px;
+  }
+
+  .rental-field-grid,
+  .rental-field-grid-3,
+  .rental-field-grid-4,
+  .rental-lodging-grid {
+    grid-template-columns: 1fr;
+    row-gap: 20px;
+  }
+
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+
+  .success-message,
+  .rental-error-message {
+    align-items: flex-start;
+  }
+}
+
+
+/* =========================================================
+   TEST DATA BUTTON
+========================================================= */
+
+.rental-test-data-button {
+  flex: 0 0 auto;
+  margin-top: 4px;
+  border: 1px solid #d8d4f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #4f46a5;
+  padding: 10px 15px;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease,
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+
+.rental-test-data-button:hover {
+  border-color: #bdb6e5;
+  background: #f8f7fd;
+  transform: translateY(-1px);
+}
+
+.rental-test-data-button:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 780px) {
+  .rental-test-data-button {
+    margin-top: 0;
+  }
+}
+
+
+/* =========================================================
+   ALLERGIES
+========================================================= */
+
+.rental-allergies-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rental-allergy-headings {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 52px;
+  gap: 10px;
+  padding: 0 2px;
+  font-size: 0.82rem;
+  color: #7b8496;
+}
+
+.rental-allergy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rental-allergy-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 52px;
+  gap: 10px;
+  align-items: center;
+}
+
+.rental-allergy-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.rental-allergy-remove {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #dfe4ea;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #465064;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.rental-allergy-remove:hover {
+  background: #f5f7f9;
+  border-color: #cbd2da;
+}
+
+.rental-allergy-add-below {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid #b8d3c1;
+  border-radius: 8px;
+  background: #edf7f0;
+  color: #2f6b45;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.rental-allergy-add-below:hover {
+  background: #e3f2e8;
+  border-color: #9fc8ad;
+  transform: translateY(-1px);
+}
+
+.rental-allergy-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.rental-allergy-notes > span {
+  color: #4c5562;
+  font-size: 0.93rem;
+  font-weight: 550;
+}
+
+
+/* =========================================================
+   ARRIVAL + DEPARTURE SCHEDULE
+========================================================= */
+
+.rental-stay-schedule {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  padding-top: 4px;
+}
+
+.rental-stay-schedule-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rental-stay-schedule-title {
+  font-weight: 650;
+  color: #343b49;
+}
+
+.rental-stay-schedule-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+
+/* =========================================================
+   LODGING IMAGES
+========================================================= */
+
+.rental-lodging-info {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rental-lodging-image {
+  width: 72px;
+  height: 58px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e1e5e9;
+}
+
+.rental-lodging-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rental-lodging-text strong {
+  display: block;
+}
+
+.rental-lodging-text small {
+  display: block;
+}
+
+
+/* =========================================================
+   CURRENCY INPUTS
+========================================================= */
+
+.rental-currency-input {
+  position: relative;
+  width: 100%;
+}
+
+.rental-currency-input input {
+  width: 100%;
+  padding-left: 38px;
+}
+
+.rental-currency-symbol {
+  position: absolute;
+  z-index: 1;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca6b8;
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   MEAL SCHEDULE
+   Matches Guest Group Booking Form styling
+========================================================= */
+
+.rental-meal-schedule {
+  margin-bottom: 4px;
+  overflow: hidden;
+  border: 1px solid #e1e5ea;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+
+/* =========================================================
+   Header
+========================================================= */
+
+.rental-meal-schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e8ebef;
+  background: #fafbfc;
+}
+
+.rental-meal-schedule-header h4 {
+  margin: 0;
+  color: #4d5561;
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.rental-meal-schedule-header p {
+  margin: 4px 0 0;
+  color: #858c9b;
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   Total Meal Badge
+========================================================= */
+
+.rental-meal-total-badge {
+  flex: 0 0 auto;
+  min-width: 78px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 11px;
+  border: 1px solid #dbe2dc;
+  border-radius: 7px;
+  background: #f1f5f1;
+  color: #647666;
+}
+
+.rental-meal-total-badge strong {
+  color: #435346;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.rental-meal-total-badge span {
+  color: #748078;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+
+/* =========================================================
+   Empty State
+========================================================= */
+
+.rental-meal-schedule-empty {
+  padding: 26px 20px;
+  background: #ffffff;
+  color: #8c94a1;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+
+/* =========================================================
+   Table Wrapper
+========================================================= */
+
+.rental-meal-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+
+/* =========================================================
+   Table
+========================================================= */
+
+.rental-meal-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: #ffffff;
+}
+
+.rental-meal-table th,
+.rental-meal-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #eceff2;
+  vertical-align: middle;
+  text-align: center;
+}
+
+/* Date column */
+
+.rental-meal-table th:first-child,
+.rental-meal-table td:first-child {
+  width: 46%;
+  text-align: left;
+}
+
+/* Meal columns */
+
+.rental-meal-table thead th:not(:first-child) {
+  width: 18%;
+}
+
+
+/* =========================================================
+   Table Header
+========================================================= */
+
+.rental-meal-table thead th {
+  background: #ffffff;
+  color: #59616e;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.rental-meal-table thead th strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #4d5561;
+  font-size: 0.88rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.rental-meal-table thead th span {
+  display: block;
+  color: #8c94a1;
+  font-size: 0.68rem;
+  font-weight: 400;
+}
+
+
+/* =========================================================
+   Date Cells
+========================================================= */
+
+.rental-meal-date strong {
+  color: #3f4651;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+/* Give alternating rows a tiny bit of separation */
+
+.rental-meal-table tbody tr:nth-child(even) {
+  background: #fbfcfd;
+}
+
+/* Row hover */
+
+.rental-meal-table tbody tr {
+  transition: background-color 150ms ease;
+}
+
+.rental-meal-table tbody tr:hover {
+  background: #f8faf9;
+}
+
+
+/* =========================================================
+   Meal Checkboxes
+========================================================= */
+
+.rental-meal-checkbox {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Hide native checkbox */
+
+.rental-meal-checkbox input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+/* Custom checkbox square */
+
+.rental-meal-checkbox > span {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #cfd5dc;
+  border-radius: 6px;
+  background: #ffffff;
+  transition: border-color 150ms ease,
+    background-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+/* Checkmark */
+
+.rental-meal-checkbox > span::after {
+  content: "✓";
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  transform: scale(0.75);
+  transition: opacity 150ms ease,
+    transform 150ms ease;
+}
+
+/* Hover */
+
+.rental-meal-checkbox:hover > span {
+  border-color: #aebbb0;
+  background: #f8faf9;
+}
+
+/* Checked */
+
+.rental-meal-checkbox input:checked + span {
+  border-color: #718b76;
+  background: #718b76;
+}
+
+.rental-meal-checkbox input:checked + span::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Keyboard focus */
+
+.rental-meal-checkbox input:focus-visible + span {
+  border-color: #718b76;
+  box-shadow: 0 0 0 4px
+    rgba(91, 119, 98, 0.11);
+}
+
+/* Small click feedback */
+
+.rental-meal-checkbox:active > span {
+  transform: scale(0.94);
+}
+
+
+/* =========================================================
+   Totals Row
+========================================================= */
+
+.rental-meal-table tfoot th,
+.rental-meal-table tfoot td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-bottom: 0;
+  background: #fafbfc;
+  color: #4d5561;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.rental-meal-table tfoot th {
+  color: #59616e;
+}
+
+/* Slight emphasis on total numbers */
+
+.rental-meal-table tfoot td {
+  color: #435346;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   Responsive
+========================================================= */
+
+@media (max-width: 640px) {
+  .rental-meal-schedule-header {
+    align-items: flex-start;
+    padding: 14px;
+  }
+
+  .rental-meal-total-badge {
+    min-width: 68px;
+    padding: 7px 9px;
+  }
+
+  .rental-meal-table th,
+  .rental-meal-table td {
+    padding: 10px;
+  }
+}
+
+
+/* =========================================================
+   MEALS — SECTION SPACING
+========================================================= */
+
+/* More room between meal times and allergies */
+
+.rental-field-grid-3 + .rental-allergies-field {
+  margin-top: 12px;
+}
+
+/* More room between allergy area and Other Meal Notes */
+
+.rental-allergies-field + .rental-field {
+  margin-top: 12px;
+}
+
+
+/* =========================================================
+   FIELD LABEL ICONS
+========================================================= */
+
+.rental-field-label-icon {
+  flex: 0 0 auto;
+  color: #718b76;
+  font-size: 0.78rem;
+  opacity: 0.9;
+}
+
+
+/* =========================================================
+   ACTUAL GUESTS GRID
+========================================================= */
+
+.rental-actual-guests-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+@media (max-width: 1000px) {
+  .rental-actual-guests-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .rental-actual-guests-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* =========================================================
+   ACTIVITIES
+========================================================= */
+
+.rental-activity-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr auto;
+  gap: 12px;
+}
+
+.rental-activity-row input,
+.rental-activity-row select {
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .rental-activity-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* =========================================================
+   LINENS GRID
+========================================================= */
+
+.rental-linen-grid {
+  grid-template-columns: 2fr 1fr 1fr;
+  align-items: end;
+}
+
+
+/* =========================================================
+   FACILITIES SECTION
+========================================================= */
+
+.rental-facility-headings {
+  grid-template-columns: 1fr 1fr 2fr 1.5fr auto;
+}
+
+.rental-facility-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr 1.5fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.rental-facility-row input {
+  width: 100%;
+}
+
+.rental-facility-row .rental-allergy-remove {
+  height: 42px;
+}
+
+@media (max-width: 900px) {
+  .rental-facility-row,
+  .rental-facility-headings {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* =========================================================
+   CREATE BOOKING — DAY CAMPERS
+   Small supplemental stylesheet for the two simple fields.
+========================================================= */
+
+.rental-day-campers-subsection {
+  margin-top: 24px;
+}
+
+.rental-day-campers-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 720px;
+}
+
+@media (max-width: 640px) {
+  .rental-day-campers-grid {
+    grid-template-columns: 1fr;
+    max-width: none;
+  }
+}
+
+
+/* =========================================================
+   MEAL TIME + ACTIVITY CONTROLS
+========================================================= */
+
+.rental-controlled-meal-times {
+  align-items: start;
+}
+
+.rental-controlled-select-field select {
+  cursor: pointer;
+}
+
+.rental-controlled-field-help {
+  display: block;
+  margin-top: 7px;
+  color: #6f746c;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.rental-controlled-data-note {
+  margin: 8px
+    0
+    16px;
+  padding: 10px
+    12px;
+  border: 1px
+    solid
+    rgba(74, 94, 70, 0.16);
+  border-radius: 10px;
+  background: rgba(74, 94, 70, 0.06);
+  color: #5f675d;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .rental-controlled-field-help {
+    font-size: 0.76rem;
+  }
+
+  .rental-controlled-data-note {
+    margin-bottom: 14px;
+  }
+}
+
+
+/* =========================================================
+   APPROXIMATE GUESTS GRID
+========================================================= */
+
+.rental-approx-guests-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.rental-approx-guests-grid .rental-field-full {
+  grid-column: span 5;
+}
+
+@media (max-width: 1200px) {
+  .rental-approx-guests-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .rental-approx-guests-grid .rental-field-full {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 800px) {
+  .rental-approx-guests-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rental-approx-guests-grid .rental-field-full {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 550px) {
+  .rental-approx-guests-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rental-approx-guests-grid .rental-field-full {
+    grid-column: span 1;
+  }
+}

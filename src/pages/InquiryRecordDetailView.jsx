@@ -222,8 +222,8 @@ function InquiryValue({
   icon: Icon,
 }) {
   return (
-    <div className="simple-inquiry-field">
-      <div className="simple-inquiry-label">
+    <div className="inquiry-record-field">
+      <div className="inquiry-record-label">
         {Icon && <Icon />}
         <span>{label}</span>
       </div>
@@ -246,7 +246,7 @@ function InquiryEditField({
   onChange,
 }) {
   return (
-    <label className="simple-inquiry-edit-field">
+    <label className="inquiry-record-edit-field">
       <span>{label}</span>
 
       <input
@@ -441,13 +441,13 @@ export default function InquiryRecordDetailView({
 
 
   return (
-    <section className="simple-inquiry-page">
+    <section className="inquiry-record-page">
 
       {/* =====================================================
           HEADER
       ===================================================== */}
 
-      <header className="simple-inquiry-header">
+      <header className="inquiry-record-header">
 
         <button
           className="secondary-dashboard-button"
@@ -460,7 +460,7 @@ export default function InquiryRecordDetailView({
         </button>
 
 
-        <div className="simple-inquiry-title">
+        <div className="inquiry-record-title">
           <p>
             Guest Group Inquiry
             {inquiryYear
@@ -478,7 +478,7 @@ export default function InquiryRecordDetailView({
         </div>
 
 
-        <div className="simple-inquiry-header-actions">
+        <div className="inquiry-record-header-actions">
 
           {isEditing ? (
             <>
@@ -522,7 +522,7 @@ export default function InquiryRecordDetailView({
 
 
           <span
-            className={`simple-inquiry-status simple-inquiry-status-${dispositionClass}`}
+            className={`inquiry-record-status inquiry-record-status-${dispositionClass}`}
           >
             {displayedDisposition ||
               "Inquiry"}
@@ -537,7 +537,7 @@ export default function InquiryRecordDetailView({
           MAIN CARD
       ===================================================== */}
 
-      <article className="simple-inquiry-card">
+      <article className="inquiry-record-card">
 
         {isEditing ? (
 
@@ -546,7 +546,7 @@ export default function InquiryRecordDetailView({
           ================================================= */
 
           <>
-            <div className="simple-inquiry-edit-grid">
+            <div className="inquiry-record-edit-grid">
 
               <InquiryEditField
                 label="Guest Group Name"
@@ -628,7 +628,7 @@ export default function InquiryRecordDetailView({
             </div>
 
 
-            <section className="simple-inquiry-edit-section">
+            <section className="inquiry-record-edit-section">
 
               <label>
                 <span>Desired Dates</span>
@@ -647,7 +647,7 @@ export default function InquiryRecordDetailView({
             </section>
 
 
-            <section className="simple-inquiry-edit-section">
+            <section className="inquiry-record-edit-section">
 
               <label>
                 <span>Additional Notes</span>
@@ -664,7 +664,7 @@ export default function InquiryRecordDetailView({
             </section>
 
 
-            <div className="simple-inquiry-bottom-actions">
+            <div className="inquiry-record-bottom-actions">
 
               <button
                 className="secondary-dashboard-button"
@@ -700,7 +700,7 @@ export default function InquiryRecordDetailView({
           ================================================= */
 
           <>
-            <div className="simple-inquiry-grid">
+            <div className="inquiry-record-grid">
 
               <InquiryValue
                 icon={FaCalendarAlt}
@@ -760,22 +760,22 @@ export default function InquiryRecordDetailView({
             </div>
 
 
-            <section className="simple-inquiry-section">
+            <section className="inquiry-record-section">
               <span>Desired Dates</span>
 
-              <strong className="simple-inquiry-dates">
+              <strong className="inquiry-record-dates">
                 {booking.desiredDatesText ||
                   "No desired dates recorded"}
               </strong>
             </section>
 
 
-            <section className="simple-inquiry-section">
+            <section className="inquiry-record-section">
               <span>
                 Additional Notes
               </span>
 
-              <p className="simple-inquiry-notes">
+              <p className="inquiry-record-notes">
                 {booking.notes ||
                   "No additional notes recorded."}
               </p>
@@ -789,7 +789,7 @@ export default function InquiryRecordDetailView({
             SOURCE — NEVER EDITED
         =================================================== */}
 
-        <footer className="simple-inquiry-source">
+        <footer className="inquiry-record-source">
           Imported from{" "}
 
           <strong>

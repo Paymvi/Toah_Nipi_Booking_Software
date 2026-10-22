@@ -1,0 +1,1222 @@
+/* =========================================================
+   BOOKING DETAIL TABS
+   Date display settings, Checklists and Program Logistics tabs,
+   delete button, and incident notes. Loads after BookingActivities.css.
+========================================================= */
+
+
+/* =========================================================
+   Booking Detail Date Display Settings
+========================================================= */
+
+.booking-profile-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.booking-date-settings-button {
+  min-height: 34px;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.booking-date-settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 7000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.booking-date-settings-modal {
+  width: min(520px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  background: #ffffff;
+  border: 1px solid #dfe4ec;
+  border-radius: 12px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
+}
+
+.booking-date-settings-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.booking-date-settings-header h3 {
+  margin: 0;
+  color: #252936;
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.booking-date-settings-header span {
+  display: block;
+  margin-top: 5px;
+  color: #858c9b;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.booking-date-settings-close {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #687083;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.booking-date-settings-close:hover {
+  background: #f7f8fa;
+  color: #303442;
+}
+
+.booking-date-settings-body {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.booking-date-format-list {
+  display: grid;
+  gap: 8px;
+}
+
+.booking-date-format-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #edf0f4;
+  border-radius: 9px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 150ms ease,
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.booking-date-format-option:hover {
+  border-color: #c9c4e8;
+  background: #fbfaff;
+}
+
+.booking-date-format-option.active {
+  border-color: #9f98d4;
+  background: #f7f5ff;
+  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.08);
+}
+
+.booking-date-format-option input {
+  margin-top: 3px;
+  accent-color: #443a9c;
+}
+
+.booking-date-format-option span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.booking-date-format-option strong {
+  color: #303442;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.booking-date-format-option small {
+  color: #858c9b;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.booking-date-weekday-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #edf0f4;
+  border-radius: 9px;
+  background: #fbfcfd;
+  cursor: pointer;
+}
+
+.booking-date-weekday-toggle input {
+  margin-top: 3px;
+  accent-color: #443a9c;
+}
+
+.booking-date-weekday-toggle input:disabled {
+  cursor: not-allowed;
+}
+
+.booking-date-weekday-toggle span {
+  display: grid;
+  gap: 3px;
+}
+
+.booking-date-weekday-toggle strong {
+  color: #303442;
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+
+.booking-date-weekday-toggle small {
+  color: #858c9b;
+  font-size: 0.76rem;
+}
+
+.booking-date-preview-card {
+  padding: 14px;
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  background: #f7f8fa;
+}
+
+.booking-date-preview-card small {
+  display: block;
+  margin-bottom: 5px;
+  color: #7b8290;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.065em;
+  text-transform: uppercase;
+}
+
+.booking-date-preview-card strong {
+  display: block;
+  color: #252936;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.booking-date-settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 18px 18px;
+  border-top: 1px solid #edf0f4;
+}
+
+@media (max-width: 720px) {
+  .booking-profile-header-actions {
+    justify-content: flex-start;
+  }
+
+  .booking-date-settings-backdrop {
+    align-items: stretch;
+    padding: 12px;
+  }
+
+  .booking-date-settings-modal {
+    max-height: none;
+    height: calc(100vh - 24px);
+  }
+
+  .booking-date-settings-footer {
+    flex-direction: column-reverse;
+  }
+
+  .booking-date-settings-footer .primary-dashboard-button,
+  .booking-date-settings-footer .secondary-dashboard-button {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   Booking Detail - Checklists Tab
+========================================================= */
+
+.booking-checklist-page {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.booking-checklist-card {
+  border-radius: 10px;
+  border-color: #dfe4ec;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+}
+
+.booking-checklist-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  border-bottom: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+.booking-checklist-header h3 {
+  margin: 0;
+  color: #252936;
+  font-size: 1.08rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.booking-checklist-header span {
+  display: block;
+  margin-top: 5px;
+  color: #858c9b;
+  font-size: 0.84rem;
+  font-weight: 400;
+}
+
+.booking-checklist-add-form {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.booking-checklist-add-form input {
+  min-height: 38px;
+  min-width: 240px;
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #303442;
+  background: #ffffff;
+  font-size: 0.84rem;
+  outline: none;
+}
+
+.booking-checklist-add-form input:focus {
+  border-color: #443a9c;
+  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+}
+
+.booking-checklist-table-wrap,
+.booking-checklist-items-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  background: #ffffff;
+}
+
+.booking-checklist-table,
+.booking-checklist-items-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.booking-checklist-table {
+  min-width: 860px;
+}
+
+.booking-checklist-items-table {
+  min-width: 1080px;
+}
+
+.booking-checklist-table th,
+.booking-checklist-items-table th {
+  padding: 11px 14px;
+  background: #f6f7f9;
+  border-bottom: 1px solid #dfe4ec;
+  color: #565d6b;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+  white-space: nowrap;
+}
+
+.booking-checklist-table td,
+.booking-checklist-items-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #edf0f4;
+  color: #3f4351;
+  font-size: 0.86rem;
+  vertical-align: middle;
+}
+
+.booking-checklist-table tbody tr:hover,
+.booking-checklist-items-table tbody tr:hover {
+  background: #fbfcfd;
+}
+
+.booking-checklist-table td strong,
+.booking-checklist-items-table td strong {
+  color: #303442;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.booking-checklist-icon-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #c9c4e8;
+  border-radius: 7px;
+  display: inline-grid;
+  place-items: center;
+  background: #ffffff;
+  color: #443a9c;
+  cursor: pointer;
+}
+
+.booking-checklist-icon-button:hover {
+  background: #f7f5ff;
+}
+
+.booking-checklist-delete-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #efcaca;
+  border-radius: 7px;
+  display: inline-grid;
+  place-items: center;
+  background: #fffafa;
+  color: #b44444;
+  cursor: pointer;
+}
+
+.booking-checklist-delete-button:hover {
+  background: #fff1f1;
+  border-color: #e6abab;
+  color: #8d2f2f;
+}
+
+.booking-checklist-progress {
+  display: grid;
+  gap: 6px;
+  min-width: 180px;
+}
+
+.booking-checklist-progress > div {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf0f4;
+}
+
+.booking-checklist-progress > div span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #5c6f46;
+}
+
+.booking-checklist-progress small {
+  color: #858c9b;
+  font-size: 0.76rem;
+  font-weight: 500;
+}
+
+/* Modal */
+
+.booking-checklist-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(20, 23, 34, 0.52);
+}
+
+.booking-checklist-modal {
+  width: min(1420px, 100%);
+  max-height: min(840px, calc(100vh - 48px));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #dfe4ec;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.25);
+}
+
+.booking-checklist-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  border-bottom: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+.booking-checklist-modal-header h3 {
+  margin: 0;
+  color: #252936;
+  font-size: 1.08rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.booking-checklist-modal-header p {
+  margin: 5px 0 0;
+  color: #858c9b;
+  font-size: 0.84rem;
+}
+
+.booking-checklist-modal-close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  display: inline-grid;
+  place-items: center;
+  background: #ffffff;
+  color: #687083;
+  cursor: pointer;
+}
+
+.booking-checklist-modal-close:hover {
+  background: #f6f7f9;
+  color: #252936;
+}
+
+.booking-checklist-item-form {
+  display: grid;
+  grid-template-columns: 100px minmax(240px, 1fr) 170px 190px auto;
+  gap: 12px;
+  align-items: end;
+  padding: 14px 18px;
+  border-bottom: 1px solid #edf0f4;
+  background: #fbfcfd;
+}
+
+.booking-checklist-item-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.booking-checklist-item-form label span {
+  color: #687083;
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+
+.booking-checklist-item-form input,
+.booking-checklist-item-form select {
+  min-height: 38px;
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #303442;
+  font-size: 0.84rem;
+  outline: none;
+}
+
+.booking-checklist-item-form select {
+  cursor: pointer;
+}
+
+.booking-checklist-item-form input:focus,
+.booking-checklist-item-form select:focus {
+  border-color: #443a9c;
+  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+}
+
+.booking-checklist-item-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.booking-checklist-items-table-wrap {
+  overflow: auto;
+}
+
+.booking-checklist-items-table input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #443a9c;
+  cursor: pointer;
+}
+
+.booking-checklist-status-button {
+  min-height: 34px;
+  border: 1px solid #c9c4e8;
+  border-radius: 7px;
+  padding: 0 12px;
+  background: #ffffff;
+  color: #443a9c;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.booking-checklist-status-button:hover {
+  background: #f7f5ff;
+}
+
+.booking-checklist-status-button.completed {
+  border-color: #bbd9c5;
+  background: #effaf3;
+  color: #236b3a;
+}
+
+.checklist-item-completed td {
+  background: #fcfdfb;
+}
+
+.checklist-item-completed td strong {
+  color: #6f7687;
+  text-decoration: line-through;
+}
+
+.booking-checklist-empty-row {
+  padding: 16px;
+  border: 1px dashed #cfd6e1;
+  border-radius: 8px;
+  background: #fbfcfd;
+  color: #858c9b;
+  text-align: center;
+  font-size: 0.86rem;
+}
+
+.booking-checklist-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+@media (max-width: 1100px) {
+  .booking-checklist-header {
+    flex-direction: column;
+  }
+
+  .booking-checklist-add-form {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .booking-checklist-add-form input {
+    flex: 1 1 240px;
+  }
+
+  .booking-checklist-item-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .booking-checklist-item-form-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .booking-checklist-modal-backdrop {
+    padding: 12px;
+  }
+
+  .booking-checklist-modal {
+    max-height: calc(100vh - 24px);
+  }
+
+  .booking-checklist-item-form {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-checklist-add-form input,
+  .booking-checklist-add-form button {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   OVERRIDE: Checklist Icon Placement Only
+   Keep original icon-box size, only center the SVG
+========================================================= */
+
+/* Keep the header aligned nicely without making it huge */
+
+.booking-checklist-page .booking-profile-header,
+.booking-checklist-page .booking-checklist-header,
+.booking-checklist-page .booking-activities-header {
+  align-items: center !important;
+}
+
+/* Keep the left header row aligned */
+
+.booking-checklist-page .booking-profile-header-title,
+.booking-checklist-page .booking-checklist-header > div:first-child,
+.booking-checklist-page .booking-activities-header > div:first-child {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-width: 0;
+}
+
+/* IMPORTANT: original-ish size, not the huge 64px version */
+
+.booking-checklist-page .section-icon,
+.booking-checklist-page .booking-work-section-icon {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  flex: 0 0 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 10px !important;
+  background: #eef1ea !important;
+  color: #7b8290 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+}
+
+/* This fixes the actual clipboard placement */
+
+.booking-checklist-page .section-icon svg,
+.booking-checklist-page .booking-work-section-icon svg {
+  width: 20px !important;
+  height: 20px !important;
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  flex: 0 0 auto !important;
+  color: currentColor !important;
+}
+
+/* Keep the text from getting squished/cut weirdly */
+
+.booking-checklist-page .booking-profile-header-title > div,
+.booking-checklist-page .booking-checklist-header > div:first-child > div,
+.booking-checklist-page .booking-activities-header > div:first-child > div {
+  min-width: 0;
+}
+
+/* Keep the description on one clean line */
+
+.booking-checklist-page .booking-profile-header-title p:not(:first-child),
+.booking-checklist-page .booking-checklist-header span,
+.booking-checklist-page .booking-activities-header p:not(.booking-activities-eyebrow) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mobile: allow the description to wrap */
+
+@media (max-width: 720px) {
+  .booking-checklist-page .booking-profile-header,
+  .booking-checklist-page .booking-checklist-header,
+  .booking-checklist-page .booking-activities-header {
+    align-items: flex-start !important;
+  }
+
+  .booking-checklist-page .booking-profile-header-title p:not(:first-child),
+  .booking-checklist-page .booking-checklist-header span,
+  .booking-checklist-page .booking-activities-header p:not(.booking-activities-eyebrow) {
+    white-space: normal;
+  }
+}
+
+
+/* =========================================================
+   Booking Detail - Program Logistics Tab
+========================================================= */
+
+.program-logistics-tab {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.program-logistics-card {
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+}
+
+.program-logistics-header,
+.program-logistics-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px;
+  border-bottom: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+.program-logistics-header h3,
+.program-logistics-section-header h3 {
+  margin: 0;
+  color: #252936;
+  font-size: 1.08rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.program-logistics-header span,
+.program-logistics-section-header span {
+  display: block;
+  margin-top: 5px;
+  color: #858c9b;
+  font-size: 0.84rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.program-logistics-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 18px;
+  border-bottom: 1px solid #edf0f4;
+  background: #fbfcfd;
+}
+
+.program-logistics-summary-grid div {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #e4e8ef;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.program-logistics-summary-grid small {
+  display: block;
+  color: #818998;
+  font-size: 0.72rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+
+.program-logistics-summary-grid strong {
+  display: block;
+  margin-top: 6px;
+  color: #303442;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.program-logistics-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 18px;
+}
+
+.program-logistics-field {
+  display: grid;
+  gap: 8px;
+}
+
+.program-logistics-field span,
+.program-assignment-row label span {
+  color: #374151;
+  font-size: 0.76rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+
+.program-logistics-field textarea {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  padding: 12px;
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  outline: none;
+}
+
+.program-logistics-field textarea:focus,
+.program-assignment-row input:focus,
+.program-assignment-row select:focus {
+  border-color: #443a9c;
+  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+}
+
+.program-assignment-list {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+}
+
+.program-assignment-row {
+  display: grid;
+  grid-template-columns: 170px 220px minmax(0, 1fr) 38px;
+  gap: 12px;
+  align-items: end;
+  padding: 14px;
+  border: 1px solid #e4e8ef;
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.program-assignment-row label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.program-assignment-row input,
+.program-assignment-row select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #111827;
+  padding: 0 11px;
+  font: inherit;
+  font-size: 0.86rem;
+  outline: none;
+}
+
+.program-assignment-delete-button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid #efcaca;
+  border-radius: 7px;
+  display: inline-grid;
+  place-items: center;
+  background: #fffafa;
+  color: #b44444;
+  cursor: pointer;
+}
+
+.program-assignment-delete-button:hover {
+  background: #fff1f1;
+  border-color: #e6abab;
+  color: #8d2f2f;
+}
+
+.program-logistics-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 42px 18px;
+  color: #858c9b;
+  text-align: center;
+}
+
+.program-logistics-empty svg {
+  color: #9ca3af;
+  font-size: 1.35rem;
+}
+
+.program-logistics-empty strong {
+  color: #303442;
+  font-size: 0.98rem;
+  font-weight: 650;
+}
+
+.program-logistics-empty p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.program-logistics-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 14px 18px;
+  border-top: 1px solid #edf0f4;
+  background: #ffffff;
+}
+
+@media (max-width: 980px) {
+  .program-logistics-header,
+  .program-logistics-section-header {
+    flex-direction: column;
+  }
+
+  .program-logistics-editor-grid,
+  .program-logistics-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .program-assignment-row {
+    grid-template-columns: 1fr;
+  }
+
+  .program-assignment-delete-button {
+    width: 100%;
+  }
+}
+
+/* Meals & Activities header icon alignment */
+
+.program-logistics-header .dashboard-heading-with-icon {
+  align-items: center;
+}
+
+.program-logistics-header .section-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border-radius: 10px;
+  background: #eef1ea;
+  color: #5c6f46;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.program-logistics-header .section-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+
+/* =========================================================
+   BOOKING DETAIL — DELETE BUTTON
+========================================================= */
+
+.booking-profile-delete-button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 13px;
+  border: 1px solid #e2bcbc;
+  border-radius: 8px;
+  background: #fffafa;
+  color: #a64242;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.booking-profile-delete-button:hover {
+  border-color: #cb8f8f;
+  background: #fff0f0;
+  color: #8d3232;
+}
+
+.booking-profile-delete-button:active {
+  background: #fbe6e6;
+}
+
+
+/* =========================================================
+   INCIDENT NOTES
+========================================================= */
+
+.booking-details-tab-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.booking-incident-notes-card {
+  padding: 24px;
+  border: 1px solid #ead7a7;
+  border-radius: 18px;
+  background: #fffdf8;
+}
+
+.booking-incident-notes-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.booking-incident-notes-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.booking-incident-notes-icon {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #fff3cd;
+  color: #956600;
+  font-size: 1rem;
+}
+
+.booking-incident-notes-title h3 {
+  margin: 2px 0 4px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.booking-incident-notes-title > div > span {
+  display: block;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.booking-incident-notes-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   INCIDENT NOTES EDITOR
+========================================================= */
+
+.booking-incident-notes-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.booking-incident-notes-field > span {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #475569;
+}
+
+.booking-incident-notes-field textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 14px 16px;
+  border: 1px solid #d9dfeb;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1e293b;
+  font: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.booking-incident-notes-field textarea::placeholder {
+  color: #a7b0bf;
+}
+
+.booking-incident-notes-field textarea:focus {
+  outline: none;
+  border-color: #b99745;
+  box-shadow: 0 0 0 3px rgba(185, 151, 69, 0.12);
+}
+
+
+/* =========================================================
+   SAVED INCIDENT NOTES
+========================================================= */
+
+.booking-incident-notes-display {
+  padding: 16px 18px;
+  border: 1px solid #ece4cf;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.booking-incident-notes-display p {
+  margin: 0;
+  white-space: pre-wrap;
+  color: #334155;
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   EMPTY INCIDENT STATE
+========================================================= */
+
+.booking-incident-notes-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px dashed #e1d5b6;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.65);
+  color: #64748b;
+}
+
+.booking-incident-notes-empty > svg {
+  flex-shrink: 0;
+  color: #b38628;
+}
+
+.booking-incident-notes-empty strong {
+  display: block;
+  margin-bottom: 3px;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.booking-incident-notes-empty p {
+  margin: 0;
+  color: #7c8798;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 760px) {
+  .booking-incident-notes-header {
+    flex-direction: column;
+  }
+
+  .booking-incident-notes-actions {
+    width: 100%;
+  }
+}

@@ -184,9 +184,9 @@ export default function BookingActivities({
 
   return (
     <section className="booking-activities">
-      <div className="booking-activities__header">
+      <div className="booking-activities-header">
         <div>
-          <p className="booking-activities__eyebrow">Booking Activities</p>
+          <p className="booking-activities-eyebrow">Booking Activities</p>
           <h2>Meals & Recreation</h2>
           <p>
             Manage scheduled meals and recreation options attached to this
@@ -249,7 +249,7 @@ export default function BookingActivities({
       </div>
 
       <div className="activity-panel">
-        <div className="activity-panel__top">
+        <div className="activity-panel-top">
           <div>
             <h3>{tabConfig[activeTab].label}</h3>
             <p>
@@ -281,7 +281,7 @@ export default function BookingActivities({
                 <th>Capacity</th>
                 <th>Rate</th>
                 <th>Requirements</th>
-                <th className="activity-table__actions">Actions</th>
+                <th className="activity-table-actions">Actions</th>
               </tr>
             </thead>
 
@@ -469,7 +469,7 @@ function ActivityEditorRow({
 
   return (
     <div className="activity-add-card">
-      <div className="activity-add-card__header">
+      <div className="activity-add-card-header">
         <h4>Add Activity</h4>
         <button onClick={onCancel}>
           <FaTimes />
@@ -558,7 +558,7 @@ function ActivityEditorRow({
         </label>
       </div>
 
-      <div className="activity-add-card__actions">
+      <div className="activity-add-card-actions">
         <button className="activity-secondary-btn" onClick={onCancel}>
           Cancel
         </button>

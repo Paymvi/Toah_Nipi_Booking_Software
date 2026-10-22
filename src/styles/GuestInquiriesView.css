@@ -1,8 +1,3 @@
-
-
-
-
-
 /* =========================================================
    GUEST INQUIRIES
    Styled to feel like the existing Inquiry Pipeline.
@@ -228,18 +223,12 @@
   font-size: 0.78rem;
 }
 
-.guest-request-column-converted
-  .guest-request-column-header
-  > div
-  > span {
+.guest-request-column-converted .guest-request-column-header > div > span {
   background: #eaf4ee;
   color: #2f6f5f;
 }
 
-.guest-request-column-declined
-  .guest-request-column-header
-  > div
-  > span {
+.guest-request-column-declined .guest-request-column-header > div > span {
   background: #fbf0f0;
   color: #9f2f2f;
 }
@@ -642,15 +631,9 @@
 }
 
 .guest-request-modal {
-  width: min(1000px, 100%);
   max-height: calc(100vh - 48px);
-  display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
-  border: 1px solid #d9dee7;
-  border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 24px 70px rgba(19, 24, 37, 0.24);
 }
 
 .guest-request-modal > header {
@@ -710,12 +693,13 @@
     Flexbox lets every section keep its natural height and makes this
     middle area scroll normally.
   */
+  overflow-y: auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 14px;
-  overflow-y: auto;
+  overflow: visible;
   padding: 18px 22px 22px;
   background: #f7f8fa;
 }
@@ -733,11 +717,11 @@
 
 .guest-request-review-section > header {
   display: flex;
-  align-items: flex-start;
   gap: 10px;
-  padding: 13px 15px;
   border-bottom: 1px solid #edf0f4;
   background: #fbfcfd;
+  align-items: center;
+  padding: 14px 15px;
 }
 
 .guest-request-review-section > header > svg {
@@ -757,6 +741,7 @@
   color: #9096a3;
   font-size: 0.73rem;
   line-height: 1.4;
+  display: none;
 }
 
 .guest-request-detail-grid {
@@ -887,7 +872,12 @@
   gap: 12px;
   padding: 14px 22px;
   border-top: 1px solid #e4e8ee;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
   background: #ffffff;
+  box-shadow: 0 -8px 18px
+    rgba(28, 35, 52, 0.05);
 }
 
 .guest-request-modal-footer > div {
@@ -956,67 +946,6 @@
 
 
 /* =========================================================
-   CREATE BOOKING MODE
-========================================================= */
-
-.guest-request-booking-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 12px 14px;
-  border: 1px solid #dfe4ec;
-  border-radius: 10px;
-  background: #ffffff;
-}
-
-.guest-request-booking-toolbar > div {
-  display: grid;
-  justify-items: end;
-  gap: 2px;
-}
-
-.guest-request-booking-toolbar small {
-  color: #9298a5;
-  font-size: 0.68rem;
-}
-
-.guest-request-booking-toolbar strong {
-  color: #3e4452;
-  font-size: 0.82rem;
-  font-weight: 650;
-}
-
-.guest-request-booking-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 11px;
-  padding: 13px 15px;
-  border: 1px solid #d7d1f0;
-  border-radius: 10px;
-  background: #f7f5fd;
-  color: #443a9c;
-}
-
-.guest-request-booking-notice > svg {
-  margin-top: 2px;
-}
-
-.guest-request-booking-notice strong {
-  display: block;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.guest-request-booking-notice p {
-  margin: 4px 0 0;
-  color: #6f6797;
-  font-size: 0.76rem;
-  line-height: 1.45;
-}
-
-
-/* =========================================================
    RESPONSIVE
 ========================================================= */
 
@@ -1029,8 +958,7 @@
 @media (max-width: 800px) {
   .guest-request-header,
   .guest-request-workflow-note,
-  .guest-request-modal-footer,
-  .guest-request-booking-toolbar {
+  .guest-request-modal-footer {
     align-items: stretch;
     flex-direction: column;
   }
@@ -1054,10 +982,6 @@
     width: 100%;
   }
 
-  .guest-request-booking-toolbar > div {
-    justify-items: start;
-  }
-
   .guest-request-detail-grid,
   .guest-request-note-grid {
     grid-template-columns: 1fr;
@@ -1078,11 +1002,8 @@
   }
 
   .guest-request-modal {
-    width: 100%;
     height: 100%;
     max-height: none;
-    border: 0;
-    border-radius: 0;
   }
 
   .guest-request-summary {
@@ -1101,6 +1022,7 @@
   }
 }
 
+
 /* =========================================================
    REVIEW MODAL — FULL EXPANSION + WHOLE-MODAL SCROLL
    This override intentionally comes LAST so it wins over
@@ -1114,179 +1036,92 @@
   constrained grid/flex row, because every review section can
   now grow to its natural content height.
 */
+
 .guest-request-modal {
   width: min(1050px, calc(100vw - 32px));
-
   height: auto;
   max-height: calc(100dvh - 32px);
-
   display: block;
-
   overflow-x: hidden;
   overflow-y: auto;
-
   scrollbar-gutter: stable;
-
   border: 1px solid #d9dee7;
   border-radius: 14px;
-
   background: #ffffff;
-
-  box-shadow:
-    0 24px 70px
+  box-shadow: 0 24px 70px
     rgba(19, 24, 37, 0.24);
 }
-
 
 /*
   Keep the group/title area visible while scrolling.
 */
+
 .guest-request-modal > header {
   position: sticky;
   top: 0;
   z-index: 5;
-
   background: #ffffff;
 }
-
-
-/*
-  The body itself should NOT be a second scroll container.
-  It simply expands vertically with all review content.
-*/
-.guest-request-modal-body {
-  min-height: 0;
-
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-
-  gap: 14px;
-
-  overflow: visible;
-
-  padding: 18px 22px 22px;
-
-  background: #f7f8fa;
-}
-
 
 /*
   Every information card gets its full natural height.
   The !important values are intentional here so a stray
   generic dashboard/card rule cannot collapse these sections.
 */
-.guest-request-modal
-.guest-request-review-section {
+
+.guest-request-modal .guest-request-review-section {
   flex: none;
-
   width: 100%;
-
   height: auto !important;
   min-height: max-content;
   max-height: none !important;
-
   overflow: visible !important;
-
   border: 1px solid #dfe4ec;
   border-radius: 10px;
-
   background: #ffffff;
 }
-
 
 /*
   Make sure the field grid itself is also never clipped.
 */
-.guest-request-modal
-.guest-request-detail-grid {
-  width: 100%;
 
+.guest-request-modal .guest-request-detail-grid {
+  width: 100%;
   height: auto !important;
   min-height: 0;
   max-height: none !important;
-
   display: grid;
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-auto-rows: auto;
-
   overflow: visible !important;
-
   padding: 4px 15px 12px;
 }
-
 
 /*
   Ensure individual fields always contribute their full
   height to the section.
 */
-.guest-request-modal
-.guest-request-detail-field {
+
+.guest-request-modal .guest-request-detail-field {
   height: auto !important;
   min-height: 64px;
   max-height: none !important;
-
   overflow: visible !important;
 }
-
 
 /*
   Notes, allergy boxes, and activities should expand normally.
 */
-.guest-request-modal
-.guest-request-list-box,
-.guest-request-modal
-.guest-request-note-grid,
-.guest-request-modal
-.guest-request-activity-list,
-.guest-request-modal
-.guest-request-long-note,
-.guest-request-modal
-.guest-request-decline-box {
+
+.guest-request-modal .guest-request-list-box,
+.guest-request-modal .guest-request-note-grid,
+.guest-request-modal .guest-request-activity-list,
+.guest-request-modal .guest-request-long-note,
+.guest-request-modal .guest-request-decline-box {
   height: auto !important;
   max-height: none !important;
-
   overflow: visible !important;
 }
-
-
-/*
-  Keep the action row visible while scrolling to make
-  Close / Decline / Open Prefilled Booking Form easy to reach.
-*/
-.guest-request-modal-footer {
-  position: sticky;
-  bottom: 0;
-  z-index: 5;
-
-  background: #ffffff;
-
-  box-shadow:
-    0 -8px 18px
-    rgba(28, 35, 52, 0.05);
-}
-
-
-/* Hide the gray captions under section titles. */
-.guest-request-review-section
-> header
-p {
-  display: none;
-}
-
-
-/*
-  With the captions gone, center the icon/title vertically
-  and remove the unnecessary extra header height.
-*/
-.guest-request-review-section
-> header {
-  align-items: center;
-
-  padding: 14px 15px;
-}
-
 
 @media (max-width: 800px) {
   .guest-request-modal {
@@ -1294,29 +1129,20 @@ p {
       100%,
       calc(100vw - 20px)
     );
-
-    max-height:
-      calc(100dvh - 20px);
+    max-height: calc(100dvh - 20px);
   }
 
-  .guest-request-modal
-  .guest-request-detail-grid {
+  .guest-request-modal .guest-request-detail-grid {
     grid-template-columns: 1fr;
   }
 }
-
 
 @media (max-width: 600px) {
   .guest-request-modal {
     width: 100%;
     height: 100dvh;
     max-height: 100dvh;
-
     border: 0;
     border-radius: 0;
   }
 }
-
-
-
-

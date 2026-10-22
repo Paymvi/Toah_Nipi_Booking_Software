@@ -11,10 +11,16 @@
 /* Header */
 
 .booking-housing-tab-card {
+  padding: 0;
+  background: #ffffff;
+  border: 1px solid #dfe4ec;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
   overflow: hidden;
 }
 
 .booking-housing-tab-header {
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -107,6 +113,8 @@
 /* Table */
 
 .booking-housing-table-wrap {
+  max-width: 100%;
+  background: #ffffff;
   width: 100%;
   overflow-x: auto;
 }
@@ -145,6 +153,7 @@
 }
 
 .housing-room-cell {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -164,6 +173,9 @@
 }
 
 .housing-room-thumb {
+  border: 1px solid #dfe4ec;
+  background: #f6f7f9;
+  box-shadow: none;
   object-fit: cover;
 }
 
@@ -421,6 +433,7 @@
   line-height: 1.45;
 }
 
+
 /* =========================================================
    BETHEL + DOTHAN FLOOR EXPANSION
 ========================================================= */
@@ -474,8 +487,7 @@
   line-height: 1.25;
 }
 
-.housing-room-expand-button:hover
-  .housing-room-expand-copy strong {
+.housing-room-expand-button:hover .housing-room-expand-copy strong {
   color: #5142a5;
 }
 
@@ -489,13 +501,11 @@
   border-radius: 7px;
   color: #8c94a4;
   font-size: 0.72rem;
-  transition:
-    background-color 140ms ease,
+  transition: background-color 140ms ease,
     color 140ms ease;
 }
 
-.housing-room-expand-button:hover
-  .housing-room-expand-chevron {
+.housing-room-expand-button:hover .housing-room-expand-chevron {
   background: #f1eff9;
   color: #5142a5;
 }
@@ -551,121 +561,46 @@
   border: 1px solid #ded9ef;
   border-radius: 11px;
   background: #ffffff;
-  box-shadow:
-    0 4px 12px rgba(48, 42, 94, 0.04);
+  box-shadow: 0 4px 12px rgba(48, 42, 94, 0.04);
 }
 
 /* Floor Panel Header */
-
-.booking-housing-floor-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  padding: 14px 16px;
-  border-bottom: 1px solid #ece9f5;
-  background: #f8f7fc;
-}
-
-.booking-housing-floor-panel-header > div:first-child {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.booking-housing-floor-panel-header > div:first-child > strong {
-  color: #333848;
-  font-size: 0.88rem;
-  font-weight: 700;
-  line-height: 1.25;
-}
-
-.booking-housing-floor-panel-header > div:first-child > span {
-  color: #878fa0;
-  font-size: 0.76rem;
-  font-weight: 400;
-  line-height: 1.35;
-}
-
-.booking-housing-floor-total {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 7px 10px;
-  border: 1px solid #dcd7ed;
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-.booking-housing-floor-total > span {
-  color: #7b8393;
-  font-size: 0.7rem;
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.booking-housing-floor-total > strong {
-  min-width: 22px;
-  color: #5142a5;
-  font-size: 0.95rem;
-  font-weight: 700;
-  text-align: right;
-}
 
 /* Floor Fields */
 
 .booking-housing-floor-grid {
   display: grid;
-  grid-template-columns:
-    repeat(var(--floor-count), minmax(0, 1fr)) 140px;
+  grid-template-columns: repeat(var(--floor-count), minmax(0, 1fr)) 140px;
   gap: 12px;
   padding: 20px;
 }
 
 .booking-housing-floor-field {
   width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #e4e8ef;
+  border-radius: 10px;
+  background: #ffffff;
 }
 
 .booking-housing-floor-total-card {
   grid-column: -2 / -1;
   width: 140px;
   justify-self: end;
+  height: 100%;
+  min-height: 120px;
   background: #e8f5ee;
   border: 1px solid #b7dfc8;
   border-radius: 9px;
-  min-height: 120px;
   padding: 12px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-}
-
-.booking-housing-floor-total-card span {
-  color: #2f6f5f;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.booking-housing-floor-total-card strong {
-  margin-top: 6px;
-  color: #1f513f;
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.booking-housing-floor-field {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  padding: 12px;
-  border: 1px solid #e3e6ec;
-  border-radius: 9px;
-  background: #fbfcfd;
+  align-items: flex-start;
 }
 
 .booking-housing-floor-field > span {
@@ -681,51 +616,6 @@
   color: #303746;
   font-size: 1rem;
   font-weight: 700;
-}
-
-.booking-housing-floor-input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.booking-housing-floor-input-wrap input {
-  width: 100%;
-  min-height: 42px;
-  padding: 8px 62px 8px 12px;
-  border: 1px solid #d9dee8;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #303746;
-  font: inherit;
-  font-size: 0.9rem;
-}
-
-.booking-housing-floor-input-wrap input:focus {
-  border-color: #786ac1;
-  outline: 3px solid rgba(81, 66, 165, 0.09);
-}
-
-.booking-housing-floor-input-wrap > small {
-  position: absolute;
-  right: 11px;
-  color: #9aa1ad;
-  font-size: 0.7rem;
-  font-weight: 600;
-  pointer-events: none;
-}
-
-.booking-housing-floor-total-card {
-  height: 100%;
-  min-height: 120px;
-  background: #e8f5ee;
-  border: 1px solid #b7dfc8;
-  border-radius: 9px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
 }
 
 .booking-housing-floor-total-card span {
@@ -789,7 +679,6 @@
 }
 
 @media (max-width: 760px) {
-  .booking-housing-floor-panel-header,
   .booking-housing-floor-panel-footer {
     align-items: flex-start;
     flex-direction: column;
@@ -809,16 +698,6 @@
 }
 
 /* Room Breakdown Inside Floor Cards */
-
-.booking-housing-floor-field {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px;
-  border: 1px solid #e4e8ef;
-  border-radius: 10px;
-  background: #ffffff;
-}
 
 .booking-housing-floor-header {
   display: flex;

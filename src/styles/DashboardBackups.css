@@ -38,6 +38,7 @@
   box-sizing: border-box;
 }
 
+
 /* =========================================================
    HERO
 ========================================================= */
@@ -51,8 +52,7 @@
   margin-bottom: 20px;
   border: 1px solid #dce4de;
   border-radius: 22px;
-  background:
-    radial-gradient(circle at 92% 12%, rgba(61, 128, 96, 0.12), transparent 28%),
+  background: radial-gradient(circle at 92% 12%, rgba(61, 128, 96, 0.12), transparent 28%),
     linear-gradient(135deg, #ffffff 0%, #f6faf7 100%);
   box-shadow: 0 14px 34px rgba(28, 52, 39, 0.06);
 }
@@ -101,6 +101,7 @@
   gap: 10px;
 }
 
+
 /* =========================================================
    BUTTONS
 ========================================================= */
@@ -111,8 +112,7 @@
   border: 0;
   font: inherit;
   cursor: pointer;
-  transition:
-    transform 160ms ease,
+  transition: transform 160ms ease,
     box-shadow 160ms ease,
     background 160ms ease,
     border-color 160ms ease,
@@ -205,6 +205,7 @@
   }
 }
 
+
 /* =========================================================
    NOTICES
 ========================================================= */
@@ -280,6 +281,7 @@
   color: var(--backup-red-700);
   background: var(--backup-red-100);
 }
+
 
 /* =========================================================
    TOP METRICS
@@ -363,6 +365,7 @@
   font-size: 0.77rem;
   line-height: 1.45;
 }
+
 
 /* =========================================================
    MAIN CARDS
@@ -455,6 +458,7 @@
   font-size: 0.8rem;
   line-height: 1.5;
 }
+
 
 /* =========================================================
    CREATE BACKUP PANEL
@@ -588,8 +592,7 @@
   text-align: left;
   font: inherit;
   cursor: pointer;
-  transition:
-    transform 160ms ease,
+  transition: transform 160ms ease,
     box-shadow 160ms ease,
     background 160ms ease;
 }
@@ -630,6 +633,7 @@
   font-size: 0.72rem;
   line-height: 1.4;
 }
+
 
 /* =========================================================
    ROUTINE / HISTORY
@@ -756,6 +760,7 @@
   font-size: 0.73rem;
 }
 
+
 /* =========================================================
    RESTORE SECTION
 ========================================================= */
@@ -778,8 +783,7 @@
   padding: 28px;
   border: 1.5px dashed #bfcfc4;
   border-radius: 16px;
-  background:
-    linear-gradient(rgba(247, 250, 248, 0.82), rgba(247, 250, 248, 0.82)),
+  background: linear-gradient(rgba(247, 250, 248, 0.82), rgba(247, 250, 248, 0.82)),
     repeating-linear-gradient(
       -45deg,
       transparent,
@@ -788,8 +792,7 @@
       rgba(61, 128, 96, 0.025) 20px
     );
   text-align: center;
-  transition:
-    border-color 160ms ease,
+  transition: border-color 160ms ease,
     background 160ms ease,
     transform 160ms ease;
 }
@@ -895,6 +898,7 @@
   color: var(--backup-slate-500);
   font-size: 0.68rem;
 }
+
 
 /* =========================================================
    VALIDATION + PREVIEW
@@ -1056,6 +1060,7 @@
   color: var(--backup-amber-700);
 }
 
+
 /* =========================================================
    RESTORE MODES
 ========================================================= */
@@ -1078,8 +1083,7 @@
   border-radius: 13px;
   background: #fff;
   cursor: pointer;
-  transition:
-    border-color 160ms ease,
+  transition: border-color 160ms ease,
     background 160ms ease,
     box-shadow 160ms ease;
 }
@@ -1245,6 +1249,7 @@
   box-shadow: 0 0 0 3px rgba(189, 75, 75, 0.09);
 }
 
+
 /* =========================================================
    PROGRESS + RESTORE FOOTER
 ========================================================= */
@@ -1326,6 +1331,7 @@
   color: var(--backup-green-700);
 }
 
+
 /* =========================================================
    COVERAGE DISCLAIMER
 ========================================================= */
@@ -1370,6 +1376,7 @@
   background: var(--backup-green-100);
   font-size: 0.7rem;
 }
+
 
 /* =========================================================
    RESPONSIVE

@@ -1,5 +1,3 @@
-
-
 /* =========================================================
    INQUIRY SPREADSHEET
 ========================================================= */
@@ -9,7 +7,6 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 24px;
-
   padding: 20px 22px;
   border-bottom: 1px solid #edf0f4;
   background: #ffffff;
@@ -17,7 +14,6 @@
 
 .inquiry-spreadsheet-title {
   min-width: 0;
-
   display: flex;
   align-items: flex-start;
   gap: 14px;
@@ -26,7 +22,6 @@
 .inquiry-spreadsheet-title h2 {
   margin: 0;
   color: #252936;
-
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -34,9 +29,7 @@
 
 .inquiry-spreadsheet-title p:last-child {
   max-width: 760px;
-
   margin: 6px 0 0;
-
   color: #858c9b;
   font-size: 0.86rem;
   line-height: 1.45;
@@ -49,18 +42,13 @@
 
 .inquiry-spreadsheet-search {
   flex: 0 0 285px;
-
   height: 40px;
-
   display: flex;
   align-items: center;
   gap: 9px;
-
   padding: 0 12px;
-
   border: 1px solid #d8dee8;
   border-radius: 9px;
-
   background: #ffffff;
   color: #7b8290;
 }
@@ -78,11 +66,9 @@
 .inquiry-spreadsheet-search input {
   width: 100%;
   min-width: 0;
-
   border: 0;
   outline: 0;
   background: transparent;
-
   color: #303442;
   font: inherit;
   font-size: 0.86rem;
@@ -102,9 +88,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-
   padding: 14px 22px;
-
   border-bottom: 1px solid #edf0f4;
   background: #fbfcfd;
 }
@@ -116,13 +100,10 @@
 
 .inquiry-spreadsheet-year-toggle {
   flex: 0 0 auto;
-
   display: inline-flex;
   align-items: center;
   gap: 4px;
-
   padding: 4px;
-
   border: 1px solid #dfe4ea;
   border-radius: 9px;
   background: #f3f5f7;
@@ -130,23 +111,17 @@
 
 .inquiry-spreadsheet-year-toggle button {
   min-height: 36px;
-
   display: inline-flex;
   align-items: center;
   gap: 7px;
-
   padding: 0 12px;
-
   border: 0;
   border-radius: 6px;
-
   background: transparent;
   color: #667085;
-
   font: inherit;
   font-size: 0.84rem;
   font-weight: 650;
-
   cursor: pointer;
 }
 
@@ -158,27 +133,20 @@
 .inquiry-spreadsheet-year-toggle button.active {
   background: #ffffff;
   color: #303442;
-
-  box-shadow:
-    0 1px 2px rgba(16, 24, 40, 0.08),
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08),
     0 0 0 1px rgba(16, 24, 40, 0.04);
 }
 
 .inquiry-spreadsheet-year-toggle button em {
   min-width: 20px;
   height: 20px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   padding: 0 6px;
-
   border-radius: 999px;
   background: #e9ecf1;
-
   color: #6f7687;
-
   font-size: 0.68rem;
   font-style: normal;
   font-weight: 700;
@@ -203,21 +171,16 @@
 
 .inquiry-spreadsheet-summary > span {
   min-width: 125px;
-
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 4px;
-
   padding: 9px 12px;
-
   border: 1px solid #dfe4ec;
   border-left: 3px solid #443a9c;
   border-radius: 8px;
-
   background: #ffffff;
   color: #7b8290;
-
   font-size: 0.64rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -234,10 +197,8 @@
 
 .inquiry-spreadsheet-summary strong {
   color: #252936;
-
   font-size: 1rem;
   font-weight: 700;
-
   line-height: 1.1;
   letter-spacing: normal;
   text-transform: none;
@@ -266,7 +227,6 @@
 .inquiry-spreadsheet-long-cell {
   min-width: 260px;
   max-width: 420px !important;
-
   white-space: normal !important;
   line-height: 1.45;
   vertical-align: top;

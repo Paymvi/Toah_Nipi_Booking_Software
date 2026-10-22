@@ -1,14 +1,27 @@
-import "./App.css";
+/*
+  All stylesheets are global and bundled in this order. The order is part
+  of the styling: later files override earlier ones, so do not reorder these
+  imports without checking the rules involved.
+*/
+import "./styles/CreateBookingForm.css";
+import "./styles/SpreadsheetHeaderSort.css";
+import "./styles/CreateBookingFromInquiry.css";
+import "./styles/BookingOverview.css";
+import "./styles/BookingHousingCamping.css";
+import "./styles/LodgingAvailability.css";
+import "./styles/BookingOverviewSchedule.css";
 import "./styles/shared.css";
 import "./styles/Dashboard.css";
+import "./styles/ReportsCamperDaysExplainer.css";
 import "./styles/CalendarView.css";
 import "./styles/InquiryPipeline.css";
 import "./styles/SpreadsheetView.css";
 import "./styles/ContactsView.css";
 import "./styles/BookingDetail.css";
+import "./styles/BookingActivities.css";
+import "./styles/BookingDetailTabs.css";
 import "./styles/ReportsView.css";
 import "./styles/AdminJobsView.css";
-import "./styles/BackupView.css";
 import "./styles/Auth.css";
 import "./styles/PortalAdminView.css";
 import "./styles/GuestInquiriesView.css";
@@ -16,7 +29,7 @@ import "./styles/LodgingCalendar.css";
 import "./styles/BookingHousing.css";
 import "./styles/HomeDashboard.css";
 import "./styles/InquirySpreadsheet.css";
-import "./styles/InquiryDetail.css";
+import "./styles/InquiryRecordDetail.css";
 import "./styles/StaffBookingDetails.css";
 import "./styles/DashboardBackups.css";
 

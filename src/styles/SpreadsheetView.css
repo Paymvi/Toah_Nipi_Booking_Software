@@ -6,11 +6,8 @@
 ========================================================= */
 
 
-
-
-
 /* =========================================================
-   Spreadsheet View: Simple + Clean
+   Spreadsheet View: Base Styles
    Flat colors only, no gradients
 ========================================================= */
 
@@ -18,6 +15,7 @@
   display: grid;
   gap: 16px;
   min-width: 0;
+  position: relative;
 }
 
 .spreadsheet-view-card {
@@ -29,13 +27,14 @@
 }
 
 .spreadsheet-view-header {
-  display: flex;
-  align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
-  padding: 18px;
   background: #ffffff;
   border-bottom: 1px solid #edf0f4;
+  align-items: start;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 16px !important;
+  padding: 18px !important;
 }
 
 .spreadsheet-view-header h2 {
@@ -54,22 +53,15 @@
 }
 
 .spreadsheet-view-summary {
-  display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 10px;
 }
 
 .spreadsheet-view-summary span {
-  min-width: 108px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 10px 12px;
   background: #fbfcfd;
   border: 1px solid #dfe4ec;
   border-left: 4px solid #443a9c;
-  border-radius: 8px;
   color: #6f7687;
   font-size: 0.68rem;
   font-weight: 650;
@@ -91,7 +83,6 @@
 
 .spreadsheet-view-summary strong {
   color: #252936;
-  font-size: 1.2rem;
   font-weight: 700;
   line-height: 1;
   letter-spacing: normal;
@@ -101,11 +92,9 @@
 .spreadsheet-table-wrap {
   width: 100%;
   max-width: 100%;
-
   /* Header row + about 20 body rows */
   height: calc(38px + (36px * 20));
   max-height: none;
-
   overflow: auto;
   background: #ffffff;
 }
@@ -147,6 +136,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  position: relative;
 }
 
 .spreadsheet-table tbody tr:nth-child(even) td {
@@ -177,7 +167,6 @@
 }
 
 .spreadsheet-table th.spreadsheet-sticky-column {
-  z-index: 5;
   background: #eef0f5;
   color: #303442;
 }
@@ -310,18 +299,9 @@
 }
 
 
-
 /* =========================================================
    Spreadsheet View: Full Settings Modal + Advanced Controls
 ========================================================= */
-
-.spreadsheet-view-header-actions {
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  gap: 12px;
-  flex-wrap: wrap;
-}
 
 .spreadsheet-settings-button {
   flex: 0 0 auto;
@@ -333,7 +313,6 @@
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-
   padding: 12px 18px;
   border-top: 1px solid #edf0f4;
   border-bottom: 1px solid #edf0f4;
@@ -373,12 +352,10 @@
   border: 0;
   background: transparent;
   padding: 0;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-
   color: inherit;
   font: inherit;
   font-size: inherit;
@@ -386,7 +363,6 @@
   text-align: left;
   text-transform: inherit;
   letter-spacing: inherit;
-
   cursor: pointer;
 }
 
@@ -403,11 +379,9 @@
   position: fixed;
   inset: 0;
   z-index: 9000;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   padding: 22px;
   background: rgba(24, 28, 38, 0.48);
 }
@@ -415,10 +389,8 @@
 .spreadsheet-settings-modal {
   width: min(1040px, 100%);
   max-height: min(820px, calc(100vh - 44px));
-
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
-
   overflow: hidden;
   border: 1px solid #dfe4ec;
   border-radius: 12px;
@@ -431,7 +403,6 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 18px;
-
   padding: 18px;
   border-bottom: 1px solid #edf0f4;
 }
@@ -457,10 +428,8 @@
   height: 36px;
   border: 1px solid #dfe4ec;
   border-radius: 8px;
-
   display: inline-grid;
   place-items: center;
-
   background: #ffffff;
   color: #5f6877;
   cursor: pointer;
@@ -476,11 +445,10 @@
 .spreadsheet-settings-tabs {
   display: flex;
   gap: 4px;
-  overflow-x: auto;
-
   padding: 8px 12px 0;
   border-bottom: 1px solid #edf0f4;
   background: #ffffff;
+  overflow-x: auto;
 }
 
 .spreadsheet-settings-tabs button {
@@ -552,17 +520,14 @@
 .spreadsheet-settings-field select {
   width: 100%;
   height: 38px;
-
   border: 1px solid #dfe4ec;
   border-radius: 8px;
   background: #ffffff;
   color: #303442;
-
   padding: 0 11px;
   font: inherit;
   font-size: 0.84rem;
   font-weight: 500;
-
   outline: none;
 }
 
@@ -586,7 +551,6 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-
   padding: 14px;
   border: 1px solid #edf0f4;
   border-radius: 10px;
@@ -603,16 +567,13 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-
   padding: 0 10px;
   border: 1px solid #dfe4ec;
   border-radius: 999px;
   background: #ffffff;
-
   color: #3f4351;
   font-size: 0.82rem;
   font-weight: 500;
-
   cursor: pointer;
 }
 
@@ -642,12 +603,10 @@
   border-radius: 7px;
   background: #ffffff;
   color: #443a9c;
-
   padding: 0 10px;
   font: inherit;
   font-size: 0.78rem;
   font-weight: 600;
-
   cursor: pointer;
 }
 
@@ -671,7 +630,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-
   padding: 10px 12px;
   border: 1px solid #edf0f4;
   border-radius: 9px;
@@ -721,7 +679,6 @@
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-
   padding: 14px 18px;
   border-top: 1px solid #edf0f4;
   background: #fbfcfd;
@@ -859,11 +816,9 @@
   min-height: 30px;
   display: inline-flex;
   align-items: center;
-
   border: 1px solid #dfe4ec;
   border-radius: 999px;
   padding: 0 10px;
-
   color: #303442;
   font-size: 0.76rem;
   font-weight: 650;
@@ -877,7 +832,7 @@
   font-size: 0.8rem;
 }
 
-/* Sticky fix with colored cells */
+/* Sticky columns with colored cells */
 
 .spreadsheet-table th.spreadsheet-sticky-column,
 .spreadsheet-table td.spreadsheet-sticky-column {
@@ -895,11 +850,6 @@
 /* Responsive */
 
 @media (max-width: 900px) {
-  .spreadsheet-view-header-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
   .spreadsheet-settings-button {
     width: 100%;
   }
@@ -939,6 +889,7 @@
   }
 }
 
+
 /* =========================================================
    Spreadsheet Settings: Input Methods Page
 ========================================================= */
@@ -953,14 +904,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-
   padding: 12px;
   border: 1px solid #edf0f4;
   border-radius: 9px;
   background: #ffffff;
-
-  transition:
-    background-color 150ms ease,
+  transition: background-color 150ms ease,
     border-color 150ms ease,
     opacity 150ms ease;
 }
@@ -1011,12 +959,10 @@
   border-radius: 7px;
   background: #ffffff;
   color: #443a9c;
-
   padding: 0 10px;
   font: inherit;
   font-size: 0.78rem;
   font-weight: 600;
-
   cursor: pointer;
 }
 
@@ -1053,19 +999,6 @@
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* =========================================================
    Spreadsheet Settings: Source Mode Toggle
 ========================================================= */
@@ -1074,7 +1007,6 @@
   width: fit-content;
   display: inline-flex;
   gap: 4px;
-
   padding: 4px;
   border: 1px solid #dfe4ec;
   border-radius: 9px;
@@ -1087,12 +1019,10 @@
   border-radius: 7px;
   background: transparent;
   color: #687083;
-
   padding: 0 12px;
   font: inherit;
   font-size: 0.82rem;
   font-weight: 600;
-
   cursor: pointer;
 }
 
@@ -1118,16 +1048,6 @@
 }
 
 
-
-
-
-
-
-
-
-
-
-
 /* =========================================================
    Spreadsheet View Loading Screen
 ========================================================= */
@@ -1143,7 +1063,6 @@
   grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
-
   padding: 22px 24px;
   border-bottom: 1px solid #edf0f4;
   background: #ffffff;
@@ -1153,11 +1072,9 @@
   width: 44px;
   height: 44px;
   border-radius: 10px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
-
   background: #f0f3ec;
   color: #5c6f46;
   font-size: 1rem;
@@ -1196,7 +1113,6 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-
   padding: 14px 24px;
   border-bottom: 1px solid #edf0f4;
   background: #fbfcfd;
@@ -1207,12 +1123,10 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-
   border: 1px solid #e4e8ef;
   border-radius: 8px;
   background: #ffffff;
   color: #6f7685;
-
   padding: 0 12px;
   font-size: 0.8rem;
   font-weight: 500;
@@ -1302,97 +1216,57 @@
   }
 }
 
-
-
-
 .spreadsheet-source-pill.source-inquiry-2027 {
   color: #377d7a;
   background: #edf6f5;
   border-color: #c6dfdd;
 }
 
-
-
-
-
-
-
-
-
 .spreadsheet-settings-stack {
-  display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  display: grid !important;
+  gap: 9px !important;
+  justify-self: stretch !important;
+  align-self: start !important;
 }
 
 .spreadsheet-row-preview-toggle {
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
+  width: 100%;
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
   gap: 8px;
-
-  padding: 7px 11px;
-
+  padding: 7px 10px;
   border: 1px solid #dfe4ec;
-  border-radius: 999px;
-  background: #f7faf6;
-
-  color: #52606d;
-  font-size: 0.78rem;
-  font-weight: 700;
+  border-radius: 9px;
+  background: #fbfcfd;
+  color: #565d6b;
+  font-size: 0.8rem;
+  font-weight: 650;
   cursor: pointer;
   user-select: none;
+  transition: background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
 }
 
 .spreadsheet-row-preview-toggle input {
-  margin: 0;
   accent-color: #5f766f;
-}
-
-.spreadsheet-row-preview-toggle span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.spreadsheet-row-preview-toggle svg {
-  font-size: 0.8rem;
-}
-
-.spreadsheet-row-preview-toggle:hover {
-  border-color: #b8c5be;
-  background: #eef5ee;
-  color: #395f52;
-}
-
-.spreadsheet-table td {
-  position: relative;
-}
-
-.spreadsheet-cell-content {
-  position: relative;
-  z-index: 1;
 }
 
 .spreadsheet-table tbody tr:hover td:first-child {
   z-index: 80;
 }
-.spreadsheet-table td {
-  position: relative;
-}
 
 .spreadsheet-cell-content {
   position: relative;
   z-index: 1;
-}
-
-.spreadsheet-table td.spreadsheet-row-preview-cell {
-  overflow: visible;
-}
-
-.spreadsheet-table tbody tr:hover td.spreadsheet-row-preview-cell {
-  z-index: 80;
 }
 
 .spreadsheet-row-hover-popup {
@@ -1400,25 +1274,20 @@
   left: 12px;
   top: calc(100% + 4px);
   z-index: 90;
-
   width: min(360px, 68vw);
   padding: 13px 14px;
-
   border: 1px solid #dfe4ec;
   border-radius: 8px;
   background: #ffffff;
   box-shadow: 0 12px 28px rgba(28, 35, 52, 0.16);
-
   color: #303442;
   text-align: left;
   white-space: normal;
-
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
   transform: translateY(4px);
-  transition:
-    opacity 130ms ease,
+  transition: opacity 130ms ease,
     visibility 130ms ease,
     transform 130ms ease;
 }
@@ -1428,10 +1297,8 @@
   position: absolute;
   top: -6px;
   left: 18px;
-
   width: 11px;
   height: 11px;
-
   border-left: 1px solid #dfe4ec;
   border-top: 1px solid #dfe4ec;
   background: #ffffff;
@@ -1480,20 +1347,6 @@
   font-weight: 600;
 }
 
-.spreadsheet-row-hover-popup-source {
-  margin: 0 0 10px;
-  padding: 7px 9px;
-
-  border: 1px solid #edf0f4;
-  border-radius: 7px;
-  background: #fbfcfd;
-
-  color: #7b8290;
-  font-size: 0.74rem;
-  font-weight: 500;
-  line-height: 1.35;
-}
-
 .spreadsheet-row-hover-popup dl {
   display: grid;
   gap: 7px;
@@ -1532,25 +1385,10 @@
   z-index: 80;
 }
 
-
-
-
-
-
 .spreadsheet-header-search {
   display: grid;
   gap: 6px;
-  width: 100%;
   min-width: 210px;
-  max-width: 260px;
-}
-
-.spreadsheet-header-search > label {
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #667085;
 }
 
 .spreadsheet-header-search-control {
@@ -1560,7 +1398,6 @@
 
 .spreadsheet-header-search-control input {
   width: 100%;
-  min-height: 36px;
   padding: 8px 34px 8px 11px;
   border: 1px solid #d8dee8;
   border-radius: 10px;
@@ -1570,10 +1407,10 @@
   font-size: 0.84rem;
   outline: none;
   box-shadow: 0 4px 12px rgba(28, 35, 52, 0.04);
-  transition:
-    border-color 0.18s ease,
+  transition: border-color 0.18s ease,
     box-shadow 0.18s ease,
     background-color 0.18s ease;
+  min-height: 42px;
 }
 
 .spreadsheet-header-search-control input::placeholder {
@@ -1582,8 +1419,7 @@
 
 .spreadsheet-header-search-control input:focus {
   border-color: #8aa996;
-  box-shadow:
-    0 0 0 3px rgba(70, 109, 88, 0.14),
+  box-shadow: 0 0 0 3px rgba(70, 109, 88, 0.14),
     0 4px 12px rgba(28, 35, 52, 0.06);
 }
 
@@ -1613,102 +1449,22 @@
 }
 
 
-
-
-
-
-
-
-
-
-
-
 /* =========================================================
    Spreadsheet Header Actions: Cleaner Settings + Row Popup Toggle
 ========================================================= */
 
-.spreadsheet-view-header {
-  align-items: flex-start;
-}
-
-.spreadsheet-view-header-actions {
-  flex: 1 1 760px;
-  min-width: 0;
-
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 178px;
-  align-items: start;
-  gap: 14px;
-}
-
-.spreadsheet-view-summary {
-  min-width: 0;
-
-  display: grid;
-  grid-template-columns: repeat(5, minmax(112px, 1fr));
-  gap: 10px;
-
-  justify-content: stretch;
-}
-
 .spreadsheet-view-summary span {
-  min-width: 0;
-  height: 72px;
-
-  justify-content: center;
-  padding: 11px 14px;
-
   border-radius: 9px;
 }
 
-.spreadsheet-settings-stack {
-  width: 178px;
-
-  display: grid;
-  gap: 8px;
-
-  align-self: start;
-  justify-self: end;
-}
-
 .spreadsheet-settings-stack .spreadsheet-settings-button {
-  width: 100%;
   min-height: 46px;
-
   border-radius: 9px;
   font-size: 0.92rem;
   font-weight: 700;
 }
 
 /* Make Row Popups look like a clean mini setting instead of a random checkbox pill */
-
-.spreadsheet-row-preview-toggle {
-  width: 100%;
-  min-height: 38px;
-
-  display: grid;
-  grid-template-columns: 38px minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-
-  padding: 7px 10px;
-
-  border: 1px solid #dfe4ec;
-  border-radius: 9px;
-  background: #fbfcfd;
-
-  color: #565d6b;
-  font-size: 0.8rem;
-  font-weight: 650;
-
-  cursor: pointer;
-  user-select: none;
-
-  transition:
-    background-color 140ms ease,
-    border-color 140ms ease,
-    color 140ms ease;
-}
 
 .spreadsheet-row-preview-toggle:hover {
   background: #f6f7f9;
@@ -1719,38 +1475,28 @@
 .spreadsheet-row-preview-toggle input {
   appearance: none;
   -webkit-appearance: none;
-
   position: relative;
-
   width: 36px;
   height: 20px;
   margin: 0;
-
   border: 1px solid #cfd6e1;
   border-radius: 999px;
   background: #e8ebf1;
-
   cursor: pointer;
-
-  transition:
-    background-color 140ms ease,
+  transition: background-color 140ms ease,
     border-color 140ms ease;
 }
 
 .spreadsheet-row-preview-toggle input::before {
   content: "";
-
   position: absolute;
   top: 2px;
   left: 2px;
-
   width: 14px;
   height: 14px;
-
   border-radius: 999px;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(28, 35, 52, 0.2);
-
   transition: transform 140ms ease;
 }
 
@@ -1765,11 +1511,9 @@
 
 .spreadsheet-row-preview-toggle span {
   min-width: 0;
-
   display: inline-flex;
   align-items: center;
   gap: 6px;
-
   line-height: 1;
   white-space: nowrap;
 }
@@ -1797,11 +1541,6 @@
     flex-direction: column;
   }
 
-  .spreadsheet-view-header-actions {
-    width: 100%;
-    grid-template-columns: 1fr;
-  }
-
   .spreadsheet-view-summary {
     grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   }
@@ -1822,34 +1561,14 @@
   }
 }
 
+
 /* =========================================================
    Spreadsheet Header Layout
    Keeps summary cards to 4 per row so controls have room
 ========================================================= */
 
-.spreadsheet-view-header {
-  display: grid;
-  grid-template-columns: minmax(260px, auto) minmax(0, 1fr);
-  align-items: start;
-  gap: 24px;
-}
-
-.spreadsheet-view-header-actions {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
-  align-items: start;
-  gap: 18px;
-  width: 100%;
-  min-width: 0;
-}
-
 .spreadsheet-view-summary {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(135px, 1fr));
-  gap: 12px;
   justify-self: end;
-  width: min(100%, 900px);
-  max-width: 900px;
   min-width: 0;
 }
 
@@ -1858,67 +1577,21 @@
   min-width: 0;
 }
 
-.spreadsheet-settings-stack {
-  justify-self: stretch;
-  width: 100%;
-  min-width: 0;
-}
-
 
 /* =========================================================
-   FINAL OVERRIDE: Spreadsheet Header Title / Cards / Controls
+   Spreadsheet Header: Title / Cards / Controls (overrides earlier header rules)
    Cards sit directly under "All Booking Data"
 ========================================================= */
-
-.spreadsheet-view-header {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  align-items: start;
-  gap: 24px;
-
-  padding: 18px;
-}
-
-.spreadsheet-view-header-main {
-  min-width: 0;
-  display: grid;
-  gap: 18px;
-  align-content: start;
-}
 
 .spreadsheet-view-header-main .dashboard-heading-with-icon {
   min-width: 0;
 }
 
 .spreadsheet-view-summary {
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(135px, 1fr));
-  gap: 10px;
-
-  width: 100%;
-  max-width: 920px;
-
   justify-content: start;
   align-content: start;
-
   /* Lines the cards up under the title text instead of under the icon */
   margin-left: 47px;
-}
-
-.spreadsheet-view-summary .spreadsheet-summary-card,
-.spreadsheet-view-summary span {
-  width: 100%;
-  min-width: 0;
-  max-width: none;
-}
-
-.spreadsheet-settings-stack {
-  width: 320px;
-  min-width: 320px;
-  max-width: 320px;
-
-  justify-self: end;
-  align-self: start;
 }
 
 .spreadsheet-settings-stack .spreadsheet-settings-button,
@@ -1927,38 +1600,22 @@
   width: 100%;
 }
 
-.spreadsheet-header-search {
-  max-width: none;
-}
-
-
-
-
-
-
 .spreadsheet-row-hover-popup-source {
   margin: 8px 0 10px;
   padding: 8px 10px;
-
   max-width: 100%;
-
   display: block;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-
   font-size: 0.74rem;
   line-height: 1.2;
   font-weight: 600;
-
   color: #707789;
   background: #f8fafc;
   border: 1px solid #e5eaf1;
   border-radius: 9px;
 }
-
-
-
 
 
 /* =========================================================
@@ -1970,7 +1627,6 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: start;
   gap: 8px 14px;
-
   padding: 16px;
   border: 1px solid #dfe4ec;
   border-radius: 10px;
@@ -1980,7 +1636,6 @@
 .spreadsheet-summary-card-settings-panel h4 {
   grid-column: 1;
   margin: 0;
-
   color: #7b8290;
   font-size: 0.68rem;
   font-weight: 650;
@@ -1992,7 +1647,6 @@
   grid-column: 1;
   max-width: 520px;
   margin: 0;
-
   color: #858c9b;
   font-size: 0.84rem;
   font-weight: 400;
@@ -2002,67 +1656,51 @@
 .spreadsheet-summary-card-settings-panel > .spreadsheet-settings-actions-row {
   grid-column: 2;
   grid-row: 1 / span 2;
-
   align-self: start;
   justify-content: flex-end;
   gap: 8px;
 }
 
-.spreadsheet-summary-card-settings-panel
-  > .spreadsheet-settings-actions-row
-  button {
+.spreadsheet-summary-card-settings-panel > .spreadsheet-settings-actions-row button {
   min-height: 34px;
   border-radius: 7px;
   padding: 0 11px;
-
   background: #ffffff;
   border-color: #c9c4e8;
   color: #443a9c;
-
   font-size: 0.78rem;
   font-weight: 600;
 }
 
-.spreadsheet-summary-card-settings-panel
-  > .spreadsheet-settings-actions-row
-  button:hover {
+.spreadsheet-summary-card-settings-panel > .spreadsheet-settings-actions-row button:hover {
   background: #f7f5ff;
   border-color: #aaa2dc;
 }
 
 .spreadsheet-summary-card-settings-list {
   grid-column: 1 / -1;
-
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
   gap: 10px;
-
   margin-top: 6px;
 }
 
 .spreadsheet-summary-card-setting {
   --summary-accent: #443a9c;
-
   position: relative;
   min-height: 74px;
-
   display: grid;
   grid-template-columns: 20px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
-
   padding: 12px 13px 12px 14px;
   overflow: hidden;
-
   border: 1px solid #dfe4ec;
   border-radius: 8px;
   background: #ffffff;
-
   cursor: pointer;
   user-select: none;
-
-  transition:
-    background-color 140ms ease,
+  transition: background-color 140ms ease,
     border-color 140ms ease,
     box-shadow 140ms ease,
     opacity 140ms ease;
@@ -2072,7 +1710,6 @@
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
-
   width: 3px;
   background: var(--summary-accent);
   opacity: 0.35;
@@ -2106,41 +1743,30 @@
 .spreadsheet-summary-card-setting input {
   appearance: none;
   -webkit-appearance: none;
-
   position: relative;
   z-index: 1;
-
   width: 18px;
   height: 18px;
   margin: 0;
-
   display: grid;
   place-content: center;
-
   border: 1px solid #b8c0ce;
   border-radius: 5px;
   background: #ffffff;
-
   cursor: pointer;
-
-  transition:
-    background-color 140ms ease,
+  transition: background-color 140ms ease,
     border-color 140ms ease,
     box-shadow 140ms ease;
 }
 
 .spreadsheet-summary-card-setting input::after {
   content: "";
-
   width: 5px;
   height: 9px;
-
   border: solid #ffffff;
   border-width: 0 2px 2px 0;
-
   transform: rotate(45deg) scale(0);
   transform-origin: center;
-
   transition: transform 120ms ease;
 }
 
@@ -2161,7 +1787,6 @@
 .spreadsheet-summary-card-setting span {
   position: relative;
   z-index: 1;
-
   min-width: 0;
   display: grid;
   gap: 5px;
@@ -2176,17 +1801,13 @@
 
 .spreadsheet-summary-card-setting small {
   width: fit-content;
-
   display: inline-flex;
   align-items: center;
-
   min-height: 22px;
   padding: 0 8px;
-
   border: 1px solid #edf0f4;
   border-radius: 999px;
   background: #f6f7f9;
-
   color: #6f7687;
   font-size: 0.74rem;
   font-weight: 500;
@@ -2194,6 +1815,7 @@
 }
 
 /* Same accent colors as the real summary cards */
+
 .spreadsheet-summary-card-setting.spreadsheet-summary-card-shown {
   --summary-accent: #443a9c;
 }
@@ -2215,6 +1837,7 @@
 }
 
 /* Keeps each top summary card color consistent even when other cards are hidden */
+
 .spreadsheet-view-summary span.spreadsheet-summary-card-shown {
   border-left-color: #443a9c;
 }
@@ -2252,10 +1875,6 @@
 }
 
 
-
-
-
-
 /* =========================================================
    Spreadsheet View: Starred Rows
 ========================================================= */
@@ -2274,14 +1893,11 @@
 .spreadsheet-table td.spreadsheet-star-column {
   position: sticky;
   left: 0;
-
   width: 58px;
   min-width: 58px;
   max-width: 58px;
-
   padding-left: 8px;
   padding-right: 8px;
-
   text-align: center;
   border-right: 1px solid #dfe4ec;
 }
@@ -2350,21 +1966,11 @@
   border-left: 4px solid #c98716;
 }
 
-/* Top toggle polish */
+/* Top toggle */
 
 .spreadsheet-starred-first-toggle svg {
   color: #c98716;
 }
-
-
-
-
-
-
-
-
-
-
 
 
 /* =========================================================
@@ -2402,16 +2008,6 @@
 }
 
 
-
-
-
-
-
-
-
-
-
-
 /* =========================================================
    Spreadsheet Settings: Saved Views
 ========================================================= */
@@ -2421,7 +2017,6 @@
   grid-template-columns: minmax(0, 1fr) minmax(220px, 300px) auto;
   gap: 14px;
   align-items: end;
-
   padding: 14px;
   border: 1px solid #edf0f4;
   border-radius: 10px;
@@ -2459,7 +2054,6 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 14px;
   align-items: center;
-
   padding: 14px;
   border: 1px solid #edf0f4;
   border-radius: 10px;
@@ -2495,13 +2089,11 @@
   min-height: 24px;
   display: inline-flex;
   align-items: center;
-
   padding: 0 8px;
   border: 1px solid #d7d1f0;
   border-radius: 999px;
   background: #f0edfa;
   color: #443a9c;
-
   font-size: 0.68rem;
   font-weight: 650;
   line-height: 1;
@@ -2512,7 +2104,6 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-
   color: #3f4351;
   font-size: 0.82rem;
   font-weight: 500;
@@ -2537,12 +2128,10 @@
   border-radius: 7px;
   background: #ffffff;
   color: #443a9c;
-
   padding: 0 10px;
   font: inherit;
   font-size: 0.78rem;
   font-weight: 600;
-
   cursor: pointer;
 }
 
@@ -2596,18 +2185,9 @@
 }
 
 
-
-
-
-
-
 /* =========================================================
    Spreadsheet Settings: Schema Tab
 ========================================================= */
-
-.spreadsheet-settings-tabs {
-  overflow-x: auto;
-}
 
 .spreadsheet-settings-tabs button {
   flex: 0 0 auto;
@@ -2618,7 +2198,6 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-
   padding: 14px;
   border: 1px solid #edf0f4;
   border-radius: 10px;
@@ -2645,16 +2224,13 @@
 .spreadsheet-schema-intro > span {
   flex: 0 0 auto;
   min-height: 28px;
-
   display: inline-flex;
   align-items: center;
-
   padding: 0 10px;
   border: 1px solid #d7d1f0;
   border-radius: 999px;
   background: #f0edfa;
   color: #443a9c;
-
   font-size: 0.74rem;
   font-weight: 650;
   white-space: nowrap;
@@ -2670,7 +2246,6 @@
 .spreadsheet-schema-mapping-card {
   min-width: 0;
   padding: 14px;
-
   border: 1px solid #edf0f4;
   border-radius: 10px;
   background: #ffffff;
@@ -2686,13 +2261,11 @@
   min-height: 24px;
   display: inline-flex;
   align-items: center;
-
   padding: 0 8px;
   border: 1px solid #dfe4ec;
   border-radius: 999px;
   background: #f6f7f9;
   color: #687083;
-
   font-size: 0.68rem;
   font-weight: 650;
   text-transform: uppercase;
@@ -2718,7 +2291,6 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-
   margin: 0 0 12px;
 }
 
@@ -2767,10 +2339,8 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 7px;
-
   max-height: 178px;
   overflow: auto;
-
   padding: 10px;
   border: 1px solid #edf0f4;
   border-radius: 8px;
@@ -2782,13 +2352,11 @@
   min-height: 25px;
   display: inline-flex;
   align-items: center;
-
   padding: 0 8px;
   border: 1px solid #dfe4ec;
   border-radius: 999px;
   background: #ffffff;
   color: #3f4351;
-
   font-size: 0.74rem;
   font-weight: 500;
   white-space: nowrap;
@@ -2829,7 +2397,6 @@
   grid-template-columns: minmax(150px, 220px) minmax(0, 1fr);
   gap: 12px;
   align-items: start;
-
   padding: 10px 12px;
   border: 1px solid #edf0f4;
   border-radius: 8px;
@@ -2865,43 +2432,6 @@
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-.spreadsheet-background-rendering-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #dbe3ef;
-  background: #f8fafc;
-  color: #64748b;
-  border-radius: 999px;
-  padding: 6px 10px;
-  font-size: 0.78rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.spreadsheet-background-rendering-pill::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  margin-right: 7px;
-  border-radius: 999px;
-  background: #94a3b8;
-  animation: spreadsheet-rendering-pulse 1s ease-in-out infinite;
-}
-
 @keyframes spreadsheet-rendering-pulse {
   0%,
   100% {
@@ -2915,57 +2445,21 @@
   }
 }
 
-.spreadsheet-view-page {
-  position: relative;
-}
-
-.spreadsheet-view-page-first-chunk-loading {
-  min-height: 520px;
-}
-
-.spreadsheet-first-chunk-loading-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 30;
-  display: grid;
-  align-items: start;
-  padding: 0;
-  background: var(--dashboard-page-background, #f6f8fb);
-}
-
-.spreadsheet-first-chunk-loading-overlay .spreadsheet-loading-card {
-  width: 100%;
-  min-height: 420px;
-}
-
-.spreadsheet-view-page-first-chunk-loading > .spreadsheet-view-card {
-  pointer-events: none;
-}
-
-
-
-
-
 /* Retreat Type badges */
 
 .spreadsheet-retreat-type-pill {
   --retreat-type-rgb: 100 116 139;
-
   max-width: 100%;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-
   min-height: 28px;
   padding: 0 11px;
-
   border-radius: 8px;
   border: 1px solid rgb(var(--retreat-type-rgb) / 0.24);
   background: rgb(var(--retreat-type-rgb) / 0.1);
   color: rgb(var(--retreat-type-rgb) / 1);
-
   font-size: 0.78rem;
   font-weight: 700;
   line-height: 1;
@@ -3032,21 +2526,6 @@
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* =========================================================
    Spreadsheet Year View Toggle
 ========================================================= */
@@ -3055,9 +2534,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-
   padding: 4px;
-
   border: 1px solid #dfe4ea;
   border-radius: 9px;
   background: #f5f7f9;
@@ -3066,17 +2543,13 @@
 .spreadsheet-year-view-toggle button {
   min-width: 58px;
   padding: 8px 12px;
-
   border: 0;
   border-radius: 6px;
-
   background: transparent;
   color: #667085;
-
   font: inherit;
   font-size: 0.86rem;
   font-weight: 600;
-
   cursor: pointer;
 }
 
@@ -3088,9 +2561,7 @@
 .spreadsheet-year-view-toggle button.active {
   background: #ffffff;
   color: #202939;
-
-  box-shadow:
-    0 1px 2px rgba(16, 24, 40, 0.08),
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08),
     0 0 0 1px rgba(16, 24, 40, 0.04);
 }
 
@@ -3106,27 +2577,6 @@
 }
 
 
-
-
-
-
-/* =========================================================
-   INQUIRY SPREADSHEET
-========================================================= */
-
-.inquiry-spreadsheet-table {
-  min-width: 1700px;
-}
-
-.inquiry-spreadsheet-long-cell {
-  min-width: 260px;
-  max-width: 420px !important;
-
-  white-space: normal !important;
-  line-height: 1.45;
-  vertical-align: top;
-}
-
 /* =========================================================
    Spreadsheet Date Range Filter
 ========================================================= */
@@ -3136,13 +2586,6 @@
   opacity: 0.65;
 }
 
-.spreadsheet-date-range-filter {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 10px;
-}
-
 .spreadsheet-date-range-filter label {
   display: flex;
   flex-direction: column;
@@ -3150,6 +2593,7 @@
   font-size: 0.78rem;
   color: #667085;
   font-weight: 600;
+  min-width: 0;
 }
 
 .spreadsheet-date-range-filter input {
@@ -3159,6 +2603,9 @@
   font: inherit;
   color: #202939;
   background: white;
+  width: 100%;
+  min-width: 0;
+  height: 40px;
 }
 
 @media (max-width: 700px) {
@@ -3176,7 +2623,6 @@
 .spreadsheet-building-filter {
   display: grid;
   gap: 9px;
-
   padding: 11px;
   border: 1px solid #dfe4ea;
   border-radius: 9px;
@@ -3235,26 +2681,21 @@
 .spreadsheet-building-filter-options > button {
   min-width: 0;
   min-height: 34px;
-
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
   align-items: center;
   gap: 7px;
-
   padding: 6px 8px;
   border: 1px solid #dfe4ea;
   border-radius: 8px;
   background: #ffffff;
   color: #5f6877;
-
   font: inherit;
   font-size: 0.78rem;
   font-weight: 600;
   text-align: left;
-
   cursor: pointer;
-  transition:
-    background-color 140ms ease,
+  transition: background-color 140ms ease,
     border-color 140ms ease,
     color 140ms ease,
     box-shadow 140ms ease;
@@ -3276,22 +2717,18 @@
 .spreadsheet-building-filter-check {
   width: 18px;
   height: 18px;
-
   display: inline-grid;
   place-items: center;
-
   border: 1px solid #cfd6e1;
   border-radius: 5px;
   background: #ffffff;
   color: transparent;
-
   font-size: 0.7rem;
   font-weight: 800;
   line-height: 1;
 }
 
-.spreadsheet-building-filter-options > button.active
-  .spreadsheet-building-filter-check {
+.spreadsheet-building-filter-options > button.active .spreadsheet-building-filter-check {
   border-color: #443a9c;
   background: #443a9c;
   color: #ffffff;
@@ -3303,21 +2740,14 @@
   }
 }
 
+
 /* =========================================================
-   FINAL OVERRIDE V2: Spacious Spreadsheet Header
+   Spreadsheet Header: Spacious Layout (overrides the header rules above)
    Uses the full card width and keeps controls compact.
 ========================================================= */
 
-.spreadsheet-view-header {
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  gap: 16px !important;
-  padding: 18px !important;
-}
-
 .spreadsheet-view-header-top {
   min-width: 0;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3335,7 +2765,6 @@
 
 .spreadsheet-view-header-layout {
   min-width: 0;
-
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(340px, 390px);
   align-items: start;
@@ -3350,11 +2779,11 @@
 }
 
 /* Compact summary cards so they do not dominate the header. */
+
 .spreadsheet-view-summary {
   display: grid !important;
   grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)) !important;
   gap: 8px !important;
-
   width: 100% !important;
   max-width: none !important;
   margin: 0 !important;
@@ -3367,7 +2796,6 @@
   max-width: none !important;
   min-height: 58px !important;
   height: 58px !important;
-
   justify-content: center;
   gap: 3px;
   padding: 8px 11px !important;
@@ -3378,10 +2806,10 @@
 }
 
 /* The building picker now gets the wide side of the header. */
+
 .spreadsheet-view-header-main .spreadsheet-building-filter {
   width: 100%;
   margin: 0;
-
   padding: 12px;
   gap: 10px;
 }
@@ -3396,37 +2824,13 @@
   padding: 7px 10px;
 }
 
-/* Right-side controls are intentionally compact. */
-.spreadsheet-settings-stack {
-  width: 100% !important;
-  min-width: 0 !important;
-  max-width: none !important;
-
-  display: grid !important;
-  gap: 9px !important;
-
-  justify-self: stretch !important;
-  align-self: start !important;
-}
-
 .spreadsheet-date-range-filter {
   width: 100%;
   margin-top: 0 !important;
-
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: end;
   gap: 9px !important;
-}
-
-.spreadsheet-date-range-filter label {
-  min-width: 0;
-}
-
-.spreadsheet-date-range-filter input {
-  width: 100%;
-  min-width: 0;
-  height: 40px;
 }
 
 .spreadsheet-header-toggle-grid {
@@ -3440,7 +2844,6 @@
   width: 100%;
   min-width: 0;
   min-height: 40px;
-
   grid-template-columns: 36px minmax(0, 1fr);
   gap: 7px;
   padding: 7px 9px;
@@ -3459,6 +2862,7 @@
 }
 
 .spreadsheet-header-sort {
+  flex-direction: column;
   display: grid;
   gap: 6px;
 }
@@ -3476,12 +2880,10 @@
   position: relative;
   width: 100%;
   min-height: 42px;
-
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
-
   padding: 0 10px;
   border: 1px solid #d8dee8;
   border-radius: 10px;
@@ -3497,24 +2899,18 @@
   width: 100%;
   min-width: 0;
   height: 40px;
-
   border: 0;
   outline: none;
   background: transparent;
   color: #303442;
-
   font: inherit;
   font-size: 0.84rem;
   font-weight: 500;
-
   cursor: pointer;
 }
 
-.spreadsheet-header-search-control input {
-  min-height: 42px;
-}
-
 /* Responsive: keep the new layout roomy until there really is not space. */
+
 @media (max-width: 1500px) {
   .spreadsheet-view-header-layout {
     grid-template-columns: minmax(0, 1fr) minmax(330px, 360px);
@@ -3591,4 +2987,3 @@
     grid-template-columns: 1fr;
   }
 }
-
