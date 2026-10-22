@@ -249,6 +249,7 @@ export function dbRowToBooking(row) {
     submittedAt: row.submitted_at || "",
     updatedAt: row.updated_at || "",
     rawSpreadsheetData: row.raw_data?.rawSpreadsheetData || null,
+    inquiryAddress: row.raw_data?.inquiryAddress || "",
     rentalFormDetails: row.raw_data?.rentalFormDetails || null,
   };
 }

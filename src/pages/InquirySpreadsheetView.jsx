@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import {
+  FaCheck,
   FaPlus,
   FaSearch,
   FaTable,
@@ -9,6 +10,38 @@ import {
 import {
   formatSubmittedDate,
 } from "../utils/dateUtils";
+
+import {
+  getInquiryPipelineRecords,
+} from "./InquiryPipeline";
+
+
+/*
+  Inquiry id -> the staff booking created from it, using the same
+  converted-inquiry rule as the Pipeline. Converted rows stay in this
+  workbook view but open that booking instead of starting another.
+*/
+function getConvertedBookingsByInquiryId(inquiryBookings) {
+  const { records, convertedInquiryIds } =
+    getInquiryPipelineRecords(inquiryBookings);
+
+  const bookingsByInquiryId = new Map();
+
+  records.forEach((booking) => {
+    const sourceInquiryId = String(
+      booking.rentalFormDetails?.sourceInquiryId || ""
+    ).trim();
+
+    if (
+      convertedInquiryIds.has(sourceInquiryId) &&
+      !bookingsByInquiryId.has(sourceInquiryId)
+    ) {
+      bookingsByInquiryId.set(sourceInquiryId, booking);
+    }
+  });
+
+  return bookingsByInquiryId;
+}
 
 
 function getInquirySpreadsheetYear(booking) {
@@ -276,6 +309,7 @@ const ALL_INQUIRY_COLUMNS = [
 export default function InquirySpreadsheetView({
   inquiryBookings,
   openBookingDetail,
+  openConvertedBooking,
   startBookingFromInquiry,
 }) {
   const [yearView, setYearView] =
@@ -283,6 +317,15 @@ export default function InquirySpreadsheetView({
 
   const [searchText, setSearchText] =
     useState("");
+
+  const convertedBookingsByInquiryId =
+    useMemo(
+      () =>
+        getConvertedBookingsByInquiryId(
+          inquiryBookings
+        ),
+      [inquiryBookings]
+    );
 
   const inquirySpreadsheetBookings =
     useMemo(() => {
@@ -476,21 +519,41 @@ export default function InquirySpreadsheetView({
                 </thead>
 
                 <tbody>
-                  {visibleBookings.map((booking) => (
+                  {visibleBookings.map((booking) => {
+                    const convertedBooking =
+                      convertedBookingsByInquiryId.get(
+                        String(booking.id || "").trim()
+                      );
+
+                    return (
                     <tr key={booking.id}>
 
                       <td className="inquiry-booking-action-cell">
-                        <button
-                          className="inquiry-create-booking-button"
-                          type="button"
-                          onClick={() =>
-                            startBookingFromInquiry(booking)
-                          }
-                          title={`Create booking from ${booking.organizationName}`}
-                        >
-                          <FaPlus />
-                          <span>Book</span>
-                        </button>
+                        {convertedBooking ? (
+                          <button
+                            className="inquiry-create-booking-button"
+                            type="button"
+                            onClick={() =>
+                              openConvertedBooking(convertedBooking)
+                            }
+                            title={`Already booked: open the staff booking for ${booking.organizationName}`}
+                          >
+                            <FaCheck />
+                            <span>Booked</span>
+                          </button>
+                        ) : (
+                          <button
+                            className="inquiry-create-booking-button"
+                            type="button"
+                            onClick={() =>
+                              startBookingFromInquiry(booking)
+                            }
+                            title={`Create booking from ${booking.organizationName}`}
+                          >
+                            <FaPlus />
+                            <span>Book</span>
+                          </button>
+                        )}
                       </td>
 
                       {visibleColumns.map(
@@ -527,7 +590,8 @@ export default function InquirySpreadsheetView({
                         }
                       )}
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

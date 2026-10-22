@@ -2811,6 +2811,64 @@ function createWorkbookBulkImportId({
   return `bulk-${safeType}-${safeSheet}-${safeRow}`;
 }
 
+function getGuestGroupInquiryImportIdentity(booking) {
+  const type = masterImportText(booking.detectedImportType || booking.sourceType);
+  if (!/^Guest Group Inquiry 20\d{2}$/i.test(type)) return "";
+  const values = [
+    type,
+    booking.organizationName,
+    booking.contactName,
+    booking.email,
+    masterImportText(booking.submittedAt).slice(0, 10),
+  ];
+  return values.map((value) => masterImportText(value).toLowerCase().replace(/\s+/g, " ")).join("|");
+}
+
+/*
+  Inquiry import IDs come from the sheet name and row number, which change
+  when rows are inserted, deleted or sorted, or a sheet is renamed. Match each
+  row to an existing inquiry of the same year by its content first so those
+  edits update the same record instead of duplicating or overwriting another.
+  Repeated rows still map to separate records; nothing is merged or deleted.
+*/
+function prepareGuestGroupInquiryImportIds(incomingRows, existingRows) {
+  const existingInquiries = existingRows.filter((booking) => getGuestGroupInquiryImportIdentity(booking));
+  const existingIds = new Set(existingRows.map((booking) => booking.id));
+  const claimedIds = new Set();
+  const matchedIds = new Map();
+
+  incomingRows.forEach((incoming, index) => {
+    const identity = getGuestGroupInquiryImportIdentity(incoming);
+    if (!identity) return;
+    const matches = existingInquiries.filter((booking) =>
+      !claimedIds.has(booking.id) && getGuestGroupInquiryImportIdentity(booking) === identity
+    );
+    const match = matches.find((booking) => booking.id === incoming.id) || matches[0];
+    if (!match) return;
+    claimedIds.add(match.id);
+    matchedIds.set(index, match.id);
+  });
+
+  return incomingRows.map((incoming, index) => {
+    if (!getGuestGroupInquiryImportIdentity(incoming)) return incoming;
+    let id = matchedIds.get(index);
+    if (!id) {
+      // An unclaimed row-position ID is the same row edited in the workbook.
+      // If another inquiry kept that ID, use a fresh one instead of overwriting it.
+      id = incoming.id;
+      for (
+        let suffix = 2;
+        claimedIds.has(id) || (id !== incoming.id && existingIds.has(id));
+        suffix += 1
+      ) {
+        id = `${incoming.id}-${suffix}`;
+      }
+      claimedIds.add(id);
+    }
+    return { ...incoming, id };
+  });
+}
+
 
 
 function splitRoomNames(value) {
@@ -8771,10 +8829,15 @@ export default function Dashboard() {
         getMasterImportIdentity(booking)
       );
 
+      const importRows = prepareGuestGroupInquiryImportIds(
+        allImportedRows,
+        existingBookings
+      );
+
       const prepared = hasMasterRows
-        ? prepareMasterImportUpdates(allImportedRows, existingBookings)
+        ? prepareMasterImportUpdates(importRows, existingBookings)
         : {
-            rows: allImportedRows,
+            rows: importRows,
             added: 0,
             updated: 0,
             duplicateRowsSkipped: 0,
@@ -10221,6 +10284,7 @@ export default function Dashboard() {
                 <InquirySpreadsheetView
                   inquiryBookings={inquiryBookings}
                   openBookingDetail={openInquiryRecordDetail}
+                  openConvertedBooking={openBookingDetail}
                   startBookingFromInquiry={
                     startBookingFromInquiry
                   }
