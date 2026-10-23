@@ -537,7 +537,8 @@ function hasPortalEligibilityValue(value) {
 function isPortalEligibleBookingRow(row) {
   // Staff already set this group up in the portal. Portal Admin is the
   // only screen that shows checklists, documents, and guest uploads, so
-  // keep it visible even if the booking was later cancelled or waitlisted.
+  // keep it visible even if the booking was later cancelled, waitlisted,
+  // or is a "Host:" record.
   if (
     (Array.isArray(row.portal_checklist_items) &&
       row.portal_checklist_items.length > 0) ||
@@ -574,7 +575,15 @@ function isPortalEligibleBookingRow(row) {
       ? row.rental_form_details
       : {};
 
+  // Staff name internal hosting records "Host: ..."; they are not guest
+  // retreats. Only the leading prefix counts, not "host" anywhere.
+  const isHostingRecord =
+    /^host\s*:/i.test(
+      String(row.organization_name || "").trim()
+    );
+
   if (
+    isHostingRecord ||
     status.includes("cancel") ||
     status.includes("archive") ||
     status.includes("wait") ||
