@@ -514,6 +514,93 @@ function getPortalProgress(checklistItems = []) {
 }
 
 
+/* =========================================================
+   PORTAL ELIGIBILITY
+   Only groups that have become bookings belong in the
+   portal workflow. Uses the same stage signals as the
+   Inquiry Pipeline: cancelled and waitlisted records are
+   out; a contract sent/returned or a Confirmed/Booked
+   status is in. Staff Booking records are real retreats
+   even while Create Booking still saves them as "Inquiry".
+========================================================= */
+
+function hasPortalEligibilityValue(value) {
+  const text = String(value ?? "").trim();
+
+  return (
+    text !== "" &&
+    !/^(?:n\/?a|none|unknown|tbd|\?|[-–—])$/i.test(text)
+  );
+}
+
+
+function isPortalEligibleBookingRow(row) {
+  // Staff already set this group up in the portal. Portal Admin is the
+  // only screen that shows checklists, documents, and guest uploads, so
+  // keep it visible even if the booking was later cancelled or waitlisted.
+  if (
+    (Array.isArray(row.portal_checklist_items) &&
+      row.portal_checklist_items.length > 0) ||
+    (Array.isArray(row.portal_documents) &&
+      row.portal_documents.length > 0)
+  ) {
+    return true;
+  }
+
+  const status =
+    String(row.status || "")
+      .trim()
+      .toLowerCase();
+
+  const waitlist =
+    String(row.waitlist || "")
+      .trim()
+      .toLowerCase();
+
+  const sourceType =
+    String(row.source_type || "")
+      .trim()
+      .toLowerCase();
+
+  const detectedImportType =
+    String(row.detected_import_type || "")
+      .trim()
+      .toLowerCase();
+
+  const details =
+    row.rental_form_details &&
+    typeof row.rental_form_details === "object" &&
+    !Array.isArray(row.rental_form_details)
+      ? row.rental_form_details
+      : {};
+
+  if (
+    status.includes("cancel") ||
+    status.includes("archive") ||
+    status.includes("wait") ||
+    waitlist === "yes" ||
+    hasPortalEligibilityValue(row.date_of_cancellation) ||
+    sourceType === "archive" ||
+    detectedImportType === "archive"
+  ) {
+    return false;
+  }
+
+  if (
+    sourceType === "staff booking" ||
+    detectedImportType === "staff booking"
+  ) {
+    return true;
+  }
+
+  return (
+    /\bconfirm|\bbooked\b|\bcontract/.test(status) ||
+    hasPortalEligibilityValue(details.contractSentDate) ||
+    hasPortalEligibilityValue(details.contractReturnedDate)
+  );
+}
+
+
 function normalizePortalOverviewRecord(row) {
   const checklistItems =
     Array.isArray(
@@ -597,12 +684,65 @@ function normalizePortalOverviewRecord(row) {
    SUPABASE
 ========================================================= */
 
+/*
+  Same paging as fetchBookings in bookingService.js: Supabase caps each
+  response (max_rows, 1,000 by default), so rows are read page by page
+  and eligibility is applied only after every page has loaded. The id
+  tiebreaker keeps rows from shifting between pages.
+*/
+const PORTAL_OVERVIEW_PAGE_SIZE = 1000;
+const PORTAL_OVERVIEW_MAX_PAGES = 1000;
+
 async function fetchPortalOverviewRecords() {
-  const {
-    data,
-    error,
-  } =
-    await supabase
+  const rows = [];
+
+  for (
+    let page = 0;
+    page < PORTAL_OVERVIEW_MAX_PAGES;
+    page += 1
+  ) {
+    const {
+      data,
+      error,
+    } =
+      await fetchPortalOverviewPage(
+        rows.length
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    // Stop only on an empty page; a server row limit below the page
+    // size also returns short pages.
+    if (
+      !data ||
+      data.length === 0
+    ) {
+      return rows
+        .filter(
+          isPortalEligibleBookingRow
+        )
+        .map(
+          normalizePortalOverviewRecord
+        );
+    }
+
+    rows.push(
+      ...data
+    );
+  }
+
+  throw new Error(
+    `Stopped loading portal records after ${PORTAL_OVERVIEW_MAX_PAGES} pages. The portal list may be incomplete.`
+  );
+}
+
+
+function fetchPortalOverviewPage(
+  offset
+) {
+  return supabase
       .from("bookings")
       .select(`
         id,
@@ -614,6 +754,11 @@ async function fetchPortalOverviewRecords() {
         end_date,
         attendee_count,
         status,
+        waitlist,
+        source_type,
+        detected_import_type,
+        date_of_cancellation,
+        rental_form_details:raw_data->rentalFormDetails,
         updated_at,
         portal_checklist_items (
           id,
@@ -647,18 +792,21 @@ async function fetchPortalOverviewRecords() {
         "start_date",
         {
           ascending: true,
+          nullsFirst: false,
         }
+      )
+      .order(
+        "id",
+        {
+          ascending: true,
+        }
+      )
+      .range(
+        offset,
+        offset +
+          PORTAL_OVERVIEW_PAGE_SIZE -
+          1
       );
-
-  if (error) {
-    throw error;
-  }
-
-  return (
-    data || []
-  ).map(
-    normalizePortalOverviewRecord
-  );
 }
 
 
