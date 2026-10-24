@@ -110,8 +110,7 @@ Staff browser
        ├─ PortalAdminView
        │    ├─► portal_checklist_items
        │    ├─► portal_documents
-       │    └─► Storage bucket: portal-uploads
-       │         (intended to be private; production setting is external to this repo)
+       │    └─► Storage bucket: portal-uploads (private)
        │
        └─ localStorage
             └─ UI preferences and selected browser-local data
@@ -129,8 +128,15 @@ Guest / group leader portal
   │
   └─ Separate application
        │
-       └─ Opened using:
-          <VITE_GUEST_PORTAL_BASE_URL>/?portal=<portal_token>
+       ├─ Opened using:
+       │    <VITE_GUEST_PORTAL_BASE_URL>/?portal=<portal_token>
+       │
+       ├─► security-definer RPCs (get_portal_record, portal_*)
+       │     callable without a staff login; scoped by portal token
+       │
+       └─► Storage bucket: portal-uploads
+             guest uploads allowed only where
+             portal_upload_path_is_allowed(name) returns true
 
 
 Automatic backup infrastructure
@@ -317,7 +323,7 @@ The guest-facing portal is a **separate application and is not contained in this
 
 This repository manages the staff side of the portal.
 
-Each booking has a `portal_token`.
+Each booking has a `portal_token`. Its database default is `encode(gen_random_bytes(16), 'hex')`, a 128-bit random value that cannot practically be guessed.
 
 Portal links use the form:
 
@@ -352,12 +358,45 @@ Custom staff documents can include supported types such as:
 - Excel
 - PNG
 - JPG/JPEG
-- HEIC
-- TXT
 
 Custom portal files are limited to 10 MB.
 
-The application is designed to use `portal-uploads` as a private Supabase Storage bucket. The repository uses short-lived signed URLs for staff file access, which is consistent with private-bucket operation; the bucket's actual production privacy setting is configured in Supabase and cannot be proven from this repository alone.
+`portal-uploads` is a private Supabase Storage bucket. Staff open files through signed URLs that expire after 10 minutes. The bucket itself enforces:
+
+| Setting | Value |
+|---|---|
+| Public | No |
+| File size limit | 10 MB (10485760 bytes) |
+| Allowed MIME types | `application/pdf`, `application/msword`, `.docx`, `application/vnd.ms-excel`, `.xlsx`, `image/png`, `image/jpeg` |
+
+The staff upload picker in `PortalAdminView.jsx` also offers HEIC and TXT, but the bucket rejects those types, so those uploads fail. Either add `image/heic` and `text/plain` to the bucket or remove them from `PORTAL_STAFF_DOCUMENT_MIME_BY_EXTENSION`.
+
+Storage paths follow the form:
+
+```text
+<portal_token>/staff-documents/<document_id>/<sanitized-file-name>
+```
+
+Because the first folder is the portal token, storage paths and signed URLs should be treated as sensitive in the same way as portal links.
+
+#### How the guest portal reaches data
+
+Guests don't sign in to Supabase. The guest portal reaches data through `security definer` database functions that can be called without a staff login:
+
+```text
+get_portal_record
+portal_get_booking_reference
+portal_get_checklist_item_response
+portal_mark_checklist_item_ready
+portal_unmark_checklist_item_ready
+portal_submit_checklist_item_response
+portal_submit_checklist_upload
+portal_upload_path_is_allowed
+```
+
+These functions are the security boundary for guest access. Each one must look up the booking from the supplied portal token and must never trust a booking ID, checklist item ID, or storage path that the guest supplies without checking it belongs to that token. Review them whenever they change. Their definitions are not yet stored in this repository.
+
+Guest file uploads, and cleanup of those uploads, are allowed in `portal-uploads` only where `portal_upload_path_is_allowed(name)` returns true.
 
 ---
 
@@ -407,11 +446,12 @@ Actual staff access is managed through Supabase Auth and the `staff_profiles` ta
 
 | Supabase feature | How the application uses it |
 |---|---|
-| **Auth** | Staff email/password sign-in using `signInWithPassword`, session restoration, and sign-out. There is no public staff sign-up screen. |
-| **Database** | Stores `bookings`, `staff_profiles`, `guest_inquiries`, `portal_checklist_items`, and `portal_documents`. |
+| **Auth** | Staff email/password sign-in using `signInWithPassword`, session restoration, and sign-out. There is no sign-up screen, but the Supabase sign-up API exists regardless of the UI, so **public sign-up must be disabled in the Supabase project settings**. |
+| **Database** | Stores `bookings`, `staff_profiles`, `guest_inquiries`, `portal_checklist_items`, and `portal_documents`. RLS is enabled on all five. |
 | **Row Level Security** | Enforces database permissions for authenticated staff. |
-| **Storage** | Uses the `portal-uploads` bucket for staff and guest portal files; the application is designed for private-bucket operation, but the live bucket privacy setting is configured in Supabase and is not verifiable from this repo alone. |
-| **Edge Functions** | `submit-guest-inquiry` accepts validated public inquiry submissions. |
+| **Database functions** | Role helpers used by RLS (see below) and the `security definer` portal functions used by the guest portal (see [How the guest portal reaches data](#how-the-guest-portal-reaches-data)). |
+| **Storage** | Private `portal-uploads` bucket for staff and guest portal files, accessed through short-lived signed URLs. |
+| **Edge Functions** | `submit-guest-inquiry` accepts validated public inquiry submissions. `verify-dev-mode` checks the Dev Mode password for signed-in users. |
 | **REST API** | Used by the external Google Apps Script backup system to read the `bookings` table. |
 
 ### Staff roles
@@ -735,7 +775,21 @@ The following production structures are **not included** in `SQL_SETUP.md` and a
 - `portal_documents`
 - The `portal-uploads` Storage bucket and its policies
 
-These objects need appropriate foreign keys, indexes where useful, and RLS/storage policies.
+They also don't include the guest portal's `security definer` functions.
+
+These objects need appropriate foreign keys, indexes where useful, and RLS/storage policies. Every policy for the `authenticated` role should call `is_active_staff()`, `can_manage_bookings()`, or `is_staff_admin()`. A policy whose condition is just `true` gives access to any signed-in Auth user, not only staff.
+
+Production foreign keys and their delete behavior:
+
+| Table → referenced table | On delete |
+|---|---|
+| `portal_checklist_items` → `bookings` | Cascade (portal tasks are deleted with the booking) |
+| `portal_documents` → `bookings` | Cascade (portal document rows are deleted with the booking) |
+| `guest_inquiries` → `bookings` | Set null (the inquiry remains, its converted-booking link is cleared) |
+| `guest_inquiries` → `auth.users` | No action (an Auth user who reviewed inquiries cannot be deleted while those rows reference them) |
+| `staff_profiles` → `auth.users` | Cascade |
+
+Deleting a booking does **not** delete its files in `portal-uploads`. Those objects remain in Storage.
 
 Do not assume that cloning this repository automatically recreates every production database object.
 
@@ -743,13 +797,15 @@ Do not assume that cloning this repository automatically recreates every product
 
 ### 5. Storage
 
-Create a bucket named:
+Create a **private** bucket named:
 
 ```text
 portal-uploads
 ```
 
-The application is designed for this bucket to be private. Configure the live Supabase bucket and Storage policies so authorized staff and the guest portal workflow can perform only the required operations. The repository itself does not prove the production bucket's privacy setting.
+with a 10 MB file size limit and the allowed MIME types listed under [Guest / Group Leader Portal](#guest--group-leader-portal).
+
+Configure Storage policies so that staff policies check an active staff role, and guest operations go only through `portal_upload_path_is_allowed(name)`.
 
 ---
 
@@ -868,7 +924,59 @@ portal-uploads
 
 bucket require their own appropriate security policies.
 
-Anonymous users should not be able to broadly read private booking or portal data.
+Anonymous users have no `SELECT`, `INSERT`, `UPDATE`, or `DELETE` privileges on any of these tables. Guest access goes only through the portal's `security definer` functions and the `portal_upload_path_is_allowed` Storage check.
+
+Policies for the `authenticated` role must check a staff role. "Signed in" is not the same as "staff".
+
+---
+
+### Auditing the live configuration
+
+Most security configuration lives in the Supabase project, not in this repository. Run these read-only queries in the SQL Editor after any schema, policy, or function change:
+
+```sql
+-- RLS enabled on every public table
+select c.relname, c.relrowsecurity
+from pg_class c join pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'public' and c.relkind = 'r' order by 1;
+
+-- Every table and Storage policy
+select schemaname, tablename, policyname, roles, cmd, qual, with_check
+from pg_policies where schemaname in ('public', 'storage') order by 1, 2, 3;
+
+-- Table privileges for anon / authenticated
+select table_name, grantee, string_agg(privilege_type, ',' order by privilege_type)
+from information_schema.role_table_grants
+where table_schema = 'public' and grantee in ('anon', 'authenticated')
+group by 1, 2 order by 1, 2;
+
+-- Functions callable by anon / authenticated
+select p.proname, p.prosecdef as security_definer,
+       has_function_privilege('anon', p.oid, 'execute') as anon_exec,
+       has_function_privilege('authenticated', p.oid, 'execute') as auth_exec
+from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public' order by 1;
+
+-- Bucket settings
+select id, public, file_size_limit, allowed_mime_types from storage.buckets;
+
+-- Auth users with no staff profile (should normally be none)
+select u.email, u.created_at, u.last_sign_in_at
+from auth.users u left join public.staff_profiles s on s.user_id = u.id
+where s.user_id is null order by u.created_at desc;
+```
+
+What to look for:
+
+- RLS is `true` on every table.
+- No `authenticated` policy uses a bare `true` condition or a check that only tests for a signed-in user.
+- No Storage policy grants `authenticated` access to the whole `portal-uploads` bucket without a staff-role check.
+- `anon` has no `SELECT`, `INSERT`, `UPDATE`, or `DELETE` privileges.
+- Only the intended portal functions are callable by `anon`.
+- The bucket is private, with the expected size and MIME limits.
+- No unexpected Auth users exist.
+
+Also confirm in the Supabase dashboard (Authentication) that public sign-ups are disabled.
 
 ---
 
@@ -884,13 +992,9 @@ Do not publish portal links publicly.
 
 ### Uploaded files
 
-The intended production configuration is for:
+`portal-uploads` is private. Files are served only through signed URLs, from the Supabase domain rather than the dashboard's domain. The bucket rejects files over 10 MB and any type outside its MIME allow-list, which excludes HTML and SVG.
 
-```text
-portal-uploads
-```
-
-to remain private. The repository uses signed URLs for temporary file access rather than permanently public URLs, but the live bucket privacy setting must be verified in Supabase.
+Guest uploads can still be harmful documents (for example, Office files with macros). Staff should open guest-uploaded Office files in Protected View and never enable macros.
 
 ---
 
@@ -970,8 +1074,10 @@ Removing someone from the browser-local User Admin view does **not** revoke acce
 
 To revoke application access:
 
-- Disable or remove the relevant Supabase Auth user as appropriate.
-- Set the corresponding `staff_profiles.is_active` value to `false`.
+- Set the corresponding `staff_profiles.is_active` value to `false`. This takes effect on the user's next database request, because RLS checks it every time.
+- Ban the Supabase Auth user (Authentication → Users) so they can no longer sign in or refresh a session. Banning is preferred over deleting: an Auth user who reviewed guest inquiries cannot be deleted while `guest_inquiries.reviewed_by` references them.
+
+Sign-out in the app only ends the session in that browser. Other devices stay signed in until their session is revoked or the user is banned.
 
 ---
 
@@ -1132,11 +1238,11 @@ Under the schema documented in `SQL_SETUP.md`, a newly inserted booking receives
 
 The automatic rollback path has the same limitation because rollback also deletes and re-inserts booking records. A rollback can therefore restore booking content while still changing every portal token.
 
-Portal-related deletion behavior cannot be fully determined from this repository because the production foreign-key `ON DELETE` rules for `portal_checklist_items` and `portal_documents` are not represented here. Depending on those rules, deleting bookings could cascade-delete related rows, be rejected by the database, or leave/set-null related records. Verify the live schema before using Replace.
+In production, `portal_checklist_items` and `portal_documents` **cascade-delete** with their booking. The Replace step deletes every booking first, so it also permanently deletes **every portal task and portal document row**. Those tables are not in the booking JSON backup, so neither Replace nor its rollback can bring them back. Files in `portal-uploads` are not deleted, but they are left without a matching portal row.
 
-Those portal tables and uploaded files are not included in the booking JSON backup.
+Replace also clears `converted_booking_id` on every converted guest inquiry (that foreign key is set null on delete).
 
-> **Do not treat Replace restore or its rollback as complete portal-aware disaster recovery until portal-token restoration, timestamps, and related portal records have been explicitly addressed and tested.**
+> **Do not use Replace on production data that has portal activity. Prefer Merge, which never deletes bookings. Do not treat Replace or its rollback as portal-aware disaster recovery until portal-token restoration, portal-table backup, and timestamps have been addressed and tested.**
 
 ##### Current RLS/delete behavior to be aware of
 
@@ -1512,7 +1618,7 @@ Do not manually rename production backup files unless you understand the filenam
 | Saving or importing fails for some users | Their database role may be read-only. |
 | Delete-all or Replace behaves strangely for a non-admin | RLS can cause the delete request to affect zero rows without returning a normal API error. Use an administrator account for destructive recovery operations and verify the resulting row set. |
 | Copied portal links point to `localhost:5173` | `VITE_GUEST_PORTAL_BASE_URL` was not configured for that build. |
-| Portal uploads fail | Check that `portal-uploads` exists and that the live Supabase bucket/privacy configuration and Storage policies match the intended private-file workflow. |
+| Portal uploads fail | Check the file is under 10 MB and is an allowed type. HEIC and TXT are offered by the staff picker but rejected by the bucket's MIME allow-list. Otherwise check the Storage policies. |
 | Opening a portal file fails | Check signed URL generation and Storage permissions. |
 | Refreshing `/calendar` or another nested route returns 404 | Production host is missing SPA fallback to `index.html`. |
 | Spreadsheet import adds no new records | Records may already exist. Master imports use merge logic; other import types can follow different upsert behavior, so review the import summary and source type. |
@@ -1542,15 +1648,15 @@ Current known state:
 - `npm run build` succeeds.
 - `npm run lint` is not currently clean and reports pre-existing errors/warnings; rerun it for the current count before release work.
 - There are currently no automated tests in the repository.
-- The repository has no `supabase/migrations` directory, and `SQL_SETUP.md` does not include `guest_inquiries`, `portal_checklist_items`, `portal_documents`, or the `portal-uploads` bucket/policies.
+- The repository has no `supabase/migrations` directory, and `SQL_SETUP.md` does not include `guest_inquiries`, `portal_checklist_items`, `portal_documents`, the `portal-uploads` bucket/policies, or the guest portal's database functions. Use [Auditing the live configuration](#auditing-the-live-configuration) to review them.
 - The Google Apps Script automatic backup system is external to this repository.
 - Automated Google Drive booking backups are configured separately from the React application.
 - Some non-database application state remains browser-local, including UI preferences, starred rows, the User Admin task-assignment directory, and the last-manual-backup display metadata.
 - Custom booking JSON backups cover the `bookings` data represented by the application but are not a full Supabase project backup.
-- `fetchBookings()` paginates through the full `bookings` table,so backups, restores, rollback and import checks use the complete booking set. Portal View and Guest Inquiries still load in a single request, and the rows returned by large `upsertBookings()` writes have not been verified.
+- `fetchBookings()` paginates through the full `bookings` table, so backups, restores, rollback and import checks use the complete booking set. Portal View and Guest Inquiries still load in a single request, and the rows returned by large `upsertBookings()` writes have not been verified.
 - Manual backups can currently be created with zero booking records without any export-time warning; the restore screen warns later but does not block the file. The external automatic-backup implementation is documented as refusing zero-record snapshots.
 - Replace restore and rollback do not safely preserve existing portal tokens. Merge and Replace also rewrite `updated_at`, and re-inserted records receive new `created_at` values.
-- Portal-table deletion behavior depends on production foreign-key `ON DELETE` rules that are not included in this repository.
+- Portal tasks and portal documents cascade-delete with their booking, so deleting a booking or running Replace restore permanently removes that booking's portal rows. Their Storage files are not removed.
 - Portal tables, uploaded files, authentication accounts, and database configuration require separate recovery consideration.
 
 ---
