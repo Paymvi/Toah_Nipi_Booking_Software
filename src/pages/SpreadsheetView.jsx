@@ -376,6 +376,8 @@ const MAPPED_MASTER_RAW_COLUMNS = new Set([
   // =========================================================
   "Confirmed or Unconfirmed",
   "Confirmed/Unconfirmed",
+  "Confirmation Status",
+  "Status",
 
   "Stage of Group",
 
@@ -506,18 +508,6 @@ const bookingSpreadsheetColumns = [
   {
     label: "Source Row",
     value: (booking) => booking.sourceRowNumber,
-  },
-  {
-  label: "Status",
-    render: (booking) => (
-      <span
-        className={`spreadsheet-status-pill ${getSpreadsheetStatusClass(
-          booking.status
-        )}`}
-      >
-        {getSpreadsheetDisplayValue(booking.status)}
-      </span>
-    ),
   },
   {
     label: "Submitted",
@@ -784,7 +774,6 @@ const SPREADSHEET_YEAR_COLUMN_LABELS = {
 
   "2027": new Set([
     "Organization",
-    "Status",
     "Start Date",
     "End Date",
     "Retreat Type",
@@ -1007,14 +996,49 @@ function getDefaultSpreadsheetSettings() {
 const SPREADSHEET_SAVED_VIEWS_STORAGE_KEY =
   "bookingSpreadsheetSavedViews";
 
+/*
+  Status is never shown as a spreadsheet column. Older saved
+  settings/views may still reference it, so strip those ids.
+*/
+const SPREADSHEET_REMOVED_COLUMN_IDS = new Set([
+  "standard:Status",
+  "raw:Status",
+  "raw:Confirmation Status",
+]);
+
+function removeSpreadsheetRemovedColumnIds(columnIds) {
+  if (!Array.isArray(columnIds)) {
+    return columnIds;
+  }
+
+  return columnIds.filter(
+    (columnId) => !SPREADSHEET_REMOVED_COLUMN_IDS.has(columnId)
+  );
+}
+
 function normalizeSpreadsheetSettings(settings = {}) {
+  const defaultSettings = getDefaultSpreadsheetSettings();
   const parsedSettings = {
-    ...getDefaultSpreadsheetSettings(),
+    ...defaultSettings,
     ...(settings || {}),
   };
 
+  const sortsByRemovedColumn = SPREADSHEET_REMOVED_COLUMN_IDS.has(
+    parsedSettings.sortColumnId
+  );
+
   return {
     ...parsedSettings,
+    visibleColumnIds: removeSpreadsheetRemovedColumnIds(
+      parsedSettings.visibleColumnIds
+    ),
+    columnOrder: removeSpreadsheetRemovedColumnIds(parsedSettings.columnOrder),
+    sortColumnId: sortsByRemovedColumn
+      ? defaultSettings.sortColumnId
+      : parsedSettings.sortColumnId,
+    sortDirection: sortsByRemovedColumn
+      ? defaultSettings.sortDirection
+      : parsedSettings.sortDirection,
     showColumnCategoryColors: Boolean(parsedSettings.showColumnCategoryColors),
     showRetreatTypeColors: Boolean(parsedSettings.showRetreatTypeColors),
     colorMode: "none",
