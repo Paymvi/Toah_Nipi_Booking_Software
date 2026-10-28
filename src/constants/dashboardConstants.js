@@ -203,7 +203,7 @@ export const bookingDetailTabs = [
   "Overview",
   "Details",
   "Housing",
-  "Meals & Activities",
+  "Staff Assignments",
   "Checklists",
 ];
 

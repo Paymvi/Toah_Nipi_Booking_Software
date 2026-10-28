@@ -60,6 +60,7 @@ import {
 
 import ExcelJS from "exceljs";
 import BookingHousingTab from "../components/BookingHousingTab";
+import BookingStaffAssignmentsTab from "../components/BookingStaffAssignmentsTab";
 import DashboardTopbar from "../components/DashboardTopbar";
 import BookingCalendar from "../components/BookingCalendar";
 // import BookingActivities from "../components/BookingActivities";
@@ -4289,289 +4290,6 @@ function BookingDateSettingsModal({ settings, updateSettings, onClose }) {
 }
 
 
-function createProgramLogisticsAssignment() {
-  return {
-    id: `program-assignment-${Date.now()}-${Math.random()
-      .toString(36)
-      .slice(2, 8)}`,
-    role: "General",
-    assignedTo: "",
-    notes: "",
-  };
-}
-
-function getProgramLogisticsAssignments(booking) {
-  return Array.isArray(booking.programLogisticsAssignments)
-    ? booking.programLogisticsAssignments
-    : [];
-}
-
-function BookingProgramLogisticsTab({ booking, onSaveBooking, staffUsers = [] }) {
-  const [formData, setFormData] = useState(() => ({
-    meals: booking.meals || "",
-    activities: booking.activities || "",
-    assignments: getProgramLogisticsAssignments(booking),
-  }));
-
-  useEffect(() => {
-    setFormData({
-      meals: booking.meals || "",
-      activities: booking.activities || "",
-      assignments: getProgramLogisticsAssignments(booking),
-    });
-  }, [booking.id]);
-
-  const updateField = (fieldName, value) => {
-    setFormData((currentData) => ({
-      ...currentData,
-      [fieldName]: value,
-    }));
-  };
-
-  const addAssignment = () => {
-    setFormData((currentData) => ({
-      ...currentData,
-      assignments: [
-        ...currentData.assignments,
-        createProgramLogisticsAssignment(),
-      ],
-    }));
-  };
-
-  const updateAssignment = (assignmentId, fieldName, value) => {
-    setFormData((currentData) => ({
-      ...currentData,
-      assignments: currentData.assignments.map((assignment) =>
-        assignment.id === assignmentId
-          ? {
-              ...assignment,
-              [fieldName]: value,
-            }
-          : assignment
-      ),
-    }));
-  };
-
-  const removeAssignment = (assignmentId) => {
-    setFormData((currentData) => ({
-      ...currentData,
-      assignments: currentData.assignments.filter(
-        (assignment) => assignment.id !== assignmentId
-      ),
-    }));
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-
-    const cleanedAssignments = formData.assignments
-      .map((assignment) => ({
-        ...assignment,
-        role: assignment.role || "General",
-        assignedTo: String(assignment.assignedTo || "").trim(),
-        notes: String(assignment.notes || "").trim(),
-      }))
-      .filter(
-        (assignment) =>
-          assignment.assignedTo || assignment.notes || assignment.role
-      );
-
-    onSaveBooking({
-      ...booking,
-      meals: formData.meals.trim(),
-      activities: formData.activities.trim(),
-      programLogisticsAssignments: cleanedAssignments,
-    });
-  };
-
-  return (
-    <form className="program-logistics-tab" onSubmit={handleSubmit}>
-      <section className="program-logistics-card">
-        <header className="program-logistics-header">
-          <div className="dashboard-heading-with-icon">
-            <span className="section-icon">
-              <FaUtensils />
-            </span>
-
-            <div>
-              <p className="dashboard-eyebrow">Meals & Activities</p>
-              <h3>Program Logistics</h3>
-              <span>
-                Edit the same meals and recreation text shown in the Overview
-                tab.
-              </span>
-            </div>
-          </div>
-
-          <button className="primary-dashboard-button" type="submit">
-            Save
-          </button>
-        </header>
-
-        <div className="program-logistics-summary-grid">
-          <div>
-            <small># Meals</small>
-            <strong>{booking.mealCount || "—"}</strong>
-          </div>
-
-          <div>
-            <small>Food Allergies</small>
-            <strong>{booking.foodAllergies || "—"}</strong>
-          </div>
-
-          <div>
-            <small>Guest Count</small>
-            <strong>{booking.attendeeCount || "—"}</strong>
-          </div>
-        </div>
-
-        <div className="program-logistics-editor-grid">
-          <label className="program-logistics-field">
-            <span>Meals</span>
-            <textarea
-              value={formData.meals}
-              placeholder="Example: 6 - Saturday breakfast through Sunday dinner..."
-              onChange={(event) => updateField("meals", event.target.value)}
-            />
-          </label>
-
-          <label className="program-logistics-field">
-            <span>Recreation / Activities</span>
-            <textarea
-              value={formData.activities}
-              placeholder="Example: Fire pit on Saturday night @ Hebron, 9-11pm..."
-              onChange={(event) =>
-                updateField("activities", event.target.value)
-              }
-            />
-          </label>
-        </div>
-      </section>
-
-      <section className="program-logistics-card">
-        <header className="program-logistics-section-header">
-          <div>
-            <p className="dashboard-eyebrow">Staff Assignments</p>
-            <h3>Assigned People</h3>
-            <span>
-              Assign staff members to meals, recreation, setup, or general
-              program logistics.
-            </span>
-          </div>
-
-          <button
-            className="secondary-dashboard-button"
-            type="button"
-            onClick={addAssignment}
-          >
-            <FaPlus />
-            Add Person
-          </button>
-        </header>
-
-        {formData.assignments.length > 0 ? (
-          <div className="program-assignment-list">
-            {formData.assignments.map((assignment) => (
-              <div className="program-assignment-row" key={assignment.id}>
-                <label>
-                  <span>Area</span>
-                  <select
-                    value={assignment.role}
-                    onChange={(event) =>
-                      updateAssignment(
-                        assignment.id,
-                        "role",
-                        event.target.value
-                      )
-                    }
-                  >
-                    <option value="General">General</option>
-                    <option value="Meals">Meals</option>
-                    <option value="Recreation">Recreation</option>
-                    <option value="Setup">Setup</option>
-                    <option value="Cleanup">Cleanup</option>
-                  </select>
-                </label>
-
-                <label>
-                  <span>Assigned To</span>
-                  <select
-                    value={assignment.assignedTo}
-                    onChange={(event) =>
-                      updateAssignment(
-                        assignment.id,
-                        "assignedTo",
-                        event.target.value
-                      )
-                    }
-                  >
-                    <option value="">Unassigned</option>
-
-                    {staffUsers
-                      .filter((user) => user.active)
-                      .map((user) => (
-                        <option value={user.name} key={user.id}>
-                          {user.name}
-                        </option>
-                      ))}
-
-                    {assignment.assignedTo &&
-                      !staffUsers.some(
-                        (user) =>
-                          user.active &&
-                          normalizeStaffName(user.name) === normalizeStaffName(assignment.assignedTo)
-                      ) && (
-                        <option value={assignment.assignedTo}>
-                          {assignment.assignedTo}
-                        </option>
-                      )}
-                  </select>
-                </label>
-
-                <label>
-                  <span>Notes</span>
-                  <input
-                    value={assignment.notes}
-                    placeholder="Example: Confirm fire pit supplies"
-                    onChange={(event) =>
-                      updateAssignment(
-                        assignment.id,
-                        "notes",
-                        event.target.value
-                      )
-                    }
-                  />
-                </label>
-
-                <button
-                  className="program-assignment-delete-button"
-                  type="button"
-                  onClick={() => removeAssignment(assignment.id)}
-                  aria-label="Remove assignment"
-                >
-                  <FaTrashAlt />
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="program-logistics-empty">
-            <FaUsers />
-            <strong>No people assigned yet</strong>
-            <p>Add a staff member to track who is handling meals or recreation.</p>
-          </div>
-        )}
-
-        <footer className="program-logistics-footer">
-          <button className="primary-dashboard-button" type="submit">
-            Save
-          </button>
-        </footer>
-      </section>
-    </form>
-  );
-}
-
 /* =========================================================
    BOOKING DETAIL RECORD TYPES
 ========================================================= */
@@ -7312,8 +7030,9 @@ function BookingDetailView({
   />
 )}
 
-{activeTab === "Meals & Activities" && (
-  <BookingProgramLogisticsTab
+{activeTab === "Staff Assignments" && (
+  <BookingStaffAssignmentsTab
+    key={booking.id}
     booking={booking}
     onSaveBooking={onSaveBooking}
     staffUsers={staffUsers}
@@ -7332,7 +7051,7 @@ function BookingDetailView({
 {activeTab !== "Overview" &&
   activeTab !== "Details" &&
   activeTab !== "Housing" &&
-  activeTab !== "Meals & Activities" &&
+  activeTab !== "Staff Assignments" &&
   activeTab !== "Checklists" &&
   activeTab !== "Notes & Tasks" && (
     <section className="dashboard-card booking-tab-placeholder">

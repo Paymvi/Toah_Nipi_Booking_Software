@@ -66,7 +66,7 @@ function getAllBookingJobs(inquiryBookings) {
     const programLogisticsJobs = getProgramLogisticsAssignments(booking).map(
       (assignment) => ({
         id: `program-${booking.id}-${assignment.id}`,
-        sourceType: "Program Logistics",
+        sourceType: "Staff Assignment",
         title: `${assignment.role || "General"} assignment`,
         role: assignment.role || "General",
         assignedTo: assignment.assignedTo || "",
@@ -271,7 +271,7 @@ export default function JobsView({
               <p className="dashboard-eyebrow">Jobs</p>
               <h2>Staff Tasks</h2>
               <span>
-                View checklist tasks and meals/activities assignments by staff
+                View checklist tasks and booking staff assignments by staff
                 member.
               </span>
             </div>
