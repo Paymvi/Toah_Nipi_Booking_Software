@@ -6,7 +6,7 @@
   grid-column: 1 / -1;
   overflow: hidden;
   border: 1px solid #e1e6eb;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: #ffffff;
 }
 
@@ -16,7 +16,7 @@
 ========================================================= */
 
 .staff-booking-form-section > .booking-work-section-header {
-  padding: 18px 20px;
+  padding: 1.125rem 1.25rem;
   border-bottom: 1px solid #e7eaee;
   background: #fafbfc;
 }
@@ -28,9 +28,9 @@
 }
 
 .staff-booking-form-section > .booking-work-section-header p {
-  margin-bottom: 3px;
+  margin-bottom: 0.188rem;
   color: #818a98;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -39,7 +39,7 @@
 .staff-booking-form-section > .booking-work-section-header h3 {
   margin: 0;
   color: #292e3a;
-  font-size: 1.05rem;
+  font-size: 1.102rem;
   font-weight: 700;
   letter-spacing: -0.015em;
 }
@@ -50,7 +50,7 @@
 ========================================================= */
 
 .staff-booking-detail-group {
-  padding: 22px 20px 24px;
+  padding: 1.375rem 1.25rem 1.5rem;
 }
 
 .staff-booking-detail-group + .staff-booking-detail-group {
@@ -58,9 +58,9 @@
 }
 
 .staff-booking-detail-group h4 {
-  margin: 0 0 15px;
+  margin: 0 0 0.938rem;
   color: #353b48;
-  font-size: 0.78rem;
+  font-size: 0.917rem;
   font-weight: 700;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -74,7 +74,7 @@
 .staff-booking-detail-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 
@@ -87,11 +87,11 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 5px;
-  min-height: 72px;
-  padding: 12px 14px;
+  gap: 0.312rem;
+  min-height: 4.5rem;
+  padding: 0.75rem 0.875rem;
   border: 1px solid #e5e9ee;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #fbfcfd;
   transition: border-color 150ms ease,
     background-color 150ms ease;
@@ -100,7 +100,7 @@
 .staff-booking-detail-field small {
   display: block;
   color: #8b93a1;
-  font-size: 0.7rem;
+  font-size: 0.867rem;
   font-weight: 600;
   line-height: 1.25;
 }
@@ -109,7 +109,7 @@
   display: block;
   min-width: 0;
   color: #303541;
-  font-size: 0.94rem;
+  font-size: 1.017rem;
   font-weight: 650;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -131,18 +131,18 @@
 ========================================================= */
 
 .staff-booking-detail-notes {
-  margin-top: 12px;
-  padding: 14px 16px;
+  margin-top: 0.75rem;
+  padding: 0.875rem 1rem;
   border-left: 3px solid #72866f;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 0.5rem 0.5rem 0;
   background: #f7f9f6;
 }
 
 .staff-booking-detail-notes small {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 0.375rem;
   color: #7d877b;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.055em;
   text-transform: uppercase;
@@ -151,7 +151,7 @@
 .staff-booking-detail-notes p {
   margin: 0;
   color: #40464f;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
   line-height: 1.55;
   white-space: pre-wrap;
 }
@@ -163,7 +163,7 @@
 
 .staff-booking-detail-group:first-of-type .staff-booking-detail-field strong,
 .staff-booking-detail-group:nth-of-type(2) .staff-booking-detail-field strong {
-  font-size: 1rem;
+  font-size: 1.055rem;
 }
 
 
@@ -179,7 +179,7 @@
 
 @media (max-width: 650px) {
   .staff-booking-detail-group {
-    padding: 18px;
+    padding: 1.125rem;
   }
 
   .staff-booking-detail-grid {

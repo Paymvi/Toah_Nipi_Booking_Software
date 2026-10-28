@@ -25,6 +25,37 @@
   --success-text: #236b3a;
 }
 
+/* =========================================================
+   Compact sizing system
+   Every size in these stylesheets is in rem, so this one value sets
+   the density of the whole app. 80% of the browser's default font size
+   (1rem = 12.8px at default settings) gives roughly the look of 80%
+   browser zoom, while still following the user's own font size and
+   zoom settings. Font sizes use a gentler scale than spacing so text
+   stays readable (body text ~12-13.5px, small labels >= ~11px).
+   Phones get a slightly larger base for touch use.
+========================================================= */
+
+html {
+  font-size: 80%;
+}
+
+@media (max-width: 720px) {
+  html {
+    font-size: 87.5%;
+  }
+}
+
+/* Touch phones: 16px text fields stop mobile browsers from zooming in on focus. */
+
+@media (max-width: 720px) and (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 html,
 body,
 #root {
@@ -35,6 +66,7 @@ body,
 
 body {
   margin: 0;
+  font-size: 1.055rem;
   font-family: Inter,
     system-ui,
     -apple-system,

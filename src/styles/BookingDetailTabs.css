@@ -13,15 +13,15 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 0.625rem;
   flex-wrap: wrap;
 }
 
 .booking-date-settings-button {
-  min-height: 34px;
-  border-radius: 8px;
-  padding: 0 12px;
-  font-size: 0.82rem;
+  min-height: 2.125rem;
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
+  font-size: 0.942rem;
   font-weight: 600;
   box-shadow: none;
 }
@@ -33,50 +33,50 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 1.25rem;
   background: rgba(15, 23, 42, 0.38);
 }
 
 .booking-date-settings-modal {
-  width: min(520px, 100%);
-  max-height: calc(100vh - 40px);
+  width: min(32.5rem, 100%);
+  max-height: calc(100vh - 2.5rem);
   overflow: auto;
   background: #ffffff;
   border: 1px solid #dfe4ec;
-  border-radius: 12px;
-  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
+  border-radius: 0.75rem;
+  box-shadow: 0 1.5rem 4.375rem rgba(15, 23, 42, 0.24);
 }
 
 .booking-date-settings-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  padding: 18px;
+  gap: 1rem;
+  padding: 1.125rem;
   border-bottom: 1px solid #edf0f4;
 }
 
 .booking-date-settings-header h3 {
   margin: 0;
   color: #252936;
-  font-size: 1.05rem;
+  font-size: 1.102rem;
   font-weight: 650;
   letter-spacing: -0.02em;
 }
 
 .booking-date-settings-header span {
   display: block;
-  margin-top: 5px;
+  margin-top: 0.312rem;
   color: #858c9b;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   line-height: 1.45;
 }
 
 .booking-date-settings-close {
-  width: 34px;
-  height: 34px;
+  width: 2.125rem;
+  height: 2.125rem;
   border: 1px solid #dfe4ec;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #ffffff;
   color: #687083;
   display: inline-grid;
@@ -91,22 +91,22 @@
 
 .booking-date-settings-body {
   display: grid;
-  gap: 14px;
-  padding: 18px;
+  gap: 0.875rem;
+  padding: 1.125rem;
 }
 
 .booking-date-format-list {
   display: grid;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .booking-date-format-option {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 12px;
+  gap: 0.625rem;
+  padding: 0.75rem;
   border: 1px solid #edf0f4;
-  border-radius: 9px;
+  border-radius: 0.562rem;
   background: #ffffff;
   cursor: pointer;
   transition: border-color 150ms ease,
@@ -122,45 +122,45 @@
 .booking-date-format-option.active {
   border-color: #9f98d4;
   background: #f7f5ff;
-  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.08);
+  box-shadow: 0 0 0 0.188rem rgba(68, 58, 156, 0.08);
 }
 
 .booking-date-format-option input {
-  margin-top: 3px;
+  margin-top: 0.188rem;
   accent-color: #443a9c;
 }
 
 .booking-date-format-option span {
   min-width: 0;
   display: grid;
-  gap: 3px;
+  gap: 0.188rem;
 }
 
 .booking-date-format-option strong {
   color: #303442;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
   font-weight: 650;
 }
 
 .booking-date-format-option small {
   color: #858c9b;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   line-height: 1.35;
 }
 
 .booking-date-weekday-toggle {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 12px;
+  gap: 0.625rem;
+  padding: 0.75rem;
   border: 1px solid #edf0f4;
-  border-radius: 9px;
+  border-radius: 0.562rem;
   background: #fbfcfd;
   cursor: pointer;
 }
 
 .booking-date-weekday-toggle input {
-  margin-top: 3px;
+  margin-top: 0.188rem;
   accent-color: #443a9c;
 }
 
@@ -170,32 +170,32 @@
 
 .booking-date-weekday-toggle span {
   display: grid;
-  gap: 3px;
+  gap: 0.188rem;
 }
 
 .booking-date-weekday-toggle strong {
   color: #303442;
-  font-size: 0.86rem;
+  font-size: 0.967rem;
   font-weight: 650;
 }
 
 .booking-date-weekday-toggle small {
   color: #858c9b;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
 }
 
 .booking-date-preview-card {
-  padding: 14px;
+  padding: 0.875rem;
   border: 1px solid #dfe4ec;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: #f7f8fa;
 }
 
 .booking-date-preview-card small {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 0.312rem;
   color: #7b8290;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 650;
   letter-spacing: 0.065em;
   text-transform: uppercase;
@@ -204,15 +204,15 @@
 .booking-date-preview-card strong {
   display: block;
   color: #252936;
-  font-size: 1rem;
+  font-size: 1.055rem;
   font-weight: 650;
 }
 
 .booking-date-settings-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 18px 18px;
+  gap: 0.625rem;
+  padding: 0.875rem 1.125rem 1.125rem;
   border-top: 1px solid #edf0f4;
 }
 
@@ -223,12 +223,12 @@
 
   .booking-date-settings-backdrop {
     align-items: stretch;
-    padding: 12px;
+    padding: 0.75rem;
   }
 
   .booking-date-settings-modal {
     max-height: none;
-    height: calc(100vh - 24px);
+    height: calc(100vh - 1.5rem);
   }
 
   .booking-date-settings-footer {
@@ -248,22 +248,22 @@
 
 .booking-checklist-page {
   display: grid;
-  gap: 16px;
+  gap: 1rem;
   min-width: 0;
 }
 
 .booking-checklist-card {
-  border-radius: 10px;
+  border-radius: 0.625rem;
   border-color: #dfe4ec;
-  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+  box-shadow: 0 0.375rem 1.125rem rgba(28, 35, 52, 0.04);
 }
 
 .booking-checklist-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
-  padding: 18px;
+  gap: 1.125rem;
+  padding: 1.125rem;
   border-bottom: 1px solid #edf0f4;
   background: #ffffff;
 }
@@ -271,16 +271,16 @@
 .booking-checklist-header h3 {
   margin: 0;
   color: #252936;
-  font-size: 1.08rem;
+  font-size: 1.13rem;
   font-weight: 650;
   letter-spacing: -0.015em;
 }
 
 .booking-checklist-header span {
   display: block;
-  margin-top: 5px;
+  margin-top: 0.312rem;
   color: #858c9b;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   font-weight: 400;
 }
 
@@ -288,25 +288,25 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 0.625rem;
   flex-wrap: wrap;
 }
 
 .booking-checklist-add-form input {
-  min-height: 38px;
-  min-width: 240px;
+  min-height: 2.375rem;
+  min-width: 15rem;
   border: 1px solid #dfe4ec;
-  border-radius: 8px;
-  padding: 0 12px;
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
   color: #303442;
   background: #ffffff;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   outline: none;
 }
 
 .booking-checklist-add-form input:focus {
   border-color: #443a9c;
-  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+  box-shadow: 0 0 0 0.188rem rgba(68, 58, 156, 0.12);
 }
 
 .booking-checklist-table-wrap,
@@ -323,21 +323,21 @@
 }
 
 .booking-checklist-table {
-  min-width: 860px;
+  min-width: 53.75rem;
 }
 
 .booking-checklist-items-table {
-  min-width: 1080px;
+  min-width: 67.5rem;
 }
 
 .booking-checklist-table th,
 .booking-checklist-items-table th {
-  padding: 11px 14px;
+  padding: 0.688rem 0.875rem;
   background: #f6f7f9;
   border-bottom: 1px solid #dfe4ec;
   color: #565d6b;
   text-align: left;
-  font-size: 0.7rem;
+  font-size: 0.867rem;
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.045em;
@@ -346,10 +346,10 @@
 
 .booking-checklist-table td,
 .booking-checklist-items-table td {
-  padding: 12px 14px;
+  padding: 0.75rem 0.875rem;
   border-bottom: 1px solid #edf0f4;
   color: #3f4351;
-  font-size: 0.86rem;
+  font-size: 0.967rem;
   vertical-align: middle;
 }
 
@@ -361,15 +361,15 @@
 .booking-checklist-table td strong,
 .booking-checklist-items-table td strong {
   color: #303442;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
   font-weight: 650;
 }
 
 .booking-checklist-icon-button {
-  width: 34px;
-  height: 34px;
+  width: 2.125rem;
+  height: 2.125rem;
   border: 1px solid #c9c4e8;
-  border-radius: 7px;
+  border-radius: 0.438rem;
   display: inline-grid;
   place-items: center;
   background: #ffffff;
@@ -382,10 +382,10 @@
 }
 
 .booking-checklist-delete-button {
-  width: 34px;
-  height: 34px;
+  width: 2.125rem;
+  height: 2.125rem;
   border: 1px solid #efcaca;
-  border-radius: 7px;
+  border-radius: 0.438rem;
   display: inline-grid;
   place-items: center;
   background: #fffafa;
@@ -401,12 +401,12 @@
 
 .booking-checklist-progress {
   display: grid;
-  gap: 6px;
-  min-width: 180px;
+  gap: 0.375rem;
+  min-width: 11.25rem;
 }
 
 .booking-checklist-progress > div {
-  height: 8px;
+  height: 0.5rem;
   overflow: hidden;
   border-radius: 999px;
   background: #edf0f4;
@@ -421,7 +421,7 @@
 
 .booking-checklist-progress small {
   color: #858c9b;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   font-weight: 500;
 }
 
@@ -433,28 +433,28 @@
   z-index: 5000;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: 1.5rem;
   background: rgba(20, 23, 34, 0.52);
 }
 
 .booking-checklist-modal {
-  width: min(1420px, 100%);
-  max-height: min(840px, calc(100vh - 48px));
+  width: min(88.75rem, 100%);
+  max-height: min(52.5rem, calc(100vh - 3rem));
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: #ffffff;
   border: 1px solid #dfe4ec;
-  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.25);
+  box-shadow: 0 1.5rem 4.375rem rgba(15, 23, 42, 0.25);
 }
 
 .booking-checklist-modal-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
-  padding: 18px;
+  gap: 1.125rem;
+  padding: 1.125rem;
   border-bottom: 1px solid #edf0f4;
   background: #ffffff;
 }
@@ -462,22 +462,22 @@
 .booking-checklist-modal-header h3 {
   margin: 0;
   color: #252936;
-  font-size: 1.08rem;
+  font-size: 1.13rem;
   font-weight: 650;
   letter-spacing: -0.015em;
 }
 
 .booking-checklist-modal-header p {
-  margin: 5px 0 0;
+  margin: 0.312rem 0 0;
   color: #858c9b;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
 }
 
 .booking-checklist-modal-close {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   border: 1px solid #dfe4ec;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   display: inline-grid;
   place-items: center;
   background: #ffffff;
@@ -492,22 +492,22 @@
 
 .booking-checklist-item-form {
   display: grid;
-  grid-template-columns: 100px minmax(240px, 1fr) 170px 190px auto;
-  gap: 12px;
+  grid-template-columns: 6.25rem minmax(15rem, 1fr) 10.625rem 11.875rem auto;
+  gap: 0.75rem;
   align-items: end;
-  padding: 14px 18px;
+  padding: 0.875rem 1.125rem;
   border-bottom: 1px solid #edf0f4;
   background: #fbfcfd;
 }
 
 .booking-checklist-item-form label {
   display: grid;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .booking-checklist-item-form label span {
   color: #687083;
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.045em;
@@ -515,13 +515,13 @@
 
 .booking-checklist-item-form input,
 .booking-checklist-item-form select {
-  min-height: 38px;
+  min-height: 2.375rem;
   border: 1px solid #dfe4ec;
-  border-radius: 8px;
-  padding: 0 12px;
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
   background: #ffffff;
   color: #303442;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   outline: none;
 }
 
@@ -532,13 +532,13 @@
 .booking-checklist-item-form input:focus,
 .booking-checklist-item-form select:focus {
   border-color: #443a9c;
-  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+  box-shadow: 0 0 0 0.188rem rgba(68, 58, 156, 0.12);
 }
 
 .booking-checklist-item-form-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   justify-content: flex-end;
 }
 
@@ -547,21 +547,21 @@
 }
 
 .booking-checklist-items-table input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
   accent-color: #443a9c;
   cursor: pointer;
 }
 
 .booking-checklist-status-button {
-  min-height: 34px;
+  min-height: 2.125rem;
   border: 1px solid #c9c4e8;
-  border-radius: 7px;
-  padding: 0 12px;
+  border-radius: 0.438rem;
+  padding: 0 0.75rem;
   background: #ffffff;
   color: #443a9c;
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 0.93rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -587,20 +587,20 @@
 }
 
 .booking-checklist-empty-row {
-  padding: 16px;
+  padding: 1rem;
   border: 1px dashed #cfd6e1;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #fbfcfd;
   color: #858c9b;
   text-align: center;
-  font-size: 0.86rem;
+  font-size: 0.967rem;
 }
 
 .booking-checklist-modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 14px 18px;
+  gap: 0.625rem;
+  padding: 0.875rem 1.125rem;
   border-top: 1px solid #edf0f4;
   background: #ffffff;
 }
@@ -616,7 +616,7 @@
   }
 
   .booking-checklist-add-form input {
-    flex: 1 1 240px;
+    flex: 1 1 15rem;
   }
 
   .booking-checklist-item-form {
@@ -631,11 +631,11 @@
 
 @media (max-width: 720px) {
   .booking-checklist-modal-backdrop {
-    padding: 12px;
+    padding: 0.75rem;
   }
 
   .booking-checklist-modal {
-    max-height: calc(100vh - 24px);
+    max-height: calc(100vh - 1.5rem);
   }
 
   .booking-checklist-item-form {
@@ -669,7 +669,7 @@
 .booking-checklist-page .booking-activities-header > div:first-child {
   display: flex !important;
   align-items: center !important;
-  gap: 12px !important;
+  gap: 0.75rem !important;
   min-width: 0;
 }
 
@@ -677,16 +677,16 @@
 
 .booking-checklist-page .section-icon,
 .booking-checklist-page .booking-work-section-icon {
-  width: 44px !important;
-  height: 44px !important;
-  min-width: 44px !important;
-  flex: 0 0 44px !important;
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  min-width: 2.75rem !important;
+  flex: 0 0 2.75rem !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   padding: 0 !important;
   margin: 0 !important;
-  border-radius: 10px !important;
+  border-radius: 0.625rem !important;
   background: #eef1ea !important;
   color: #7b8290 !important;
   line-height: 1 !important;
@@ -697,8 +697,8 @@
 
 .booking-checklist-page .section-icon svg,
 .booking-checklist-page .booking-work-section-icon svg {
-  width: 20px !important;
-  height: 20px !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
   display: block !important;
   margin: 0 !important;
   padding: 0 !important;
@@ -750,7 +750,7 @@
 
 .program-logistics-tab {
   display: grid;
-  gap: 16px;
+  gap: 1rem;
   min-width: 0;
 }
 
@@ -758,8 +758,8 @@
   overflow: hidden;
   background: #ffffff;
   border: 1px solid #dfe4ec;
-  border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+  border-radius: 0.625rem;
+  box-shadow: 0 0.375rem 1.125rem rgba(28, 35, 52, 0.04);
 }
 
 .program-logistics-header,
@@ -767,8 +767,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
-  padding: 18px;
+  gap: 1.125rem;
+  padding: 1.125rem;
   border-bottom: 1px solid #edf0f4;
   background: #ffffff;
 }
@@ -777,7 +777,7 @@
 .program-logistics-section-header h3 {
   margin: 0;
   color: #252936;
-  font-size: 1.08rem;
+  font-size: 1.13rem;
   font-weight: 650;
   letter-spacing: -0.015em;
 }
@@ -785,9 +785,9 @@
 .program-logistics-header span,
 .program-logistics-section-header span {
   display: block;
-  margin-top: 5px;
+  margin-top: 0.312rem;
   color: #858c9b;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   font-weight: 400;
   line-height: 1.45;
 }
@@ -795,24 +795,24 @@
 .program-logistics-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  padding: 18px;
+  gap: 0.75rem;
+  padding: 1.125rem;
   border-bottom: 1px solid #edf0f4;
   background: #fbfcfd;
 }
 
 .program-logistics-summary-grid div {
   min-width: 0;
-  padding: 14px;
+  padding: 0.875rem;
   border: 1px solid #e4e8ef;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #ffffff;
 }
 
 .program-logistics-summary-grid small {
   display: block;
   color: #818998;
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.045em;
@@ -820,9 +820,9 @@
 
 .program-logistics-summary-grid strong {
   display: block;
-  margin-top: 6px;
+  margin-top: 0.375rem;
   color: #303442;
-  font-size: 0.92rem;
+  font-size: 1.005rem;
   font-weight: 600;
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -831,19 +831,19 @@
 .program-logistics-editor-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  padding: 18px;
+  gap: 1rem;
+  padding: 1.125rem;
 }
 
 .program-logistics-field {
   display: grid;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .program-logistics-field span,
 .program-assignment-row label span {
   color: #374151;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.045em;
@@ -851,15 +851,15 @@
 
 .program-logistics-field textarea {
   width: 100%;
-  min-height: 180px;
+  min-height: 11.25rem;
   resize: vertical;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #ffffff;
   color: #111827;
-  padding: 12px;
+  padding: 0.75rem;
   font: inherit;
-  font-size: 0.92rem;
+  font-size: 1.005rem;
   line-height: 1.55;
   outline: none;
 }
@@ -868,51 +868,51 @@
 .program-assignment-row input:focus,
 .program-assignment-row select:focus {
   border-color: #443a9c;
-  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+  box-shadow: 0 0 0 0.188rem rgba(68, 58, 156, 0.12);
 }
 
 .program-assignment-list {
   display: grid;
-  gap: 10px;
-  padding: 18px;
+  gap: 0.625rem;
+  padding: 1.125rem;
 }
 
 .program-assignment-row {
   display: grid;
-  grid-template-columns: 170px 220px minmax(0, 1fr) 38px;
-  gap: 12px;
+  grid-template-columns: 10.625rem 13.75rem minmax(0, 1fr) 2.375rem;
+  gap: 0.75rem;
   align-items: end;
-  padding: 14px;
+  padding: 0.875rem;
   border: 1px solid #e4e8ef;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #fbfcfd;
 }
 
 .program-assignment-row label {
   display: grid;
-  gap: 7px;
+  gap: 0.438rem;
   min-width: 0;
 }
 
 .program-assignment-row input,
 .program-assignment-row select {
   width: 100%;
-  min-height: 38px;
+  min-height: 2.375rem;
   border: 1px solid #d1d5db;
-  border-radius: 7px;
+  border-radius: 0.438rem;
   background: #ffffff;
   color: #111827;
-  padding: 0 11px;
+  padding: 0 0.688rem;
   font: inherit;
-  font-size: 0.86rem;
+  font-size: 0.967rem;
   outline: none;
 }
 
 .program-assignment-delete-button {
-  width: 38px;
-  height: 38px;
+  width: 2.375rem;
+  height: 2.375rem;
   border: 1px solid #efcaca;
-  border-radius: 7px;
+  border-radius: 0.438rem;
   display: inline-grid;
   place-items: center;
   background: #fffafa;
@@ -929,32 +929,32 @@
 .program-logistics-empty {
   display: grid;
   justify-items: center;
-  gap: 8px;
-  padding: 42px 18px;
+  gap: 0.5rem;
+  padding: 2.625rem 1.125rem;
   color: #858c9b;
   text-align: center;
 }
 
 .program-logistics-empty svg {
   color: #9ca3af;
-  font-size: 1.35rem;
+  font-size: 1.383rem;
 }
 
 .program-logistics-empty strong {
   color: #303442;
-  font-size: 0.98rem;
+  font-size: 1.042rem;
   font-weight: 650;
 }
 
 .program-logistics-empty p {
   margin: 0;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
 }
 
 .program-logistics-footer {
   display: flex;
   justify-content: flex-end;
-  padding: 14px 18px;
+  padding: 0.875rem 1.125rem;
   border-top: 1px solid #edf0f4;
   background: #ffffff;
 }
@@ -986,25 +986,25 @@
 }
 
 .program-logistics-header .section-icon {
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 2.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin: 0;
   padding: 0;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: #eef1ea;
   color: #5c6f46;
-  font-size: 1rem;
+  font-size: 1.055rem;
   line-height: 1;
 }
 
 .program-logistics-header .section-icon svg {
   display: block;
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   margin: 0;
   flex: 0 0 auto;
 }
@@ -1015,18 +1015,18 @@
 ========================================================= */
 
 .booking-profile-delete-button {
-  min-height: 38px;
+  min-height: 2.375rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 0 13px;
+  gap: 0.438rem;
+  padding: 0 0.812rem;
   border: 1px solid #e2bcbc;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #fffafa;
   color: #a64242;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 150ms ease,
@@ -1052,13 +1052,13 @@
 .booking-details-tab-stack {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 1.5rem;
 }
 
 .booking-incident-notes-card {
-  padding: 24px;
+  padding: 1.5rem;
   border: 1px solid #ead7a7;
-  border-radius: 18px;
+  border-radius: 1.125rem;
   background: #fffdf8;
 }
 
@@ -1066,39 +1066,39 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 20px;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .booking-incident-notes-title {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .booking-incident-notes-icon {
-  width: 42px;
-  height: 42px;
+  width: 2.625rem;
+  height: 2.625rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: #fff3cd;
   color: #956600;
-  font-size: 1rem;
+  font-size: 1.055rem;
 }
 
 .booking-incident-notes-title h3 {
-  margin: 2px 0 4px;
-  font-size: 1.05rem;
+  margin: 2px 0 0.25rem;
+  font-size: 1.102rem;
   font-weight: 800;
   color: #1e293b;
 }
 
 .booking-incident-notes-title > div > span {
   display: block;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
   line-height: 1.5;
   color: #64748b;
 }
@@ -1106,7 +1106,7 @@
 .booking-incident-notes-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   flex-shrink: 0;
 }
 
@@ -1118,21 +1118,21 @@
 .booking-incident-notes-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .booking-incident-notes-field > span {
-  font-size: 0.8rem;
+  font-size: 0.93rem;
   font-weight: 800;
   color: #475569;
 }
 
 .booking-incident-notes-field textarea {
   width: 100%;
-  min-height: 160px;
-  padding: 14px 16px;
+  min-height: 10rem;
+  padding: 0.875rem 1rem;
   border: 1px solid #d9dfeb;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: #ffffff;
   color: #1e293b;
   font: inherit;
@@ -1148,7 +1148,7 @@
 .booking-incident-notes-field textarea:focus {
   outline: none;
   border-color: #b99745;
-  box-shadow: 0 0 0 3px rgba(185, 151, 69, 0.12);
+  box-shadow: 0 0 0 0.188rem rgba(185, 151, 69, 0.12);
 }
 
 
@@ -1157,9 +1157,9 @@
 ========================================================= */
 
 .booking-incident-notes-display {
-  padding: 16px 18px;
+  padding: 1rem 1.125rem;
   border: 1px solid #ece4cf;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: #ffffff;
 }
 
@@ -1167,7 +1167,7 @@
   margin: 0;
   white-space: pre-wrap;
   color: #334155;
-  font-size: 0.92rem;
+  font-size: 1.005rem;
   line-height: 1.65;
 }
 
@@ -1179,10 +1179,10 @@
 .booking-incident-notes-empty {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 18px;
+  gap: 0.75rem;
+  padding: 1rem 1.125rem;
   border: 1px dashed #e1d5b6;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: rgba(255, 255, 255, 0.65);
   color: #64748b;
 }
@@ -1194,15 +1194,15 @@
 
 .booking-incident-notes-empty strong {
   display: block;
-  margin-bottom: 3px;
+  margin-bottom: 0.188rem;
   color: #475569;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
 }
 
 .booking-incident-notes-empty p {
   margin: 0;
   color: #7c8798;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   line-height: 1.45;
 }
 

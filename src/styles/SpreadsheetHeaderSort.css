@@ -4,16 +4,16 @@
 
 .spreadsheet-header-sort-control > svg {
   position: absolute;
-  left: 16px;
+  left: 1rem;
   z-index: 1;
-  font-size: 0.95rem;
+  font-size: 1.023rem;
   pointer-events: none;
 }
 
 .spreadsheet-header-sort-control select {
-  min-height: 56px;
-  padding: 0 44px 0 45px;
-  border-radius: 14px;
+  min-height: 2.5rem;
+  padding: 0 2.75rem 0 2.812rem;
+  border-radius: 0.875rem;
   transition: border-color 0.15s ease,
     box-shadow 0.15s ease,
     background-color 0.15s ease;
@@ -26,5 +26,5 @@
 
 .spreadsheet-header-sort-control select:focus {
   border-color: #7769c7;
-  box-shadow: 0 0 0 3px rgba(119, 105, 199, 0.12);
+  box-shadow: 0 0 0 0.188rem rgba(119, 105, 199, 0.12);
 }

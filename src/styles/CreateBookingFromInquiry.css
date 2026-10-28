@@ -3,14 +3,14 @@
 ========================================================= */
 
 .inquiry-booking-action-heading {
-  width: 105px;
-  min-width: 105px;
+  width: 6.562rem;
+  min-width: 6.562rem;
   text-align: center;
 }
 
 .inquiry-booking-action-cell {
-  width: 105px;
-  min-width: 105px;
+  width: 6.562rem;
+  min-width: 6.562rem;
   text-align: center;
 }
 
@@ -18,15 +18,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  min-height: 36px;
-  padding: 0 12px;
+  gap: 0.438rem;
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
   border: 1px solid #d9dfeb;
-  border-radius: 9px;
+  border-radius: 0.562rem;
   background: #ffffff;
   color: #5142a5;
   font: inherit;
-  font-size: 0.86rem;
+  font-size: 0.967rem;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s ease,
@@ -35,7 +35,7 @@
 }
 
 .inquiry-create-booking-button svg {
-  font-size: 0.75rem;
+  font-size: 0.898rem;
 }
 
 .inquiry-create-booking-button:hover {
@@ -56,11 +56,11 @@
 .rental-inquiry-prefill-notice {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  margin: 0 0 24px;
-  padding: 18px 20px;
+  gap: 0.875rem;
+  margin: 0 0 1.5rem;
+  padding: 1.125rem 1.25rem;
   border: 1px solid #ddd9f5;
-  border-radius: 14px;
+  border-radius: 0.875rem;
   background: #f8f7ff;
   color: #24324a;
 }
@@ -68,7 +68,7 @@
 .rental-inquiry-prefill-notice > svg {
   flex: 0 0 auto;
   margin-top: 2px;
-  font-size: 1.15rem;
+  font-size: 1.195rem;
   color: #5142a5;
 }
 
@@ -79,39 +79,39 @@
 
 .rental-inquiry-prefill-notice > div > strong {
   display: block;
-  margin-bottom: 4px;
-  font-size: 0.98rem;
+  margin-bottom: 0.25rem;
+  font-size: 1.042rem;
   font-weight: 800;
 }
 
 .rental-inquiry-prefill-notice p {
   margin: 0;
   color: #68738a;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
   line-height: 1.55;
 }
 
 .rental-inquiry-prefill-details {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 14px;
+  gap: 0.75rem;
+  margin-top: 0.875rem;
 }
 
 .rental-inquiry-prefill-details > span {
   display: flex;
   flex-direction: column;
-  min-width: 150px;
-  padding: 9px 12px;
+  min-width: 9.375rem;
+  padding: 0.562rem 0.75rem;
   border: 1px solid #e5e3f3;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: #ffffff;
 }
 
 .rental-inquiry-prefill-details small {
   margin-bottom: 2px;
   color: #8a94a7;
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -119,7 +119,7 @@
 
 .rental-inquiry-prefill-details strong {
   color: #25324a;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
   font-weight: 700;
 }
 

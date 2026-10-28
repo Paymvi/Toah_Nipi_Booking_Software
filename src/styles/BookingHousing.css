@@ -5,7 +5,7 @@
 .booking-housing-tab {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 1.5rem;
 }
 
 /* Header */
@@ -14,8 +14,8 @@
   padding: 0;
   background: #ffffff;
   border: 1px solid #dfe4ec;
-  border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+  border-radius: 0.625rem;
+  box-shadow: 0 0.375rem 1.125rem rgba(28, 35, 52, 0.04);
   overflow: hidden;
 }
 
@@ -24,15 +24,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 24px 26px;
+  gap: 1.5rem;
+  padding: 1.5rem 1.625rem;
   border-bottom: 1px solid #e7eaf0;
 }
 
 .booking-housing-tab-title {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .booking-housing-tab-title-icon {
@@ -40,7 +40,7 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  font-size: 1.1rem;
+  font-size: 1.148rem;
   color: #5142a5;
 }
 
@@ -48,21 +48,21 @@
 .booking-housing-linens-header h3 {
   margin: 0;
   color: #2f3442;
-  font-size: 1.15rem;
+  font-size: 1.195rem;
   font-weight: 700;
 }
 
 .booking-housing-tab-title p,
 .booking-housing-linens-header p {
-  margin: 5px 0 0;
+  margin: 0.312rem 0 0;
   color: #8790a2;
-  font-size: 0.93rem;
+  font-size: 1.011rem;
 }
 
 .booking-housing-tab-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 /* Summary */
@@ -76,9 +76,9 @@
 .booking-housing-summary-item {
   display: flex;
   align-items: center;
-  gap: 13px;
-  min-height: 92px;
-  padding: 18px 26px;
+  gap: 0.812rem;
+  min-height: 5.75rem;
+  padding: 1.125rem 1.625rem;
   border-right: 1px solid #e7eaf0;
 }
 
@@ -91,14 +91,14 @@
   align-items: center;
   justify-content: center;
   color: #5142a5;
-  font-size: 1rem;
+  font-size: 1.055rem;
 }
 
 .booking-housing-summary-item small {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
   color: #828b9c;
-  font-size: 0.75rem;
+  font-size: 0.898rem;
   font-weight: 700;
   letter-spacing: 0.045em;
   text-transform: uppercase;
@@ -106,7 +106,7 @@
 
 .booking-housing-summary-item strong {
   color: #2f3442;
-  font-size: 1.35rem;
+  font-size: 1.383rem;
   font-weight: 700;
 }
 
@@ -125,11 +125,11 @@
 }
 
 .booking-housing-table thead th {
-  padding: 16px 18px;
+  padding: 1rem 1.125rem;
   background: #f7f8fa;
   border-bottom: 1px solid #e1e5eb;
   color: #626a79;
-  font-size: 0.77rem;
+  font-size: 0.911rem;
   font-weight: 700;
   letter-spacing: 0.045em;
   text-align: left;
@@ -137,10 +137,10 @@
 }
 
 .booking-housing-table tbody td {
-  padding: 16px 18px;
+  padding: 1rem 1.125rem;
   border-bottom: 1px solid #edf0f4;
   color: #535b6b;
-  font-size: 0.95rem;
+  font-size: 1.023rem;
   vertical-align: middle;
 }
 
@@ -156,7 +156,7 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .housing-room-cell strong {
@@ -166,10 +166,10 @@
 
 .housing-room-thumb,
 .housing-room-thumb-placeholder {
-  width: 54px;
-  height: 54px;
-  flex: 0 0 54px;
-  border-radius: 10px;
+  width: 3.375rem;
+  height: 3.375rem;
+  flex: 0 0 3.375rem;
+  border-radius: 0.625rem;
 }
 
 .housing-room-thumb {
@@ -189,16 +189,16 @@
 
 .booking-housing-assigned-count {
   color: #313746;
-  font-size: 1rem;
+  font-size: 1.055rem;
   font-weight: 700;
 }
 
 .booking-housing-count-input {
-  width: 92px;
-  min-height: 42px;
-  padding: 8px 12px;
+  width: 5.75rem;
+  min-height: 2.625rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid #d9dee8;
-  border-radius: 9px;
+  border-radius: 0.562rem;
   background: #ffffff;
   color: #303746;
   font: inherit;
@@ -218,37 +218,37 @@
 .booking-housing-linens-header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 22px 26px;
+  gap: 0.875rem;
+  padding: 1.375rem 1.625rem;
   border-bottom: 1px solid #e7eaf0;
 }
 
 .booking-housing-linens-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 24px 26px;
-  gap: 18px;
+  padding: 1.5rem 1.625rem;
+  gap: 1.125rem;
 }
 
 .booking-housing-linen-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .booking-housing-linen-field > span {
   color: #697181;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
   font-weight: 700;
 }
 
 .booking-housing-linen-field > strong {
-  min-height: 46px;
+  min-height: 2.875rem;
   display: flex;
   align-items: center;
-  padding: 0 14px;
+  padding: 0 0.875rem;
   border: 1px solid #e1e5eb;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: #fafbfc;
   color: #343a49;
   font-weight: 600;
@@ -256,10 +256,10 @@
 
 .booking-housing-linen-field input,
 .booking-housing-linen-field select {
-  min-height: 46px;
-  padding: 0 13px;
+  min-height: 2.875rem;
+  padding: 0 0.812rem;
   border: 1px solid #d9dee8;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: #ffffff;
   color: #343a49;
   font: inherit;
@@ -279,14 +279,14 @@
 /* Imported / Legacy Housing */
 
 .booking-housing-legacy-card {
-  padding: 22px 26px;
+  padding: 1.375rem 1.625rem;
 }
 
 .booking-housing-legacy-card small {
   display: block;
-  margin-bottom: 7px;
+  margin-bottom: 0.438rem;
   color: #7d8594;
-  font-size: 0.75rem;
+  font-size: 0.898rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -299,9 +299,9 @@
 }
 
 .booking-housing-legacy-card p {
-  margin: 8px 0 0;
+  margin: 0.5rem 0 0;
   color: #8a92a1;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
 }
 
 /* Responsive */
@@ -335,11 +335,11 @@
 .booking-housing-use-pill {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  min-height: 30px;
-  padding: 5px 10px;
+  gap: 0.438rem;
+  min-height: 1.875rem;
+  padding: 0.312rem 0.625rem;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: 0.93rem;
   font-weight: 650;
 }
 
@@ -349,11 +349,11 @@
 }
 
 .booking-housing-use-pill-active svg {
-  font-size: 0.72rem;
+  font-size: 0.88rem;
 }
 
 .booking-housing-use-pill-empty {
-  padding-left: 4px;
+  padding-left: 0.25rem;
   background: transparent;
   color: #a1a7b3;
 }
@@ -363,16 +363,16 @@
 .booking-housing-use-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   cursor: pointer;
   color: #4e5666;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
   font-weight: 600;
 }
 
 .booking-housing-use-toggle input {
-  width: 17px;
-  height: 17px;
+  width: 1.062rem;
+  height: 1.062rem;
   accent-color: #5142a5;
   cursor: pointer;
 }
@@ -382,12 +382,12 @@
 .booking-housing-count-unknown {
   display: inline-flex;
   align-items: center;
-  min-height: 30px;
-  padding: 5px 10px;
-  border-radius: 8px;
+  min-height: 1.875rem;
+  padding: 0.312rem 0.625rem;
+  border-radius: 0.5rem;
   background: #f3f1fa;
   color: #675b9e;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
   font-weight: 650;
 }
 
@@ -400,14 +400,14 @@
 .booking-housing-import-warning {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  margin: 18px 24px 0;
-  padding: 13px 15px;
+  gap: 0.75rem;
+  margin: 1.125rem 1.5rem 0;
+  padding: 0.812rem 0.938rem;
   border: 1px solid #e4dfc8;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: #fcfaf1;
   color: #665f45;
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
 }
 
 .booking-housing-import-warning > svg {
@@ -419,17 +419,17 @@
 .booking-housing-import-warning div {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 0.188rem;
 }
 
 .booking-housing-import-warning strong {
-  font-size: 0.87rem;
+  font-size: 0.973rem;
   font-weight: 700;
 }
 
 .booking-housing-import-warning span {
   color: #817960;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
   line-height: 1.45;
 }
 
@@ -441,16 +441,16 @@
 /* Expandable Main Lodging Row */
 
 .booking-housing-row-expandable td:first-child {
-  padding-right: 10px;
+  padding-right: 0.625rem;
 }
 
 .housing-room-expand-button {
   width: 100%;
-  min-width: 250px;
+  min-width: 15.625rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.75rem;
   padding: 0;
   border: 0;
   background: transparent;
@@ -463,26 +463,26 @@
 .housing-room-expand-button:focus-visible {
   outline: 3px solid rgba(81, 66, 165, 0.12);
   outline-offset: 5px;
-  border-radius: 8px;
+  border-radius: 0.5rem;
 }
 
 .housing-room-expand-copy {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 0.188rem;
 }
 
 .housing-room-expand-copy strong {
   color: #313746;
-  font-size: 0.95rem;
+  font-size: 1.023rem;
   font-weight: 700;
   line-height: 1.25;
 }
 
 .housing-room-expand-copy small {
   color: #969dac;
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   font-weight: 500;
   line-height: 1.25;
 }
@@ -492,15 +492,15 @@
 }
 
 .housing-room-expand-chevron {
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: 0 0 1.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 7px;
+  border-radius: 0.438rem;
   color: #8c94a4;
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   transition: background-color 140ms ease,
     color 140ms ease;
 }
@@ -525,12 +525,12 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 3px;
+  gap: 0.188rem;
 }
 
 .booking-housing-calculated-count > strong {
   color: #313746;
-  font-size: 1rem;
+  font-size: 1.055rem;
   font-weight: 700;
   line-height: 1.1;
 }
@@ -538,7 +538,7 @@
 .booking-housing-calculated-count > small,
 .booking-housing-assigned-total > small {
   color: #8278bd;
-  font-size: 0.7rem;
+  font-size: 0.867rem;
   font-weight: 600;
   line-height: 1.2;
 }
@@ -556,12 +556,12 @@
 }
 
 .booking-housing-floor-panel {
-  margin: 0 18px 16px 82px;
+  margin: 0 1.125rem 1rem 5.125rem;
   overflow: hidden;
   border: 1px solid #ded9ef;
-  border-radius: 11px;
+  border-radius: 0.688rem;
   background: #ffffff;
-  box-shadow: 0 4px 12px rgba(48, 42, 94, 0.04);
+  box-shadow: 0 0.25rem 0.75rem rgba(48, 42, 94, 0.04);
 }
 
 /* Floor Panel Header */
@@ -570,9 +570,9 @@
 
 .booking-housing-floor-grid {
   display: grid;
-  grid-template-columns: repeat(var(--floor-count), minmax(0, 1fr)) 140px;
-  gap: 12px;
-  padding: 20px;
+  grid-template-columns: repeat(var(--floor-count), minmax(0, 1fr)) 8.75rem;
+  gap: 0.75rem;
+  padding: 1.25rem;
 }
 
 .booking-housing-floor-field {
@@ -580,23 +580,23 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 18px;
+  gap: 0.875rem;
+  padding: 1.125rem;
   border: 1px solid #e4e8ef;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: #ffffff;
 }
 
 .booking-housing-floor-total-card {
   grid-column: -2 / -1;
-  width: 140px;
+  width: 8.75rem;
   justify-self: end;
   height: 100%;
-  min-height: 120px;
+  min-height: 7.5rem;
   background: #e8f5ee;
   border: 1px solid #b7dfc8;
-  border-radius: 9px;
-  padding: 12px;
+  border-radius: 0.562rem;
+  padding: 0.75rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -605,30 +605,30 @@
 
 .booking-housing-floor-field > span {
   color: #5f6777;
-  font-size: 0.78rem;
+  font-size: 0.917rem;
   font-weight: 700;
 }
 
 .booking-housing-floor-field > strong {
-  min-height: 42px;
+  min-height: 2.625rem;
   display: flex;
   align-items: center;
   color: #303746;
-  font-size: 1rem;
+  font-size: 1.055rem;
   font-weight: 700;
 }
 
 .booking-housing-floor-total-card span {
   color: #2f6f5f;
-  font-size: 11px;
+  font-size: 0.859rem;
   font-weight: 700;
   text-transform: uppercase;
 }
 
 .booking-housing-floor-total-card strong {
-  margin-top: 8px;
+  margin-top: 0.5rem;
   color: #1f513f;
-  font-size: 22px;
+  font-size: 1.406rem;
   font-weight: 700;
 }
 
@@ -638,28 +638,28 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 11px 16px;
+  gap: 1rem;
+  padding: 0.688rem 1rem;
   border-top: 1px solid #eceff3;
   background: #fbfcfd;
 }
 
 .booking-housing-floor-panel-footer > span {
   color: #858d9d;
-  font-size: 0.74rem;
+  font-size: 0.892rem;
   line-height: 1.4;
 }
 
 .booking-housing-clear-floor-button {
   flex: 0 0 auto;
-  min-height: 32px;
-  padding: 0 10px;
+  min-height: 2rem;
+  padding: 0 0.625rem;
   border: 1px solid #d8dce5;
-  border-radius: 7px;
+  border-radius: 0.438rem;
   background: #ffffff;
   color: #687083;
   font: inherit;
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -674,7 +674,7 @@
 
 @media (max-width: 1050px) {
   .booking-housing-floor-panel {
-    margin-left: 18px;
+    margin-left: 1.125rem;
   }
 }
 
@@ -689,11 +689,11 @@
   }
 
   .booking-housing-floor-panel {
-    margin: 0 10px 12px;
+    margin: 0 0.625rem 0.75rem;
   }
 
   .housing-room-expand-button {
-    min-width: 220px;
+    min-width: 13.75rem;
   }
 }
 
@@ -707,42 +707,42 @@
 
 .booking-housing-floor-header strong {
   color: #303442;
-  font-size: .95rem;
+  font-size: 1.023rem;
   font-weight: 650;
 }
 
 .booking-housing-floor-header span {
   color: #5c6f46;
-  font-size: .8rem;
+  font-size: 0.93rem;
   font-weight: 650;
 }
 
 .booking-housing-room-list {
   display: grid;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .booking-housing-room-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
   background: #f8fafc;
   border: 1px solid #edf0f4;
 }
 
 .booking-housing-room-row span {
   color: #4b5563;
-  font-size: .85rem;
+  font-size: 0.961rem;
   font-weight: 600;
 }
 
 .booking-housing-room-row input {
-  width: 70px;
+  width: 4.375rem;
   border: 1px solid #dfe4ec;
-  border-radius: 7px;
-  padding: 6px 8px;
+  border-radius: 0.438rem;
+  padding: 0.375rem 0.5rem;
   text-align: center;
 }
 

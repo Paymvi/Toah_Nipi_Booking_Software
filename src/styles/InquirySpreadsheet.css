@@ -6,8 +6,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 24px;
-  padding: 20px 22px;
+  gap: 1.5rem;
+  padding: 1.25rem 1.375rem;
   border-bottom: 1px solid #edf0f4;
   background: #ffffff;
 }
@@ -16,22 +16,22 @@
   min-width: 0;
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .inquiry-spreadsheet-title h2 {
   margin: 0;
   color: #252936;
-  font-size: 1.25rem;
+  font-size: 1.289rem;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .inquiry-spreadsheet-title p:last-child {
-  max-width: 760px;
-  margin: 6px 0 0;
+  max-width: 47.5rem;
+  margin: 0.375rem 0 0;
   color: #858c9b;
-  font-size: 0.86rem;
+  font-size: 0.967rem;
   line-height: 1.45;
 }
 
@@ -41,26 +41,26 @@
 ========================================================= */
 
 .inquiry-spreadsheet-search {
-  flex: 0 0 285px;
-  height: 40px;
+  flex: 0 0 17.812rem;
+  height: 2.5rem;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 0 12px;
+  gap: 0.562rem;
+  padding: 0 0.75rem;
   border: 1px solid #d8dee8;
-  border-radius: 9px;
+  border-radius: 0.562rem;
   background: #ffffff;
   color: #7b8290;
 }
 
 .inquiry-spreadsheet-search:focus-within {
   border-color: #9f98d4;
-  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.1);
+  box-shadow: 0 0 0 0.188rem rgba(68, 58, 156, 0.1);
 }
 
 .inquiry-spreadsheet-search svg {
   flex: 0 0 auto;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
 }
 
 .inquiry-spreadsheet-search input {
@@ -71,7 +71,7 @@
   background: transparent;
   color: #303442;
   font: inherit;
-  font-size: 0.86rem;
+  font-size: 0.967rem;
 }
 
 .inquiry-spreadsheet-search input::placeholder {
@@ -87,8 +87,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 14px 22px;
+  gap: 1.5rem;
+  padding: 0.875rem 1.375rem;
   border-bottom: 1px solid #edf0f4;
   background: #fbfcfd;
 }
@@ -102,25 +102,25 @@
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px;
+  gap: 0.25rem;
+  padding: 0.25rem;
   border: 1px solid #dfe4ea;
-  border-radius: 9px;
+  border-radius: 0.562rem;
   background: #f3f5f7;
 }
 
 .inquiry-spreadsheet-year-toggle button {
-  min-height: 36px;
+  min-height: 2.25rem;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 0 12px;
+  gap: 0.438rem;
+  padding: 0 0.75rem;
   border: 0;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: transparent;
   color: #667085;
   font: inherit;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   font-weight: 650;
   cursor: pointer;
 }
@@ -138,16 +138,16 @@
 }
 
 .inquiry-spreadsheet-year-toggle button em {
-  min-width: 20px;
-  height: 20px;
+  min-width: 1.25rem;
+  height: 1.25rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 6px;
+  padding: 0 0.375rem;
   border-radius: 999px;
   background: #e9ecf1;
   color: #6f7687;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-style: normal;
   font-weight: 700;
 }
@@ -166,22 +166,22 @@
   display: flex;
   align-items: stretch;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .inquiry-spreadsheet-summary > span {
-  min-width: 125px;
+  min-width: 7.812rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
-  padding: 9px 12px;
+  gap: 0.25rem;
+  padding: 0.562rem 0.75rem;
   border: 1px solid #dfe4ec;
   border-left: 3px solid #443a9c;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #ffffff;
   color: #7b8290;
-  font-size: 0.64rem;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -197,7 +197,7 @@
 
 .inquiry-spreadsheet-summary strong {
   color: #252936;
-  font-size: 1rem;
+  font-size: 1.055rem;
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: normal;
@@ -210,23 +210,23 @@
 ========================================================= */
 
 .inquiry-spreadsheet-table {
-  min-width: 1700px;
+  min-width: 106.25rem;
 }
 
 .inquiry-spreadsheet-table th {
-  padding-top: 12px;
-  padding-bottom: 12px;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
 }
 
 .inquiry-spreadsheet-table td {
   height: auto;
-  min-height: 48px;
+  min-height: 3rem;
   vertical-align: top;
 }
 
 .inquiry-spreadsheet-long-cell {
-  min-width: 260px;
-  max-width: 420px !important;
+  min-width: 16.25rem;
+  max-width: 26.25rem !important;
   white-space: normal !important;
   line-height: 1.45;
   vertical-align: top;

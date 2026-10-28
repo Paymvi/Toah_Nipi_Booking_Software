@@ -12,9 +12,9 @@
 
 .contacts-view-page {
   display: grid;
-  gap: 16px;
+  gap: 1rem;
   min-width: 0;
-  min-height: calc(100vh - 120px);
+  min-height: calc(100vh - 7.5rem);
 }
 
 /* Main card */
@@ -23,9 +23,9 @@
   overflow: hidden;
   background: #ffffff;
   border: 1px solid #dfe4ec;
-  border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
-  min-height: calc(100vh - 115px);
+  border-radius: 0.625rem;
+  box-shadow: 0 0.375rem 1.125rem rgba(28, 35, 52, 0.04);
+  min-height: calc(100vh - 7.188rem);
   display: flex;
   flex-direction: column;
 }
@@ -36,8 +36,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
-  padding: 18px;
+  gap: 1.125rem;
+  padding: 1.125rem;
   background: #ffffff;
   border-bottom: 1px solid #edf0f4;
 }
@@ -49,17 +49,17 @@
 .contacts-view-header h2 {
   margin: 0;
   color: #252936;
-  font-size: 1.12rem;
+  font-size: 1.167rem;
   font-weight: 650;
   letter-spacing: -0.015em;
   line-height: 1.2;
 }
 
 .contacts-view-header p:not(.dashboard-eyebrow) {
-  max-width: 720px;
-  margin: 5px 0 0;
+  max-width: 45rem;
+  margin: 0.312rem 0 0;
   color: #858c9b;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   font-weight: 400;
   line-height: 1.45;
 }
@@ -67,12 +67,12 @@
 /* Header icon consistency */
 
 .contacts-view-header .section-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
   background: #eef1ea;
   color: #5c6f46;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
 }
 
 /* Summary cards */
@@ -81,21 +81,21 @@
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 0.625rem;
   flex: 0 0 auto;
 }
 
 .contacts-view-summary span {
-  min-width: 106px;
+  min-width: 6.625rem;
   display: grid;
-  gap: 4px;
-  padding: 10px 12px;
+  gap: 0.25rem;
+  padding: 0.625rem 0.75rem;
   background: #fbfcfd;
   border: 1px solid #dfe4ec;
   border-left: 4px solid #443a9c;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   color: #6f7687;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 650;
   line-height: 1.2;
   text-transform: uppercase;
@@ -108,7 +108,7 @@
 
 .contacts-view-summary strong {
   color: #252936;
-  font-size: 1.15rem;
+  font-size: 1.195rem;
   font-weight: 700;
   line-height: 1;
   letter-spacing: normal;
@@ -135,7 +135,7 @@
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;
-  min-width: 980px;
+  min-width: 61.25rem;
 }
 
 .contacts-view-table th {
@@ -150,8 +150,8 @@
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.045em;
-  padding: 8px 12px !important;
-  font-size: 0.66rem;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.825rem;
   line-height: 1.15;
 }
 
@@ -166,9 +166,9 @@
   border-right: 1px solid #f1f3f6;
   font-weight: 400;
   vertical-align: middle;
-  max-width: 260px;
-  padding: 7px 12px !important;
-  font-size: 0.8rem;
+  max-width: 16.25rem;
+  padding: 0.438rem 0.75rem !important;
+  font-size: 0.93rem;
   line-height: 1.25;
 }
 
@@ -192,7 +192,7 @@
 
 .contacts-view-table td strong {
   display: inline-block;
-  max-width: 240px;
+  max-width: 15rem;
   color: #303442;
   font-weight: 650;
   overflow: hidden;
@@ -213,7 +213,7 @@
 
 .contacts-view-table .table-link {
   color: #443a9c;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -226,22 +226,22 @@
 /* Empty state inside contacts card */
 
 .contacts-view-card .empty-state {
-  margin: 18px;
-  padding: 18px;
-  border-radius: 8px;
+  margin: 1.125rem;
+  padding: 1.125rem;
+  border-radius: 0.5rem;
   background: #fbfcfd;
   border-color: #cfd6e1;
 }
 
 .contacts-view-card .empty-state strong {
   color: #303442;
-  font-size: 0.94rem;
+  font-size: 1.017rem;
   font-weight: 650;
 }
 
 .contacts-view-card .empty-state p {
   color: #858c9b;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
 }
 
 /* Responsive */
@@ -249,8 +249,8 @@
 @media (max-width: 900px) {
   .contacts-view-header {
     flex-direction: column;
-    gap: 14px;
-    padding: 16px;
+    gap: 0.875rem;
+    padding: 1rem;
   }
 
   .contacts-view-summary {
@@ -260,15 +260,15 @@
 
 @media (max-width: 720px) {
   .contacts-view-page {
-    gap: 14px;
+    gap: 0.875rem;
   }
 
   .contacts-view-header h2 {
-    font-size: 1.05rem;
+    font-size: 1.102rem;
   }
 
   .contacts-view-header p:not(.dashboard-eyebrow) {
-    font-size: 0.82rem;
+    font-size: 0.942rem;
   }
 
   .contacts-view-summary {
@@ -276,7 +276,7 @@
   }
 
   .contacts-view-summary span {
-    flex: 1 1 130px;
+    flex: 1 1 8.125rem;
   }
 }
 
@@ -302,16 +302,16 @@
 .contacts-view-toolbar {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 0.875rem;
   background: #fbfcfd;
   border-bottom: 1px solid #edf0f4;
-  padding: 7px 14px;
+  padding: 0.438rem 0.875rem;
 }
 
 .contacts-view-toolbar p {
   margin: 0;
   color: #858c9b;
-  font-size: 0.78rem;
+  font-size: 0.917rem;
   font-weight: 400;
 }
 
@@ -322,14 +322,14 @@
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  gap: 7px;
-  font-size: 0.78rem;
+  gap: 0.438rem;
+  font-size: 0.917rem;
 }
 
 .contacts-view-pin-toggle input {
   accent-color: #443a9c;
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .contacts-view-summary span:nth-child(3) {
@@ -384,7 +384,7 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .contacts-view-name-cell strong {
@@ -399,7 +399,7 @@
 .contacts-view-actions {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .contacts-view-actions .table-link {
@@ -413,7 +413,7 @@
   }
 
   .contacts-view-table {
-    min-width: 980px;
+    min-width: 61.25rem;
   }
 }
 
@@ -448,11 +448,11 @@
 .contacts-view-table td:nth-child(1),
 .contacts-view-favorite-column,
 .contacts-view-favorite-cell {
-  width: 58px !important;
-  min-width: 58px !important;
-  max-width: 58px !important;
-  padding-left: 8px !important;
-  padding-right: 8px !important;
+  width: 3.625rem !important;
+  min-width: 3.625rem !important;
+  max-width: 3.625rem !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
   text-align: center;
   border-right: 1px solid #dfe4ec;
 }
@@ -491,39 +491,39 @@
 
 .contacts-view-table th:nth-child(2),
 .contacts-view-table td:nth-child(2) {
-  width: 190px !important;
-  max-width: 190px !important;
+  width: 11.875rem !important;
+  max-width: 11.875rem !important;
 }
 
 .contacts-view-table th:nth-child(3),
 .contacts-view-table td:nth-child(3) {
-  width: 260px !important;
-  max-width: 260px !important;
+  width: 16.25rem !important;
+  max-width: 16.25rem !important;
 }
 
 .contacts-view-table th:nth-child(4),
 .contacts-view-table td:nth-child(4) {
-  width: 290px !important;
-  max-width: 290px !important;
+  width: 18.125rem !important;
+  max-width: 18.125rem !important;
 }
 
 .contacts-view-table th:nth-child(5),
 .contacts-view-table td:nth-child(5) {
-  width: 130px !important;
-  max-width: 130px !important;
+  width: 8.125rem !important;
+  max-width: 8.125rem !important;
 }
 
 .contacts-view-table th:nth-child(6),
 .contacts-view-table td:nth-child(6) {
-  width: 90px !important;
-  max-width: 90px !important;
+  width: 6.5rem !important;
+  max-width: 6.5rem !important;
   text-align: center;
 }
 
 .contacts-view-table th:nth-child(7),
 .contacts-view-table td:nth-child(7) {
-  width: 190px !important;
-  max-width: 190px !important;
+  width: 11.875rem !important;
+  max-width: 11.875rem !important;
 }
 
 
@@ -559,13 +559,13 @@
 }
 
 .contacts-view-copy-cell.is-copied .contacts-view-copy-cell-content {
-  padding-right: 58px;
+  padding-right: 3.625rem;
 }
 
 .contacts-view-copy-feedback {
   position: absolute;
   top: 50%;
-  right: 8px;
+  right: 0.5rem;
   transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
@@ -575,9 +575,9 @@
   font-weight: 650;
   line-height: 1;
   pointer-events: none;
-  min-height: 19px;
-  padding: 0 6px;
-  font-size: 0.62rem;
+  min-height: 1.188rem;
+  padding: 0 0.375rem;
+  font-size: 0.775rem;
 }
 
 .contacts-view-copy-cell .contacts-view-name-cell {
@@ -596,19 +596,19 @@
 .contacts-loading-hero {
   display: flex;
   align-items: center;
-  gap: 18px;
-  padding: 6px 0 18px;
+  gap: 1.125rem;
+  padding: 0.375rem 0 1.125rem;
 }
 
 .contacts-loading-icon {
-  width: 52px;
-  height: 52px;
+  width: 3.25rem;
+  height: 3.25rem;
   display: grid;
   place-items: center;
-  border-radius: 16px;
+  border-radius: 1rem;
   background: #eef4ec;
   color: #4f6f3f;
-  font-size: 1.35rem;
+  font-size: 1.383rem;
 }
 
 .contacts-loading-copy {
@@ -616,7 +616,7 @@
 }
 
 .contacts-loading-copy h2 {
-  margin: 2px 0 6px;
+  margin: 2px 0 0.375rem;
 }
 
 .contacts-loading-copy p:last-child {
@@ -625,8 +625,8 @@
 }
 
 .contacts-loading-spinner {
-  width: 30px;
-  height: 30px;
+  width: 1.875rem;
+  height: 1.875rem;
   border: 3px solid #e2e7ee;
   border-top-color: #4f6f3f;
   border-radius: 999px;
@@ -636,42 +636,42 @@
 .contacts-loading-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin: 8px 0 18px;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1.125rem;
 }
 
 .contacts-loading-summary span {
-  padding: 14px;
+  padding: 0.875rem;
   border: 1px solid #e2e7ee;
-  border-radius: 14px;
+  border-radius: 0.875rem;
   background: #fbfcfd;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
   color: #667085;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
 }
 
 .contacts-loading-summary strong {
   color: #1f2937;
-  font-size: 1rem;
+  font-size: 1.055rem;
 }
 
 .contacts-loading-table-preview {
   display: grid;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .contacts-loading-preview-header,
 .contacts-loading-preview-row {
   display: grid;
   grid-template-columns: 1.1fr 1.4fr 1.3fr 1fr;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .contacts-loading-preview-header span,
 .contacts-loading-preview-row span {
-  height: 14px;
+  height: 0.875rem;
   border-radius: 999px;
   background: linear-gradient(90deg, #edf1f5, #f8fafc, #edf1f5);
   background-size: 200% 100%;
@@ -679,13 +679,13 @@
 }
 
 .contacts-loading-preview-header span {
-  height: 12px;
+  height: 0.75rem;
 }
 
 .contacts-loading-preview-row {
-  padding: 14px;
+  padding: 0.875rem;
   border: 1px solid #edf1f5;
-  border-radius: 12px;
+  border-radius: 0.75rem;
 }
 
 @keyframes contacts-loading-spin {
@@ -716,7 +716,7 @@
 
 .contacts-view-table td strong,
 .contacts-view-name-cell strong {
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   line-height: 1.2;
 }
 
@@ -725,10 +725,10 @@
 .contact-star-button,
 .contacts-view-favorite-cell .contact-star-button,
 .contacts-view-favorite-cell .spreadsheet-star-button {
-  width: 26px !important;
-  height: 26px !important;
-  border-radius: 6px;
-  font-size: 0.8rem !important;
+  width: 1.625rem !important;
+  height: 1.625rem !important;
+  border-radius: 0.375rem;
+  font-size: 0.93rem !important;
 }
 
 
@@ -751,18 +751,18 @@
 
 .contacts-view-search {
   flex: 1;
-  max-width: 420px;
+  max-width: 26.25rem;
 }
 
 .contacts-view-search input {
   width: 100%;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 8px;
+  height: 2.125rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
   border: 1px solid #dfe4ec;
   background: #ffffff;
   color: #303442;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
   outline: none;
   transition: border-color 140ms ease,
     box-shadow 140ms ease;
@@ -774,7 +774,7 @@
 
 .contacts-view-search input:focus {
   border-color: #443a9c;
-  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+  box-shadow: 0 0 0 0.188rem rgba(68, 58, 156, 0.12);
 }
 
 @media (max-width: 900px) {
@@ -797,26 +797,26 @@
 
 .contacts-bookings-expanded {
   border-top: 1px solid #e2e8f0;
-  padding: 16px 18px 18px;
+  padding: 1rem 1.125rem 1.125rem;
   background: #f8fafc;
 }
 
 .contacts-bookings-header {
-  gap: 12px;
+  gap: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 0.75rem;
 }
 
 .contacts-bookings-header span {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: 0.25rem 0.625rem;
   border-radius: 999px;
   background: #eef2f7;
   color: #64748b;
-  font-size: .72rem;
+  font-size: 0.88rem;
   font-weight: 650;
 }
 
@@ -829,14 +829,14 @@
   flex-wrap: wrap;
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 0.625rem;
+  margin-bottom: 0.5rem;
 }
 
 .contacts-booking-title {
   line-height: 1.2;
   color: #252936;
-  font-size: .92rem;
+  font-size: 1.005rem;
   font-weight: 700;
 }
 
@@ -847,53 +847,53 @@
 
 .contacts-bookings-header strong {
   color: #252936;
-  font-size: .86rem;
+  font-size: 0.967rem;
   font-weight: 700;
 }
 
 .contacts-bookings-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit,minmax(320px,1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit,minmax(20rem,1fr));
+  gap: 0.75rem;
 }
 
 .contacts-booking-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 14px 16px;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(15,23,42,.04);
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 0.375rem rgba(15,23,42,.04);
 }
 
 .contacts-booking-info {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 1rem;
   color: #64748b;
-  font-size: .78rem;
+  font-size: 0.917rem;
   font-weight: 550;
 }
 
 .contacts-booking-date::before {
   content: "📅";
-  margin-right: 5px;
+  margin-right: 0.312rem;
 }
 
 .contacts-booking-guests::before {
   content: "👥";
-  margin-right: 5px;
+  margin-right: 0.312rem;
 }
 
 /* status */
 
 .contacts-booking-status-pill {
-  padding: 4px 10px;
+  padding: 0.25rem 0.625rem;
   border-radius: 999px;
-  font-size: .7rem;
+  font-size: 0.867rem;
   font-weight: 700;
 }
 
@@ -905,13 +905,13 @@
 /* button */
 
 .contacts-booking-open-button {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 8px;
+  height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
   border: 1px solid #dbe2ea;
   background: white;
   color: #443a9c;
-  font-size: .76rem;
+  font-size: 0.905rem;
   font-weight: 650;
   cursor: pointer;
 }
@@ -949,18 +949,18 @@
 .contacts-booking-title-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   flex-wrap: wrap;
 }
 
 .contacts-booking-type {
   display: inline-flex;
   align-items: center;
-  padding: 3px 9px;
+  padding: 0.188rem 0.562rem;
   border-radius: 999px;
   background: #f1f5f9;
   color: #64748b;
-  font-size: .7rem;
+  font-size: 0.867rem;
   font-weight: 650;
 }
 
@@ -972,20 +972,20 @@
 .contacts-view-name-sort {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   color: #64748b;
-  font-size: .78rem;
+  font-size: 0.917rem;
   font-weight: 600;
 }
 
 .contacts-view-name-sort button {
-  height: 30px;
-  padding: 0 10px;
-  border-radius: 7px;
+  height: 1.875rem;
+  padding: 0 0.625rem;
+  border-radius: 0.438rem;
   border: 1px solid #dfe4ec;
   background: #ffffff;
   color: #475569;
-  font-size: .76rem;
+  font-size: 0.905rem;
   font-weight: 600;
   cursor: pointer;
 }
@@ -1007,17 +1007,17 @@
 ========================================================= */
 
 .contacts-view-deleted-toggle {
-  min-height: 32px;
+  min-height: 2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 0 10px;
+  gap: 0.438rem;
+  padding: 0 0.625rem;
   border: 1px solid #dfe4ec;
-  border-radius: 7px;
+  border-radius: 0.438rem;
   background: #ffffff;
   color: #64748b;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   font-weight: 650;
   cursor: pointer;
   white-space: nowrap;
@@ -1035,7 +1035,7 @@
 
 .contacts-view-deleted-panel {
   flex: 0 0 auto;
-  padding: 14px 18px 16px;
+  padding: 0.875rem 1.125rem 1rem;
   background: #fffafa;
   border-bottom: 1px solid #ecdada;
 }
@@ -1044,8 +1044,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .contacts-view-deleted-panel-header > div {
@@ -1055,26 +1055,26 @@
 .contacts-view-deleted-panel-header strong {
   display: block;
   color: #7f1d1d;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
   font-weight: 700;
 }
 
 .contacts-view-deleted-panel-header p {
-  margin: 4px 0 0;
+  margin: 0.25rem 0 0;
   color: #8a5a5a;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   line-height: 1.4;
 }
 
 .contacts-view-deleted-close {
   flex: 0 0 auto;
-  min-height: 30px;
-  padding: 0 10px;
+  min-height: 1.875rem;
+  padding: 0 0.625rem;
   border: 1px solid #e4caca;
-  border-radius: 7px;
+  border-radius: 0.438rem;
   background: #ffffff;
   color: #7f1d1d;
-  font-size: 0.74rem;
+  font-size: 0.892rem;
   font-weight: 650;
   cursor: pointer;
 }
@@ -1085,17 +1085,17 @@
 
 .contacts-view-deleted-list {
   display: grid;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .contacts-view-deleted-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 10px 12px;
+  gap: 1rem;
+  padding: 0.625rem 0.75rem;
   border: 1px solid #ecdada;
-  border-radius: 9px;
+  border-radius: 0.562rem;
   background: #ffffff;
 }
 
@@ -1115,35 +1115,35 @@
 
 .contacts-view-deleted-copy strong {
   color: #303442;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
   font-weight: 700;
 }
 
 .contacts-view-deleted-copy span {
   color: #5f6674;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   font-weight: 600;
 }
 
 .contacts-view-deleted-copy small {
   color: #8a909c;
-  font-size: 0.7rem;
+  font-size: 0.867rem;
   font-weight: 500;
 }
 
 .contacts-view-restore-button {
   flex: 0 0 auto;
-  min-height: 32px;
+  min-height: 2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 10px;
+  gap: 0.375rem;
+  padding: 0 0.625rem;
   border: 1px solid #cadfcf;
-  border-radius: 7px;
+  border-radius: 0.438rem;
   background: #f4fbf6;
   color: #2f6f46;
-  font-size: 0.74rem;
+  font-size: 0.892rem;
   font-weight: 700;
   cursor: pointer;
 }
@@ -1154,25 +1154,25 @@
 }
 
 .contacts-view-deleted-empty {
-  padding: 12px;
+  padding: 0.75rem;
   border: 1px dashed #e4caca;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   color: #8a5a5a;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   text-align: center;
 }
 
 .contact-delete-button {
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: transparent;
   color: #a3a8b1;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   cursor: pointer;
   transition: background-color 140ms ease,
     border-color 140ms ease,

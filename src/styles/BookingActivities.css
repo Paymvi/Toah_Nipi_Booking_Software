@@ -19,13 +19,13 @@
   padding: 1.25rem;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 0.625rem;
 }
 
 .booking-activities-eyebrow {
   margin: 0 0 0.35rem;
   color: #4f46e5;
-  font-size: 0.75rem;
+  font-size: 0.898rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -33,16 +33,16 @@
 
 .booking-activities-header h2 {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.383rem;
   font-weight: 750;
   color: #111827;
 }
 
 .booking-activities-header p {
   margin: 0.35rem 0 0;
-  max-width: 620px;
+  max-width: 38.75rem;
   color: #6b7280;
-  font-size: 0.92rem;
+  font-size: 1.005rem;
   line-height: 1.5;
 }
 
@@ -62,7 +62,7 @@
   border: none;
   border-bottom: 3px solid transparent;
   color: #6b7280;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
   font-weight: 700;
   cursor: pointer;
   transition: 0.2s ease;
@@ -91,23 +91,23 @@
   padding: 1rem;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 0.625rem;
 }
 
 .activity-summary-card span {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: 2.625rem;
+  height: 2.625rem;
   color: #3730a3;
   background: #eef2ff;
-  border-radius: 9px;
+  border-radius: 0.562rem;
 }
 
 .activity-summary-card p {
   margin: 0;
   color: #6b7280;
-  font-size: 0.78rem;
+  font-size: 0.917rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -115,7 +115,7 @@
 
 .activity-summary-card h3 {
   margin: 0.15rem 0 0;
-  font-size: 1.4rem;
+  font-size: 1.43rem;
   font-weight: 750;
   color: #111827;
 }
@@ -123,7 +123,7 @@
 .activity-panel {
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   overflow: hidden;
 }
 
@@ -139,7 +139,7 @@
 
 .activity-panel-top h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.055rem;
   font-weight: 750;
   color: #111827;
 }
@@ -147,7 +147,7 @@
 .activity-panel-top p {
   margin: 0.25rem 0 0;
   color: #6b7280;
-  font-size: 0.86rem;
+  font-size: 0.967rem;
 }
 
 .activity-table-wrap {
@@ -158,14 +158,14 @@
 .activity-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 980px;
+  min-width: 61.25rem;
 }
 
 .activity-table th {
   padding: 0.85rem 1rem;
   background: #f9fafb;
   color: #4b5563;
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   font-weight: 750;
   text-align: left;
   text-transform: uppercase;
@@ -176,7 +176,7 @@
 .activity-table td {
   padding: 0.9rem 1rem;
   color: #374151;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
 }
@@ -192,13 +192,13 @@
 .activity-requirement-pill {
   display: inline-flex;
   align-items: center;
-  max-width: 260px;
+  max-width: 16.25rem;
   padding: 0.45rem 0.65rem;
   color: #3730a3;
   background: #f5f3ff;
   border: 1px solid #ddd6fe;
-  border-radius: 7px;
-  font-size: 0.78rem;
+  border-radius: 0.438rem;
+  font-size: 0.917rem;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -213,12 +213,12 @@
 .activity-icon-btn {
   display: inline-grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 2.125rem;
+  height: 2.125rem;
   background: #ffffff;
   color: #4b5563;
   border: 1px solid #d1d5db;
-  border-radius: 7px;
+  border-radius: 0.438rem;
   cursor: pointer;
   transition: 0.2s ease;
 }
@@ -255,10 +255,10 @@
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  min-height: 38px;
+  min-height: 2.375rem;
   padding: 0.6rem 0.9rem;
-  border-radius: 8px;
-  font-size: 0.86rem;
+  border-radius: 0.5rem;
+  font-size: 0.967rem;
   font-weight: 750;
   cursor: pointer;
   transition: 0.2s ease;
@@ -291,7 +291,7 @@
   padding: 1rem;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: 0.625rem;
 }
 
 .activity-add-card-header {
@@ -304,19 +304,19 @@
 .activity-add-card-header h4 {
   margin: 0;
   color: #111827;
-  font-size: 0.98rem;
+  font-size: 1.042rem;
   font-weight: 750;
 }
 
 .activity-add-card-header button {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   color: #6b7280;
   background: #ffffff;
   border: 1px solid #d1d5db;
-  border-radius: 7px;
+  border-radius: 0.438rem;
   cursor: pointer;
 }
 
@@ -331,7 +331,7 @@
   flex-direction: column;
   gap: 0.35rem;
   color: #4b5563;
-  font-size: 0.78rem;
+  font-size: 0.917rem;
   font-weight: 750;
 }
 
@@ -342,15 +342,15 @@
   color: #111827;
   background: #ffffff;
   border: 1px solid #d1d5db;
-  border-radius: 7px;
-  font-size: 0.86rem;
+  border-radius: 0.438rem;
+  font-size: 0.967rem;
   outline: none;
 }
 
 .activity-add-grid input:focus,
 .activity-table input:focus {
   border-color: #3730a3;
-  box-shadow: 0 0 0 3px rgba(55, 48, 163, 0.1);
+  box-shadow: 0 0 0 0.188rem rgba(55, 48, 163, 0.1);
 }
 
 .activity-add-card-actions {
@@ -362,7 +362,7 @@
 
 .activity-mini-inputs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(80px, 1fr));
+  grid-template-columns: repeat(3, minmax(5rem, 1fr));
   gap: 0.45rem;
 }
 
@@ -376,7 +376,7 @@
   position: absolute;
   left: 0.55rem;
   color: #6b7280;
-  font-size: 0.8rem;
+  font-size: 0.93rem;
 }
 
 .activity-mini-inputs input {
@@ -398,20 +398,20 @@
 
 .activity-empty-state svg {
   color: #9ca3af;
-  font-size: 1.5rem;
+  font-size: 1.523rem;
 }
 
 .activity-empty-state h4 {
   margin: 0.25rem 0 0;
   color: #374151;
-  font-size: 1rem;
+  font-size: 1.055rem;
   font-weight: 750;
 }
 
 .activity-empty-state p {
   margin: 0;
-  max-width: 360px;
-  font-size: 0.9rem;
+  max-width: 22.5rem;
+  font-size: 0.992rem;
 }
 
 @media (max-width: 900px) {

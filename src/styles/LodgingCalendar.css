@@ -13,11 +13,11 @@
 
 .lodging-calendar-building-switcher {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+  gap: 0.625rem;
   width: 100%;
   min-width: 0;
-  padding: 18px 20px 14px;
+  padding: 1.125rem 1.25rem 0.875rem;
   border-bottom: 1px solid #edf0f4;
   background: #ffffff;
 }
@@ -31,14 +31,14 @@
   --lodging-soft: #f4f5f7;
   position: relative;
   flex: 0 0 auto;
-  min-width: 155px;
-  min-height: 62px;
+  min-width: 9.688rem;
+  min-height: 3.875rem;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 7px 11px 7px 7px;
+  gap: 0.625rem;
+  padding: 0.438rem 0.688rem 0.438rem 0.438rem;
   border: 1px solid #dfe4ec;
-  border-radius: 11px;
+  border-radius: 0.688rem;
   background: #ffffff;
   color: #3f4351;
   font: inherit;
@@ -65,12 +65,12 @@
 --------------------------------------------------------- */
 
 .lodging-calendar-building-image {
-  width: 52px;
-  height: 46px;
-  flex: 0 0 52px;
+  width: 3.25rem;
+  height: 2.875rem;
+  flex: 0 0 3.25rem;
   display: block;
   border: 2px solid var(--lodging-color);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   overflow: hidden;
   background: var(--lodging-soft);
 }
@@ -92,29 +92,29 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .lodging-calendar-building-copy > span {
   min-width: 0;
   color: #4e5565;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
   font-weight: 650;
   white-space: nowrap;
 }
 
 .lodging-calendar-building-copy > strong {
-  min-width: 27px;
-  height: 27px;
+  min-width: 1.688rem;
+  height: 1.688rem;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 7px;
+  padding: 0 0.438rem;
   border-radius: 999px;
   background: var(--lodging-soft);
   color: var(--lodging-color);
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   font-weight: 700;
 }
 
@@ -126,7 +126,7 @@
   border-color: var(--lodging-color);
   background: var(--lodging-soft);
   box-shadow: inset 0 0 0 1px var(--lodging-color),
-    0 5px 14px rgba(28, 35, 52, 0.07);
+    0 0.312rem 0.875rem rgba(28, 35, 52, 0.07);
 }
 
 .lodging-calendar-building-option.active .lodging-calendar-building-copy > span {
@@ -144,20 +144,20 @@
 ========================================================= */
 
 .lodging-calendar-building-marker {
-  width: 52px;
-  height: 46px;
-  flex: 0 0 52px;
+  width: 3.25rem;
+  height: 2.875rem;
+  flex: 0 0 3.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  border-radius: 8px;
+  gap: 0.25rem;
+  border-radius: 0.5rem;
   background: #f3f4f7;
 }
 
 .lodging-calendar-building-marker i {
-  width: 8px;
-  height: 22px;
+  width: 0.5rem;
+  height: 1.375rem;
   display: block;
   border-radius: 999px;
 }
@@ -307,7 +307,7 @@
 
 .lodging-calendar-agenda-card small {
   display: block;
-  margin-top: 5px;
+  margin-top: 0.312rem;
   color: #737b8c;
   line-height: 1.4;
 }
@@ -319,10 +319,10 @@
 
 @media (max-width: 900px) {
   .lodging-calendar-building-switcher {
-    padding: 14px 16px 12px;
+    padding: 0.875rem 1rem 0.75rem;
   }
 
   .lodging-calendar-building-option {
-    min-width: 150px;
+    min-width: 9.375rem;
   }
 }

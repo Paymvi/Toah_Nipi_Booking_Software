@@ -3083,7 +3083,7 @@ function AvailabilityBoard({
         <div
           className="availability-grid"
           style={{
-            gridTemplateColumns: `210px repeat(${availabilityDays.length}, minmax(36px, 1fr))`,
+            gridTemplateColumns: `13.125rem repeat(${availabilityDays.length}, minmax(2.25rem, 1fr))`,
           }}
         >
           <div className="availability-row-heading">

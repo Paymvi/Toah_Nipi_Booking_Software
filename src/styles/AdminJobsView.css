@@ -10,7 +10,7 @@
 .jobs-panel-header h3 {
   margin: 0;
   color: #252936;
-  font-size: 1.12rem;
+  font-size: 1.167rem;
   font-weight: 650;
   letter-spacing: -0.015em;
   line-height: 1.2;
@@ -21,18 +21,18 @@
 .admin-panel-header span,
 .jobs-panel-header span {
   display: block;
-  margin-top: 5px;
+  margin-top: 0.312rem;
   color: #858c9b;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   line-height: 1.45;
 }
 
 .admin-summary-grid,
 .jobs-summary-grid {
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  grid-template-columns: repeat(4, minmax(7.5rem, 1fr));
   display: grid;
-  gap: 14px;
-  padding: 18px;
+  gap: 0.875rem;
+  padding: 1.125rem;
 }
 
 @media (max-width: 720px) {
@@ -59,7 +59,7 @@
 .admin-page,
 .jobs-page {
   display: grid;
-  gap: 16px;
+  gap: 1rem;
   min-width: 0;
 }
 
@@ -70,10 +70,10 @@
 .admin-panel-card,
 .jobs-panel {
   overflow: hidden;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   border: 1px solid #dfe4ec;
   background: #ffffff;
-  box-shadow: 0 6px 18px rgba(28, 35, 52, 0.04);
+  box-shadow: 0 0.375rem 1.125rem rgba(28, 35, 52, 0.04);
 }
 
 /* Header sizing matches Reports header/panel headers */
@@ -85,8 +85,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 18px;
-  padding: 18px;
+  gap: 1.125rem;
+  padding: 1.125rem;
   border-bottom: 1px solid #edf0f4;
   background: #ffffff;
 }
@@ -98,7 +98,7 @@
 .admin-panel-header .dashboard-heading-with-icon,
 .jobs-panel-header .dashboard-heading-with-icon {
   align-items: flex-start;
-  gap: 11px;
+  gap: 0.688rem;
   min-width: 0;
 }
 
@@ -108,18 +108,18 @@
 .jobs-hero-header .section-icon,
 .admin-panel-header .section-icon,
 .jobs-panel-header .section-icon {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 2.25rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin: 0;
   padding: 0;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #eef1ea;
   color: #5c6f46;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
   line-height: 1;
 }
 
@@ -127,8 +127,8 @@
 .jobs-hero-header .section-icon svg,
 .admin-panel-header .section-icon svg,
 .jobs-panel-header .section-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
   display: block;
   margin: 0;
   flex: 0 0 auto;
@@ -140,7 +140,7 @@
 .jobs-hero-header h2 {
   margin: 0;
   color: #252936;
-  font-size: 1.12rem;
+  font-size: 1.167rem;
   font-weight: 650;
   letter-spacing: -0.015em;
   line-height: 1.2;
@@ -150,7 +150,7 @@
 .jobs-panel-header h3 {
   margin: 0;
   color: #252936;
-  font-size: 1rem;
+  font-size: 1.055rem;
   font-weight: 650;
   letter-spacing: -0.015em;
   line-height: 1.2;
@@ -165,10 +165,10 @@
 .admin-panel-header > div > span,
 .jobs-panel-header > div > span {
   display: block;
-  max-width: 740px;
-  margin-top: 5px;
+  max-width: 46.25rem;
+  margin-top: 0.312rem;
   color: #858c9b;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   font-weight: 400;
   line-height: 1.45;
 }
@@ -179,9 +179,9 @@
 .jobs-hero-header .dashboard-eyebrow,
 .admin-panel-header .dashboard-eyebrow,
 .jobs-panel-header .dashboard-eyebrow {
-  margin: 0 0 6px;
+  margin: 0 0 0.375rem;
   color: #7b8290;
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   font-weight: 650;
   letter-spacing: 0.095em;
   text-transform: uppercase;
@@ -191,9 +191,9 @@
 
 .admin-current-user-picker,
 .jobs-filter-field {
-  min-width: 190px;
+  min-width: 11.875rem;
   display: grid;
-  gap: 5px;
+  gap: 0.312rem;
   flex: 0 0 auto;
 }
 
@@ -201,7 +201,7 @@
 .jobs-filter-field span,
 .admin-user-form label span {
   color: #7b8290;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 650;
   letter-spacing: 0.065em;
   text-transform: uppercase;
@@ -214,14 +214,14 @@
 .admin-table input,
 .admin-table select {
   width: 100%;
-  height: 38px;
+  height: 2.375rem;
   border: 1px solid #dfe4ec;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #ffffff;
   color: #303442;
-  padding: 0 11px;
+  padding: 0 0.688rem;
   font: inherit;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   font-weight: 500;
   outline: none;
 }
@@ -233,24 +233,24 @@
 .admin-table input:focus,
 .admin-table select:focus {
   border-color: #9f98d4;
-  box-shadow: 0 0 0 3px rgba(68, 58, 156, 0.12);
+  box-shadow: 0 0 0 0.188rem rgba(68, 58, 156, 0.12);
 }
 
 .admin-summary-grid {
-  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  grid-template-columns: repeat(3, minmax(9.375rem, 1fr));
 }
 
 .jobs-summary-grid {
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  grid-template-columns: repeat(4, minmax(9.375rem, 1fr));
 }
 
 .admin-summary-grid div,
 .jobs-summary-grid div {
   min-width: 0;
-  padding: 14px;
+  padding: 0.875rem;
   border: 1px solid #dfe4ec;
   border-left: 4px solid #443a9c;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #fbfcfd;
 }
 
@@ -272,7 +272,7 @@
 .jobs-summary-grid small {
   display: block;
   color: #6f7687;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.055em;
@@ -281,9 +281,9 @@
 .admin-summary-grid strong,
 .jobs-summary-grid strong {
   display: block;
-  margin-top: 7px;
+  margin-top: 0.438rem;
   color: #252936;
-  font-size: 1.35rem;
+  font-size: 1.383rem;
   font-weight: 700;
   line-height: 1;
 }
@@ -292,18 +292,18 @@
 
 .admin-user-form {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr)
-    minmax(220px, 1.2fr)
-    minmax(140px, 0.75fr)
+  grid-template-columns: minmax(11.25rem, 1fr)
+    minmax(13.75rem, 1.2fr)
+    minmax(8.75rem, 0.75fr)
     auto;
-  gap: 12px;
+  gap: 0.75rem;
   align-items: end;
-  padding: 18px;
+  padding: 1.125rem;
 }
 
 .admin-user-form label {
   display: grid;
-  gap: 5px;
+  gap: 0.312rem;
 }
 
 /* Admin table matches Reports table sizing */
@@ -317,17 +317,17 @@
 
 .admin-table {
   width: 100%;
-  min-width: 850px;
+  min-width: 53.125rem;
   border-collapse: collapse;
 }
 
 .admin-table th {
-  padding: 11px 14px;
+  padding: 0.688rem 0.875rem;
   background: #f6f7f9;
   color: #565d6b;
   border-bottom: 1px solid #dfe4ec;
   text-align: left;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.045em;
@@ -335,10 +335,10 @@
 }
 
 .admin-table td {
-  padding: 13px 14px;
+  padding: 0.812rem 0.875rem;
   border-bottom: 1px solid #edf0f4;
   color: #3f4351;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   vertical-align: middle;
 }
 
@@ -351,15 +351,15 @@
 .admin-status-pill,
 .admin-current-pill,
 .job-status-pill {
-  min-height: 24px;
+  min-height: 1.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1px solid transparent;
-  border-radius: 7px;
-  padding: 0 9px;
+  border-radius: 0.438rem;
+  padding: 0 0.562rem;
   font: inherit;
-  font-size: 0.7rem;
+  font-size: 0.867rem;
   font-weight: 650;
   line-height: 1;
   white-space: nowrap;
@@ -399,27 +399,27 @@
 
 .jobs-two-column-layout {
   display: grid;
-  grid-template-columns: minmax(360px, 0.85fr) minmax(0, 1.15fr);
-  gap: 16px;
+  grid-template-columns: minmax(22.5rem, 0.85fr) minmax(0, 1.15fr);
+  gap: 1rem;
   align-items: start;
 }
 
 .jobs-task-list,
 .jobs-member-list {
   display: grid;
-  gap: 10px;
-  padding: 18px;
+  gap: 0.625rem;
+  padding: 1.125rem;
 }
 
 /* Individual job cards match report quality rows */
 
 .job-task-card {
   display: grid;
-  gap: 11px;
-  padding: 12px;
+  gap: 0.688rem;
+  padding: 0.75rem;
   border: 1px solid #edf0f4;
   border-left: 4px solid #443a9c;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #fbfcfd;
   box-shadow: none;
 }
@@ -436,21 +436,21 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .job-task-main h4 {
-  margin: 8px 0 0;
+  margin: 0.5rem 0 0;
   color: #303442;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
   font-weight: 650;
   line-height: 1.25;
 }
 
 .job-task-main p {
-  margin: 4px 0 0;
+  margin: 0.25rem 0 0;
   color: #858c9b;
-  font-size: 0.78rem;
+  font-size: 0.917rem;
   font-weight: 400;
   line-height: 1.35;
 }
@@ -458,15 +458,15 @@
 .job-task-notes {
   margin: 0;
   color: #4f5564;
-  font-size: 0.8rem;
+  font-size: 0.93rem;
   line-height: 1.45;
 }
 
 .job-open-icon,
 .job-complete-icon {
   flex: 0 0 auto;
-  margin-top: 3px;
-  font-size: 0.95rem;
+  margin-top: 0.188rem;
+  font-size: 1.023rem;
 }
 
 .job-open-icon {
@@ -482,16 +482,16 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   overflow: hidden;
   border: 1px solid #edf0f4;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #ffffff;
 }
 
 .job-task-meta span {
   min-width: 0;
-  padding: 10px;
+  padding: 0.625rem;
   background: #ffffff;
   color: #303442;
-  font-size: 0.8rem;
+  font-size: 0.93rem;
   overflow-wrap: anywhere;
 }
 
@@ -501,9 +501,9 @@
 
 .job-task-meta strong {
   display: block;
-  margin-bottom: 3px;
+  margin-bottom: 0.188rem;
   color: #818998;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.055em;
@@ -514,7 +514,7 @@
 .jobs-member-card {
   overflow: hidden;
   border: 1px solid #dfe4ec;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: #ffffff;
   box-shadow: none;
 }
@@ -523,8 +523,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  padding: 13px 14px;
+  gap: 0.75rem;
+  padding: 0.812rem 0.875rem;
   border-bottom: 1px solid #edf0f4;
   background: #fbfcfd;
 }
@@ -532,23 +532,23 @@
 .jobs-member-header strong {
   display: block;
   color: #252936;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
   font-weight: 650;
   line-height: 1.25;
 }
 
 .jobs-member-header span {
   display: block;
-  margin-top: 3px;
+  margin-top: 0.188rem;
   color: #858c9b;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   font-weight: 400;
 }
 
 .jobs-member-header em {
   flex: 0 0 auto;
   color: #443a9c;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   font-style: normal;
   font-weight: 650;
 }
@@ -562,13 +562,13 @@
   border: 0;
   border-bottom: 1px solid #edf0f4;
   background: transparent;
-  padding: 11px 14px;
+  padding: 0.688rem 0.875rem;
   display: grid;
-  grid-template-columns: minmax(160px, 1fr)
-    minmax(130px, 0.8fr)
-    minmax(110px, 0.65fr)
+  grid-template-columns: minmax(10rem, 1fr)
+    minmax(8.125rem, 0.8fr)
+    minmax(6.875rem, 0.65fr)
     auto;
-  gap: 10px;
+  gap: 0.625rem;
   align-items: center;
   color: inherit;
   font: inherit;
@@ -582,7 +582,7 @@
 
 .jobs-member-task-row span {
   color: #303442;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   font-weight: 650;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -591,7 +591,7 @@
 
 .jobs-member-task-row small {
   color: #858c9b;
-  font-size: 0.78rem;
+  font-size: 0.917rem;
   font-weight: 400;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -600,7 +600,7 @@
 
 .jobs-member-task-row em {
   color: #687083;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   font-style: normal;
   font-weight: 600;
   text-align: right;
@@ -608,18 +608,18 @@
 }
 
 .jobs-member-task-overdue {
-  box-shadow: inset 3px 0 0 #9f2f2f;
+  box-shadow: inset 0.188rem 0 0 #9f2f2f;
 }
 
 .jobs-member-task-completed {
-  box-shadow: inset 3px 0 0 #2f6f5f;
+  box-shadow: inset 0.188rem 0 0 #2f6f5f;
 }
 
 .jobs-member-empty {
   margin: 0;
-  padding: 14px;
+  padding: 0.875rem;
   color: #858c9b;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
 }
 
 .jobs-unassigned-card {
@@ -631,8 +631,8 @@
 .jobs-page .empty-state,
 .admin-page .empty-state {
   margin: 0;
-  padding: 18px;
-  border-radius: 8px;
+  padding: 1.125rem;
+  border-radius: 0.5rem;
   background: #fbfcfd;
   border: 1px dashed #cfd6e1;
 }
@@ -640,15 +640,15 @@
 .jobs-page .empty-state strong,
 .admin-page .empty-state strong {
   color: #303442;
-  font-size: 0.94rem;
+  font-size: 1.017rem;
   font-weight: 650;
 }
 
 .jobs-page .empty-state p,
 .admin-page .empty-state p {
-  margin: 6px 0 0;
+  margin: 0.375rem 0 0;
   color: #858c9b;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
 }
 
 /* Responsive behavior matches Reports-style pages */
@@ -673,8 +673,8 @@
   .admin-panel-header,
   .jobs-panel-header {
     flex-direction: column;
-    gap: 14px;
-    padding: 16px;
+    gap: 0.875rem;
+    padding: 1rem;
   }
 
   .admin-current-user-picker,
@@ -684,8 +684,8 @@
 
   .admin-summary-grid,
   .jobs-summary-grid {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
-    padding: 16px;
+    grid-template-columns: repeat(2, minmax(8.75rem, 1fr));
+    padding: 1rem;
   }
 }
 
@@ -710,6 +710,6 @@
   }
 
   .admin-table {
-    min-width: 820px;
+    min-width: 51.25rem;
   }
 }

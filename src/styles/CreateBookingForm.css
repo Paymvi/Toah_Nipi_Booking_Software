@@ -5,7 +5,7 @@
 
 .rental-page {
   min-height: 100vh;
-  padding: 44px 20px;
+  padding: 2.75rem 1.25rem;
   background: var(--page-bg, #f6f7f9);
 }
 
@@ -18,11 +18,11 @@
   width: 100%;
   max-width: 1180px;
   margin: 0 auto;
-  padding: 36px 40px 38px;
+  padding: 2.25rem 2.5rem 2.375rem;
   background: var(--card-bg, #ffffff);
   border: 1px solid var(--border, #dde2e8);
-  border-radius: 14px;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+  border-radius: 0.875rem;
+  box-shadow: 0 1.125rem 2.812rem rgba(15, 23, 42, 0.06);
 }
 
 
@@ -31,13 +31,13 @@
 ========================================================= */
 
 .rental-header {
-  margin-bottom: 30px;
+  margin-bottom: 1.875rem;
 }
 
 .rental-eyebrow {
-  margin: 0 0 7px;
+  margin: 0 0 0.438rem;
   color: #6c7b70;
-  font-size: 0.72rem;
+  font-size: 0.88rem;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -46,25 +46,25 @@
 .rental-header h1 {
   margin: 0;
   color: var(--text-main, #252936);
-  font-size: clamp(2rem, 4vw, 2.6rem);
+  font-size: clamp(1.992rem, 3.2vw, 2.555rem);
   line-height: 1.1;
   letter-spacing: -0.04em;
   font-weight: 600;
 }
 
 .rental-header p {
-  max-width: 620px;
-  margin: 10px 0 0;
+  max-width: 38.75rem;
+  margin: 0.625rem 0 0;
   color: var(--text-muted);
-  font-size: 0.98rem;
+  font-size: 1.042rem;
   line-height: 1.6;
 }
 
 .rental-header > p:last-child {
-  max-width: 680px;
-  margin: 10px 0 0;
+  max-width: 42.5rem;
+  margin: 0.625rem 0 0;
   color: var(--text-muted, #7c8492);
-  font-size: 0.98rem;
+  font-size: 1.042rem;
   line-height: 1.6;
 }
 
@@ -77,10 +77,10 @@
 .rental-error-message {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  margin-bottom: 26px;
-  padding: 14px 16px;
-  border-radius: 10px;
+  gap: 0.625rem;
+  margin-bottom: 1.625rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.625rem;
 }
 
 .success-message {
@@ -110,7 +110,7 @@
 .success-message > div,
 .rental-error-message > div {
   display: grid;
-  gap: 3px;
+  gap: 0.188rem;
 }
 
 .success-message strong,
@@ -120,7 +120,7 @@
 
 .success-message span,
 .rental-error-message span {
-  font-size: 0.88rem;
+  font-size: 0.98rem;
   font-weight: 400;
   line-height: 1.4;
 }
@@ -133,7 +133,7 @@
 .rental-form {
   width: 100%;
   display: grid;
-  gap: 24px;
+  gap: 1.5rem;
 }
 
 
@@ -144,7 +144,7 @@
 .rental-form-section {
   overflow: hidden;
   border: 1px solid var(--border, #dde2e8);
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: #ffffff;
 }
 
@@ -156,37 +156,37 @@
 .rental-section-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 15px 18px;
+  gap: 0.75rem;
+  padding: 0.938rem 1.125rem;
   border-bottom: 1px solid #dce5dc;
   background: #f4f7f3;
 }
 
 .rental-section-icon {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
+  width: 2.125rem;
+  height: 2.125rem;
+  flex: 0 0 2.125rem;
   display: grid;
   place-items: center;
   border: 1px solid #d2dfd0;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #ffffff;
   color: #5f735f;
-  font-size: 0.85rem;
+  font-size: 0.961rem;
 }
 
 .rental-section-header h2 {
   margin: 0;
   color: var(--text-main, #252936);
-  font-size: 0.98rem;
+  font-size: 1.042rem;
   font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 .rental-section-header p {
-  margin: 3px 0 0;
+  margin: 0.188rem 0 0;
   color: var(--text-muted, #858c9b);
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   line-height: 1.4;
 }
 
@@ -197,8 +197,8 @@
 
 .rental-section-body {
   display: grid;
-  gap: 24px;
-  padding: 22px;
+  gap: 1.5rem;
+  padding: 1.375rem;
 }
 
 
@@ -209,18 +209,18 @@
 .rental-field-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 34px;
-  row-gap: 24px;
+  column-gap: 2.125rem;
+  row-gap: 1.5rem;
 }
 
 .rental-field-grid-3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  column-gap: 24px;
+  column-gap: 1.5rem;
 }
 
 .rental-field-grid-4 {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  column-gap: 20px;
+  column-gap: 1.25rem;
 }
 
 .rental-field-full {
@@ -235,22 +235,22 @@
 .rental-field {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 0.562rem;
   min-width: 0;
 }
 
 .rental-field > span {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   color: #4c5562;
-  font-size: 0.93rem;
+  font-size: 1.011rem;
   font-weight: 550;
 }
 
 .rental-field > span small {
   color: #9ca3af;
-  font-size: 0.74rem;
+  font-size: 0.892rem;
   font-weight: 400;
 }
 
@@ -259,12 +259,12 @@
 .rental-field textarea {
   width: 100%;
   border: 1px solid var(--border, #d6dbe2);
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: #ffffff;
   color: var(--text-main, #252936);
-  padding: 13px 15px;
+  padding: 0.812rem 0.938rem;
   font: inherit;
-  font-size: 1rem;
+  font-size: 1.055rem;
   outline: none;
   transition: border-color 170ms ease,
     box-shadow 170ms ease,
@@ -273,11 +273,11 @@
 
 .rental-field input,
 .rental-field select {
-  min-height: 48px;
+  min-height: 3rem;
 }
 
 .rental-field textarea {
-  min-height: 120px;
+  min-height: 7.5rem;
   line-height: 1.5;
   resize: vertical;
 }
@@ -296,7 +296,7 @@
 .rental-field select:focus,
 .rental-field textarea:focus {
   border-color: var(--focus, #718b76);
-  box-shadow: 0 0 0 4px
+  box-shadow: 0 0 0 0.25rem
     var(--focus-soft, rgba(91, 119, 98, 0.11));
   background: #ffffff;
 }
@@ -314,21 +314,21 @@
 
 .rental-subsection {
   display: grid;
-  gap: 18px;
+  gap: 1.125rem;
 }
 
 .rental-subsection + .rental-subsection {
-  padding-top: 22px;
+  padding-top: 1.375rem;
   border-top: 1px solid #e3e9e2;
 }
 
 .rental-subsection h3 {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 0.438rem;
   margin: 0;
   color: #4d5561;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
@@ -345,7 +345,7 @@
 .rental-form-two-column {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
+  gap: 1.5rem;
   align-items: start;
 }
 
@@ -357,18 +357,18 @@
 .rental-lodging-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .rental-lodging-field {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  min-height: 72px;
-  padding: 12px;
+  gap: 0.75rem;
+  min-height: 4.5rem;
+  padding: 0.75rem;
   border: 1px solid #e1e5ea;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #fafbfc;
 }
 
@@ -376,38 +376,38 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 0.188rem;
 }
 
 .rental-lodging-field strong {
   color: #3f4651;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   font-weight: 600;
 }
 
 .rental-lodging-field small {
   color: #8c94a1;
-  font-size: 0.72rem;
+  font-size: 0.88rem;
 }
 
 .rental-lodging-field input {
-  width: 65px;
-  height: 42px;
-  flex: 0 0 65px;
+  width: 4.062rem;
+  height: 2.625rem;
+  flex: 0 0 4.062rem;
   border: 1px solid var(--border, #d6dbe2);
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: #ffffff;
-  padding: 0 8px;
+  padding: 0 0.5rem;
   color: var(--text-main, #252936);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
   text-align: center;
   outline: none;
 }
 
 .rental-lodging-field input:focus {
   border-color: var(--focus, #718b76);
-  box-shadow: 0 0 0 4px
+  box-shadow: 0 0 0 0.25rem
     var(--focus-soft, rgba(91, 119, 98, 0.11));
 }
 
@@ -424,13 +424,13 @@
 }
 
 .form-actions button {
-  min-width: 185px;
+  min-width: 11.562rem;
   border: 0;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: var(--button, #4f46c7);
   color: #ffffff;
-  padding: 14px 28px;
-  font-size: 1rem;
+  padding: 0.875rem 1.75rem;
+  font-size: 1.055rem;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 170ms ease,
@@ -441,7 +441,7 @@
 .form-actions button:hover {
   background: var(--button-hover);
   transform: translateY(-1px);
-  box-shadow: 0 12px 22px rgba(79, 70, 199, 0.22);
+  box-shadow: 0 0.75rem 1.375rem rgba(79, 70, 199, 0.22);
 }
 
 .form-actions button:active {
@@ -452,7 +452,7 @@
 .form-actions button:hover:not(:disabled) {
   background: var(--button-hover, #4338b3);
   transform: translateY(-1px);
-  box-shadow: 0 12px 22px rgba(79, 70, 199, 0.22);
+  box-shadow: 0 0.75rem 1.375rem rgba(79, 70, 199, 0.22);
 }
 
 .form-actions button:active:not(:disabled) {
@@ -483,20 +483,20 @@
 
 @media (max-width: 780px) {
   .rental-page {
-    padding: 24px 14px;
+    padding: 1.5rem 0.875rem;
   }
 
   .rental-card {
-    padding: 26px 18px 28px;
-    border-radius: 12px;
+    padding: 1.625rem 1.125rem 1.75rem;
+    border-radius: 0.75rem;
   }
 
   .rental-form {
-    gap: 20px;
+    gap: 1.25rem;
   }
 
   .rental-section-body {
-    padding: 18px;
+    padding: 1.125rem;
   }
 
   .rental-field-grid,
@@ -504,7 +504,7 @@
   .rental-field-grid-4,
   .rental-lodging-grid {
     grid-template-columns: 1fr;
-    row-gap: 20px;
+    row-gap: 1.25rem;
   }
 
   .form-actions {
@@ -528,14 +528,14 @@
 
 .rental-test-data-button {
   flex: 0 0 auto;
-  margin-top: 4px;
+  margin-top: 0.25rem;
   border: 1px solid #d8d4f0;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #ffffff;
   color: #4f46a5;
-  padding: 10px 15px;
+  padding: 0.625rem 0.938rem;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 150ms ease,
@@ -567,28 +567,28 @@
 .rental-allergies-field {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .rental-allergy-headings {
   display: grid;
-  grid-template-columns: 130px minmax(0, 1fr) 52px;
-  gap: 10px;
+  grid-template-columns: 8.125rem minmax(0, 1fr) 3.25rem;
+  gap: 0.625rem;
   padding: 0 2px;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
   color: #7b8496;
 }
 
 .rental-allergy-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .rental-allergy-row {
   display: grid;
-  grid-template-columns: 130px minmax(0, 1fr) 52px;
-  gap: 10px;
+  grid-template-columns: 8.125rem minmax(0, 1fr) 3.25rem;
+  gap: 0.625rem;
   align-items: center;
 }
 
@@ -599,16 +599,16 @@
 }
 
 .rental-allergy-remove {
-  width: 42px;
-  height: 42px;
+  width: 2.625rem;
+  height: 2.625rem;
   display: grid;
   place-items: center;
   padding: 0;
   border: 1px solid #dfe4ea;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #ffffff;
   color: #465064;
-  font-size: 1.35rem;
+  font-size: 1.383rem;
   line-height: 1;
   cursor: pointer;
   transition: background 0.15s ease,
@@ -625,13 +625,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 42px;
-  padding: 0 14px;
+  min-height: 2.625rem;
+  padding: 0 0.875rem;
   border: 1px solid #b8d3c1;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #edf7f0;
   color: #2f6b45;
-  font-size: 0.95rem;
+  font-size: 1.023rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s ease,
@@ -648,13 +648,13 @@
 .rental-allergy-notes {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 14px;
+  gap: 0.5rem;
+  margin-top: 0.875rem;
 }
 
 .rental-allergy-notes > span {
   color: #4c5562;
-  font-size: 0.93rem;
+  font-size: 1.011rem;
   font-weight: 550;
 }
 
@@ -666,14 +666,14 @@
 .rental-stay-schedule {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  padding-top: 4px;
+  gap: 1.5rem;
+  padding-top: 0.25rem;
 }
 
 .rental-stay-schedule-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .rental-stay-schedule-title {
@@ -684,7 +684,7 @@
 .rental-stay-schedule-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 
@@ -696,15 +696,15 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .rental-lodging-image {
-  width: 72px;
-  height: 58px;
+  width: 4.5rem;
+  height: 3.625rem;
   flex-shrink: 0;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   border: 1px solid #e1e5e9;
 }
 
@@ -712,7 +712,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 0.188rem;
 }
 
 .rental-lodging-text strong {
@@ -735,17 +735,17 @@
 
 .rental-currency-input input {
   width: 100%;
-  padding-left: 38px;
+  padding-left: 2.375rem;
 }
 
 .rental-currency-symbol {
   position: absolute;
   z-index: 1;
-  left: 16px;
+  left: 1rem;
   top: 50%;
   transform: translateY(-50%);
   color: #9ca6b8;
-  font-size: 1rem;
+  font-size: 1.055rem;
   pointer-events: none;
 }
 
@@ -756,10 +756,10 @@
 ========================================================= */
 
 .rental-meal-schedule {
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
   overflow: hidden;
   border: 1px solid #e1e5ea;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: #ffffff;
 }
 
@@ -772,8 +772,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  padding: 14px 16px;
+  gap: 1.125rem;
+  padding: 0.875rem 1rem;
   border-bottom: 1px solid #e8ebef;
   background: #fafbfc;
 }
@@ -781,15 +781,15 @@
 .rental-meal-schedule-header h4 {
   margin: 0;
   color: #4d5561;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 
 .rental-meal-schedule-header p {
-  margin: 4px 0 0;
+  margin: 0.25rem 0 0;
   color: #858c9b;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   line-height: 1.4;
 }
 
@@ -800,28 +800,28 @@
 
 .rental-meal-total-badge {
   flex: 0 0 auto;
-  min-width: 78px;
+  min-width: 4.875rem;
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 5px;
-  padding: 8px 11px;
+  gap: 0.312rem;
+  padding: 0.5rem 0.688rem;
   border: 1px solid #dbe2dc;
-  border-radius: 7px;
+  border-radius: 0.438rem;
   background: #f1f5f1;
   color: #647666;
 }
 
 .rental-meal-total-badge strong {
   color: #435346;
-  font-size: 1rem;
+  font-size: 1.055rem;
   font-weight: 700;
   line-height: 1;
 }
 
 .rental-meal-total-badge span {
   color: #748078;
-  font-size: 0.7rem;
+  font-size: 0.867rem;
   font-weight: 500;
 }
 
@@ -831,10 +831,10 @@
 ========================================================= */
 
 .rental-meal-schedule-empty {
-  padding: 26px 20px;
+  padding: 1.625rem 1.25rem;
   background: #ffffff;
   color: #8c94a1;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
   line-height: 1.5;
   text-align: center;
 }
@@ -856,7 +856,7 @@
 
 .rental-meal-table {
   width: 100%;
-  min-width: 520px;
+  min-width: 32.5rem;
   border-collapse: collapse;
   table-layout: fixed;
   background: #ffffff;
@@ -864,7 +864,7 @@
 
 .rental-meal-table th,
 .rental-meal-table td {
-  padding: 11px 14px;
+  padding: 0.688rem 0.875rem;
   border-bottom: 1px solid #eceff2;
   vertical-align: middle;
   text-align: center;
@@ -892,15 +892,15 @@
 .rental-meal-table thead th {
   background: #ffffff;
   color: #59616e;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   font-weight: 600;
 }
 
 .rental-meal-table thead th strong {
   display: block;
-  margin-bottom: 3px;
+  margin-bottom: 0.188rem;
   color: #4d5561;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
   font-weight: 650;
   line-height: 1;
 }
@@ -908,7 +908,7 @@
 .rental-meal-table thead th span {
   display: block;
   color: #8c94a1;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 400;
 }
 
@@ -919,7 +919,7 @@
 
 .rental-meal-date strong {
   color: #3f4651;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   font-weight: 600;
 }
 
@@ -946,8 +946,8 @@
 
 .rental-meal-checkbox {
   position: relative;
-  width: 42px;
-  height: 42px;
+  width: 2.625rem;
+  height: 2.625rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -966,12 +966,12 @@
 /* Custom checkbox square */
 
 .rental-meal-checkbox > span {
-  width: 25px;
-  height: 25px;
+  width: 1.562rem;
+  height: 1.562rem;
   display: grid;
   place-items: center;
   border: 1px solid #cfd5dc;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: #ffffff;
   transition: border-color 150ms ease,
     background-color 150ms ease,
@@ -984,7 +984,7 @@
 .rental-meal-checkbox > span::after {
   content: "✓";
   color: #ffffff;
-  font-size: 0.82rem;
+  font-size: 0.942rem;
   font-weight: 700;
   line-height: 1;
   opacity: 0;
@@ -1016,7 +1016,7 @@
 
 .rental-meal-checkbox input:focus-visible + span {
   border-color: #718b76;
-  box-shadow: 0 0 0 4px
+  box-shadow: 0 0 0 0.25rem
     rgba(91, 119, 98, 0.11);
 }
 
@@ -1033,12 +1033,12 @@
 
 .rental-meal-table tfoot th,
 .rental-meal-table tfoot td {
-  padding-top: 12px;
-  padding-bottom: 12px;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
   border-bottom: 0;
   background: #fafbfc;
   color: #4d5561;
-  font-size: 0.8rem;
+  font-size: 0.93rem;
   font-weight: 600;
 }
 
@@ -1050,7 +1050,7 @@
 
 .rental-meal-table tfoot td {
   color: #435346;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
   font-weight: 700;
 }
 
@@ -1062,17 +1062,17 @@
 @media (max-width: 640px) {
   .rental-meal-schedule-header {
     align-items: flex-start;
-    padding: 14px;
+    padding: 0.875rem;
   }
 
   .rental-meal-total-badge {
-    min-width: 68px;
-    padding: 7px 9px;
+    min-width: 4.25rem;
+    padding: 0.438rem 0.562rem;
   }
 
   .rental-meal-table th,
   .rental-meal-table td {
-    padding: 10px;
+    padding: 0.625rem;
   }
 }
 
@@ -1084,13 +1084,13 @@
 /* More room between meal times and allergies */
 
 .rental-field-grid-3 + .rental-allergies-field {
-  margin-top: 12px;
+  margin-top: 0.75rem;
 }
 
 /* More room between allergy area and Other Meal Notes */
 
 .rental-allergies-field + .rental-field {
-  margin-top: 12px;
+  margin-top: 0.75rem;
 }
 
 
@@ -1101,7 +1101,7 @@
 .rental-field-label-icon {
   flex: 0 0 auto;
   color: #718b76;
-  font-size: 0.78rem;
+  font-size: 0.917rem;
   opacity: 0.9;
 }
 
@@ -1113,7 +1113,7 @@
 .rental-actual-guests-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
+  gap: 1.125rem;
 }
 
 @media (max-width: 1000px) {
@@ -1136,7 +1136,7 @@
 .rental-activity-row {
   display: grid;
   grid-template-columns: 1fr 1fr 2fr auto;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .rental-activity-row input,
@@ -1172,7 +1172,7 @@
 .rental-facility-row {
   display: grid;
   grid-template-columns: 1fr 1fr 2fr 1.5fr auto;
-  gap: 12px;
+  gap: 0.75rem;
   align-items: center;
 }
 
@@ -1181,7 +1181,7 @@
 }
 
 .rental-facility-row .rental-allergy-remove {
-  height: 42px;
+  height: 2.625rem;
 }
 
 @media (max-width: 900px) {
@@ -1198,12 +1198,12 @@
 ========================================================= */
 
 .rental-day-campers-subsection {
-  margin-top: 24px;
+  margin-top: 1.5rem;
 }
 
 .rental-day-campers-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  max-width: 720px;
+  max-width: 45rem;
 }
 
 @media (max-width: 640px) {
@@ -1228,36 +1228,36 @@
 
 .rental-controlled-field-help {
   display: block;
-  margin-top: 7px;
+  margin-top: 0.438rem;
   color: #6f746c;
-  font-size: 0.78rem;
+  font-size: 0.917rem;
   font-weight: 500;
   line-height: 1.4;
 }
 
 .rental-controlled-data-note {
-  margin: 8px
+  margin: 0.5rem
     0
-    16px;
-  padding: 10px
-    12px;
+    1rem;
+  padding: 0.625rem
+    0.75rem;
   border: 1px
     solid
     rgba(74, 94, 70, 0.16);
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: rgba(74, 94, 70, 0.06);
   color: #5f675d;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
   line-height: 1.5;
 }
 
 @media (max-width: 760px) {
   .rental-controlled-field-help {
-    font-size: 0.76rem;
+    font-size: 0.905rem;
   }
 
   .rental-controlled-data-note {
-    margin-bottom: 14px;
+    margin-bottom: 0.875rem;
   }
 }
 
@@ -1269,7 +1269,7 @@
 .rental-approx-guests-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 18px;
+  gap: 1.125rem;
 }
 
 .rental-approx-guests-grid .rental-field-full {

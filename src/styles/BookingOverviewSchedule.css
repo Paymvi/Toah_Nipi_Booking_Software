@@ -4,7 +4,7 @@
 ========================================================= */
 
 .booking-overview-schedule-showcase {
-  padding: 20px 22px 22px;
+  padding: 1.25rem 1.375rem 1.375rem;
 }
 
 
@@ -15,21 +15,21 @@
 .booking-overview-schedule-header {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  margin-bottom: 18px;
+  gap: 0.875rem;
+  margin-bottom: 1.125rem;
 }
 
 .booking-overview-schedule-header-icon {
-  width: 42px;
-  height: 42px;
+  width: 2.625rem;
+  height: 2.625rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 42px;
-  border-radius: 12px;
+  flex: 0 0 2.625rem;
+  border-radius: 0.75rem;
   background: #edf4ea;
   color: #6f8157;
-  font-size: 1rem;
+  font-size: 1.055rem;
 }
 
 .booking-overview-schedule-header-icon-facilities {
@@ -42,18 +42,18 @@
 }
 
 .booking-overview-schedule-header p {
-  margin: 0 0 3px;
+  margin: 0 0 0.188rem;
   color: #8b95a5;
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .booking-overview-schedule-header h3 {
-  margin: 0 0 4px;
+  margin: 0 0 0.25rem;
   color: #1f2a3a;
-  font-size: 1.35rem;
+  font-size: 1.383rem;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -61,7 +61,7 @@
 .booking-overview-schedule-header > div > span {
   display: block;
   color: #6f7c8f;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
   line-height: 1.45;
 }
 
@@ -74,7 +74,7 @@
   width: 100%;
   overflow-x: auto;
   border: 1px solid #e3e8ef;
-  border-radius: 14px;
+  border-radius: 0.875rem;
   background: #ffffff;
 }
 
@@ -83,11 +83,11 @@
 }
 
 .booking-overview-activity-table {
-  min-width: 620px;
+  min-width: 38.75rem;
 }
 
 .booking-overview-facility-table {
-  min-width: 980px;
+  min-width: 61.25rem;
 }
 
 .booking-overview-schedule-table-head,
@@ -98,18 +98,18 @@
 
 .booking-overview-activity-table .booking-overview-schedule-table-head,
 .booking-overview-activity-table .booking-overview-schedule-row {
-  grid-template-columns: minmax(150px, 0.8fr)
-    minmax(105px, 0.55fr)
-    minmax(280px, 1.8fr);
+  grid-template-columns: minmax(9.375rem, 0.8fr)
+    minmax(6.562rem, 0.55fr)
+    minmax(17.5rem, 1.8fr);
 }
 
 .booking-overview-facility-table .booking-overview-schedule-table-head,
 .booking-overview-facility-table .booking-overview-schedule-row {
-  grid-template-columns: minmax(145px, 0.75fr)
-    minmax(100px, 0.5fr)
-    minmax(240px, 1.45fr)
-    minmax(160px, 0.95fr)
-    minmax(220px, 1.3fr);
+  grid-template-columns: minmax(9.062rem, 0.75fr)
+    minmax(6.25rem, 0.5fr)
+    minmax(15rem, 1.45fr)
+    minmax(10rem, 0.95fr)
+    minmax(13.75rem, 1.3fr);
 }
 
 .booking-overview-schedule-table-head {
@@ -119,16 +119,16 @@
 
 .booking-overview-schedule-table-head > span {
   min-width: 0;
-  padding: 11px 14px;
+  padding: 0.688rem 0.875rem;
   color: #7c8798;
-  font-size: 0.7rem;
+  font-size: 0.867rem;
   font-weight: 700;
   letter-spacing: 0.045em;
   text-transform: uppercase;
 }
 
 .booking-overview-schedule-row {
-  min-height: 50px;
+  min-height: 3.125rem;
   border-bottom: 1px solid #edf1f5;
 }
 
@@ -139,10 +139,10 @@
 .booking-overview-schedule-row > span,
 .booking-overview-schedule-row > strong {
   min-width: 0;
-  padding: 12px 14px;
+  padding: 0.75rem 0.875rem;
   overflow-wrap: anywhere;
   color: #4a5668;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   line-height: 1.45;
 }
 
@@ -162,29 +162,29 @@
 ========================================================= */
 
 .booking-overview-schedule-legacy {
-  padding: 16px 18px;
+  padding: 1rem 1.125rem;
   border: 1px solid #e3e8ef;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: #fbfcfd;
   color: #39475a;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
   line-height: 1.6;
   white-space: pre-wrap;
 }
 
 .booking-overview-schedule-notes {
-  margin-top: 16px;
-  padding: 14px 16px;
+  margin-top: 1rem;
+  padding: 0.875rem 1rem;
   border-left: 3px solid #82946b;
-  border-radius: 0 10px 10px 0;
+  border-radius: 0 0.625rem 0.625rem 0;
   background: #f7f9f5;
 }
 
 .booking-overview-schedule-notes > strong {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 0.312rem;
   color: #5f7050;
-  font-size: 0.76rem;
+  font-size: 0.905rem;
   font-weight: 700;
   letter-spacing: 0.035em;
   text-transform: uppercase;
@@ -193,7 +193,7 @@
 .booking-overview-schedule-notes p {
   margin: 0;
   color: #3e4959;
-  font-size: 0.88rem;
+  font-size: 0.98rem;
   line-height: 1.55;
   white-space: pre-wrap;
 }
@@ -204,14 +204,14 @@
 ========================================================= */
 
 .booking-overview-schedule-empty {
-  min-height: 118px;
+  min-height: 7.375rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 24px 20px;
+  gap: 0.875rem;
+  padding: 1.5rem 1.25rem;
   border: 1px dashed #d9e1e9;
-  border-radius: 14px;
+  border-radius: 0.875rem;
   background: #fbfcfd;
   color: #7d8898;
   text-align: left;
@@ -219,8 +219,8 @@
 
 .booking-overview-schedule-empty > svg {
   flex: 0 0 auto;
-  width: 22px;
-  height: 22px;
+  width: 1.375rem;
+  height: 1.375rem;
   color: #81916d;
 }
 
@@ -234,17 +234,17 @@
 
 .booking-overview-schedule-empty strong {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
   color: #39465a;
-  font-size: 0.9rem;
+  font-size: 0.992rem;
   font-weight: 700;
 }
 
 .booking-overview-schedule-empty span {
   display: block;
-  max-width: 620px;
+  max-width: 38.75rem;
   color: #7d8898;
-  font-size: 0.84rem;
+  font-size: 0.955rem;
   line-height: 1.5;
 }
 
@@ -261,10 +261,10 @@
 
 @media (max-width: 760px) {
   .booking-overview-schedule-showcase {
-    padding: 18px 16px;
+    padding: 1.125rem 1rem;
   }
 
   .booking-overview-schedule-header h3 {
-    font-size: 1.2rem;
+    font-size: 1.242rem;
   }
 }
