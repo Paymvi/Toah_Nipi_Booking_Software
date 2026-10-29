@@ -1558,9 +1558,9 @@ git add SQL_SETUP.md
 git commit -m "Document Supabase SQL setup"
 ```
 
-If the file is placed inside a docs folder:
+This file currently lives in `src/docs/`:
 
 ```bash
-git add docs/SQL_SETUP.md
+git add src/docs/SQL_SETUP.md
 git commit -m "Document Supabase SQL setup"
 ```

@@ -22,6 +22,23 @@ import {
 } from "react-icons/fa";
 
 import { supabase } from "../lib/supabaseClient";
+import {
+  getAlreadyAssignedDocumentIds,
+  getAlreadyAssignedTaskIds,
+  getDueDateWarning,
+  getPortalProgress,
+  portalItemHasGuestSubmission,
+  sanitizePortalDocumentFileName,
+} from "../utils/portalRules";
+import {
+  changePortalItemDueDate,
+  insertPortalRowsOnce,
+  removePortalDocument,
+  removePortalItem,
+  reopenPortalItem,
+  requestPortalItemChanges,
+} from "../services/portalCorrections";
+
 
 import {
   formatDateRange,
@@ -89,20 +106,6 @@ function getPortalStaffDocumentMimeType(file) {
   }
 
   return inferredMimeType;
-}
-
-
-function sanitizePortalDocumentFileName(fileName) {
-  const cleanedName =
-    String(fileName || "upload")
-      .trim()
-      .replace(/[\/\\]+/g, "-")
-      .replace(/[^a-zA-Z0-9._() -]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .slice(0, 140);
-
-  return cleanedName || "upload";
 }
 
 
@@ -450,7 +453,8 @@ function normalizePortalChecklistItem(item) {
     uploadedFilePath: item.uploaded_file_path || "",
     uploadedFileMime: item.uploaded_file_mime || "",
     uploadedFileSize: item.uploaded_file_size || 0,
-    responseText: item.response_text || "",
+        responseText: item.response_text || "",
+    staffReviewNote: item.staff_review_note || "",
     lastChangedAt: item.last_changed_at || "",
     sortOrder: item.sort_order || 0,
   };
@@ -467,49 +471,6 @@ function normalizePortalDocument(document) {
     status: document.status || "ready",
     uploadedByGuest: Boolean(document.uploaded_by_guest),
     lastChangedAt: document.last_changed_at || document.created_at || "",
-  };
-}
-
-
-function getPortalProgress(checklistItems = []) {
-  const total = checklistItems.length;
-
-  const completed = checklistItems.filter(
-    (item) => item.status === "completed"
-  ).length;
-
-  const needsReview = checklistItems.filter(
-    (item) => item.status === "needsReview"
-  ).length;
-
-  const waitingOnGuest = checklistItems.filter(
-    (item) => item.status === "waitingOnGuest"
-  ).length;
-
-  const notStarted = checklistItems.filter(
-    (item) => item.status === "notStarted"
-  ).length;
-
-  const open =
-    waitingOnGuest +
-    notStarted;
-
-  const percent =
-    total > 0
-      ? Math.round(
-          ((completed + needsReview) / total) *
-            100
-        )
-      : 0;
-
-  return {
-    total,
-    completed,
-    needsReview,
-    waitingOnGuest,
-    notStarted,
-    open,
-    percent,
   };
 }
 
@@ -823,17 +784,15 @@ async function insertPortalChecklistItems(
   bookingId,
   checklistItems
 ) {
-  const {
-    data,
-    error,
-  } =
-    await supabase
-      .from(
-        "portal_checklist_items"
-      )
-      .insert(
+    const data =
+    await insertPortalRowsOnce(
+      supabase,
+      "portal_checklist_items",
         checklistItems.map(
           (item) => ({
+            client_request_id:
+              item.requestId,
+
             booking_id:
               bookingId,
 
@@ -863,13 +822,12 @@ async function insertPortalChecklistItems(
             sort_order:
               item.sortOrder,
 
-            last_changed_at:
+                        last_changed_at:
               new Date()
                 .toISOString(),
           })
-        )
-      )
-      .select(`
+        ),
+      `
         id,
         item_id,
         title,
@@ -881,15 +839,10 @@ async function insertPortalChecklistItems(
         response_text,
         last_changed_at,
         sort_order
-      `);
+      `
+    );
 
-  if (error) {
-    throw error;
-  }
-
-  return (
-    data || []
-  ).map(
+  return data.map(
     normalizePortalChecklistItem
   );
 }
@@ -899,17 +852,15 @@ async function insertPortalDocuments(
   bookingId,
   documents
 ) {
-  const {
-    data,
-    error,
-  } =
-    await supabase
-      .from(
-        "portal_documents"
-      )
-      .insert(
+    const data =
+    await insertPortalRowsOnce(
+      supabase,
+      "portal_documents",
         documents.map(
           (document) => ({
+            client_request_id:
+              document.requestId,
+
             booking_id:
               bookingId,
 
@@ -932,13 +883,12 @@ async function insertPortalDocuments(
             uploaded_by_guest:
               false,
 
-            last_changed_at:
+                        last_changed_at:
               new Date()
                 .toISOString(),
           })
-        )
-      )
-      .select(`
+        ),
+      `
         id,
         title,
         document_type,
@@ -948,15 +898,10 @@ async function insertPortalDocuments(
         uploaded_by_guest,
         last_changed_at,
         created_at
-      `);
+      `
+    );
 
-  if (error) {
-    throw error;
-  }
-
-  return (
-    data || []
-  ).map(
+  return data.map(
     normalizePortalDocument
   );
 }
@@ -1032,10 +977,26 @@ async function insertCustomPortalDocument(
    PORTAL URL
 ========================================================= */
 
+/*
+  A production build without VITE_GUEST_PORTAL_BASE_URL has no portal
+  address, so no link is built (AUDIT-022). Development builds keep the
+  local portal default.
+*/
+const PORTAL_BASE_URL_MISSING_MESSAGE =
+  "The guest portal address (VITE_GUEST_PORTAL_BASE_URL) is not set for this build, so portal links cannot be created. Ask the site administrator to set it.";
+
 function getPortalBaseUrl() {
-  return (
+  const configured = String(
     import.meta.env
-      .VITE_GUEST_PORTAL_BASE_URL ||
+      .VITE_GUEST_PORTAL_BASE_URL || ""
+  ).trim();
+
+  if (!configured && import.meta.env.PROD) {
+    return "";
+  }
+
+  return (
+    configured ||
     "http://localhost:5173"
   ).replace(
     /\/$/,
@@ -1047,11 +1008,13 @@ function getPortalBaseUrl() {
 function buildPortalUrl(
   portalToken
 ) {
-  if (!portalToken) {
+    const baseUrl = getPortalBaseUrl();
+
+  if (!portalToken || !baseUrl) {
     return "";
   }
 
-  return `${getPortalBaseUrl()}/?portal=${portalToken}`;
+  return `${baseUrl}/?portal=${portalToken}`;
 }
 
 
@@ -1175,10 +1138,82 @@ function PortalAdminProgressBar({
    CHECKLIST PREVIEW
 ========================================================= */
 
+function PortalItemCorrections({ item, onCorrectItem }) {
+  const [dueDate, setDueDate] = useState(item.dueDate || "");
+  const [note, setNote] = useState("");
+
+  return (
+    <details className="portal-item-corrections">
+      <summary>Correct…</summary>
+
+      <div className="portal-item-corrections-body">
+        <label>
+          <span>Due date</span>
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(event) => setDueDate(event.target.value)}
+          />
+        </label>
+        <button
+          className="secondary-dashboard-button"
+          type="button"
+          disabled={dueDate === (item.dueDate || "")}
+          onClick={() => onCorrectItem(item, "dueDate", { dueDate })}
+        >
+          Save due date
+        </button>
+
+        {item.status === "needsReview" && (
+          <>
+            <label>
+              <span>Note to the guest (optional)</span>
+              <textarea
+                rows={2}
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+              />
+            </label>
+            <button
+              className="secondary-dashboard-button"
+              type="button"
+              onClick={() => onCorrectItem(item, "requestChanges", { note })}
+            >
+              Send back for changes
+            </button>
+          </>
+        )}
+
+        {item.status === "completed" && (
+          <button
+            className="secondary-dashboard-button"
+            type="button"
+            onClick={() => onCorrectItem(item, "reopen")}
+          >
+            Reopen task
+          </button>
+        )}
+
+        <button
+          className="portal-item-remove-button"
+          type="button"
+          onClick={() => onCorrectItem(item, "remove")}
+        >
+          {portalItemHasGuestSubmission(item)
+            ? "Remove task (keeps the guest's file)"
+            : "Remove task"}
+        </button>
+      </div>
+    </details>
+  );
+}
+
+
 function PortalChecklistPreview({
   items,
   confirmingItemId,
   onConfirmItem,
+  onCorrectItem,
 }) {
   const [
     isExpanded,
@@ -1402,14 +1437,26 @@ function PortalChecklistPreview({
                     </span>
                   )}
 
-                  {item.status ===
+                                    {item.status ===
                     "completed" && (
                     <span className="portal-checklist-confirmed-label">
                       Confirmed
                     </span>
                   )}
+                  {onCorrectItem && (
+                    <PortalItemCorrections
+                      item={item}
+                      onCorrectItem={onCorrectItem}
+                    />
+                  )}
                 </div>
               </div>
+              {item.staffReviewNote &&
+                item.status === "waitingOnGuest" && (
+                <p className="portal-item-review-note">
+                  Sent back: {item.staffReviewNote}
+                </p>
+              )}
 
               {hasResponse &&
                 isItemExpanded && (
@@ -1496,57 +1543,58 @@ function PortalChecklistPreview({
 function createTaskAssignmentDraft(
   record
 ) {
-  const assignedItemIds =
-    new Set(
-      record.checklistItems.map(
-        (item) =>
-          item.itemId
-      )
-    );
-
-  const assignedTitles =
-    new Set(
-      record.checklistItems.map(
-        (item) =>
-          String(
-            item.title || ""
-          )
-            .trim()
-            .toLowerCase()
-      )
+  // Nothing is preselected (Q-018); an existing task is flagged, not blocked.
+  const alreadyAssignedIds =
+    getAlreadyAssignedTaskIds(
+      record.checklistItems,
+      PORTAL_TASK_OPTIONS
     );
 
   return Object.fromEntries(
     PORTAL_TASK_OPTIONS.map(
-      (task) => {
-        const alreadyAssigned =
-          assignedItemIds.has(
-            task.id
-          ) ||
-          assignedTitles.has(
-            task.title
-              .trim()
-              .toLowerCase()
-          );
+      (task) => [
+        task.id,
+        {
+          selected:
+            false,
 
-        return [
-          task.id,
-          {
-            selected:
-              false,
+          dueDate:
+            "",
 
-            dueDate:
-              "",
+          required:
+            task.defaultRequired,
 
-            required:
-              task.defaultRequired,
-
-            alreadyAssigned,
-          },
-        ];
-      }
+          alreadyAssigned:
+            alreadyAssignedIds.has(
+              task.id
+            ),
+        },
+      ]
     )
   );
+}
+
+
+/*
+  One request id per task for the current selection. A retry after an
+  error reuses them, so the same click can never insert twice; a new
+  selection after success gets new ids, so an intentional repeat works.
+*/
+function getAssignmentRequestIds(pendingRef, selectionKey, keys) {
+  if (pendingRef.current?.selectionKey !== selectionKey) {
+    pendingRef.current = {
+      selectionKey,
+      ids: Object.fromEntries(
+        keys.map((key) => [
+          key,
+          window.crypto?.randomUUID?.() ||
+            `${Date.now()}-${key}-${Math.random().toString(36).slice(2)}`,
+        ])
+      ),
+    };
+  }
+
+  return pendingRef.current.ids;
 }
 
 
@@ -1567,11 +1615,14 @@ function PortalTaskAssignmentPanel({
         )
     );
 
-  const [
+    const [
     assignmentError,
     setAssignmentError,
   ] =
     useState("");
+
+  const pendingTaskRequestRef =
+    useRef(null);
 
   useEffect(
     () => {
@@ -1591,22 +1642,18 @@ function PortalTaskAssignmentPanel({
     ]
   );
 
-  const selectedCount =
+    const selectedCount =
     Object.values(
       taskDrafts
     ).filter(
       (draft) =>
-        draft.selected &&
-        !draft.alreadyAssigned
+        draft.selected
     ).length;
 
+  // Every task can be assigned again after a warning.
   const availableCount =
-    Object.values(
-      taskDrafts
-    ).filter(
-      (draft) =>
-        !draft.alreadyAssigned
-    ).length;
+    PORTAL_TASK_OPTIONS.length;
+
 
 
   function updateTaskDraft(
@@ -1639,10 +1686,8 @@ function PortalTaskAssignmentPanel({
                 task.id
               ];
 
-            return (
-              draft?.selected &&
-              !draft
-                ?.alreadyAssigned
+                        return Boolean(
+              draft?.selected
             );
           }
         )
@@ -1684,7 +1729,7 @@ function PortalTaskAssignmentPanel({
           }
         );
 
-    if (
+        if (
       selectedTasks.length === 0
     ) {
       setAssignmentError(
@@ -1694,15 +1739,54 @@ function PortalTaskAssignmentPanel({
       return;
     }
 
+    const repeatTitles = selectedTasks
+      .filter((task) => taskDrafts[task.itemId]?.alreadyAssigned)
+      .map((task) => task.title);
+    const dueDateWarnings = selectedTasks
+      .map((task) => {
+        const warning = getDueDateWarning(task.dueDate, record.startDate);
+        return warning ? `${task.title}: ${warning}` : "";
+      })
+      .filter(Boolean);
+
+    if (
+      (repeatTitles.length > 0 || dueDateWarnings.length > 0) &&
+      !window.confirm(
+        [
+          repeatTitles.length
+            ? `Already assigned to this group: ${repeatTitles.join(", ")}. Assign another copy?`
+            : "",
+          ...dueDateWarnings,
+          "",
+          "Continue?",
+        ]
+          .filter((line, index, lines) => line || index === lines.length - 2)
+          .join("\n")
+      )
+    ) {
+      return;
+    }
+
+    const requestIds = getAssignmentRequestIds(
+      pendingTaskRequestRef,
+      selectedTasks
+        .map((task) => `${task.itemId}:${task.dueDate}:${task.required}`)
+        .join("|"),
+      selectedTasks.map((task) => task.itemId)
+    );
+
     try {
       setAssignmentError(
         ""
       );
-
       await onAssignTasks(
         record,
-        selectedTasks
+        selectedTasks.map((task) => ({
+          ...task,
+          requestId: requestIds[task.itemId],
+        }))
       );
+      pendingTaskRequestRef.current = null;
     } catch (error) {
       console.error(
         "Could not assign portal tasks:",
@@ -1732,11 +1816,12 @@ function PortalTaskAssignmentPanel({
             }
           </h4>
 
-          <span>
+                    <span>
             Choose from the approved
-            task list below. Already
-            assigned tasks cannot be
-            added twice.
+            task list below. Nothing is
+            preselected. A task the group
+            already has can be added again
+            after a warning.
           </span>
         </div>
 
@@ -1797,10 +1882,16 @@ function PortalTaskAssignmentPanel({
                     task.id
                   ];
 
-                const disabled =
+                                const disabled =
+                  false;
+                const alreadyAssigned =
                   draft
                     ?.alreadyAssigned;
-
+                const dueDateWarning =
+                  getDueDateWarning(
+                    draft?.dueDate,
+                    record.startDate
+                  );
                 return (
                   <div
                     className={`portal-task-option-row ${
@@ -1808,8 +1899,8 @@ function PortalTaskAssignmentPanel({
                         ?.selected
                         ? "selected"
                         : ""
-                    } ${
-                      disabled
+                                        } ${
+                      alreadyAssigned
                         ? "assigned"
                         : ""
                     }`}
@@ -1845,23 +1936,27 @@ function PortalTaskAssignmentPanel({
                         }
                       />
 
-                      <span className="portal-task-option-check">
-                        {disabled
+                                            <span className="portal-task-option-check">
+                        {alreadyAssigned
                           ? "✓"
                           : ""}
                       </span>
-
                       <span>
                         <strong>
                           {
                             task.title
                           }
                         </strong>
-
-                        {disabled && (
+                        {alreadyAssigned && (
                           <small>
-                            Already
-                            assigned
+                            Already assigned;
+                            selecting adds
+                            another copy
+                          </small>
+                        )}
+                        {dueDateWarning && (
+                          <small className="portal-due-date-warning">
+                            {dueDateWarning}
                           </small>
                         )}
                       </span>
@@ -2019,58 +2114,28 @@ function PortalTaskAssignmentPanel({
 /* A standard document is assigned when a staff-side row carries
    its catalog file name. Guest uploads and custom-document titles
    are not catalog assignments. */
-function normalizePortalDocumentFileName(fileName) {
-  return String(fileName || "")
-    .trim()
-    .toLowerCase();
-}
-
-
-function getAssignedStandardFileNames(record) {
-  return new Set(
-    record.documents
-      .filter(
-        (document) =>
-          !document.uploadedByGuest
-      )
-      .map(
-        (document) =>
-          normalizePortalDocumentFileName(
-            document.fileName
-          )
-      )
-  );
-}
-
-
 function createDocumentAssignmentDraft(
   record
 ) {
-  const assignedFileNames =
-    getAssignedStandardFileNames(
-      record
+  const alreadyAssignedIds =
+    getAlreadyAssignedDocumentIds(
+      record.documents,
+      PORTAL_DOCUMENT_OPTIONS
     );
 
   return Object.fromEntries(
     PORTAL_DOCUMENT_OPTIONS.map(
-      (document) => {
-        const alreadyAssigned =
-          assignedFileNames.has(
-            normalizePortalDocumentFileName(
-              document.fileName
-            )
-          );
-
-        return [
-          document.id,
-          {
-            selected:
-              false,
-
-            alreadyAssigned,
-          },
-        ];
-      }
+      (document) => [
+        document.id,
+        {
+          selected:
+            false,
+          alreadyAssigned:
+            alreadyAssignedIds.has(
+              document.id
+            ),
+        },
+      ]
     )
   );
 }
@@ -2082,6 +2147,7 @@ function PortalDocumentAssignmentPanel({
   isUploadingCustomDocument,
   onAssignDocuments,
   onUploadCustomDocument,
+  onRemoveDocument,
   onClose,
 }) {
   const [
@@ -2165,22 +2231,20 @@ function PortalDocumentAssignmentPanel({
   );
 
 
-  const selectedCount =
+    const selectedCount =
     Object.values(
       documentDrafts
     ).filter(
       (draft) =>
-        draft.selected &&
-        !draft.alreadyAssigned
+        draft.selected
     ).length;
 
   const availableCount =
-    Object.values(
-      documentDrafts
-    ).filter(
-      (draft) =>
-        !draft.alreadyAssigned
-    ).length;
+    PORTAL_DOCUMENT_OPTIONS.length;
+
+  const pendingDocumentRequestRef =
+    useRef(null);
+
 
 
   const documentGroups = [
@@ -2379,10 +2443,8 @@ function PortalDocumentAssignmentPanel({
               document.id
             ];
 
-          return (
-            draft?.selected &&
-            !draft
-              ?.alreadyAssigned
+                    return Boolean(
+            draft?.selected
           );
         }
       );
@@ -2397,6 +2459,25 @@ function PortalDocumentAssignmentPanel({
       return;
     }
 
+    const repeatTitles = selectedDocuments
+      .filter((document) => documentDrafts[document.id]?.alreadyAssigned)
+      .map((document) => document.title);
+
+    if (
+      repeatTitles.length > 0 &&
+      !window.confirm(
+        `Already shared with this group: ${repeatTitles.join(", ")}.\n\nShare another copy?`
+      )
+    ) {
+      return;
+    }
+
+    const requestIds = getAssignmentRequestIds(
+      pendingDocumentRequestRef,
+      selectedDocuments.map((document) => document.id).join("|"),
+      selectedDocuments.map((document) => document.id)
+    );
+
     try {
       setAssignmentError(
         ""
@@ -2404,11 +2485,14 @@ function PortalDocumentAssignmentPanel({
 
       await onAssignDocuments(
         record,
-        selectedDocuments
+        selectedDocuments.map((document) => ({
+          ...document,
+          requestId: requestIds[document.id],
+        }))
       );
+      pendingDocumentRequestRef.current = null;
 
-      // Lock what was just assigned even if the follow-up reload failed,
-      // so a second click cannot insert the same rows again.
+            // Mark what was just assigned; a repeat now needs the warning above.
       setDocumentDrafts(
         (currentDrafts) => {
           const nextDrafts = {
@@ -2480,6 +2564,34 @@ function PortalDocumentAssignmentPanel({
         </button>
       </div>
 
+
+            {record.documents.length > 0 && (
+        <section className="portal-assigned-documents">
+          <h5>Shared with this group</h5>
+          <ul>
+            {record.documents.map((document) => (
+              <li key={document.id}>
+                <span>
+                  <strong>{document.title}</strong>
+                  <small>
+                    {document.fileName}
+                    {document.uploadedByGuest ? " · uploaded by the guest" : ""}
+                  </small>
+                </span>
+                {!document.uploadedByGuest && (
+                  <button
+                    className="secondary-dashboard-button"
+                    type="button"
+                    onClick={() => onRemoveDocument(record, document)}
+                  >
+                    Remove
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="portal-custom-document-upload">
         <div className="portal-custom-document-upload-heading">
@@ -2768,10 +2880,11 @@ function PortalDocumentAssignmentPanel({
                             document.id
                           ];
 
-                        const disabled =
+                                                const disabled =
+                          false;
+                        const alreadyAssigned =
                           draft
                             ?.alreadyAssigned;
-
                         const extension =
                           document.fileName
                             .split(".")
@@ -2786,8 +2899,8 @@ function PortalDocumentAssignmentPanel({
                                 ?.selected
                                 ? "selected"
                                 : ""
-                            } ${
-                              disabled
+                                                        } ${
+                              alreadyAssigned
                                 ? "assigned"
                                 : ""
                             }`}
@@ -2820,8 +2933,8 @@ function PortalDocumentAssignmentPanel({
                                 }
                               />
 
-                              <span className="portal-document-option-check">
-                                {disabled
+                                                            <span className="portal-document-option-check">
+                                {alreadyAssigned
                                   ? "✓"
                                   : ""}
                               </span>
@@ -2839,9 +2952,9 @@ function PortalDocumentAssignmentPanel({
                                   }
                                 </small>
 
-                                {disabled && (
+                                                                {alreadyAssigned && (
                                   <em>
-                                    Already assigned
+                                    Already shared; selecting adds another copy
                                   </em>
                                 )}
                               </span>
@@ -2946,8 +3059,10 @@ function PortalRecordCard({
   isAssigning,
   isAssigningDocuments,
   isUploadingCustomDocument,
-  confirmingItemId,
+    confirmingItemId,
   onConfirmChecklistItem,
+  onCorrectChecklistItem,
+  onRemoveDocument,
   onCopyPortalLink,
   onOpenBooking,
   onAssignTasks,
@@ -3086,11 +3201,20 @@ function PortalRecordCard({
           confirmingItemId={
             confirmingItemId
           }
-          onConfirmItem={
+                    onConfirmItem={
             (item) =>
               onConfirmChecklistItem(
                 record,
                 item
+              )
+          }
+          onCorrectItem={
+            (item, action, payload) =>
+              onCorrectChecklistItem(
+                record,
+                item,
+                action,
+                payload
               )
           }
         />
@@ -3121,6 +3245,11 @@ function PortalRecordCard({
             Portal Link
           </small>
 
+                    {!getPortalBaseUrl() && (
+            <em className="portal-record-link-warning">
+              {PORTAL_BASE_URL_MISSING_MESSAGE}
+            </em>
+          )}
           {record.portalToken ? (
             <code>
               {record.portalToken.slice(
@@ -3213,10 +3342,7 @@ function PortalRecordCard({
           <button
             className="secondary-dashboard-button"
             type="button"
-            disabled={
-              !portalUrl
-            }
-            onClick={() =>
+                        onClick={() =>
               onCopyPortalLink(
                 record
               )
@@ -3290,8 +3416,11 @@ function PortalRecordCard({
           onAssignDocuments={
             onAssignDocuments
           }
-          onUploadCustomDocument={
+                    onUploadCustomDocument={
             onUploadCustomDocument
+          }
+          onRemoveDocument={
+            onRemoveDocument
           }
           onClose={() =>
             setOpenManager(
@@ -3684,9 +3813,14 @@ export default function PortalAdminView({
         record.portalToken
       );
 
-    if (
+        if (
       !portalUrl
     ) {
+      alert(
+        getPortalBaseUrl()
+          ? "This booking has no portal token yet."
+          : PORTAL_BASE_URL_MISSING_MESSAGE
+      );
       return;
     }
 
@@ -3816,49 +3950,87 @@ export default function PortalAdminView({
   }
 
 
+    /*
+    The five corrections (AUDIT-038, Q-017). Each is guarded in the
+    database by the status staff saw; the list reloads afterwards.
+  */
+  async function handleCorrectChecklistItem(
+    record,
+    item,
+    action,
+    payload = {}
+  ) {
+    try {
+      if (action === "dueDate") {
+        await changePortalItemDueDate(supabase, item, payload.dueDate);
+      } else if (action === "requestChanges") {
+        const { noteSaved } = await requestPortalItemChanges(supabase, item, payload.note);
+        if (payload.note && !noteSaved) {
+          alert(
+            "The task was sent back to the guest. The note could not be saved because the database does not have the staff_review_note column yet."
+          );
+        }
+      } else if (action === "reopen") {
+        await reopenPortalItem(supabase, item);
+      } else if (action === "remove") {
+        if (
+          !window.confirm(
+            portalItemHasGuestSubmission(item)
+              ? `Remove "${item.title}" from ${record.organizationName}'s portal?\n\nThe guest's upload is kept for staff and hidden from the guest.`
+              : `Remove "${item.title}" from ${record.organizationName}'s portal?`
+          )
+        ) {
+          return;
+        }
+        const { data: userData } = await supabase.auth.getUser();
+        const result = await removePortalItem(supabase, {
+          bookingId: record.id,
+          item,
+          removedBy: userData?.user?.id || null,
+          bucket: PORTAL_UPLOAD_BUCKET,
+        });
+        alert(result.message);
+      }
+
+      await loadPortalRecords();
+    } catch (error) {
+      console.error("Could not correct the portal task:", error);
+      alert(error?.message || "Could not change this portal task.");
+      await loadPortalRecords();
+    }
+  }
+
+  async function handleRemoveDocument(record, document) {
+    if (
+      !window.confirm(
+        `Stop sharing "${document.title}" with ${record.organizationName}?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const result = await removePortalDocument(supabase, document);
+      alert(result.message);
+    } catch (error) {
+      console.error("Could not remove the portal document:", error);
+      alert(error?.message || "Could not remove this document.");
+    } finally {
+      await loadPortalRecords();
+    }
+  }
+
   async function handleAssignTasks(
     record,
     tasks
   ) {
-    const existingItemIds =
-      new Set(
-        record.checklistItems.map(
-          (item) =>
-            item.itemId
-        )
-      );
-
-    const existingTitles =
-      new Set(
-        record.checklistItems.map(
-          (item) =>
-            String(
-              item.title ||
-                ""
-            )
-              .trim()
-              .toLowerCase()
-        )
-      );
-
-    const safeTasks =
-      tasks.filter(
-        (task) =>
-          !existingItemIds.has(
-            task.itemId
-          ) &&
-          !existingTitles.has(
-            task.title
-              .trim()
-              .toLowerCase()
-          )
-      );
+    const safeTasks = tasks;
 
     if (
       safeTasks.length === 0
     ) {
       throw new Error(
-        "Those tasks are already assigned to this group."
+        "Choose at least one task to assign."
       );
     }
 
@@ -3885,26 +4057,13 @@ export default function PortalAdminView({
     record,
     documents
   ) {
-    const existingFileNames =
-      getAssignedStandardFileNames(
-        record
-      );
-
-    const safeDocuments =
-      documents.filter(
-        (document) =>
-          !existingFileNames.has(
-            normalizePortalDocumentFileName(
-              document.fileName
-            )
-          )
-      );
+    const safeDocuments = documents;
 
     if (
       safeDocuments.length === 0
     ) {
       throw new Error(
-        "Those documents are already assigned to this group."
+        "Choose at least one document to assign."
       );
     }
 
@@ -4045,8 +4204,22 @@ export default function PortalAdminView({
             }
           );
 
-      if (uploadError) {
+            if (uploadError) {
         throw uploadError;
+      }
+
+      // Keep the file's location on the row so it never has to be derived
+      // from the current portal token. Skipped until the column exists.
+      const { error: pathError } = await supabase
+        .from("portal_documents")
+        .update({ storage_path: storagePath })
+        .eq("id", insertedDocument.id);
+
+      if (pathError) {
+        console.warn(
+          "Could not record the document's storage path (has the portal migration been run?):",
+          pathError
+        );
       }
 
       await loadPortalRecords();
@@ -4318,8 +4491,14 @@ export default function PortalAdminView({
                 confirmingItemId={
                   confirmingChecklistItemId
                 }
-                onConfirmChecklistItem={
+                                onConfirmChecklistItem={
                   handleConfirmChecklistItem
+                }
+                onCorrectChecklistItem={
+                  handleCorrectChecklistItem
+                }
+                onRemoveDocument={
+                  handleRemoveDocument
                 }
                 onCopyPortalLink={
                   handleCopyPortalLink

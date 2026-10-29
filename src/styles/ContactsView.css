@@ -1205,3 +1205,12 @@
     width: 100%;
   }
 }
+
+/* Secondary contacts in the main list (AUDIT-039). */
+.contacts-view-secondary-label {
+  display: block;
+  margin-top: 0.15rem;
+  color: #6b7280;
+  font-size: 0.78rem;
+  font-weight: 500;
+}

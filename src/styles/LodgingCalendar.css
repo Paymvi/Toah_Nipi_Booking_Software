@@ -226,6 +226,13 @@
   --lodging-soft: #faeef1;
 }
 
+/* Camping — Olive */
+
+.lodging-camping {
+  --lodging-color: #6b7a2f;
+  --lodging-soft: #f2f4e6;
+}
+
 /* Unassigned — Slate gray */
 
 .lodging-unassigned {
@@ -274,6 +281,12 @@
   background: #f7e6eb;
   border-left-color: #a85f72;
   color: #7e4656;
+}
+
+.lodging-calendar-card .calendar-span-event.calendar-lodging-camping {
+  background: #eef1dd;
+  border-left-color: #6b7a2f;
+  color: #4f5a22;
 }
 
 .lodging-calendar-card .calendar-span-event.calendar-lodging-unassigned {

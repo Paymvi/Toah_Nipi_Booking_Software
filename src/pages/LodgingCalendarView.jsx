@@ -1,4 +1,14 @@
 import { useMemo, useState } from "react";
+import { LODGING_CALENDAR_GROUPS } from "../constants/lodgingConstants";
+import {
+  describeLodgingAvailability,
+  getBookingCalendarGroups,
+  getBookingLodgingDisplayText,
+} from "../utils/lodgingUtils";
+import {
+  countsForLodgingOccupancy,
+  getBookingDisplayState,
+} from "../utils/bookingClassification";
 
 import BookingCalendar from "../components/BookingCalendar";
 
@@ -169,174 +179,15 @@ function formatWeekRange(weekStart) {
   return `${weekStart.toLocaleDateString()} - ${weekEnd.toLocaleDateString()}`;
 }
 
-const LODGING_BUILDINGS = [
-  {
-    id: "bethel",
-    label: "Bethel",
-    aliases: ["bethel"],
-    image: "/lodges/Bethel.webp",
-    colorClass: "lodging-bethel",
-    eventClass: "calendar-lodging-bethel",
-  },
-
-  {
-    id: "hebron",
-    label: "Hebron",
-    aliases: [
-      "hebron",
-      "hebron 3rd",
-      "hebron third",
-      "hebron bunks",
-      "main lodge",
-    ],
-    image: "/lodges/May-2025-Hebron.jpg",
-    colorClass: "lodging-hebron",
-    eventClass: "calendar-lodging-hebron",
-  },
-
-  {
-    id: "dothan",
-    label: "Dothan",
-    aliases: ["dothan"],
-    image: "/lodges/Dothan.webp",
-    colorClass: "lodging-dothan",
-    eventClass: "calendar-lodging-dothan",
-  },
-
-  {
-    id: "ajalon",
-    label: "Ajalon",
-    aliases: ["ajalon"],
-    image: "/lodges/Ajalon.png",
-    colorClass: "lodging-ajalon",
-    eventClass: "calendar-lodging-ajalon",
-  },
-
-  {
-    id: "capernaum",
-    label: "Capernaum",
-    aliases: ["capernaum"],
-    image: "/lodges/Capurnum.webp",
-    colorClass: "lodging-capernaum",
-    eventClass: "calendar-lodging-capernaum",
-  },
-
-  {
-    id: "guest-house",
-    label: "Guest House",
-    aliases: ["guest house", "guesthouse"],
-    image: "/lodges/Guest-House.webp",
-    colorClass: "lodging-guest-house",
-    eventClass: "calendar-lodging-guest-house",
-  },
-];
-
-
-function normalizeLodgingText(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-}
-
-
 /*
-Determines whether a lodging segment actually represents usage.
-
-Examples:
-
-"Bethel: 20"       -> true
-"Bethel: 0"        -> false
-"Hebron"           -> true
-"Hebron: Unknown"  -> true
-"Guest House"      -> true
-
-This is important because some imported bookings know that a
-building was used even when the exact person count is unknown.
+  Building groups and matching come from the shared lodging rules
+  (src/constants/lodgingConstants.js, src/utils/lodgingUtils.js), the same
+  ones the Housing tab, Dashboard home and Reports use.
 */
-function lodgingSegmentHasAssignment(segment) {
-  const text = normalizeLodgingText(segment);
+const LODGING_BUILDINGS = LODGING_CALENDAR_GROUPS;
 
-  if (!text) {
-    return false;
-  }
-
-  if (
-    /:\s*(?:0|0\.0+|none|no|n\/a|unassigned|not assigned)\s*$/.test(text)
-  ) {
-    return false;
-  }
-
-  const numericMatch = text.match(/:\s*(\d+(?:\.\d+)?)\s*$/);
-
-  if (numericMatch) {
-    return Number(numericMatch[1]) > 0;
-  }
-
-  return true;
-}
-
-
-/*
-Gets every housing-related text segment that we currently have
-available on the booking.
-
-buildingsRooms is the important field for the newer booking system.
-
-roomName is kept as a fallback for older/imported records.
-*/
-function getBookingLodgingSegments(booking) {
-  const sourceValues = [
-    booking?.buildingsRooms,
-    booking?.roomName,
-  ]
-    .map((value) => String(value || "").trim())
-    .filter(
-      (value) =>
-        value &&
-        value.toLowerCase() !== "unassigned"
-    );
-
-  const segments = sourceValues.flatMap((value) =>
-    value
-      .split(/[;\n|]+/)
-      .map((segment) => segment.trim())
-      .filter(Boolean)
-  );
-
-  return [...new Set(segments)];
-}
-
-
-/*
-Returns the logical buildings used by a booking.
-
-Notice that anything containing Hebron counts as "hebron".
-That means these all work:
-
-Hebron
-Hebron 3rd Floor
-Hebron Bunks
-Hebron: Unknown
-*/
 function getAssignedBuildingIds(booking) {
-  const segments = getBookingLodgingSegments(booking);
-
-  return LODGING_BUILDINGS
-    .filter((building) =>
-      segments.some((segment) => {
-        if (!lodgingSegmentHasAssignment(segment)) {
-          return false;
-        }
-
-        const normalizedSegment = normalizeLodgingText(segment);
-
-        return building.aliases.some((alias) =>
-          normalizedSegment.includes(alias)
-        );
-      })
-    )
-    .map((building) => building.id);
+  return getBookingCalendarGroups(booking);
 }
 
 
@@ -391,30 +242,6 @@ function getBookingBuildingSummary(booking) {
 }
 
 
-function getBookingLodgingDisplayText(booking) {
-  const buildingsRooms = String(
-    booking?.buildingsRooms || ""
-  ).trim();
-
-  if (buildingsRooms) {
-    return buildingsRooms;
-  }
-
-  const roomName = String(
-    booking?.roomName || ""
-  ).trim();
-
-  if (
-    roomName &&
-    roomName.toLowerCase() !== "unassigned"
-  ) {
-    return roomName;
-  }
-
-  return "Unassigned";
-}
-
-
 export default function LodgingCalendarView({
   calendarCells,
   datedInquiries,
@@ -454,9 +281,14 @@ export default function LodgingCalendarView({
       getStartOfWeek(new Date())
     );
 
-  const safeDatedInquiries = datedInquiries || [];
-  const safeSelectedMonthInquiries =
-    selectedMonthInquiries || [];
+  const safeDatedInquiries = useMemo(
+    () => (datedInquiries || []).filter(countsForLodgingOccupancy),
+    [datedInquiries]
+  );
+  const safeSelectedMonthInquiries = useMemo(
+    () => (selectedMonthInquiries || []).filter(countsForLodgingOccupancy),
+    [selectedMonthInquiries]
+  );
 
 
   const yearOptions = useMemo(() => {
@@ -819,38 +651,15 @@ export default function LodgingCalendarView({
       return;
     }
 
-    const buildings = LODGING_BUILDINGS.map(
-      (building) => {
-        const overlappingBookings =
-          safeDatedInquiries.filter((booking) => {
-            const bookingRange =
-              getInquiryDateRange(booking);
-
-            if (!bookingRange) {
-              return false;
-            }
-
-            const overlapsSelectedPeriod =
-              bookingRange.startDate <= endDate &&
-              bookingRange.endDate >= startDate;
-
-            return (
-              overlapsSelectedPeriod &&
-              bookingMatchesBuilding(
-                booking,
-                building.id
-              )
-            );
-          });
-
-        return {
-          ...building,
-          overlappingBookings,
-          isAvailable:
-            overlappingBookings.length === 0,
-        };
-      }
-    );
+    const buildings = describeLodgingAvailability(
+      safeDatedInquiries,
+      availabilityStartDate,
+      availabilityEndDate
+    ).map((building) => ({
+      ...building,
+      overlappingBookings: building.stays.map((stay) => stay.booking),
+      isAvailable: building.status === "available",
+    }));
 
     setAvailabilityError("");
     setAvailabilitySummary({
@@ -872,6 +681,13 @@ export default function LodgingCalendarView({
     availabilitySummary
       ? availabilitySummary.buildings.length -
         availableBuildingCount
+      : 0;
+
+  const conflictBuildingCount =
+    availabilitySummary
+      ? availabilitySummary.buildings.filter(
+          (building) => building.status === "conflict"
+        ).length
       : 0;
 
 
@@ -965,14 +781,14 @@ export default function LodgingCalendarView({
               </h3>
 
               <p>
-                Choose a date range to see which lodging
-                buildings have no overlapping assignments
-                and which already have groups scheduled.
+                Choose the arrival and departure dates. Lodging
+                is counted by night, so a group leaving on the
+                arrival date does not overlap.
               </p>
             </div>
 
             <span className="lodging-availability-note">
-              Building-level summary
+              Night-based summary
             </span>
           </div>
 
@@ -1046,8 +862,15 @@ export default function LodgingCalendarView({
                   </span>
 
                   <span className="assigned">
-                    {assignedBuildingCount} assigned
+                    {assignedBuildingCount} in use
                   </span>
+
+                  {conflictBuildingCount > 0 && (
+                    <span className="conflict">
+                      {conflictBuildingCount} room conflict
+                      {conflictBuildingCount === 1 ? "" : "s"}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -1061,6 +884,9 @@ export default function LodgingCalendarView({
                         building.isAvailable
                           ? "is-available"
                           : "has-assignments",
+                        building.status === "conflict"
+                          ? "has-conflict"
+                          : "",
                       ]
                         .filter(Boolean)
                         .join(" ")}
@@ -1069,6 +895,7 @@ export default function LodgingCalendarView({
                       <div className="lodging-availability-building-heading">
                         <div className="lodging-availability-building-name">
                           <span className="lodging-availability-building-image">
+                            {building.image && (
                             <img
                               src={building.image}
                               alt=""
@@ -1078,6 +905,7 @@ export default function LodgingCalendarView({
                                   "none";
                               }}
                             />
+                            )}
                           </span>
 
                           <div>
@@ -1087,12 +915,12 @@ export default function LodgingCalendarView({
 
                             <small>
                               {building.isAvailable
-                                ? "No overlapping lodging assignments"
-                                : `${building.overlappingBookings.length} overlapping assignment${
+                                ? "No group stays here on these nights"
+                                : `${building.overlappingBookings.length} group${
                                     building.overlappingBookings.length === 1
                                       ? ""
                                       : "s"
-                                  }`}
+                                  } staying`}
                             </small>
                           </div>
                         </div>
@@ -1101,12 +929,19 @@ export default function LodgingCalendarView({
                           className={`lodging-availability-status ${
                             building.isAvailable
                               ? "available"
-                              : "assigned"
+                              : building.status === "conflict"
+                                ? "conflict"
+                                : "assigned"
                           }`}
                         >
-                          {building.isAvailable
-                            ? "Available"
-                            : "Assigned"}
+                          {
+                            {
+                              available: "Available",
+                              "in-use": "In use",
+                              shared: "Shared",
+                              conflict: "Room conflict",
+                            }[building.status]
+                          }
                         </span>
                       </div>
 
@@ -1118,7 +953,36 @@ export default function LodgingCalendarView({
                         </p>
                       ) : (
                         <div className="lodging-availability-conflicts">
-                          <span>Assignments in this period</span>
+                          {building.conflicts.map((conflict) => (
+                            <p
+                              className="lodging-availability-room-conflict"
+                              key={`${conflict.buildingLabel}-${conflict.roomLabel}-${conflict.bookings
+                                .map((booking) => booking.id)
+                                .join("-")}`}
+                            >
+                              {conflict.buildingLabel} {conflict.roomLabel}:{" "}
+                              {conflict.bookings
+                                .map(
+                                  (booking) =>
+                                    booking.organizationName ||
+                                    "Unnamed Organization"
+                                )
+                                .join(" and ")}{" "}
+                              share this room on {conflict.nights.length} night
+                              {conflict.nights.length === 1 ? "" : "s"}.
+                            </p>
+                          ))}
+
+                          {building.notes.map((note) => (
+                            <p
+                              className="lodging-availability-room-note"
+                              key={note}
+                            >
+                              {note}
+                            </p>
+                          ))}
+
+                          <span>Groups staying these nights</span>
 
                           <ul>
                             {building.overlappingBookings
@@ -1144,8 +1008,7 @@ export default function LodgingCalendarView({
                                   </div>
 
                                   <span>
-                                    {booking.status ||
-                                      "No status"}
+                                    {getBookingDisplayState(booking).label}
                                   </span>
                                 </li>
                               ))}
@@ -1173,10 +1036,13 @@ export default function LodgingCalendarView({
               </div>
 
               <p className="lodging-availability-summary-footnote">
-                This summary is intentionally conservative:
-                a building is marked assigned when any dated
-                booking overlaps the selected period and lists
-                that building in its lodging assignment.
+                Counted: every booking except host records,
+                open inquiries and clearly cancelled groups.
+                Several groups can share a building; a room
+                conflict is shown only when the saved Housing
+                assignments put two groups in the same room on
+                the same night. Where room detail is missing,
+                the card says so instead.
               </p>
             </div>
           )}

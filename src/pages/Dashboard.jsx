@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
@@ -11,10 +11,8 @@ import {
   FaExclamationTriangle,
   FaTicketAlt,
   FaClock,
-  FaMapMarkedAlt,
   FaBed,
   FaEnvelopeOpenText,
-  FaFilter,
   FaKey,
   FaTimes,
   FaTrashAlt,
@@ -50,20 +48,56 @@ import {
 
 import {
   fetchBookings,
-  upsertBooking,
-  upsertBookings,
+  saveBooking,
+  saveBookings,
   deleteAllBookings,
   deleteBooking,
-  getConsistentWaitlistState,
+  getBookingSaveErrorMessage,
 } from "../services/bookingService";
 
 
 import ExcelJS from "exceljs";
+import { supabase } from "../lib/supabaseClient";
+import { decideGuestInquiryConversion } from "../services/guestInquiryConversion";
+import {
+  createStaffDirectoryId,
+  getUnlistedStaffNames,
+  loadStaffDirectory,
+  saveStaffDirectoryChanges,
+} from "../services/staffDirectory";
+import {
+  LODGING_BUILDINGS,
+  LODGING_CALENDAR_GROUPS,
+} from "../constants/lodgingConstants";
+import {
+  getBookingCalendarGroups,
+  getBookingLodgingAssignments,
+  getBookingLodgingDisplayText,
+  getLegacyLodgingText,
+} from "../utils/lodgingUtils";
+import {
+  isHousingAuthoritative,
+  mergeMasterImportRecord,
+  withImportBaseline,
+} from "../utils/masterImportMerge";
+import {
+  applyBookingClassification,
+  getBookingClassificationOptions,
+  getBookingClassificationValue,
+  getBookingDisplayState,
+  getConvertedInquiryIds,
+  getRecordKind,
+  isActiveBooking,
+  RECORD_KIND,
+} from "../utils/bookingClassification";
+import {
+  mirrorTopLevelIntoDetails,
+  recordStaffEdits,
+} from "../utils/bookingFields";
 import BookingHousingTab from "../components/BookingHousingTab";
 import BookingStaffAssignmentsTab from "../components/BookingStaffAssignmentsTab";
 import DashboardTopbar from "../components/DashboardTopbar";
 import BookingCalendar from "../components/BookingCalendar";
-// import BookingActivities from "../components/BookingActivities";
 import DashboardBackups from "../components/DashboardBackups";
 
 import CreateBooking from "../pages/CreateBooking";
@@ -80,10 +114,7 @@ import {
 } from "../services/guestInquiryService";
 
 import {
-  monthNames,
   sidebarSections,
-  activityLocations,
-  defaultRoomRows,
   bookingDetailTabs,
 
   DATED_INQUIRY_SETTINGS_STORAGE_KEY,
@@ -97,10 +128,6 @@ import {
   DEFAULT_BOOKING_DETAIL_DATE_SETTINGS,
   bookingDetailDateFormatOptions,
 
-  RETREAT_TYPE_CONFIG,
-  RETREAT_TYPE_LEGEND_KEYS,
-  getInquiryRetreatType,
-  getRetreatTypeConfig,
 
   
 } from "../constants/dashboardConstants";
@@ -121,7 +148,6 @@ import {
   getDaysInMonth,
   getLocalDate,
   formatExcelDateValue,
-  parseDesiredDateRange,
   getBookingInquiryDateValue,
 } from "../utils/dateUtils";
 
@@ -131,7 +157,6 @@ import {
   cleanExcelCellValue,
   rowHasAnyData,
   getRowsFromWorksheetFlexible,
-  getRawRowNotes,
 } from "../utils/spreadsheetUtils";
 
 import BookingChecklists, {
@@ -147,7 +172,6 @@ import InquirySpreadsheetView from "../pages/InquirySpreadsheetView";
 import ContactsView from "../pages/ContactsView";
 import InquiryPipelineView, {
   getInquiryPipelineColumnKey,
-  getInquiryPipelineRecords,
 } from "../pages/InquiryPipeline";
 import ReportsView from "../pages/ReportsView";
 import JobsView, {
@@ -876,24 +900,6 @@ function BookingFacilitiesOverview({
 }
 
 
-function getSavedInquiries() {
-  try {
-    const savedInquiries = localStorage.getItem("toahNipiPublicInquiries");
-
-    if (!savedInquiries) {
-      return [];
-    }
-
-    const parsedInquiries = JSON.parse(savedInquiries);
-
-    return Array.isArray(parsedInquiries) ? parsedInquiries : [];
-  } catch (error) {
-    console.error("Could not read booking inquiries:", error);
-    return [];
-  }
-}
-
-
 function getSavedBookingDetailDateSettings() {
   try {
     const savedSettings = localStorage.getItem(
@@ -1076,36 +1082,19 @@ const STAFF_USERS_STORAGE_KEY = "toahNipiStaffUsers";
 const CURRENT_STAFF_USER_STORAGE_KEY = "toahNipiCurrentStaffUserId";
 
 
-const DEFAULT_STAFF_USERS = [
-  {
-    id: "staff-admin",
-    name: "Admin",
-    email: "admin@toahnipi.org",
-    role: "Admin",
-    active: true,
-  },
-  {
-    id: "staff-office",
-    name: "Office Staff",
-    email: "office@toahnipi.org",
-    role: "Staff",
-    active: true,
-  },
-  {
-    id: "staff-program",
-    name: "Program Staff",
-    email: "program@toahnipi.org",
-    role: "Staff",
-    active: true,
-  },
-];
+/*
+  This browser's staff list, used only until the shared staff directory
+  (Supabase table staff_directory) exists. Placeholder users are no longer
+  added when it is empty (AUDIT-017).
+*/
 
 function normalizeStaffName(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+// Ids work in both the browser list and the shared directory (uuid column).
 function createStaffUserId() {
-  return `staff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return createStaffDirectoryId();
 }
 
 function normalizeStaffEmail(value) {
@@ -1166,18 +1155,16 @@ function getSavedStaffUsers() {
   try {
     const savedUsers = localStorage.getItem(STAFF_USERS_STORAGE_KEY);
 
-    if (!savedUsers) {
-      return DEFAULT_STAFF_USERS;
+        if (!savedUsers) {
+      return [];
     }
 
     const parsedUsers = JSON.parse(savedUsers);
 
-    return Array.isArray(parsedUsers) && parsedUsers.length > 0
-      ? parsedUsers
-      : DEFAULT_STAFF_USERS;
+    return Array.isArray(parsedUsers) ? parsedUsers : [];
   } catch (error) {
     console.error("Could not read staff users:", error);
-    return DEFAULT_STAFF_USERS;
+    return [];
   }
 }
 
@@ -1193,14 +1180,15 @@ function getSavedCurrentStaffUserId(staffUsers) {
   try {
     const savedUserId = localStorage.getItem(CURRENT_STAFF_USER_STORAGE_KEY);
 
+        // Attribution needs an explicit choice; nobody is picked by default.
     if (savedUserId && staffUsers.some((user) => user.id === savedUserId)) {
       return savedUserId;
     }
 
-    return staffUsers[0]?.id || "";
+    return "";
   } catch (error) {
     console.error("Could not read current staff user:", error);
-    return staffUsers[0]?.id || "";
+    return "";
   }
 }
 
@@ -1348,20 +1336,6 @@ function getCalendarCells(year, monthIndex) {
   return cells;
 }
 
-function inquiryTouchesDay(inquiry, year, monthIndex, day) {
-  if (!inquiry.startDate) {
-    return false;
-  }
-
-  const currentDate = new Date(year, monthIndex, day);
-  const startDate = new Date(`${inquiry.startDate}T00:00:00`);
-  const endDate = inquiry.endDate
-    ? new Date(`${inquiry.endDate}T00:00:00`)
-    : startDate;
-
-  return currentDate >= startDate && currentDate <= endDate;
-}
-
 function normalizeInquiry(inquiry, index) {
   const organizationName =
     inquiry.organizationName ||
@@ -1401,6 +1375,16 @@ function normalizeInquiry(inquiry, index) {
     waitlist: inquiry.waitlist || "No",
     status: inquiry.status || "Inquiry",
     submittedAt: inquiry.submittedAt || "",
+
+    /*
+      Row metadata from the database. updatedAt is the conflict check for
+      the next save (AUDIT-045); createdAt and portalToken are read-only.
+    */
+    updatedAt: inquiry.updatedAt || "",
+    createdAt: inquiry.createdAt || "",
+    portalToken: inquiry.portalToken || "",
+    firstName: inquiry.firstName || "",
+    lastName: inquiry.lastName || "",
 
     inquiryAddress: inquiry.inquiryAddress || "",
     inquiryDisposition: inquiry.inquiryDisposition || inquiry.stageOfGroup || "",
@@ -1717,7 +1701,11 @@ function parseMasterImportLinens(value) {
   return { linenOption: "Some", ...(sets ? { linenSets: sets[1] } : {}) };
 }
 
-function getMasterImportStatus({ confirmed, stage, cancellationDate, cancellationReason, contractReturned, contractSent, year }) {
+/*
+  Status the sheet row itself states, or "" when the row says nothing about
+  status. Re-imports only change a saved status when this is non-empty.
+*/
+function getExplicitMasterImportStatus({ confirmed, stage, cancellationDate, cancellationReason, contractReturned, contractSent, year }) {
   if (cancellationDate || cancellationReason || /cancel/i.test(`${confirmed} ${stage}`)) return "Cancelled";
   if (/unconfirmed|considering|tentative/i.test(confirmed)) return "Inquiry";
   if (/\bconfirmed\b|\bbooked\b/i.test(confirmed)) return "Confirmed";
@@ -1728,7 +1716,12 @@ function getMasterImportStatus({ confirmed, stage, cancellationDate, cancellatio
   if (/contract.*(?:signed|returned|received|rec['’]?d)/i.test(stage)) return "Confirmed";
   if (/feedback|invoice|payment due|paid|confirmed|booked/i.test(stage)) return "Confirmed";
   if (/contract/i.test(stage)) return "Contract Sent";
-  return year === 2027 ? "Inquiry" : "Confirmed";
+  return "";
+}
+
+// New records with no stated status keep the year default (AUDIT-024 deferred).
+function getMasterImportStatus(values) {
+  return getExplicitMasterImportStatus(values) || (values.year === 2027 ? "Inquiry" : "Confirmed");
 }
 
 function getMasterImportIdentity(booking, includeContact = true) {
@@ -1804,7 +1797,9 @@ function normalizeMasterImportRow(row, index, year) {
     warnings.push(`The spreadsheet lists ${nights} night(s), while the dates span ${calculatedNights}; the spreadsheet count is retained.`);
   }
   const mealPlan = parseMasterImportMeals(rawMeals, arrival.date, departure.date, get("#Meals", "Meals Count", "Number of Meals"), warnings);
-  const status = getMasterImportStatus({ confirmed, stage, cancellationDate, cancellationReason, contractSent, contractReturned, year });
+  const statusValues = { confirmed, stage, cancellationDate, cancellationReason, contractSent, contractReturned, year };
+  const status = getMasterImportStatus(statusValues);
+  const statusSource = getExplicitMasterImportStatus(statusValues) ? "sheet" : "default";
   const minGuests = text("Min. Number of Paying Guests", "Minimum Number of Paying Guests", "Minimum Guarantee");
   const maxGuests = text("Max. Number of Paying Guests", "Maximum Number of Paying Guests", "Maximum Guarantee");
   const adultRate = text("Adult Guest Rate", "Guest Rate", "Adult Rate Quoted");
@@ -1822,6 +1817,7 @@ function normalizeMasterImportRow(row, index, year) {
     importedContractSentStatus: masterImportText(contractSent),
     importedContractReturnedStatus: masterImportText(contractReturned),
     importedDepositStatus: masterImportText(depositStatus),
+    importedStatusSource: statusSource,
     importWarnings: warnings,
   };
   const put = (key, value) => { if (value !== "" && value !== null && value !== undefined) details[key] = value; };
@@ -1953,12 +1949,66 @@ function getBookingImportRowsFromWorksheet(worksheet) {
   return rows;
 }
 
+/*
+  Rebuilds what an earlier import wrote, from the sheet row saved with the
+  record, for records imported before importBaseline existed.
+*/
+function rebuildMasterImportBaseline(existing) {
+  const year = Number(String(existing.sourceType || "").match(/20\d{2}/)?.[0]);
+  const raw = existing.rawSpreadsheetData;
+  if (!year || !raw || typeof raw !== "object") return null;
+  const index = Math.max(0, Number(existing.sourceRowNumber || 2) - 2);
+  return normalizeMasterImportRow(raw, index, year);
+}
+
+function masterImportRecordsEqual(existing, merged) {
+  const comparable = (booking) => {
+    const details = { ...(booking.rentalFormDetails || {}) };
+    delete details.importBaseline;
+    return JSON.stringify({ ...booking, rentalFormDetails: details, rawSpreadsheetData: null });
+  };
+  return comparable(existing) === comparable(merged);
+}
+
+const MASTER_REIMPORT_RULES_TEXT =
+  "How existing bookings are updated:\n" +
+  "- Matching uses the import ID, then the group name and stay dates.\n" +
+  "- Fields changed in the app keep the app value. The sheet only fills blanks and updates fields nobody has changed since the last import.\n" +
+  "- For bookings imported before this rule existed, a filled field whose value cannot be traced to the earlier import keeps the app value.\n" +
+  "- Status changes only when the sheet row states one; a blank status never resets it.\n" +
+  "- Once the Housing tab has been saved, the sheet does not change lodging; its lodging text is kept as a reference note.\n" +
+  "- Blank sheet cells never clear app values. Booking IDs, checklists, assignments and portal data are untouched.\n" +
+  "- Bookings absent from this spreadsheet are kept. Repeated rows use the first occurrence.\n";
+
+function formatMasterImportKeptValues(keptAppValues = []) {
+  if (!keptAppValues.length) return "";
+  const fieldCount = keptAppValues.reduce((sum, entry) => sum + entry.fields.length, 0);
+  const examples = keptAppValues
+    .slice(0, 8)
+    .map((entry) => `  ${entry.organizationName}: ${entry.fields.map((field) => field.field).join(", ")}`)
+    .join("\n");
+  const more = keptAppValues.length > 8 ? `\n  …and ${keptAppValues.length - 8} more` : "";
+  return `\nApp values kept instead of the sheet: ${fieldCount} field(s) on ${keptAppValues.length} booking(s)\n${examples}${more}`;
+}
+
+function formatImportSaveFailures(failures = []) {
+  if (!failures.length) return "";
+  const lines = failures
+    .slice(0, 8)
+    .map(({ booking, error }) => `  ${booking.organizationName || booking.id}: ${error?.message || String(error)}`)
+    .join("\n");
+  const more = failures.length > 8 ? `\n  …and ${failures.length - 8} more` : "";
+  return `\n\nNOT SAVED (${failures.length}). These rows were left exactly as they were:\n${lines}${more}`;
+}
+
 function prepareMasterImportUpdates(incomingRows, existingRows) {
   const existingMasters = existingRows.filter((booking) => getMasterImportIdentity(booking));
   const seenBookings = new Set();
   const usedIds = new Set();
   let added = 0;
   let updated = 0;
+  let unchanged = 0;
+  const keptAppValues = [];
   let duplicateRowsSkipped = 0;
   let duplicateExistingRecords = 0;
   const rows = incomingRows.flatMap((incoming) => {
@@ -1974,9 +2024,12 @@ function prepareMasterImportUpdates(incomingRows, existingRows) {
       return [];
     }
 
+    // The import ID is derived from the sheet row, so it still matches after
+    // staff change the group name or dates in the app.
+    const byId = existingMasters.filter((booking) => booking.id === incoming.id);
     const exact = existingMasters.filter((booking) => getMasterImportIdentity(booking) === getMasterImportIdentity(incoming));
     const sameStay = existingMasters.filter((booking) => getMasterImportIdentity(booking, false) === getMasterImportIdentity(incoming, false));
-    const matches = exact.length ? exact : sameStay;
+    const matches = byId.length ? byId : exact.length ? exact : sameStay;
     // Prefer the stable import ID when it exists; otherwise update one match.
     const existing = matches.find((booking) => booking.id === incoming.id) || matches[0];
     const id = existing?.id || incoming.id;
@@ -1992,14 +2045,17 @@ function prepareMasterImportUpdates(incomingRows, existingRows) {
     usedIds.add(id);
     // Other stored matches remain available, with their IDs and staff data intact.
     duplicateExistingRecords += Math.max(0, sameStay.length - 1);
-    if (!existing) { added += 1; return incoming; }
-    updated += 1;
-    const populated = Object.fromEntries(Object.entries(incoming).filter(([, value]) => value !== "" && value !== null && value !== undefined));
-    const populatedDetails = Object.fromEntries(Object.entries(incoming.rentalFormDetails || {}).filter(([, value]) => value !== "" && value !== null && value !== undefined));
-    const mergedDetails = { ...(existing.rentalFormDetails || {}), ...populatedDetails };
+    if (!existing) { added += 1; return withImportBaseline(incoming); }
+    const { merged, keptAppValues: keptForRow } = mergeMasterImportRecord(existing, incoming, {
+      rebuildBaseline: rebuildMasterImportBaseline,
+    });
+    if (keptForRow.length) {
+      keptAppValues.push({ organizationName: existing.organizationName, id: existing.id, fields: keptForRow });
+    }
+    const mergedDetails = merged.rentalFormDetails;
     const ageCounts = ["actualAdultGuests", "actualChildrenUnder3", "actualChildren3to17"]
       .map((key) => masterImportNumber(mergedDetails[key]));
-    const total = masterImportNumber(incoming.attendeeCount);
+    const total = masterImportNumber(merged.attendeeCount);
     if (mergedDetails.importedGuestCountKind === "recorded" && total !== "" && ageCounts.some((value) => value !== "")) {
       const knownTotal = ageCounts.reduce((sum, value) => sum + Number(value || 0), 0) +
         (incoming.sourceType === "Master 2025" ? Number(masterImportNumber(mergedDetails.dayCamperCount) || 0) : 0);
@@ -2010,45 +2066,19 @@ function prepareMasterImportUpdates(incomingRows, existingRows) {
         ])];
       }
     }
-    return {
-      ...existing, ...populated,
-      id: existing.id, submittedAt: existing.submittedAt || incoming.submittedAt,
-      rentalFormDetails: mergedDetails,
-      // The spreadsheet provides activity notes, not staff's scheduled assignments.
-      activities: Array.isArray(existing.activities) ? existing.activities : incoming.activities || existing.activities || "",
-    };
+    // Rows the sheet did not change are not rewritten.
+    if (masterImportRecordsEqual(existing, merged)) {
+      unchanged += 1;
+      return [];
+    }
+    updated += 1;
+    return merged;
   });
-  return { rows, added, updated, duplicateRowsSkipped, duplicateExistingRecords };
+  return { rows, added, updated, unchanged, keptAppValues, duplicateRowsSkipped, duplicateExistingRecords };
 }
 
 function normalizeMasterSpreadsheetRow(row, index) {
   return normalizeMasterImportRow(row, index, 2025);
-}
-
-function getStatusFromStage(stageOfGroup) {
-  const text = String(stageOfGroup || "").trim().toLowerCase();
-
-  if (!text) {
-    return "Confirmed";
-  }
-
-  if (text.includes("cancel")) {
-    return "Cancelled";
-  }
-
-  if (text.includes("contract")) {
-    return "Contract Sent";
-  }
-
-  if (text.includes("confirm") || text.includes("booked")) {
-    return "Confirmed";
-  }
-
-  if (text.includes("inquiry") || text.includes("lead")) {
-    return "Inquiry";
-  }
-
-  return String(stageOfGroup).trim();
 }
 
 function normalizeMaster2026SpreadsheetRow(row, index) {
@@ -2057,342 +2087,6 @@ function normalizeMaster2026SpreadsheetRow(row, index) {
 
 function normalizeMaster2027SpreadsheetRow(row, index) {
   return normalizeMasterImportRow(row, index, 2027);
-}
-
-const ARCHIVE_PRIOR_VISIT_LINK_COLUMNS = Array.from(
-  { length: 11 },
-  (_, index) => `Prior_Visit_${index + 1}_Link`
-);
-
-const ARCHIVE_EXPECTED_COLUMNS = [
-  "Organization",
-  "Organization_Confident",
-  "First Name",
-  "First_Name_Confident",
-  "Last Name",
-  "Last_Name_Confident",
-  "Address",
-  "Address_Confident",
-  "City",
-  "City_Confident",
-  "State",
-  "State_Confident",
-  "Zip",
-  "Zip_Confident",
-  "Email",
-  "Email_Confident",
-  "Phone Number",
-  "Phone_Number_Confident",
-  "Visit Date",
-  "Visit_Date_Confident",
-  "Guest Group",
-  "Guest_Group_Confident",
-  "All Prior Visit Dates",
-  "All_Prior_Visit_Dates_Confident",
-  "Notes",
-  "Notes_Confident",
-  "Visit Count",
-  "Visit_Count_Confident",
-  "Source_PDF_Link",
-  ...ARCHIVE_PRIOR_VISIT_LINK_COLUMNS,
-];
-
-function normalizeArchiveSpreadsheetRow(row, index) {
-  const organization = readSpreadsheetCell(row, ["Organization"]);
-  const firstName = readSpreadsheetCell(row, ["First Name"]);
-  const lastName = readSpreadsheetCell(row, ["Last Name"]);
-  const address = readSpreadsheetCell(row, ["Address"]);
-  const city = readSpreadsheetCell(row, ["City"]);
-  const state = readSpreadsheetCell(row, ["State"]);
-  const zip = readSpreadsheetCell(row, ["Zip"]);
-  const email = readSpreadsheetCell(row, ["Email"]);
-  const phone = readSpreadsheetCell(row, ["Phone Number", "Phone"]);
-  const visitDate = readSpreadsheetCell(row, ["Visit Date"]);
-  const guestGroup = readSpreadsheetCell(row, ["Guest Group"]);
-  const allPriorVisitDates = readSpreadsheetCell(row, [
-    "All Prior Visit Dates",
-  ]);
-  const notes = readSpreadsheetCell(row, ["Notes"]);
-  const visitCount = readSpreadsheetCell(row, ["Visit Count"]);
-  const sourcePdfLink = readSpreadsheetCell(row, ["Source_PDF_Link"]);
-
-  const priorVisitLinks = ARCHIVE_PRIOR_VISIT_LINK_COLUMNS.map((columnName) =>
-    readSpreadsheetCell(row, [columnName])
-  )
-    .map((link) => String(link || "").trim())
-    .filter(Boolean);
-
-  const rowHasData =
-    organization ||
-    firstName ||
-    lastName ||
-    address ||
-    city ||
-    state ||
-    zip ||
-    email ||
-    phone ||
-    visitDate ||
-    guestGroup ||
-    allPriorVisitDates ||
-    notes ||
-    visitCount ||
-    sourcePdfLink ||
-    priorVisitLinks.length > 0;
-
-  if (!rowHasData) {
-    return null;
-  }
-
-  const formattedVisitDate = formatExcelDateValue(visitDate);
-  const contactName = [firstName, lastName]
-    .map((value) => String(value || "").trim())
-    .filter(Boolean)
-    .join(" ");
-
-  const archiveNotes = [
-    notes ? String(notes).trim() : "",
-    allPriorVisitDates
-      ? `All prior visit dates: ${allPriorVisitDates}`
-      : "",
-    visitCount ? `Visit count: ${visitCount}` : "",
-    sourcePdfLink ? `Source PDF: ${sourcePdfLink}` : "",
-    priorVisitLinks.length > 0
-      ? `Prior visit links:\n${priorVisitLinks.join("\n")}`
-      : "",
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-
-  return {
-    id: `archive-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
-    sourceType: "Archive",
-    detectedImportType: "Archive",
-    sourceSheet: row.sourceSheet || "",
-    sourceRowNumber: row.sourceRowNumber || "",
-    rawSpreadsheetData: row,
-    submittedAt: new Date().toISOString(),
-
-    organizationName:
-      String(organization || guestGroup || "").trim() ||
-      "Unnamed Archive Record",
-
-    name: contactName,
-    firstName: String(firstName || "").trim(),
-    lastName: String(lastName || "").trim(),
-    contactName: contactName || "",
-
-    email: String(email || "").trim(),
-    phone: String(phone || "").trim(),
-
-    startDate: formattedVisitDate,
-    endDate: formattedVisitDate,
-    desiredDatesText:
-      formattedVisitDate || String(visitDate || "").trim() || "",
-
-    attendeeCount: "",
-    groupSize: "",
-    retreatType: "Archive",
-
-    roomName: "Unassigned",
-    buildingsRooms: "",
-
-    notes: archiveNotes,
-    message: archiveNotes,
-
-    waitlist: "No",
-    status: "Archived Visit",
-    promoCode: "",
-
-    archiveAddress: String(address || "").trim(),
-    archiveCity: String(city || "").trim(),
-    archiveState: String(state || "").trim(),
-    archiveZip: String(zip || "").trim(),
-    archiveGuestGroup: String(guestGroup || "").trim(),
-    archiveVisitDate: formattedVisitDate,
-    archiveAllPriorVisitDates: String(allPriorVisitDates || "").trim(),
-    archiveVisitCount: String(visitCount || "").trim(),
-    archiveSourcePdfLink: String(sourcePdfLink || "").trim(),
-    archivePriorVisitLinks: priorVisitLinks,
-
-    archiveConfidence: {
-      organization: String(
-        readSpreadsheetCell(row, ["Organization_Confident"]) || ""
-      ).trim(),
-      firstName: String(
-        readSpreadsheetCell(row, ["First_Name_Confident"]) || ""
-      ).trim(),
-      lastName: String(
-        readSpreadsheetCell(row, ["Last_Name_Confident"]) || ""
-      ).trim(),
-      address: String(
-        readSpreadsheetCell(row, ["Address_Confident"]) || ""
-      ).trim(),
-      city: String(readSpreadsheetCell(row, ["City_Confident"]) || "").trim(),
-      state: String(
-        readSpreadsheetCell(row, ["State_Confident"]) || ""
-      ).trim(),
-      zip: String(readSpreadsheetCell(row, ["Zip_Confident"]) || "").trim(),
-      email: String(
-        readSpreadsheetCell(row, ["Email_Confident"]) || ""
-      ).trim(),
-      phone: String(
-        readSpreadsheetCell(row, ["Phone_Number_Confident"]) || ""
-      ).trim(),
-      visitDate: String(
-        readSpreadsheetCell(row, ["Visit_Date_Confident"]) || ""
-      ).trim(),
-      guestGroup: String(
-        readSpreadsheetCell(row, ["Guest_Group_Confident"]) || ""
-      ).trim(),
-      allPriorVisitDates: String(
-        readSpreadsheetCell(row, ["All_Prior_Visit_Dates_Confident"]) || ""
-      ).trim(),
-      notes: String(
-        readSpreadsheetCell(row, ["Notes_Confident"]) || ""
-      ).trim(),
-      visitCount: String(
-        readSpreadsheetCell(row, ["Visit_Count_Confident"]) || ""
-      ).trim(),
-    },
-  };
-}
-
-
-function normalizeGenericSpreadsheetRow(row, index) {
-  if (!rowHasAnyData(row)) {
-    return null;
-  }
-
-  const groupName = readSpreadsheetCell(row, [
-    "Guest Group Name",
-    "Group Name",
-    "Organization",
-    "Church or Ministry",
-    "Church/Ministry",
-    "name",
-    "Name",
-  ]);
-
-  const contactName = readSpreadsheetCell(row, [
-    "Contact Name",
-    "Contact Person",
-    "Group Leader/Contact Person",
-    "Group Leader",
-    "Name",
-  ]);
-
-  const email = readSpreadsheetCell(row, [
-    "Email Address",
-    "Email",
-    "Contact Person Email",
-  ]);
-
-  const phone = readSpreadsheetCell(row, [
-    "Phone Number",
-    "Phone",
-    "Contact Person Cell #",
-  ]);
-
-  const desiredDates = readSpreadsheetCell(row, [
-    "Desired Dates",
-    "Dates",
-    "Date Range",
-  ]);
-
-  const parsedDesiredDates = parseDesiredDateRange(desiredDates);
-
-  const arrivalDate = readSpreadsheetCell(row, [
-    "Arrival Date",
-    "Start Date",
-    "Check In",
-    "Check-in",
-  ]);
-
-  const departureDate = readSpreadsheetCell(row, [
-    "Departure Date",
-    "End Date",
-    "Check Out",
-    "Check-out",
-  ]);
-
-  const startDate =
-    formatExcelDateValue(arrivalDate) || parsedDesiredDates.startDate;
-
-  const endDate =
-    formatExcelDateValue(departureDate) || parsedDesiredDates.endDate;
-
-  const groupSize = readSpreadsheetCell(row, [
-    "Estimated Number of Guests",
-    "Actual Number of Guests",
-    "Size",
-    "Group Size",
-    "#Persons",
-    "Persons",
-  ]);
-
-  const retreatType = readSpreadsheetCell(row, [
-    "Guest Group Type",
-    "Retreat Type",
-    "Type",
-  ]);
-
-  const buildingsRooms = readSpreadsheetCell(row, [
-    "Buildings/Rooms",
-    "Buildings",
-    "Rooms",
-    "Room",
-  ]);
-
-  const notes =
-    readSpreadsheetCell(row, [
-      "Notes",
-      "Additional Notes",
-      "Message",
-      "Need to know",
-      "Need To Know",
-    ]) || getRawRowNotes(row);
-
-  const status = readSpreadsheetCell(row, [
-    "Status",
-    "Stage",
-    "Stage of Group",
-  ]);
-
-  return {
-    id: `generic-import-${Date.now()}-${row.sourceSheet || "sheet"}-${index}`,
-    sourceType: "Generic Spreadsheet",
-    sourceSheet: row.sourceSheet || "",
-    sourceRowNumber: row.sourceRowNumber || "",
-
-    submittedAt: new Date().toISOString(),
-
-    organizationName: String(groupName || "").trim() || "Unnamed Imported Row",
-    name: String(contactName || "").trim(),
-    contactName: String(contactName || "").trim(),
-    email: String(email || "").trim(),
-    phone: String(phone || "").trim(),
-
-    startDate,
-    endDate,
-    desiredDatesText:
-      desiredDates ||
-      (startDate && endDate ? `${startDate} - ${endDate}` : startDate || ""),
-
-    attendeeCount: String(groupSize || "").trim(),
-    groupSize: String(groupSize || "").trim(),
-    retreatType: String(retreatType || "").trim(),
-
-    roomName: String(buildingsRooms || "Unassigned").trim(),
-    buildingsRooms: String(buildingsRooms || "").trim(),
-
-    notes: String(notes || "").trim(),
-    waitlist: "No",
-    status: status ? String(status).trim() : "Imported",
-    promoCode: "",
-
-    rawSpreadsheetData: row,
-  };
 }
 
 function normalizeSpreadsheetHeaderName(value) {
@@ -2812,15 +2506,24 @@ function createWorkbookBulkImportId({
   return `bulk-${safeType}-${safeSheet}-${safeRow}`;
 }
 
-function getGuestGroupInquiryImportIdentity(booking) {
+/*
+  dayOffset shifts the inquiry date before building the identity. Records
+  imported before the AUDIT-013 fix carry a date one day early, so a fresh
+  row (correct date) also matches an existing record dated the day before.
+*/
+function getGuestGroupInquiryImportIdentity(booking, dayOffset = 0) {
   const type = masterImportText(booking.detectedImportType || booking.sourceType);
   if (!/^Guest Group Inquiry 20\d{2}$/i.test(type)) return "";
+  const inquiryDay = masterImportText(booking.submittedAt).slice(0, 10);
+  const shiftedDay = dayOffset && /^\d{4}-\d{2}-\d{2}$/.test(inquiryDay)
+    ? new Date(Date.parse(`${inquiryDay}T00:00:00Z`) + dayOffset * 86400000).toISOString().slice(0, 10)
+    : inquiryDay;
   const values = [
     type,
     booking.organizationName,
     booking.contactName,
     booking.email,
-    masterImportText(booking.submittedAt).slice(0, 10),
+    shiftedDay,
   ];
   return values.map((value) => masterImportText(value).toLowerCase().replace(/\s+/g, " ")).join("|");
 }
@@ -2841,9 +2544,15 @@ function prepareGuestGroupInquiryImportIds(incomingRows, existingRows) {
   incomingRows.forEach((incoming, index) => {
     const identity = getGuestGroupInquiryImportIdentity(incoming);
     if (!identity) return;
-    const matches = existingInquiries.filter((booking) =>
+    const exactMatches = existingInquiries.filter((booking) =>
       !claimedIds.has(booking.id) && getGuestGroupInquiryImportIdentity(booking) === identity
     );
+    const legacyShiftedMatches = exactMatches.length
+      ? []
+      : existingInquiries.filter((booking) =>
+          !claimedIds.has(booking.id) && getGuestGroupInquiryImportIdentity(booking, 1) === identity
+        );
+    const matches = exactMatches.length ? exactMatches : legacyShiftedMatches;
     const match = matches.find((booking) => booking.id === incoming.id) || matches[0];
     if (!match) return;
     claimedIds.add(match.id);
@@ -2870,328 +2579,6 @@ function prepareGuestGroupInquiryImportIds(incomingRows, existingRows) {
   });
 }
 
-
-
-function splitRoomNames(value) {
-  return String(value || "")
-    .split(/[,;\n]+/g)
-    .map((roomName) => roomName.trim())
-    .filter(Boolean);
-}
-
-function getRoomRowsFromBookings(datedInquiries) {
-  const importedRoomNames = datedInquiries
-    .flatMap((inquiry) => [
-      ...splitRoomNames(inquiry.roomName),
-      ...splitRoomNames(inquiry.buildingsRooms),
-    ])
-    .filter(
-      (roomName) =>
-        roomName &&
-        roomName.toLowerCase() !== "unassigned" &&
-        roomName.toLowerCase() !== "no room"
-    );
-
-  const defaultRoomNames = new Set(
-    defaultRoomRows.map((room) => room.name.toLowerCase())
-  );
-
-  const dynamicRoomRows = [...new Set(importedRoomNames)]
-    .filter((roomName) => !defaultRoomNames.has(roomName.toLowerCase()))
-    .map((roomName) => ({
-      name: roomName,
-      aliases: [roomName],
-    }));
-
-  return [...defaultRoomRows, ...dynamicRoomRows];
-}
-
-function bookingUsesRoom(inquiry, room) {
-  const searchableText = [inquiry.roomName, inquiry.buildingsRooms]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  return room.aliases.some((alias) =>
-    searchableText.includes(alias.toLowerCase())
-  );
-}
-
-function getAvailabilityBookingsForDay({
-  row,
-  day,
-  datedInquiries,
-  selectedYear,
-  selectedMonth,
-  matcher,
-}) {
-  return datedInquiries.filter(
-    (inquiry) =>
-      inquiryTouchesDay(inquiry, selectedYear, selectedMonth, day) &&
-      matcher(inquiry, row)
-  );
-}
-
-function getAvailabilityDays(selectedYear, selectedMonth) {
-  const daysInMonth = getDaysInMonth(selectedYear, selectedMonth);
-
-  return Array.from({ length: daysInMonth }, (_, index) => index + 1);
-}
-
-function getShortWeekday(selectedYear, selectedMonth, day) {
-  return new Date(selectedYear, selectedMonth, day).toLocaleDateString("en-US", {
-    weekday: "short",
-  });
-}
-
-function bookingUsesActivityLocation(inquiry, location) {
-  const searchableText = [
-    inquiry.roomName,
-    inquiry.buildingsRooms,
-    inquiry.activities,
-    inquiry.notes,
-    inquiry.needToKnow,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  return location.aliases.some((alias) =>
-    searchableText.includes(alias.toLowerCase())
-  );
-}
-
-function getActivityBookingsForDay({
-  location,
-  day,
-  datedInquiries,
-  selectedYear,
-  selectedMonth,
-}) {
-  return datedInquiries.filter(
-    (inquiry) =>
-      inquiryTouchesDay(inquiry, selectedYear, selectedMonth, day) &&
-      bookingUsesActivityLocation(inquiry, location)
-  );
-}
-
-function bookingContinuesBeforeDay(inquiry, selectedYear, selectedMonth, day) {
-  const currentDate = new Date(selectedYear, selectedMonth, day);
-  const startDate = getLocalDate(inquiry.startDate);
-
-  return startDate && startDate < currentDate;
-}
-
-function bookingContinuesAfterDay(inquiry, selectedYear, selectedMonth, day) {
-  const currentDate = new Date(selectedYear, selectedMonth, day);
-  const endDate = inquiry.endDate
-    ? getLocalDate(inquiry.endDate)
-    : getLocalDate(inquiry.startDate);
-
-  return endDate && endDate > currentDate;
-}
-
-
-function AvailabilityBoard({
-  datedInquiries,
-  selectedYear,
-  selectedMonth,
-  goToPreviousMonth,
-  goToNextMonth,
-  getCalendarEventColor,
-}) {
-  const [availabilityView, setAvailabilityView] = useState("activities");
-
-  const availabilityDays = getAvailabilityDays(selectedYear, selectedMonth);
-  const roomRows = getRoomRowsFromBookings(datedInquiries);
-
-  const isRoomView = availabilityView === "rooms";
-
-  const rows = isRoomView ? roomRows : activityLocations;
-  const matcher = isRoomView ? bookingUsesRoom : bookingUsesActivityLocation;
-
-  return (
-    <section className="dashboard-card availability-card">
-      <div className="availability-header">
-        <div className="dashboard-heading-with-icon">
-          <span className="section-icon">
-            {isRoomView ? <FaBed /> : <FaMapMarkedAlt />}
-          </span>
-
-          <div>
-            <p className="dashboard-eyebrow">Availability</p>
-            <h2>
-              {isRoomView
-                ? "Room Availability"
-                : "Activity Location Availability"}
-            </h2>
-            <p>
-              {isRoomView
-                ? "Monthly room usage based on assigned rooms and building fields."
-                : "Monthly activity space usage based on booking rooms, activities, and notes."}
-            </p>
-          </div>
-        </div>
-
-        <div className="availability-header-actions">
-          <div className="availability-toggle">
-            <button
-              className={availabilityView === "activities" ? "active" : ""}
-              type="button"
-              onClick={() => setAvailabilityView("activities")}
-            >
-              Activity Locations
-            </button>
-
-            <button
-              className={availabilityView === "rooms" ? "active" : ""}
-              type="button"
-              onClick={() => setAvailabilityView("rooms")}
-            >
-              Rooms
-            </button>
-          </div>
-
-          <button className="secondary-dashboard-button" type="button">
-            <FaFilter />
-            Site Filter
-          </button>
-
-          {isRoomView && (
-            <button className="secondary-dashboard-button" type="button">
-              <FaFilter />
-              Housing Area Filter
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="availability-toolbar">
-        <button type="button" onClick={goToPreviousMonth}>
-          «
-        </button>
-
-        <strong>
-          {monthNames[selectedMonth]} {selectedYear}
-        </strong>
-
-        <button type="button" onClick={goToNextMonth}>
-          »
-        </button>
-      </div>
-
-      <div className="availability-scroll">
-        <div
-          className="availability-grid"
-          style={{
-            gridTemplateColumns: `13.125rem repeat(${availabilityDays.length}, minmax(2.25rem, 1fr))`,
-          }}
-        >
-          <div className="availability-row-heading">
-            {isRoomView ? "Room" : "Activity Location"}
-          </div>
-
-          {availabilityDays.map((day) => (
-            <div className="availability-weekday-cell" key={`weekday-${day}`}>
-              {getShortWeekday(selectedYear, selectedMonth, day).slice(0, 1)}
-            </div>
-          ))}
-
-          {availabilityDays.map((day) => (
-            <div className="availability-day-number-cell" key={`day-${day}`}>
-              {day}
-            </div>
-          ))}
-
-          {rows.map((row) => (
-            <Fragment key={row.name}>
-              <div className="availability-row-name">{row.name}</div>
-
-              {availabilityDays.map((day) => {
-                const bookingsForDay = getAvailabilityBookingsForDay({
-                  row,
-                  day,
-                  datedInquiries,
-                  selectedYear,
-                  selectedMonth,
-                  matcher,
-                });
-
-                const firstBooking = bookingsForDay[0];
-                const colorClass = firstBooking
-                  ? getCalendarEventColor(firstBooking.status)
-                  : "";
-
-                const continuesBefore =
-                  firstBooking &&
-                  bookingContinuesBeforeDay(
-                    firstBooking,
-                    selectedYear,
-                    selectedMonth,
-                    day
-                  );
-
-                const continuesAfter =
-                  firstBooking &&
-                  bookingContinuesAfterDay(
-                    firstBooking,
-                    selectedYear,
-                    selectedMonth,
-                    day
-                  );
-
-                return (
-                  <div
-                    className={`availability-day-cell ${
-                      firstBooking ? `availability-day-booked ${colorClass}` : ""
-                    } ${
-                      continuesBefore ? "availability-day-continues-before" : ""
-                    } ${
-                      continuesAfter ? "availability-day-continues-after" : ""
-                    }`}
-                    key={`${row.name}-${day}`}
-                  >
-                    {firstBooking && (
-                      <div className="availability-tooltip">
-                        <strong>{firstBooking.organizationName}</strong>
-                        <span>{firstBooking.status}</span>
-
-                        <p>
-                          {formatDateRange(
-                            firstBooking.startDate,
-                            firstBooking.endDate
-                          )}
-                        </p>
-
-                        <small>
-                          {firstBooking.retreatType || "No retreat type"} ·{" "}
-                          {firstBooking.attendeeCount || "No group size"} guests
-                        </small>
-
-                        {isRoomView && (
-                          <small>
-                            Room:{" "}
-                            {firstBooking.roomName ||
-                              firstBooking.buildingsRooms ||
-                              "Unassigned"}
-                          </small>
-                        )}
-
-                        {bookingsForDay.length > 1 && (
-                          <em>+{bookingsForDay.length - 1} more booking</em>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </Fragment>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 
 function getSecondaryContact(booking) {
@@ -3243,187 +2630,6 @@ function formatSecondaryContactPhone(value) {
   return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
-function getBookingContacts(booking) {
-  if (!booking) {
-    return [];
-  }
-
-  const primaryContact = {
-    id: `${booking.id}-primary-contact`,
-    contactName: booking.contactName || booking.name || "No contact name",
-    companyName: booking.organizationName || "No organization",
-    email:
-      booking.email && booking.email !== "No email provided"
-        ? booking.email
-        : "",
-    phone:
-      booking.phone && booking.phone !== "No phone provided"
-        ? booking.phone
-        : "",
-    contactTypes: ["Primary"],
-    booking,
-  };
-
-  const secondaryContact = getSecondaryContact(booking);
-
-  if (!Object.values(secondaryContact).some(Boolean)) {
-    return [primaryContact];
-  }
-
-  return [
-    primaryContact,
-    {
-      id: `${booking.id}-secondary-contact`,
-      contactName: secondaryContact.secondaryContactName || "Secondary contact",
-      companyName: primaryContact.companyName,
-      email: secondaryContact.secondaryContactEmail,
-      phone: secondaryContact.secondaryContactPhone,
-      contactTypes: ["Secondary"],
-      booking,
-    },
-  ];
-}
-
-function BookingContactsSection({
-  booking,
-  bookings,
-  secondaryOnly = false,
-  onOpenBooking,
-}) {
-  const contacts = (bookings || (booking ? [booking] : []))
-    .flatMap(getBookingContacts)
-    .filter((contact) =>
-      !secondaryOnly || contact.contactTypes.includes("Secondary")
-    );
-
-  return (
-    <section className="dashboard-card booking-contacts-card">
-      <div className="booking-contacts-header">
-        <div>
-          <h3>{secondaryOnly ? "Secondary Contacts" : "Contacts"}</h3>
-          <p>
-            {secondaryOnly
-              ? "Optional additional contacts saved with guest group bookings."
-              : "Primary and optional secondary contacts for this booking."}
-          </p>
-        </div>
-      </div>
-
-      <div className="booking-contacts-table-wrap">
-        <table className="booking-contacts-table">
-          <thead>
-            <tr>
-              <th>Contact Name</th>
-              <th>Company Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Contact Type</th>
-              <th aria-label="Actions"></th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {contacts.length === 0 && (
-              <tr>
-                <td colSpan={6}>No secondary contacts have been added.</td>
-              </tr>
-            )}
-
-            {contacts.map((contact) => (
-              <tr key={contact.id}>
-                <td>
-                  {onOpenBooking ? (
-                    <button
-                      className="booking-contact-name-button"
-                      type="button"
-                      onClick={() => onOpenBooking(contact.booking)}
-                    >
-                      {contact.contactName}
-                    </button>
-                  ) : contact.contactName}
-                </td>
-
-                <td>{contact.companyName}</td>
-
-                <td>
-                  {contact.email ? (
-                    <a href={`mailto:${contact.email}`}>{contact.email}</a>
-                  ) : "—"}
-                </td>
-
-                <td>
-                  {contact.phone ? (
-                    <a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`}>
-                      {contact.phone}
-                    </a>
-                  ) : "—"}
-                </td>
-
-                <td>
-                  <div className="contact-type-list">
-                    {contact.contactTypes.map((type) => (
-                      <span className="contact-type-pill" key={type}>
-                        {type}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-
-                <td>
-                  {onOpenBooking && (
-                    <button
-                      className="secondary-dashboard-button"
-                      type="button"
-                      onClick={() => onOpenBooking(contact.booking)}
-                    >
-                      View Booking
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-
-function DetailCardHeader({ icon: Icon, title, subtitle, action }) {
-  return (
-    <div className="detail-card-header-clean">
-      <div className="detail-card-title-clean">
-        <span className="detail-card-icon-clean">
-          <Icon />
-        </span>
-
-        <div>
-          <h3>{title}</h3>
-          {subtitle && <p>{subtitle}</p>}
-        </div>
-      </div>
-
-      {action && <div className="detail-card-action-clean">{action}</div>}
-    </div>
-  );
-}
-
-function DetailField({ icon: Icon, label, value, tone = "default" }) {
-  return (
-    <div className={`detail-field-clean detail-field-clean-${tone}`}>
-      <span className="detail-field-icon-clean">
-        <Icon />
-      </span>
-
-      <div>
-        <small>{label}</small>
-        <strong>{value || "—"}</strong>
-      </div>
-    </div>
-  );
-}
-
 function getBookingInitials(name) {
   return String(name || "TN")
     .split(" ")
@@ -3432,60 +2638,6 @@ function getBookingInitials(name) {
     .map((word) => word[0])
     .join("")
     .toUpperCase();
-}
-
-function BookingMetric({ icon: Icon, label, value, helper }) {
-  return (
-    <div className="booking-profile-metric">
-      <span>
-        <Icon />
-      </span>
-
-      <div>
-        <small>{label}</small>
-        <strong>{value || "—"}</strong>
-        {helper && <em>{helper}</em>}
-      </div>
-    </div>
-  );
-}
-
-function BookingSection({ icon: Icon, title, eyebrow, action, children }) {
-  return (
-    <article className="booking-work-section">
-      <div className="booking-work-section-header">
-        <div>
-          <span className="booking-work-section-icon">
-            <Icon />
-          </span>
-
-          <div>
-            {eyebrow && <p>{eyebrow}</p>}
-            <h3>{title}</h3>
-          </div>
-        </div>
-
-        {action}
-      </div>
-
-      {children}
-    </article>
-  );
-}
-
-function BookingDetailRow({ label, value, icon: Icon, tone = "default" }) {
-  return (
-    <div className={`booking-detail-row booking-detail-row-${tone}`}>
-      <span>
-        <Icon />
-      </span>
-
-      <div>
-        <small>{label}</small>
-        <strong>{value || "—"}</strong>
-      </div>
-    </div>
-  );
 }
 
 /* =========================================================
@@ -3529,8 +2681,6 @@ function BookingIncidentNotesCard({ booking, onSaveBooking }) {
         incidentNotes:
           incidentNotes.trim(),
       },
-
-      updatedAt: new Date().toISOString(),
     };
 
     await onSaveBooking(updatedBooking);
@@ -3664,8 +2814,7 @@ function createBookingEditFormState(booking) {
 
     attendeeCount: booking.attendeeCount || "",
     retreatType: booking.retreatType || "",
-    status: booking.status || "Inquiry",
-    waitlist: booking.waitlist || "No",
+    classification: getBookingClassificationValue(booking),
 
     roomName: booking.roomName === "Unassigned" ? "" : booking.roomName || "",
     buildingsRooms: booking.buildingsRooms || "",
@@ -3703,7 +2852,10 @@ function BookingEditField({
   autoComplete,
   pattern,
   title,
+  readOnlyReason = "",
 }) {
+  const canEdit = isEditing && !readOnlyReason;
+
   return (
     <label className="booking-edit-field">
       <span>{label}</span>
@@ -3711,19 +2863,24 @@ function BookingEditField({
       {options ? (
         <select
           value={value || ""}
-          disabled={!isEditing}
+          disabled={!canEdit}
           onChange={(event) => onChange(event.target.value)}
         >
-          {options.map((option) => (
-            <option value={option} key={option}>
-              {option}
-            </option>
-          ))}
+          {options.map((option) => {
+            const optionValue = typeof option === "object" ? option.value : option;
+            const optionLabel = typeof option === "object" ? option.label : option;
+
+            return (
+              <option value={optionValue} key={optionValue}>
+                {optionLabel}
+              </option>
+            );
+          })}
         </select>
       ) : multiline ? (
         <textarea
           value={value || ""}
-          readOnly={!isEditing}
+          readOnly={!canEdit}
           rows={4}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -3736,9 +2893,13 @@ function BookingEditField({
           pattern={pattern}
           title={title}
           value={value || ""}
-          readOnly={!isEditing}
+          readOnly={!canEdit}
           onChange={(event) => onChange(event.target.value)}
         />
+      )}
+
+      {readOnlyReason && isEditing && (
+        <small className="booking-edit-field-note">{readOnlyReason}</small>
       )}
     </label>
   );
@@ -3746,8 +2907,25 @@ function BookingEditField({
 
 
 
+// Top-level fields this form edits; changes are recorded for re-imports.
+const BOOKING_EDIT_TRACKED_FIELDS = [
+  "organizationName", "contactName", "email", "phone",
+  "startDate", "endDate", "desiredDatesText",
+  "attendeeCount", "retreatType", "status", "waitlist",
+  "roomName", "buildingsRooms",
+  "meals", "foodAllergies", "needToKnow", "linenSets", "activities",
+  "persons", "nights", "mealCount", "camperDays",
+  "usageFee", "lodgingCost", "foodCost", "miscCost",
+  "notes",
+];
+
 function BookingDetailsEditForm({ booking, onSaveBooking }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const housingIsAuthoritative = isHousingAuthoritative(booking);
+  const housingReadOnlyReason = housingIsAuthoritative
+    ? "Managed on the Housing tab."
+    : "";
   const [formData, setFormData] = useState(() =>
     createBookingEditFormState(booking)
   );
@@ -3769,8 +2947,12 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
     setIsEditing(false);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (isSaving) {
+      return;
+    }
 
     const desiredDatesText =
       formData.desiredDatesText.trim() ||
@@ -3803,11 +2985,14 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
       groupSize: formData.attendeeCount.trim(),
 
       retreatType: formData.retreatType.trim(),
-      status: formData.status,
-      waitlist: formData.waitlist,
 
-      roomName: formData.roomName.trim() || "Unassigned",
-      buildingsRooms: formData.buildingsRooms.trim(),
+      // The Housing tab owns lodging once it has been saved (AUDIT-007).
+      roomName: housingIsAuthoritative
+        ? booking.roomName
+        : formData.roomName.trim() || "Unassigned",
+      buildingsRooms: housingIsAuthoritative
+        ? booking.buildingsRooms
+        : formData.buildingsRooms.trim(),
 
       meals: formData.meals.trim(),
       foodAllergies: formData.foodAllergies.trim(),
@@ -3826,17 +3011,35 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
       miscCost: formData.miscCost.trim(),
 
       notes: formData.notes.trim(),
-      updatedAt: new Date().toISOString(),
     };
 
-    // Status and Waitlist are edited separately; save one consistent pair.
-    Object.assign(
+    /*
+      Classification replaces the old status dropdowns; status and waitlist
+      change only when staff pick a different classification. Then the
+      edited fields are recorded (re-imports keep them) and copied into the
+      duplicated detail copies Master records carry (AUDIT-003).
+    */
+    const classifiedBooking = applyBookingClassification(
       updatedBooking,
-      getConsistentWaitlistState(booking, updatedBooking)
+      formData.classification
     );
+    const trackedBooking = recordStaffEdits(
+      booking,
+      classifiedBooking,
+      BOOKING_EDIT_TRACKED_FIELDS
+    );
+    const bookingToSave = mirrorTopLevelIntoDetails(trackedBooking);
 
-    onSaveBooking(updatedBooking);
-    setIsEditing(false);
+    setIsSaving(true);
+
+    try {
+      await onSaveBooking(bookingToSave);
+      setIsEditing(false);
+    } catch {
+      // The save handler already explained the failure; keep the edits on screen.
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -3861,8 +3064,8 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
                 Cancel
               </button>
 
-              <button className="primary-dashboard-button" type="submit">
-                Save Changes
+              <button className="primary-dashboard-button" type="submit" disabled={isSaving}>
+                {isSaving ? "Saving…" : "Save Changes"}
               </button>
             </>
           ) : (
@@ -3971,7 +3174,7 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
             <FaCalendarAlt />
             <div>
               <h4>Rental Details</h4>
-              <p>Dates, status, guest count, and waitlist status.</p>
+              <p>Dates, guest count, and whether the booking is cancelled or waitlisted. Contract, deposit and other progress is tracked in the guest portal.</p>
             </div>
           </div>
 
@@ -4007,26 +3210,16 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
             />
 
             <BookingEditField
-              label="Status"
-              value={formData.status}
+              label="Booking"
+              value={formData.classification}
               isEditing={isEditing}
-              options={[
-                "Inquiry",
-                "Contract Sent",
-                "Confirmed",
-                "Imported",
-                "Cancelled",
-                "Waitlist",
-              ]}
-              onChange={(value) => updateField("status", value)}
-            />
-
-            <BookingEditField
-              label="Waitlist"
-              value={formData.waitlist}
-              isEditing={isEditing}
-              options={["No", "Yes"]}
-              onChange={(value) => updateField("waitlist", value)}
+              options={getBookingClassificationOptions(booking)}
+              readOnlyReason={
+                formData.classification === "archive"
+                  ? "Archive records cannot be reclassified."
+                  : ""
+              }
+              onChange={(value) => updateField("classification", value)}
             />
           </div>
         </section>
@@ -4045,6 +3238,7 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
               label="Assigned Room / Area"
               value={formData.roomName}
               isEditing={isEditing}
+              readOnlyReason={housingReadOnlyReason}
               onChange={(value) => updateField("roomName", value)}
             />
 
@@ -4052,6 +3246,7 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
               label="Buildings / Rooms"
               value={formData.buildingsRooms}
               isEditing={isEditing}
+              readOnlyReason={housingReadOnlyReason}
               onChange={(value) => updateField("buildingsRooms", value)}
             />
 
@@ -4290,28 +3485,6 @@ function BookingDateSettingsModal({ settings, updateSettings, onClose }) {
 }
 
 
-/* =========================================================
-   BOOKING DETAIL RECORD TYPES
-========================================================= */
-
-function isGuestGroupInquiryRecord(booking) {
-  const sourceType = String(booking?.sourceType || "")
-    .trim()
-    .toLowerCase();
-
-  const detectedImportType = String(
-    booking?.detectedImportType || ""
-  )
-    .trim()
-    .toLowerCase();
-
-  return (
-    sourceType.startsWith("guest group inquiry") ||
-    detectedImportType.startsWith("guest group inquiry")
-  );
-}
-
-
 function isStaffBookingRecord(booking) {
   const sourceType = String(booking?.sourceType || "")
     .trim()
@@ -4329,326 +3502,6 @@ function isStaffBookingRecord(booking) {
   );
 }
 
-
-function StaffBookingDetailField({
-  label,
-  value,
-}) {
-  return (
-    <div className="staff-booking-detail-field">
-      <small>{label}</small>
-      <strong>{value || "—"}</strong>
-    </div>
-  );
-}
-
-function StaffBookingFormDetails({
-  booking,
-  dateSettings,
-}) {
-  const details =
-    booking.rentalFormDetails || {};
-
-  return (
-    <article className="booking-work-section staff-booking-form-section">
-
-      <div className="booking-work-section-header">
-        <div>
-          <span className="booking-work-section-icon">
-            <FaClipboardList />
-          </span>
-
-          <div>
-            <p>Staff Booking</p>
-            <h3>Original Staff Form Details</h3>
-          </div>
-        </div>
-      </div>
-
-
-      {/* GUEST BREAKDOWN */}
-
-      <section className="staff-booking-detail-group">
-        <h4>Guest Information</h4>
-
-        <div className="staff-booking-detail-grid">
-
-          <StaffBookingDetailField
-            label="Approx. Adults"
-            value={details.approxAdultGuests}
-          />
-
-          <StaffBookingDetailField
-            label="Approx. Children"
-            value={details.approxChildrenGuests}
-          />
-
-          <StaffBookingDetailField
-            label="Actual Adults"
-            value={details.actualAdultGuests}
-          />
-
-          <StaffBookingDetailField
-            label="Actual Children"
-            value={details.actualChildrenGuests}
-          />
-
-          <StaffBookingDetailField
-            label="Minimum Guarantee"
-            value={
-              details.minimumGuarantee ||
-              booking.minPayingGuests
-            }
-          />
-
-          <StaffBookingDetailField
-            label="Ethnic Breakdown"
-            value={details.ethnicBreakdown}
-          />
-
-        </div>
-      </section>
-
-
-      {/* RATES */}
-
-      <section className="staff-booking-detail-group">
-        <h4>Quoted Rates</h4>
-
-        <div className="staff-booking-detail-grid">
-
-          <StaffBookingDetailField
-            label="Adult Rate"
-            value={details.adultRateQuoted}
-          />
-
-          <StaffBookingDetailField
-            label="Child Rate"
-            value={details.childRateQuoted}
-          />
-
-          <StaffBookingDetailField
-            label="# Nights"
-            value={
-              details.numberOfNights ||
-              booking.nights
-            }
-          />
-
-          <StaffBookingDetailField
-            label="# Meals"
-            value={
-              details.numberOfMeals ||
-              booking.mealCount
-            }
-          />
-
-        </div>
-      </section>
-
-
-      {/* BOOKING TIMELINE */}
-
-      <section className="staff-booking-detail-group">
-        <h4>Booking Timeline</h4>
-
-        <div className="staff-booking-detail-grid">
-
-          <StaffBookingDetailField
-            label="Inquiry Date"
-            value={formatBookingDetailDate(
-              details.inquiryDate,
-              dateSettings
-            )}
-          />
-
-          <StaffBookingDetailField
-            label="Contract Sent"
-            value={formatBookingDetailDate(
-              details.contractSentDate,
-              dateSettings
-            )}
-          />
-
-          <StaffBookingDetailField
-            label="Return Contract By"
-            value={formatBookingDetailDate(
-              details.returnContractByDate,
-              dateSettings
-            )}
-          />
-
-          <StaffBookingDetailField
-            label="Contract Returned"
-            value={formatBookingDetailDate(
-              details.contractReturnedDate,
-              dateSettings
-            )}
-          />
-
-        </div>
-      </section>
-
-
-      {/* PAYMENT / DOCUMENTS */}
-
-      <section className="staff-booking-detail-group">
-        <h4>Payments & Documents</h4>
-
-        <div className="staff-booking-detail-grid">
-
-          <StaffBookingDetailField
-            label="Deposit Received"
-            value={formatBookingDetailDate(
-              details.depositReceivedDate,
-              dateSettings
-            )}
-          />
-
-          <StaffBookingDetailField
-            label="Deposit Amount"
-            value={
-              details.depositAmount ||
-              booking.deposit
-            }
-          />
-
-          <StaffBookingDetailField
-            label="Insurance Certificate"
-            value={formatBookingDetailDate(
-              details.insuranceCertificateDate,
-              dateSettings
-            )}
-          />
-
-          <StaffBookingDetailField
-            label="Notification Date"
-            value={formatBookingDetailDate(
-              details.notificationDate,
-              dateSettings
-            )}
-          />
-
-          <StaffBookingDetailField
-            label="Payment Method"
-            value={details.paymentMethod}
-          />
-
-        </div>
-      </section>
-
-
-      {/* TIMES */}
-
-      <section className="staff-booking-detail-group">
-        <h4>Arrival, Departure & Meals</h4>
-
-        <div className="staff-booking-detail-grid">
-
-          <StaffBookingDetailField
-            label="Arrival Time"
-            value={formatBookingOverviewTime(details.arrivalTime)}
-          />
-
-          <StaffBookingDetailField
-            label="Departure Time"
-            value={formatBookingOverviewTime(details.departureTime)}
-          />
-
-          <StaffBookingDetailField
-            label="First Meal"
-            value={details.firstMeal}
-          />
-
-          <StaffBookingDetailField
-            label="Last Meal"
-            value={details.lastMeal}
-          />
-
-          <StaffBookingDetailField
-            label="Breakfast"
-            value={details.breakfastTime}
-          />
-
-          <StaffBookingDetailField
-            label="Lunch"
-            value={details.lunchTime}
-          />
-
-          <StaffBookingDetailField
-            label="Dinner"
-            value={details.dinnerTime}
-          />
-
-        </div>
-
-        {details.mealNotes && (
-          <div className="staff-booking-detail-notes">
-            <small>Meal Notes</small>
-            <p>{details.mealNotes}</p>
-          </div>
-        )}
-      </section>
-
-
-      {/* LODGING BREAKDOWN */}
-
-      <section className="staff-booking-detail-group">
-        <h4>Lodging Breakdown</h4>
-
-        <div className="staff-booking-detail-grid">
-
-          <StaffBookingDetailField
-            label="Bethel"
-            value={details.lodgingBethel}
-          />
-
-          <StaffBookingDetailField
-            label="Hebron 3rd Floor"
-            value={details.lodgingHebronThird}
-          />
-
-          <StaffBookingDetailField
-            label="Hebron Bunks"
-            value={details.lodgingHebronBunks}
-          />
-
-          <StaffBookingDetailField
-            label="Dothan"
-            value={details.lodgingDothan}
-          />
-
-          <StaffBookingDetailField
-            label="Ajalon"
-            value={details.lodgingAjalon}
-          />
-
-          <StaffBookingDetailField
-            label="Capernaum"
-            value={details.lodgingCapernaum}
-          />
-
-          <StaffBookingDetailField
-            label="Guest House"
-            value={details.lodgingGuestHouse}
-          />
-
-          <StaffBookingDetailField
-            label="Linen Option"
-            value={details.linenOption}
-          />
-
-          <StaffBookingDetailField
-            label="Linen Sets"
-            value={details.linenSets}
-          />
-
-        </div>
-      </section>
-
-    </article>
-  );
-}
 
 /* =========================================================
    ADAPTIVE BOOKING OVERVIEW
@@ -5681,12 +4534,9 @@ function BookingOverview({
       dateSettings
     );
 
+  // Housing tab values once saved; never the stale imported label (AUDIT-007).
   const summaryHousing =
-    firstBookingOverviewValue(
-      booking.roomName,
-      booking.buildingsRooms,
-      "Unassigned"
-    );
+    getBookingLodgingDisplayText(booking);
 
   const summaryGuests =
     firstBookingOverviewValue(
@@ -6128,57 +4978,25 @@ function BookingOverview({
   LODGING & LINENS
 ===================================================== */
 
-const lodgingOverviewRows = [
-  {
-    id: "bethel",
-    name: "Bethel",
-    capacity: "70",
-    image: "/lodges/Bethel.webp",
-    value: details?.lodgingBethel,
-  },
-  {
-    id: "hebron-third",
-    name: "Hebron 3rd Floor",
-    capacity: "14",
-    image: "/lodges/May-2025-Hebron.jpg",
-    value: details?.lodgingHebronThird,
-  },
-  {
-    id: "hebron-bunks",
-    name: "Hebron Bunks",
-    capacity: "52",
-    image: "/lodges/May-2025-Hebron.jpg",
-    value: details?.lodgingHebronBunks,
-  },
-  {
-    id: "dothan",
-    name: "Dothan",
-    capacity: "21",
-    image: "/lodges/Dothan.webp",
-    value: details?.lodgingDothan,
-  },
-  {
-    id: "ajalon",
-    name: "Ajalon",
-    capacity: "5–8",
-    image: "/lodges/Ajalon.png",
-    value: details?.lodgingAjalon,
-  },
-  {
-    id: "capernaum",
-    name: "Capernaum",
-    capacity: "5",
-    image: "/lodges/Capurnum.webp",
-    value: details?.lodgingCapernaum,
-  },
-  {
-    id: "guest-house",
-    name: "Guest House",
-    capacity: "9–12",
-    image: "/lodges/Guest-House.webp",
-    value: details?.lodgingGuestHouse,
-  },
-];
+// Same building list and lodging reader as every other screen (AUDIT-031).
+const overviewLodgingAssignments =
+  getBookingLodgingAssignments(booking);
+
+const lodgingOverviewRows = LODGING_BUILDINGS.map((building) => {
+  const assignment = overviewLodgingAssignments.find(
+    (entry) => entry.buildingId === building.id
+  );
+
+  return {
+    id: building.id,
+    name: building.label,
+    capacity: building.capacity,
+    image: building.image,
+    value: assignment
+      ? assignment.count ?? "Used, count unknown"
+      : "",
+  };
+});
 
 const getLodgingOverviewValue = (value) => {
   if (
@@ -6670,7 +5488,9 @@ const overviewLinenPieces =
                   columns={1}
                   fields={[
                     {
-                      label: "Spreadsheet Lodging",
+                      label: isHousingAuthoritative(booking)
+                        ? "Imported lodging note (reference only; the Housing tab is the lodging record)"
+                        : "Spreadsheet Lodging",
                       value: details.importedLodgingText,
                       multiline: true,
                     },
@@ -6706,9 +5526,11 @@ const overviewLinenPieces =
                       <span className="rental-lodging-text">
                         <strong>{lodging.name}</strong>
 
-                        <small>
-                          Capacity {lodging.capacity}
-                        </small>
+                        {lodging.capacity && (
+                          <small>
+                            Capacity {lodging.capacity}
+                          </small>
+                        )}
                       </span>
 
                     </div>
@@ -6889,10 +5711,11 @@ function BookingDetailView({
   activeTab,
   setActiveTab,
   onBack,
-  onSaveBooking,
+    onSaveBooking,
   onDeleteBooking,
   staffUsers,
   currentStaffUserId,
+  canDeleteBookings = true,
 }) {
   const [isDateSettingsOpen, setIsDateSettingsOpen] = useState(false);
   const [dateSettings, setDateSettings] = useState(() =>
@@ -6926,9 +5749,9 @@ function BookingDetailView({
     );
   }
 
-  const statusClass =
+    const statusClass =
     getBookingOverviewStatusClass(
-      booking.status
+      getBookingDisplayState(booking).label
     );
 
   return (
@@ -6949,6 +5772,8 @@ function BookingDetailView({
         </div>
 
         <div className="booking-profile-header-actions">
+                    {/* The database lets only admins delete bookings (AUDIT-023). */}
+          {canDeleteBookings && (
           <button
             className="booking-profile-delete-button"
             type="button"
@@ -6957,6 +5782,7 @@ function BookingDetailView({
             <FaTrashAlt />
             Delete
           </button>
+          )}
 
           <button
             className="secondary-dashboard-button booking-date-settings-button"
@@ -6967,8 +5793,8 @@ function BookingDetailView({
             Date Display
           </button>
 
-          <span className={`booking-profile-status ${statusClass}`}>
-            {booking.status}
+                    <span className={`booking-profile-status ${statusClass}`}>
+            {getBookingDisplayState(booking).label}
           </span>
         </div>
 
@@ -7007,10 +5833,11 @@ function BookingDetailView({
   <div className="booking-details-tab-stack">
 
     {isStaffBookingRecord(booking) ? (
-      <CreateBooking
+            <CreateBooking
         key={`edit-booking-${booking.id}`}
         existingBooking={booking}
         onBookingUpdated={onSaveBooking}
+        staffUsers={staffUsers}
         embedded
       />
     ) : (
@@ -7039,7 +5866,7 @@ function BookingDetailView({
   />
 )}
 
-{(activeTab === "Checklists" || activeTab === "Notes & Tasks") && (
+{activeTab === "Checklists" && (
   <BookingChecklists
     booking={booking}
     onSaveBooking={onSaveBooking}
@@ -7052,8 +5879,7 @@ function BookingDetailView({
   activeTab !== "Details" &&
   activeTab !== "Housing" &&
   activeTab !== "Staff Assignments" &&
-  activeTab !== "Checklists" &&
-  activeTab !== "Notes & Tasks" && (
+  activeTab !== "Checklists" && (
     <section className="dashboard-card booking-tab-placeholder">
       <h3>{activeTab}</h3>
       <p>
@@ -7073,6 +5899,9 @@ function UserAdminView({
   setStaffUsers,
   currentStaffUserId,
   setCurrentStaffUserId,
+  staffDirectoryStatus = { checked: false, shared: false, reason: "" },
+  unlistedStaffNames = [],
+  onCopyBrowserListToShared,
 }) {
   const [newUserForm, setNewUserForm] = useState({
     name: "",
@@ -7083,9 +5912,21 @@ function UserAdminView({
   const activeUsers = staffUsers.filter((user) => user.active);
   const inactiveUsers = staffUsers.filter((user) => !user.active);
 
-  const updateUsers = (nextUsers) => {
+    const updateUsers = (nextUsers) => {
     setStaffUsers(nextUsers);
-    saveStaffUsers(nextUsers);
+  };
+
+  const addUnlistedName = (name) => {
+    updateUsers([
+      ...staffUsers,
+      {
+        id: createStaffUserId(),
+        name,
+        email: "",
+        role: "Staff",
+        active: true,
+      },
+    ]);
   };
 
   const updateNewUserField = (fieldName, value) => {
@@ -7112,14 +5953,8 @@ function UserAdminView({
       active: true,
     };
 
-    const nextUsers = [...staffUsers, nextUser];
-
+        const nextUsers = [...staffUsers, nextUser];
     updateUsers(nextUsers);
-
-    if (!currentStaffUserId) {
-      setCurrentStaffUserId(nextUser.id);
-      saveCurrentStaffUserId(nextUser.id);
-    }
 
     setNewUserForm({
       name: "",
@@ -7167,11 +6002,9 @@ function UserAdminView({
 
     updateUsers(nextUsers);
 
-    if (currentStaffUserId === userId) {
-      const fallbackUserId = nextUsers[0]?.id || "";
-
-      setCurrentStaffUserId(fallbackUserId);
-      saveCurrentStaffUserId(fallbackUserId);
+        if (currentStaffUserId === userId) {
+      setCurrentStaffUserId("");
+      saveCurrentStaffUserId("");
     }
   };
 
@@ -7186,15 +6019,18 @@ function UserAdminView({
 
             <div>
               <p className="dashboard-eyebrow">Administration</p>
-              <h2>User Admin</h2>
+                            <h2>User Admin</h2>
               <span>
-                Manage staff members used for checklist and program logistics assignments.
+                The staff directory used for checklist, staff and facility
+                assignments. It is separate from sign-in accounts: everyone
+                shares one login, so "Working as" on each computer records
+                who did something.
               </span>
             </div>
           </div>
 
-          <label className="admin-current-user-picker">
-            <span>Current User</span>
+                    <label className="admin-current-user-picker">
+            <span>Working as (this computer)</span>
 
             <select
               value={currentStaffUserId}
@@ -7203,7 +6039,8 @@ function UserAdminView({
                 saveCurrentStaffUserId(event.target.value);
               }}
             >
-              {staffUsers.map((user) => (
+              <option value="">Choose your name…</option>
+              {activeUsers.map((user) => (
                 <option value={user.id} key={user.id}>
                   {user.name}
                 </option>
@@ -7211,6 +6048,67 @@ function UserAdminView({
             </select>
           </label>
         </div>
+
+        {staffDirectoryStatus.checked && (
+          <div
+            className={`admin-directory-status ${
+              staffDirectoryStatus.shared ? "is-shared" : "is-local"
+            }`}
+            role="status"
+          >
+            {staffDirectoryStatus.shared ? (
+              <>
+                <strong>Shared staff directory</strong>
+                <span>
+                  The same list on every computer. "Working as" is remembered
+                  per computer and is what checklist "completed by" records.
+                </span>
+                {onCopyBrowserListToShared && (
+                  <button
+                    className="secondary-dashboard-button"
+                    type="button"
+                    onClick={onCopyBrowserListToShared}
+                  >
+                    Copy this browser's old list into it
+                  </button>
+                )}
+              </>
+            ) : (
+              <>
+                <strong>Using this browser's staff list</strong>
+                <span>
+                  {staffDirectoryStatus.reason} Changes here are saved only on
+                  this computer until the staff directory migration is run.
+                </span>
+              </>
+            )}
+          </div>
+        )}
+
+        {unlistedStaffNames.length > 0 && (
+          <div className="admin-unlisted-names">
+            <strong>Names on bookings that are not in the directory</strong>
+            <span>
+              They were typed on checklist items or staff assignments. Add the
+              ones that are real staff members; nothing is added or matched
+              automatically.
+            </span>
+            <ul>
+              {unlistedStaffNames.map((name) => (
+                <li key={name}>
+                  {name}
+                  <button
+                    className="secondary-dashboard-button"
+                    type="button"
+                    onClick={() => addUnlistedName(name)}
+                  >
+                    Add
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="admin-summary-grid">
           <div>
@@ -7437,32 +6335,9 @@ function dashboardHomeBookingTouchesDate(booking, date) {
   return date >= startDate && date <= endDate;
 }
 
+// Cancelled, waitlisted, archive and host records are not active work.
 function isDashboardHomeInactiveBooking(booking) {
-  const status = String(
-    booking?.status || ""
-  )
-    .trim()
-    .toLowerCase();
-
-  const waitlist = String(
-    booking?.waitlist || ""
-  )
-    .trim()
-    .toLowerCase();
-
-  const cancellationDate = String(
-    booking?.dateOfCancellation || ""
-  ).trim();
-
-  // Same cancel / waitlist signals the Inquiry Pipeline uses.
-  return (
-    status.includes("cancel") ||
-    status.includes("archive") ||
-    status.includes("wait") ||
-    waitlist === "yes" ||
-    (cancellationDate !== "" &&
-      !masterImportUnknown(cancellationDate))
-  );
+  return !isActiveBooking(booking);
 }
 
 function dashboardHomeHasValue(value) {
@@ -7472,66 +6347,12 @@ function dashboardHomeHasValue(value) {
 }
 
 /*
-  Mirrors the Inquiry Pipeline's contract stages: a returned date or a
-  Confirmed/Booked status means returned; a sent date or a Contract
-  status means sent.
-*/
-function dashboardHomeContractAwaitingReturn(booking) {
-  const details =
-    booking?.rentalFormDetails || {};
-
-  const status = String(
-    booking?.status || ""
-  ).toLowerCase();
-
-  const isReturned =
-    dashboardHomeHasValue(
-      details.contractReturnedDate
-    ) ||
-    status.includes("confirm") ||
-    status.includes("booked");
-
-  const isSent =
-    dashboardHomeHasValue(
-      details.contractSentDate
-    ) ||
-    status.includes("contract");
-
-  return isSent && !isReturned;
-}
-
-/*
-  Plain inquiry stage: status is still Inquiry and no contract has been
-  sent or returned. Lodging and guest counts are not expected yet.
-  Staff Booking records are real retreats created in Create Booking,
-  which saves "Inquiry" until a contract date exists, so they never count.
+  Records from the Inquiry Spreadsheet are inquiries: lodging and guest
+  counts are not expected yet. Master and staff bookings are real bookings
+  whatever their legacy status says (Q-007).
 */
 function isDashboardHomePlainInquiry(booking) {
-  if (isStaffBookingRecord(booking)) {
-    return false;
-  }
-
-  const status = String(
-    booking?.status || ""
-  )
-    .trim()
-    .toLowerCase();
-
-  if (status && status !== "inquiry") {
-    return false;
-  }
-
-  const details =
-    booking?.rentalFormDetails || {};
-
-  return (
-    !dashboardHomeHasValue(
-      details.contractSentDate
-    ) &&
-    !dashboardHomeHasValue(
-      details.contractReturnedDate
-    )
-  );
+  return getRecordKind(booking) === RECORD_KIND.INQUIRY;
 }
 
 /*
@@ -7582,147 +6403,19 @@ function getDashboardHomeGuestCount(booking) {
     : 0;
 }
 
+// Shared lodging reader: Housing tab values once saved, else imported text.
 function getDashboardHomeHousingLabel(booking) {
-  const housing = [
-    booking?.roomName,
-    booking?.buildingsRooms,
-  ]
-    .map((value) => String(value || "").trim())
-    .filter(
-      (value, index, values) =>
-        value &&
-        value.toLowerCase() !== "unassigned" &&
-        value.toLowerCase() !== "no room" &&
-        values.indexOf(value) === index
-    )
-    .join(" · ");
-
-  return housing || "Housing not assigned";
-}
-
-const DASHBOARD_HOME_BUILDINGS = [
-  {
-    key: "bethel",
-    label: "Bethel",
-    aliases: ["bethel"],
-    detailFields: ["lodgingBethel"],
-  },
-  {
-    key: "hebron",
-    label: "Hebron",
-    aliases: ["hebron"],
-    detailFields: [
-      "lodgingHebronThird",
-      "lodgingHebronBunks",
-    ],
-  },
-  {
-    key: "dothan",
-    label: "Dothan",
-    aliases: ["dothan"],
-    detailFields: ["lodgingDothan"],
-  },
-  {
-    key: "ajalon",
-    label: "Ajalon",
-    aliases: ["ajalon", "aijalon"],
-    detailFields: ["lodgingAjalon"],
-  },
-  {
-    key: "capernaum",
-    label: "Capernaum",
-    aliases: ["capernaum", "capurnum"],
-    detailFields: ["lodgingCapernaum"],
-  },
-  {
-    key: "guest-house",
-    label: "Guest House",
-    aliases: ["guest house", "guesthouse"],
-    detailFields: ["lodgingGuestHouse"],
-  },
-];
-
-function dashboardHomeHasLodgingValue(value) {
-  if (
-    value === null ||
-    value === undefined
-  ) {
-    return false;
-  }
-
-  const text = String(value).trim();
-
-  if (!text) {
-    return false;
-  }
-
-  const normalizedText =
-    text.toLowerCase();
-
-  if (
-    normalizedText === "0" ||
-    normalizedText === "no" ||
-    normalizedText === "none" ||
-    normalizedText === "n/a" ||
-    normalizedText === "na"
-  ) {
-    return false;
-  }
-
-  const numericValue = Number(
-    text.replace(/[^0-9.-]/g, "")
-  );
-
-  if (Number.isFinite(numericValue)) {
-    return numericValue > 0;
-  }
-
-  return true;
+  const text = getBookingLodgingDisplayText(booking);
+  return text === "Unassigned" ? "Housing not assigned" : text;
 }
 
 function getDashboardHomeBuildingTags(booking) {
-  const details =
-    booking?.rentalFormDetails || {};
+  const groupIds = getBookingCalendarGroups(booking);
 
-  const housingText = [
-    booking?.roomName,
-    booking?.buildingsRooms,
-  ]
-    .map((value) =>
-      String(value || "")
-        .trim()
-        .toLowerCase()
-    )
-    .filter(Boolean)
-    .join(" ");
-
-  const matchedBuildings =
-    DASHBOARD_HOME_BUILDINGS.filter(
-      (building) => {
-        const appearsInHousingText =
-          building.aliases.some((alias) =>
-            housingText.includes(
-              alias.toLowerCase()
-            )
-          );
-
-        const appearsInDetailedHousing =
-          building.detailFields.some(
-            (fieldName) =>
-              dashboardHomeHasLodgingValue(
-                details?.[fieldName]
-              )
-          );
-
-        return (
-          appearsInHousingText ||
-          appearsInDetailedHousing
-        );
-      }
-    );
-
-  if (matchedBuildings.length > 0) {
-    return matchedBuildings;
+  if (groupIds.length > 0) {
+    return LODGING_CALENDAR_GROUPS.filter((group) =>
+      groupIds.includes(group.id)
+    ).map((group) => ({ key: group.id, label: group.label }));
   }
 
   return [
@@ -7743,18 +6436,9 @@ function dashboardHomeBookingNeedsHousing(booking) {
     roomName defaults to "Unassigned" on every staff booking, so the
     placeholder is dropped per value instead of matched in joined text.
   */
-  const housingText = [
-    booking?.roomName,
-    booking?.buildingsRooms,
-  ]
-    .map((value) => String(value || "").trim())
-    .filter(
-      (value) =>
-        value &&
-        value.toLowerCase() !== "unassigned"
-    )
-    .join(" ")
-    .toLowerCase();
+  const housingText = isHousingAuthoritative(booking)
+    ? String(booking?.buildingsRooms || "").trim().toLowerCase()
+    : getLegacyLodgingText(booking).toLowerCase();
 
   if (
     housingText.includes("no room") ||
@@ -7769,55 +6453,7 @@ function dashboardHomeBookingNeedsHousing(booking) {
   }
 
   // Lodging saved by the form or Housing tab only in rentalFormDetails.
-  const details =
-    booking?.rentalFormDetails || {};
-
-  const hasDetailedLodging = [
-    ...DASHBOARD_HOME_BUILDINGS.flatMap(
-      (building) => building.detailFields
-    ),
-    "lodgingCamping",
-    "lodgingCampingTent",
-    "lodgingCampingRV",
-  ].some((fieldName) =>
-    dashboardHomeHasLodgingValue(
-      details[fieldName]
-    )
-  );
-
-  const hasMarkedUsage = Object.values(
-    details.housingUsage || {}
-  ).some((value) => value === true);
-
-  return !hasDetailedLodging && !hasMarkedUsage;
-}
-
-function getDashboardHomeStatusTone(status) {
-  const normalizedStatus = String(
-    status || ""
-  )
-    .trim()
-    .toLowerCase();
-
-  if (
-    normalizedStatus.includes("confirmed") ||
-    normalizedStatus.includes("booked")
-  ) {
-    return "confirmed";
-  }
-
-  if (normalizedStatus.includes("contract")) {
-    return "contract";
-  }
-
-  if (
-    normalizedStatus.includes("inquiry") ||
-    normalizedStatus.includes("lead")
-  ) {
-    return "inquiry";
-  }
-
-  return "neutral";
+  return getBookingLodgingAssignments(booking).length === 0;
 }
 
 function formatDashboardHomeDateTile(date) {
@@ -7837,7 +6473,6 @@ export default function Dashboard() {
 
   const masterFileInputRef = useRef(null);
   const staffContactsFileInputRef = useRef(null);
-  const archiveFileInputRef = useRef(null);
 
   const master2026FileInputRef = useRef(null);
   const master2027FileInputRef = useRef(null);
@@ -7885,11 +6520,97 @@ export default function Dashboard() {
   const spreadsheetRevealFrameRef = useRef(0);
   const spreadsheetRevealSecondFrameRef = useRef(0);
 
-  const [staffUsers, setStaffUsers] = useState(() => getSavedStaffUsers());
+    const [staffUsers, setStaffUsersState] = useState(() => getSavedStaffUsers());
 
   const [currentStaffUserId, setCurrentStaffUserId] = useState(() =>
     getSavedCurrentStaffUserId(getSavedStaffUsers())
   );
+
+  /*
+    Shared staff directory (AUDIT-017). Until the staff_directory table
+    exists, this browser's list keeps working and User Admin says so.
+  */
+  const [staffDirectoryStatus, setStaffDirectoryStatus] = useState({
+    checked: false,
+    shared: false,
+    reason: "",
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    loadStaffDirectory(supabase).then((result) => {
+      if (cancelled) {
+        return;
+      }
+
+      setStaffDirectoryStatus({
+        checked: true,
+        shared: result.available,
+        reason: result.reason,
+      });
+
+      if (result.available) {
+        setStaffUsersState(result.users);
+        setCurrentStaffUserId((currentId) =>
+          result.users.some((user) => user.id === currentId) ? currentId : ""
+        );
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const setStaffUsers = async (nextUsers) => {
+    const previousUsers = staffUsers;
+    setStaffUsersState(nextUsers);
+
+    if (!staffDirectoryStatus.shared) {
+      saveStaffUsers(nextUsers);
+      return;
+    }
+
+    try {
+      await saveStaffDirectoryChanges(supabase, previousUsers, nextUsers);
+    } catch (error) {
+      console.error("Could not save the shared staff directory:", error);
+      alert(
+        "The staff directory change was not saved. The list has been reloaded from the database."
+      );
+      const reloaded = await loadStaffDirectory(supabase);
+      if (reloaded.available) {
+        setStaffUsersState(reloaded.users);
+      }
+    }
+  };
+
+  const copyBrowserStaffListToSharedDirectory = async () => {
+    const browserUsers = getSavedStaffUsers();
+    const knownNames = new Set(
+      staffUsers.map((user) => normalizeStaffName(user.name))
+    );
+    const usersToAdd = browserUsers
+      .filter((user) => !knownNames.has(normalizeStaffName(user.name)))
+      .map((user) => ({ ...user, id: createStaffUserId() }));
+
+    if (usersToAdd.length === 0) {
+      alert("Everyone in this browser's list is already in the shared directory.");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Add ${usersToAdd.length} people from this browser's list to the shared staff directory?\n\n` +
+          usersToAdd.map((user) => user.name).join(", ")
+      )
+    ) {
+      return;
+    }
+
+    await setStaffUsers([...staffUsers, ...usersToAdd]);
+  };
   
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [bookingDetailTab, setBookingDetailTab] = useState("Overview");
@@ -7900,7 +6621,38 @@ export default function Dashboard() {
     setGuestBookingSource,
   ] = useState(null);
 
-  const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
+  /*
+    Shown above the booking form after a save. Lives outside the keyed
+    CreateBooking so it survives the form resetting (AUDIT-026), and
+    carries a retry when the website inquiry could not be marked (AUDIT-008).
+  */
+  const [bookingFormNotice, setBookingFormNotice] = useState(null);
+  const [isRetryingConversion, setIsRetryingConversion] = useState(false);
+
+    const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
+
+  /*
+    The signed-in account's database role: admin, staff or viewer
+    (staff_profiles). Controls the database would refuse are hidden. ""
+    while unknown; then controls stay and the database still decides.
+  */
+  const [staffRole, setStaffRole] = useState("");
+  const isViewOnlyAccount = staffRole === "viewer";
+  const canDeleteBookings = staffRole === "" || staffRole === "admin";
+
+  useEffect(() => {
+    let cancelled = false;
+
+    supabase.rpc("current_staff_role").then(({ data, error }) => {
+      if (!cancelled && !error && typeof data === "string") {
+        setStaffRole(data);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   // Dev Mode lives here so it survives view changes; resets on page reload.
   const [isDevMode, setIsDevMode] = useState(false);
   const [isDatedInquirySettingsOpen, setIsDatedInquirySettingsOpen] =
@@ -8030,7 +6782,23 @@ export default function Dashboard() {
     }
 
     try {
-      await deleteAllBookings();
+      const expectedCount = publicInquiries.length;
+      const deletedCount = await deleteAllBookings();
+
+      if (deletedCount === 0 && expectedCount > 0) {
+        alert(
+          "Nothing was deleted. Only administrators can delete bookings."
+        );
+        return;
+      }
+
+      if (deletedCount < expectedCount) {
+        alert(
+          `Only ${deletedCount} of ${expectedCount} bookings were deleted. Reloading the list.`
+        );
+        await loadBookingsFromSupabase();
+        return;
+      }
 
       setPublicInquiries([]);
       setSelectedBooking(null);
@@ -8074,20 +6842,32 @@ export default function Dashboard() {
       console.error("Could not delete booking:", error);
 
       alert(
-        "Could not delete this booking. Check the console for more information."
+        error?.code === "BOOKING_NOT_PERMITTED"
+          ? error.message
+          : "Could not delete this booking. Check the console for more information."
       );
     }
   };
 
 
-  const saveBookingEdits = async (updatedBooking) => {
-    try {
-      const bookingToSave = {
-        ...updatedBooking,
-        updatedAt: new Date().toISOString(),
-      };
+  /*
+    Every booking edit goes through here. The booking's updatedAt is the
+    value read from the database; the save is refused if anyone saved the
+    booking since (AUDIT-045). Screens keep their unsaved edits when a save
+    fails, so nothing typed is lost.
+  */
+    const saveBookingEdits = async (updatedBooking) => {
+    if (isViewOnlyAccount) {
+      const error = new Error(
+        "This account is view-only, so changes cannot be saved. Ask an administrator for staff access."
+      );
+      error.code = "BOOKING_NOT_PERMITTED";
+      alert(error.message);
+      throw error;
+    }
 
-      const savedBooking = await upsertBooking(bookingToSave);
+    try {
+      const savedBooking = await saveBooking(updatedBooking);
 
       setPublicInquiries((currentInquiries) => {
         const existingIndex = currentInquiries.findIndex(
@@ -8110,7 +6890,7 @@ export default function Dashboard() {
       return savedBooking;
     } catch (error) {
       console.error("Could not save booking to Supabase:", error);
-      alert("Could not save booking to Supabase. Check the console.");
+      alert(getBookingSaveErrorMessage(error));
       throw error;
     }
   };
@@ -8197,6 +6977,8 @@ export default function Dashboard() {
         masterImportSummary =
           `\nNew bookings: ${prepared.added}` +
           `\nExisting bookings updated: ${prepared.updated}` +
+          `\nExisting bookings unchanged: ${prepared.unchanged}` +
+          formatMasterImportKeptValues(prepared.keptAppValues) +
           `\nDuplicate spreadsheet rows skipped: ${prepared.duplicateRowsSkipped}` +
           (prepared.duplicateExistingRecords
             ? `\nOther existing duplicate records retained: ${prepared.duplicateExistingRecords}`
@@ -8206,17 +6988,16 @@ export default function Dashboard() {
         const confirmed = window.confirm(
           `Import ${requestedMasterType}?\n${masterImportSummary}\n\n` +
           (newRecordCount === 0
-            ? `NO NEW BOOKINGS DETECTED\nAll matching bookings are already in the database. Existing matching records will still be refreshed from the spreadsheet.\n\n`
+            ? `NO NEW BOOKINGS DETECTED\nAll matching bookings are already in the database.\n\n`
             : `New bookings that will be added: ${newRecordCount}\n\n`) +
-          `Matching uses the group name and stay dates. Existing booking IDs and staff-only fields are retained. ` +
-          `Repeated spreadsheet rows use the first occurrence. When several existing records match, one record is updated. ` +
-          `Bookings absent from this spreadsheet are kept. Review notes will appear in each booking's Notes section.`
+          MASTER_REIMPORT_RULES_TEXT +
+          `\nReview notes will appear in each booking's Notes section.`
         );
 
         if (!confirmed) return;
       }
 
-      const savedRows = await upsertBookings(rowsToSave);
+      const { saved: savedRows, failures } = await saveBookings(rowsToSave);
       setPublicInquiries((currentInquiries) => {
         const byId = new Map(currentInquiries.map((booking) => [booking.id, booking]));
         savedRows.forEach((booking) => byId.set(booking.id, booking));
@@ -8233,7 +7014,8 @@ export default function Dashboard() {
 
       alert(
         `Imported ${savedRows.length} ${importTypeLabel} row(s).` +
-        `${noNewRecordsMessage}${masterImportSummary}${skippedMessage}`
+        `${noNewRecordsMessage}${masterImportSummary}${skippedMessage}` +
+        formatImportSaveFailures(failures)
       );
     } catch (error) {
       console.error(`Could not import ${importTypeLabel} spreadsheet:`, error);
@@ -8246,15 +7028,6 @@ export default function Dashboard() {
     }
   };
 
-
-  const handleImportArchiveSpreadsheet = (event) => {
-    importSpreadsheet({
-      event,
-      importTypeLabel: "archive",
-      normalizeRow: normalizeArchiveSpreadsheetRow,
-      expectedColumns: ARCHIVE_EXPECTED_COLUMNS,
-    });
-  };
 
   const handleImportMasterSpreadsheet = (event) => {
     importSpreadsheet({
@@ -8559,6 +7332,8 @@ export default function Dashboard() {
             rows: importRows,
             added: 0,
             updated: 0,
+            unchanged: 0,
+            keptAppValues: [],
             duplicateRowsSkipped: 0,
             duplicateExistingRecords: 0,
           };
@@ -8577,6 +7352,10 @@ export default function Dashboard() {
       const masterImportSummary = hasMasterRows
         ? `Master bookings added: ${prepared.added}\n` +
           `Master bookings updated: ${prepared.updated}\n` +
+          `Master bookings unchanged: ${prepared.unchanged}\n` +
+          (formatMasterImportKeptValues(prepared.keptAppValues).trim()
+            ? `${formatMasterImportKeptValues(prepared.keptAppValues).trim()}\n`
+            : "") +
           `Duplicate spreadsheet rows skipped: ${prepared.duplicateRowsSkipped}\n` +
           (prepared.duplicateExistingRecords
             ? `Other existing duplicate records retained: ${prepared.duplicateExistingRecords}\n`
@@ -8602,19 +7381,18 @@ export default function Dashboard() {
 
           masterImportSummary +
           (newRecordCount === 0
-            ? `NO NEW RECORDS DETECTED\nEverything in this workbook already matches records in the database. Existing matching records can still be refreshed by continuing.\n\n`
+            ? `NO NEW RECORDS DETECTED\nEverything in this workbook already matches records in the database.\n\n`
             : `New records that will be added: ${newRecordCount}\n\n`) +
-          `Matching Master bookings retain their IDs and staff-only fields. Bookings absent from this workbook are kept.\n` +
-          `Repeated Master rows use the first occurrence. When several existing records match, one record is updated.\n` +
-          `Other worksheet types will be skipped.`
+          MASTER_REIMPORT_RULES_TEXT +
+          `\nOther worksheet types will be skipped.`
       );
 
       if (!confirmed) {
         return;
       }
 
-      const savedRows =
-        await upsertBookings(prepared.rows);
+      const { saved: savedRows, failures } =
+        await saveBookings(prepared.rows);
 
       setPublicInquiries((currentInquiries) => {
         const byId = new Map();
@@ -8649,7 +7427,8 @@ export default function Dashboard() {
             ? `No new records were added. Everything in this workbook already matched records in the database.\n\n`
             : "") +
           masterImportSummary +
-          `${sheetSummaries.join("\n")}`
+          `${sheetSummaries.join("\n")}` +
+          formatImportSaveFailures(failures)
       );
     } catch (error) {
       console.error("Could not import booking workbook:", error);
@@ -8740,9 +7519,10 @@ export default function Dashboard() {
 
           nextUsers[existingUserIndex] = {
             ...existingUser,
-            name: importedUser.name || existingUser.name,
+                        name: importedUser.name || existingUser.name,
             email: importedUser.email || existingUser.email,
-            active: true,
+            // Keep a deactivated person deactivated.
+            active: existingUser.active !== false,
             updatedAt: new Date().toISOString(),
           };
 
@@ -8754,13 +7534,8 @@ export default function Dashboard() {
         addedCount += 1;
       });
 
-      saveStaffUsers(nextUsers);
-      setStaffUsers(nextUsers);
+            await setStaffUsers(nextUsers);
 
-      if (!currentStaffUserId && nextUsers.length > 0) {
-        setCurrentStaffUserId(nextUsers[0].id);
-        saveCurrentStaffUserId(nextUsers[0].id);
-      }
 
       alert(
         `Imported staff contacts from Staff_Contacts.\n\nAdded: ${addedCount}\nUpdated: ${updatedCount}\nSkipped: ${skippedCount}`
@@ -8773,11 +7548,6 @@ export default function Dashboard() {
     }
   };
 
-
-  const openArchiveImportPicker = () => {
-    setIsImportMenuOpen(false);
-    archiveFileInputRef.current?.click();
-  };
 
   const openMasterImportPicker = () => {
     setIsImportMenuOpen(false);
@@ -8884,50 +7654,19 @@ export default function Dashboard() {
     );
   }, [publicInquiries]);
 
-  useEffect(() => {
-    const assignedNames = getAssignedStaffNamesFromBookings(inquiryBookings);
-
-    if (assignedNames.length === 0) {
-      return;
-    }
-
-    setStaffUsers((currentUsers) => {
-      const existingNameSet = new Set(
-        currentUsers.map((user) => normalizeStaffName(user.name))
-      );
-
-      const newUsers = assignedNames
-        .filter((name) => !existingNameSet.has(normalizeStaffName(name)))
-        .map((name) => ({
-          id: createStaffUserId(),
-          name,
-          email: "",
-          role: "Staff",
-          active: true,
-        }));
-
-      if (newUsers.length === 0) {
-        return currentUsers;
-      }
-
-      const nextUsers = [...currentUsers, ...newUsers];
-
-      saveStaffUsers(nextUsers);
-
-      return nextUsers;
-    });
-  }, [inquiryBookings]);
-
-  useEffect(() => {
-    if (currentStaffUserId || staffUsers.length === 0) {
-      return;
-    }
-
-    const fallbackUserId = staffUsers[0].id;
-
-    setCurrentStaffUserId(fallbackUserId);
-    saveCurrentStaffUserId(fallbackUserId);
-  }, [currentStaffUserId, staffUsers]);
+  /*
+    Names on bookings that are not in the staff directory. They are shown
+    in User Admin to add by hand; nothing is added automatically, so a
+    deleted or renamed person does not come back (AUDIT-017).
+  */
+  const unlistedStaffNames = useMemo(
+    () =>
+      getUnlistedStaffNames(
+        getAssignedStaffNamesFromBookings(inquiryBookings),
+        staffUsers
+      ),
+    [inquiryBookings, staffUsers]
+  );
 
   const inquiryPipelineNeedsReviewCount = useMemo(() => {
     return inquiryBookings.filter((booking) => {
@@ -9020,9 +7759,7 @@ export default function Dashboard() {
     staff booking (sourceInquiryId) represents it, as in the Pipeline.
   */
   const dashboardConvertedInquiryIds =
-    getInquiryPipelineRecords(
-      inquiryBookings
-    ).convertedInquiryIds;
+    getConvertedInquiryIds(inquiryBookings);
 
   const dashboardActiveBookings =
     inquiryBookings.filter(
@@ -9197,26 +7934,6 @@ export default function Dashboard() {
       }
     );
 
-  // Undated bookings are included; past stays are not.
-  const dashboardContractsAwaitingReturn =
-    dashboardActiveBookings.filter(
-      (booking) => {
-        const endDate =
-          getDashboardHomeBookingDate(
-            booking.endDate ||
-              booking.startDate
-          );
-
-        return (
-          dashboardHomeContractAwaitingReturn(
-            booking
-          ) &&
-          (!endDate ||
-            endDate >= dashboardToday)
-        );
-      }
-    );
-
   const dashboardAttentionItems = [
     {
       id: "dates",
@@ -9250,17 +7967,7 @@ export default function Dashboard() {
       icon: FaUsers,
       view: SPREADSHEET_VIEW_NAME,
     },
-    {
-      id: "contracts",
-      title: "Contracts awaiting return",
-      description:
-        "Contracts have been sent but no returned date is recorded.",
-      count:
-        dashboardContractsAwaitingReturn.length,
-      tone: "green",
-      icon: FaFileContract,
-      view: SPREADSHEET_VIEW_NAME,
-    },
+    // Contract, deposit and insurance progress is tracked in Portal Admin.
   ];
 
   const dashboardVisibleAttentionItems =
@@ -9396,8 +8103,13 @@ export default function Dashboard() {
       return;
     }
 
+        /*
+      A contact list, not a backup (AUDIT-014, Q-034 A). The disposition
+      column uses the Guest Group sheets' own heading and values, and the
+      date is the real inquiry date. JSON Backup is the full-data format.
+    */
     const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Booking Inquiries");
+    const worksheet = workbook.addWorksheet("Contact List");
 
     worksheet.columns = [
       { header: "Date", key: "date", width: 14 },
@@ -9411,12 +8123,15 @@ export default function Dashboard() {
       { header: "Size", key: "size", width: 10 },
       { header: "Desired Dates", key: "desiredDates", width: 28 },
       { header: "Additional Notes", key: "additionalNotes", width: 44 },
-      { header: "Waitlist or No", key: "waitlist", width: 16 },
+            { header: "Waitlist, Considering or No", key: "disposition", width: 22 },
+      { header: "Booking", key: "bookingState", width: 16 },
     ];
 
     inquiryBookings.forEach((inquiry) => {
       worksheet.addRow({
-        date: formatSubmittedDate(inquiry.submittedAt),
+                date: getBookingInquiryDateValue(inquiry)
+          ? formatSubmittedDate(`${getBookingInquiryDateValue(inquiry)}T12:00:00`)
+          : "",
         contactName: inquiry.contactName,
         email: inquiry.email === "No email provided" ? "" : inquiry.email,
         phone: inquiry.phone === "No phone provided" ? "" : inquiry.phone,
@@ -9428,10 +8143,18 @@ export default function Dashboard() {
           (inquiry.startDate || inquiry.endDate
             ? formatDateRange(inquiry.startDate, inquiry.endDate)
             : ""),
-        additionalNotes: inquiry.notes || "",
-        waitlist: inquiry.waitlist || "No",
+                additionalNotes: inquiry.notes || "",
+        disposition: inquiry.inquiryDisposition || inquiry.stageOfGroup || "",
+        bookingState: getBookingDisplayState(inquiry).label,
       });
     });
+
+    const aboutSheet = workbook.addWorksheet("About this file");
+    aboutSheet.addRow(["Toah Nipi contact list"]);
+    aboutSheet.addRow([`Exported ${new Date().toLocaleString()}`]);
+    aboutSheet.addRow([
+      "This is a contact list for reference. It is not a backup and is not meant to be imported back. Use Backups (JSON) for a full copy of the data.",
+    ]);
 
     worksheet.getRow(1).font = {
       bold: true,
@@ -9456,7 +8179,7 @@ export default function Dashboard() {
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = "toah-nipi-booking-inquiries.xlsx";
+        link.download = "toah-nipi-contact-list.xlsx";
 
     document.body.appendChild(link);
     link.click();
@@ -9516,6 +8239,9 @@ export default function Dashboard() {
 
     if (nextView !== "Form") {
       loadBookingsFromSupabase();
+      // Leaving the form ends any pending website-inquiry conversion.
+      setBookingFormSeed(null);
+      setGuestBookingSource(null);
     }
 
     setActiveView(nextView);
@@ -9536,6 +8262,9 @@ export default function Dashboard() {
 
   const startBookingFromInquiry = (booking) => {
     setBookingFormSeed(booking);
+    // A staff-sheet inquiry is never a website inquiry (AUDIT-004).
+    setGuestBookingSource(null);
+    setBookingFormNotice(null);
 
     setSelectedBooking(null);
     setBookingDetailTab("Overview");
@@ -9546,6 +8275,105 @@ export default function Dashboard() {
       top: 0,
       behavior: "smooth",
     });
+  };
+
+  /*
+    Runs after Create Booking saves a new booking. The website inquiry is
+    marked converted only when the form was opened from it AND the saved
+    booking still records it as its source, so a different or reset form
+    can never close an unrelated inquiry (AUDIT-004, AUDIT-044).
+  */
+  const handleBookingCreated = async (savedBooking) => {
+    const guestSource = guestBookingSource;
+    const decision = decideGuestInquiryConversion({
+      guestSource,
+      formSeedId: bookingFormSeed?.id,
+      savedBooking,
+    });
+
+    setGuestBookingSource(null);
+    setBookingFormSeed(null);
+
+    if (savedBooking?.id) {
+      setPublicInquiries((currentInquiries) => [
+        ...currentInquiries.filter((inquiry) => inquiry.id !== savedBooking.id),
+        savedBooking,
+      ]);
+    }
+
+    const bookingName = savedBooking?.organizationName || "the group";
+
+    if (decision.action === "none") {
+      setBookingFormNotice({
+        kind: "success",
+        message: `Booking created for ${bookingName}.`,
+      });
+      return;
+    }
+
+    if (decision.action === "skip") {
+      setBookingFormNotice({
+        kind: "warning",
+        message:
+          `Booking created for ${bookingName}, but it no longer records the website inquiry from ` +
+          `${guestSource.guestOrganizationName} as its source, so that inquiry was left open.`,
+      });
+      return;
+    }
+
+    try {
+      await markGuestInquiryConverted(
+        guestSource.guestInquiryId,
+        savedBooking.id
+      );
+
+      setBookingFormNotice({
+        kind: "success",
+        message: `Booking created for ${bookingName}. The website inquiry was marked converted.`,
+      });
+    } catch (error) {
+      console.error(
+        "Booking saved, but guest inquiry could not be marked converted:",
+        error
+      );
+
+      setBookingFormNotice({
+        kind: "warning",
+        message:
+          `Booking created for ${bookingName}, but the website inquiry from ` +
+          `${guestSource.guestOrganizationName} is still open: ${error?.message || "unknown error"}`,
+        retry: {
+          guestInquiryId: guestSource.guestInquiryId,
+          bookingId: savedBooking.id,
+          bookingName,
+        },
+      });
+    }
+  };
+
+  const retryGuestInquiryConversion = async () => {
+    const retry = bookingFormNotice?.retry;
+
+    if (!retry) {
+      return;
+    }
+
+    setIsRetryingConversion(true);
+
+    try {
+      await markGuestInquiryConverted(retry.guestInquiryId, retry.bookingId);
+      setBookingFormNotice({
+        kind: "success",
+        message: `The website inquiry is now marked converted to ${retry.bookingName}.`,
+      });
+    } catch (error) {
+      setBookingFormNotice({
+        ...bookingFormNotice,
+        message: `Still not marked: ${error?.message || "unknown error"}`,
+      });
+    } finally {
+      setIsRetryingConversion(false);
+    }
   };
 
   const startBookingFromGuestInquiry = ({
@@ -9560,7 +8388,9 @@ export default function Dashboard() {
     setGuestBookingSource({
       guestInquiryId,
       guestOrganizationName,
+      seedId: bookingSeed?.id,
     });
+    setBookingFormNotice(null);
 
     setSelectedBooking(null);
 
@@ -9739,6 +8569,7 @@ export default function Dashboard() {
               setSelectedBooking(null);
               setBookingFormSeed(null);
               setGuestBookingSource(null);
+              setBookingFormNotice(null);
               setBookingDetailTab("Overview");
               navigate("/form")
             }}
@@ -9874,21 +8705,14 @@ export default function Dashboard() {
               openEverythingImportPicker={openEverythingImportPicker}
               exportInquiriesToSpreadsheet={exportInquiriesToSpreadsheet}
               refreshInquiries={refreshInquiries}
-              deleteAllInquiries={deleteAllInquiries}
+                            deleteAllInquiries={
+                canDeleteBookings ? deleteAllInquiries : undefined
+              }
+              canImport={!isViewOnlyAccount}
               handleImportStaffContactsSpreadsheet={handleImportStaffContactsSpreadsheet}
               openStaffContactsImportPicker={openStaffContactsImportPicker}
-              archiveFileInputRef={archiveFileInputRef}
-              handleImportArchiveSpreadsheet={handleImportArchiveSpreadsheet}
-              openArchiveImportPicker={openArchiveImportPicker}
             />
-{/* 
-            <DashboardBackups
-              onRestoreComplete={() => {
-                setSelectedBooking(null);
-                setBookingDetailTab("Overview");
-                setActiveView("Dashboard");
-              }}
-            /> */}
+
 
           </>
         )}
@@ -9920,32 +8744,45 @@ export default function Dashboard() {
 
         {activeView === "Form" ? (
           <section className="dashboard-form-view">
+            {bookingFormNotice && (
+              <div
+                className={`booking-form-notice is-${bookingFormNotice.kind}`}
+                role={bookingFormNotice.kind === "warning" ? "alert" : "status"}
+              >
+                <p>{bookingFormNotice.message}</p>
+
+                <div className="booking-form-notice-actions">
+                  {bookingFormNotice.retry && (
+                    <button
+                      className="primary-dashboard-button"
+                      type="button"
+                      disabled={isRetryingConversion}
+                      onClick={retryGuestInquiryConversion}
+                    >
+                      {isRetryingConversion ? "Retrying…" : "Retry marking the inquiry"}
+                    </button>
+                  )}
+
+                  <button
+                    className="secondary-dashboard-button"
+                    type="button"
+                    onClick={() => setBookingFormNotice(null)}
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
+
             <CreateBooking
               key={
                 bookingFormSeed?.id ||
                 "blank-booking-form"
               }
-              initialInquiry={bookingFormSeed}
-              onBookingCreated={async (
-                savedBooking
-              ) => {
-                if (guestBookingSource) {
-                  try {
-                    await markGuestInquiryConverted(
-                      guestBookingSource.guestInquiryId,
-                      savedBooking?.id
-                    );
-                  } catch (error) {
-                    console.error(
-                      "Booking saved, but guest inquiry could not be marked converted:",
-                      error
-                    );
-                  }
-                }
-
-                setGuestBookingSource(null);
-                setBookingFormSeed(null);
-              }}
+                            initialInquiry={bookingFormSeed}
+              isDevMode={isDevMode}
+              staffUsers={staffUsers}
+              onBookingCreated={handleBookingCreated}
             />
           </section>
         ) : activeView === "Inquiry Record Detail" ? (
@@ -9963,7 +8800,8 @@ export default function Dashboard() {
             activeTab={bookingDetailTab}
             setActiveTab={setBookingDetailTab}
             onSaveBooking={saveBookingEdits}
-            onDeleteBooking={deleteSingleBooking}
+                        onDeleteBooking={deleteSingleBooking}
+            canDeleteBookings={canDeleteBookings}
             staffUsers={staffUsers}
             currentStaffUserId={currentStaffUserId}
             onBack={() => {
@@ -10009,18 +8847,25 @@ export default function Dashboard() {
                   }
                 />
               ) : activeView === "Contacts View" ? (
-          <>
-            <ContactsView
-              inquiryBookings={inquiryBookings}
-              openBookingDetail={openBookingDetail}
-            />
-
-            <BookingContactsSection
-              bookings={inquiryBookings}
-              secondaryOnly
-              onOpenBooking={openBookingDetail}
-            />
-          </>
+                    // Secondary contacts are part of the main list now (AUDIT-039).
+          <ContactsView
+            inquiryBookings={inquiryBookings}
+            openBookingDetail={openBookingDetail}
+          />
+        ) : activeView === "Inquiry Pipeline" && !isDevMode ? (
+          /*
+            Retired (Q-011): the code is kept for reference, but staff cannot
+            open it, including through the /inquiry-pipeline address. It only
+            renders with Dev Mode on. Booking progress lives in Portal Admin.
+          */
+          <section className="dashboard-card empty-state">
+            <strong>The Inquiry Pipeline has been retired</strong>
+            <p>
+              Booking progress such as contracts, deposits and insurance is
+              tracked in Portal Admin. Inquiries are listed in the Inquiry
+              Spreadsheet and Guest Inquiries.
+            </p>
+          </section>
         ) : activeView === "Inquiry Pipeline" ? (
           <InquiryPipelineView
             inquiryBookings={inquiryBookings}
@@ -10042,10 +8887,14 @@ export default function Dashboard() {
             onCreateBooking={
               startBookingFromGuestInquiry
             }
+            existingBookings={inquiryBookings}
           />
 
         ) : activeView === "Backup" ? (
-          <DashboardBackups
+                    <DashboardBackups
+            isDevMode={isDevMode}
+            canReplace={canDeleteBookings}
+            canRestore={!isViewOnlyAccount}
             onRestoreComplete={() => {
               loadBookingsFromSupabase();
             }}
@@ -10059,18 +8908,26 @@ export default function Dashboard() {
             openBookingDetail={openBookingDetail}
           />
         ) : activeView === "User Admin" ? (
-          <UserAdminView
+                    <UserAdminView
             staffUsers={staffUsers}
             setStaffUsers={setStaffUsers}
             currentStaffUserId={currentStaffUserId}
             setCurrentStaffUserId={setCurrentStaffUserId}
+            staffDirectoryStatus={staffDirectoryStatus}
+            unlistedStaffNames={unlistedStaffNames}
+            onCopyBrowserListToShared={
+              getSavedStaffUsers().length > 0
+                ? copyBrowserStaffListToSharedDirectory
+                : undefined
+            }
           />
         ) : activeView === "Jobs" ? (
-          <JobsView
+                    <JobsView
             inquiryBookings={inquiryBookings}
             staffUsers={staffUsers}
             currentStaffUserId={currentStaffUserId}
             openBookingDetail={openBookingDetail}
+            onSaveBooking={saveBookingEdits}
           />
         ) : (
           <section className="home-dashboard-page">
@@ -10102,6 +8959,7 @@ export default function Dashboard() {
                     setSelectedBooking(null);
                     setBookingFormSeed(null);
                     setGuestBookingSource(null);
+                    setBookingFormNotice(null);
                     setBookingDetailTab(
                       "Overview"
                     );
@@ -10382,8 +9240,8 @@ export default function Dashboard() {
                                           : "s"
                                       }`
                                     : "Guest count not recorded"}
-                                  {booking.status
-                                    ? ` · ${booking.status}`
+                                  {getBookingDisplayState(booking).key !== "booked"
+                                    ? ` · ${getBookingDisplayState(booking).label}`
                                     : ""}
                                 </small>
                               </span>

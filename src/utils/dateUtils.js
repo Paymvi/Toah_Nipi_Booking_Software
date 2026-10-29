@@ -28,7 +28,7 @@ Example:
 -------------------------------------------------------------------------------
 */
 
-import { MEAL_TYPES } from "../constants/mealConstants";
+import { MEAL_TYPES } from "../constants/mealConstants.js";
 
 // Formats a YYYY-MM-DD date string into a readable US date.
 // Example: "2026-06-15" -> "6/15/2026"
@@ -179,11 +179,15 @@ export function formatExcelDateValue(value) {
     return "";
   }
 
-  // ExcelJS may give us a real JavaScript Date object.
+  /*
+    ExcelJS gives date cells as Date objects at UTC midnight, so the UTC
+    getters return the date shown in the sheet. Local getters returned the
+    previous day in U.S. time zones (AUDIT-013).
+  */
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    const year = value.getFullYear();
-    const month = String(value.getMonth() + 1).padStart(2, "0");
-    const day = String(value.getDate()).padStart(2, "0");
+    const year = value.getUTCFullYear();
+    const month = String(value.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(value.getUTCDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
   }
@@ -233,18 +237,6 @@ export function formatExcelDateValue(value) {
   }
 
   return "";
-}
-
-// Formats an imported spreadsheet date as a submittedAt timestamp.
-// If the spreadsheet date is unusable, it falls back to the current date/time.
-export function formatExcelSubmittedAt(value) {
-  const dateOnly = formatExcelDateValue(value);
-
-  if (!dateOnly) {
-    return new Date().toISOString();
-  }
-
-  return `${dateOnly}T00:00:00`;
 }
 
 // Parses a flexible "Desired Dates" spreadsheet value into startDate, endDate,

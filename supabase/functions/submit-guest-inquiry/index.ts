@@ -1,5 +1,96 @@
 import { withSupabase } from "npm:@supabase/server@^1";
 
+/*
+  Browser access (AUDIT-027). The public form posts from another site, so
+  the browser first sends an OPTIONS preflight. It is answered here and
+  every response carries CORS headers, like verify-dev-mode.
+
+  Set PUBLIC_FORM_ORIGINS (comma-separated, e.g.
+  "https://www.toahnipi.org,https://toahnipi.org") to allow only those
+  sites; without it any origin is allowed. Either way this endpoint stays
+  what it already was: public, no sign-in, insert-only.
+*/
+function getCorsHeaders(req: Request) {
+  const allowed = String(Deno.env.get("PUBLIC_FORM_ORIGINS") || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  const origin = req.headers.get("origin") || "";
+  const allowOrigin =
+    allowed.length === 0 ? "*" : allowed.includes(origin) ? origin : allowed[0];
+
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    Vary: "Origin",
+  };
+}
+
+// A real calendar date written as YYYY-MM-DD.
+function isIsoDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function optionalIsoDate(value: unknown) {
+  const text = cleanText(value, 20);
+  if (!text) return { ok: true, value: null };
+  return isIsoDate(text) ? { ok: true, value: text } : { ok: false, value: null };
+}
+
+/*
+  Item shapes the staff screens read (AUDIT-028): allergies {name, count},
+  activities {date, time, activity}, mealSchedule {date: {breakfast,
+  lunch, dinner}}. Anything else is dropped rather than stored.
+*/
+function cleanAllergies(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .slice(0, 50)
+    .filter((item) => item && typeof item === "object")
+    .map((item: Record<string, unknown>) => ({
+      name: cleanText(item.name, 200),
+      count: nullableInteger(item.count),
+    }))
+    .filter((item) => item.name);
+}
+
+function cleanActivities(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .slice(0, 100)
+    .filter((item) => item && typeof item === "object")
+    .map((item: Record<string, unknown>) => {
+      const date = cleanText(item.date, 20);
+      return {
+        date: isIsoDate(date) ? date : "",
+        time: cleanText(item.time, 20),
+        activity: cleanText(item.activity, 300),
+      };
+    })
+    .filter((item) => item.activity || item.date || item.time);
+}
+
+function cleanMealSchedule(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const schedule: Record<string, { breakfast: boolean; lunch: boolean; dinner: boolean }> = {};
+  Object.entries(value as Record<string, unknown>)
+    .slice(0, 60)
+    .forEach(([date, meals]) => {
+      if (!isIsoDate(date) || !meals || typeof meals !== "object") return;
+      const day = meals as Record<string, unknown>;
+      schedule[date] = {
+        breakfast: day.breakfast === true,
+        lunch: day.lunch === true,
+        dinner: day.dinner === true,
+      };
+    });
+  return schedule;
+}
+
+
 function cleanText(value: unknown, maxLength = 500) {
   return String(value ?? "")
     .trim()
@@ -35,17 +126,19 @@ export default {
       auth: "none",
     },
 
-    async (req, ctx) => {
+        async (req, ctx) => {
+      const corsHeaders = getCorsHeaders(req);
+
+      if (req.method === "OPTIONS") {
+        return new Response(null, { status: 204, headers: corsHeaders });
+      }
+
+      // Every response below carries the CORS headers.
+      const respond = (body: unknown, status = 200) =>
+        Response.json(body, { status, headers: corsHeaders });
 
       if (req.method !== "POST") {
-        return Response.json(
-          {
-            error: "Method not allowed.",
-          },
-          {
-            status: 405,
-          }
-        );
+        return respond({ error: "Method not allowed." }, 405);
       }
 
 
@@ -54,14 +147,9 @@ export default {
       try {
         body = await req.json();
       } catch {
-        return Response.json(
-          {
+        return respond({
             error: "Invalid request body.",
-          },
-          {
-            status: 400,
-          }
-        );
+          }, 400);
       }
 
 
@@ -114,80 +202,54 @@ export default {
       */
 
       if (!organizationName) {
-        return Response.json(
-          {
+        return respond({
             error:
               "Guest Group Name is required.",
-          },
-          {
-            status: 400,
-          }
-        );
+          }, 400);
       }
 
 
       if (!contactName) {
-        return Response.json(
-          {
+        return respond({
             error:
               "Primary Contact is required.",
-          },
-          {
-            status: 400,
-          }
-        );
+          }, 400);
       }
 
 
       if (!email) {
-        return Response.json(
-          {
+        return respond({
             error:
               "Email is required.",
-          },
-          {
-            status: 400,
-          }
-        );
+          }, 400);
       }
 
 
       if (!phone) {
-        return Response.json(
-          {
+        return respond({
             error:
               "Phone is required.",
-          },
-          {
-            status: 400,
-          }
-        );
+          }, 400);
       }
 
 
       if (!startDate || !endDate) {
-        return Response.json(
-          {
+        return respond({
             error:
               "Arrival and departure dates are required.",
-          },
-          {
-            status: 400,
-          }
-        );
+          }, 400);
       }
 
 
+            if (!isIsoDate(startDate) || !isIsoDate(endDate)) {
+        return respond({ error: "Dates must be written as YYYY-MM-DD." }, 400);
+      }
+
       if (endDate < startDate) {
-        return Response.json(
-          {
+        return respond({
             error:
               "Departure cannot be before arrival.",
-          },
-          {
-            status: 400,
-          }
-        );
+          }, 400);
       }
 
 
@@ -198,17 +260,35 @@ export default {
         approxTotalGuests < 1 ||
         approxTotalGuests > 2000
       ) {
-        return Response.json(
-          {
+        return respond({
             error:
               "Estimated guest count is invalid.",
-          },
-          {
-            status: 400,
-          }
-        );
+          }, 400);
       }
 
+
+            const dateChecks = {
+        contractReturnedDate: optionalIsoDate(body.contractReturnedDate),
+        depositSentDate: optionalIsoDate(body.depositSentDate),
+        insuranceCertificateSentDate: optionalIsoDate(body.insuranceCertificateSentDate),
+      };
+
+      if (Object.values(dateChecks).some((date) => !date.ok)) {
+        return respond({ error: "Dates must be written as YYYY-MM-DD." }, 400);
+      }
+
+      const optionalDates = {
+        contractReturnedDate: dateChecks.contractReturnedDate.value,
+        depositSentDate: dateChecks.depositSentDate.value,
+        insuranceCertificateSentDate: dateChecks.insuranceCertificateSentDate.value,
+      };
+
+      const depositText = cleanText(body.depositAmount, 20).replace(/[$,]/g, "");
+      const depositAmount = depositText === "" ? null : Number(depositText);
+
+      if (depositAmount !== null && (!Number.isFinite(depositAmount) || depositAmount < 0)) {
+        return respond({ error: "Deposit amount must be a number." }, 400);
+      }
 
       /*
         Only build the fields YOU approve.
@@ -280,31 +360,15 @@ export default {
             body.numberOfNights
           ),
 
-        contract_returned_date:
-          cleanText(
-            body.contractReturnedDate,
-            20
-          ) || null,
+                contract_returned_date:
+          optionalDates.contractReturnedDate,
 
-        deposit_sent_date:
-          cleanText(
-            body.depositSentDate,
-            20
-          ) || null,
-
+                deposit_sent_date:
+          optionalDates.depositSentDate,
         deposit_amount:
-          body.depositAmount === null ||
-          body.depositAmount === ""
-            ? null
-            : Number(
-                body.depositAmount
-              ),
-
+          depositAmount,
         insurance_certificate_sent_date:
-          cleanText(
-            body.insuranceCertificateSentDate,
-            20
-          ) || null,
+          optionalDates.insuranceCertificateSentDate,
 
         payment_method:
           cleanText(
@@ -312,12 +376,8 @@ export default {
             100
           ) || null,
 
-        meal_schedule:
-          body.mealSchedule &&
-          typeof body.mealSchedule ===
-            "object"
-            ? body.mealSchedule
-            : {},
+                meal_schedule:
+          cleanMealSchedule(body.mealSchedule),
 
         number_of_meals:
           nullableInteger(
@@ -342,15 +402,8 @@ export default {
             20
           ) || null,
 
-        allergies:
-          Array.isArray(
-            body.allergies
-          )
-            ? body.allergies.slice(
-                0,
-                50
-              )
-            : [],
+                allergies:
+          cleanAllergies(body.allergies),
 
         allergy_notes:
           cleanText(
@@ -364,15 +417,8 @@ export default {
             3000
           ) || null,
 
-        activities:
-          Array.isArray(
-            body.activities
-          )
-            ? body.activities.slice(
-                0,
-                100
-              )
-            : [],
+                activities:
+          cleanActivities(body.activities),
 
         linen_option:
           ["No", "Some", "All"].includes(
@@ -423,28 +469,18 @@ export default {
           error
         );
 
-        return Response.json(
-          {
+        return respond({
             error:
               "Your request could not be saved.",
-          },
-          {
-            status: 500,
-          }
-        );
+          }, 500);
       }
 
 
-      return Response.json(
-        {
+      return respond({
           ok: true,
           inquiryId:
             data.id,
-        },
-        {
-          status: 201,
-        }
-      );
+        }, 201);
     }
   ),
 };

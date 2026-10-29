@@ -1551,8 +1551,79 @@
   background: rgb(90 150 150 / var(--heat-opacity));
 }
 
+.calendar-year-heatmap-day.lodging-camping {
+  background: rgb(107 122 47 / var(--heat-opacity));
+}
+
 .calendar-year-heatmap-day.lodging-guest-house {
   background: rgb(181 138 146 / var(--heat-opacity));
   border-color: rgb(181 138 146 / 0.45);
   color: #6b3f48;
+}
+
+/* Shared booking labels and exception toggles (AUDIT-020, Q-005). */
+.calendar-exception-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: 0;
+  font-size: 0.9rem;
+  color: #4b5262;
+}
+
+.calendar-exception-toggles legend {
+  float: left;
+  margin-right: 0.25rem;
+  padding: 0;
+  font-weight: 700;
+}
+
+.calendar-exception-toggles label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.calendar-exception-count {
+  color: #8a6d1f;
+  font-size: 0.8rem;
+}
+
+.calendar-display-state {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #e5f1ec;
+  color: #245648;
+}
+
+.calendar-display-state.is-inquiry {
+  background: #e8edf8;
+  color: #344b87;
+}
+
+.calendar-display-state.is-waitlist {
+  background: #fbf4ea;
+  color: #8b5a26;
+}
+
+.calendar-display-state.is-cancelled {
+  background: #fdeeee;
+  color: #a03a3a;
+}
+
+.calendar-display-state.is-archive {
+  background: #eef0f3;
+  color: #4f5663;
+}
+
+.calendar-display-state.is-host {
+  background: #f3eef7;
+  color: #59406e;
 }

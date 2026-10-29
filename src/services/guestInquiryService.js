@@ -1,5 +1,6 @@
 
 import { supabase } from "../lib/supabaseClient";
+import { markGuestInquiryConvertedWithClient } from "./guestInquiryConversion.js";
 
 
 export async function getGuestInquiries() {
@@ -70,6 +71,7 @@ export async function declineGuestInquiry(
 }
 
 
+// Rules and the guarded update live in guestInquiryConversion.js.
 export async function markGuestInquiryConverted(
   inquiryId,
   bookingId
@@ -79,37 +81,10 @@ export async function markGuestInquiryConverted(
   } =
     await supabase.auth.getUser();
 
-  const {
-    data,
-    error,
-  } =
-    await supabase
-      .from("guest_inquiries")
-      .update({
-        status:
-          "converted",
-
-        converted_booking_id:
-          bookingId,
-
-        reviewed_at:
-          new Date()
-            .toISOString(),
-
-        reviewed_by:
-          userData?.user?.id ||
-          null,
-      })
-      .eq(
-        "id",
-        inquiryId
-      )
-      .select()
-      .single();
-
-  if (error) {
-    throw error;
-  }
-
-  return data;
+  return markGuestInquiryConvertedWithClient(
+    supabase,
+    inquiryId,
+    bookingId,
+    userData?.user?.id || null
+  );
 }

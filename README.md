@@ -188,7 +188,7 @@ Each main staff view has its own route inside the dashboard.
 | `/form` | Create / Edit Booking | Full booking form for group information, contacts, dates, guest counts, lodging, linens, meals, activities, facilities, rates, payments, documents, and other booking details. |
 | `/calendar` | Calendar View | Month and week views of dated bookings. |
 | `/lodging-calendar` | Lodging Calendar | Shows which lodging facilities are being used on which dates. |
-| `/inquiry-pipeline` | Inquiry Pipeline | Groups inquiries by stage such as New Inquiry, Needs Review, Contract Sent, Confirmed, Waitlist, and Cancelled. |
+| `/inquiry-pipeline` | Inquiry Pipeline (retired) | Kept in the code for reference only. Without Dev Mode the route shows a "retired" notice; booking progress is tracked in Portal Admin. |
 | `/master-spreadsheet` | All Booking Data | Spreadsheet-style grid of booking records with configurable columns. |
 | `/inquiry-spreadsheet` | Guest Group Inquiries & No's | Spreadsheet-style view focused on inquiry records. |
 | `/contacts` | Contacts View | Contact directory generated from booking records, including primary and secondary contacts. |
@@ -196,7 +196,7 @@ Each main staff view has its own route inside the dashboard.
 | `/portal-admin` | Portal View | Manages group leader portal tasks, documents, custom uploads, guest uploads, and portal links. |
 | `/reports` | Reports | Reporting for status, retreat type, source, monthly trends, lodging usage, camper days, financial fields, and data quality, with CSV export. |
 | `/jobs` | Jobs | Aggregates checklist and program logistics tasks assigned to staff across bookings. |
-| `/user-admin` | User Admin | Browser-local staff directory used for task assignment. |
+| `/user-admin` | User Admin | Shared staff directory (Supabase table `staff_directory`) used for task assignment, and the per-computer "Working as" choice. |
 | `/backup` | Backups & Restore | Creates, validates, compares, merges, and restores booking JSON backups. |
 
 ---
@@ -226,7 +226,7 @@ Lodging definitions are not perfectly identical across every view. For example, 
 
 #### Checklists and activities
 
-`BookingChecklists.jsx` and `BookingActivities.jsx` support internal staff planning.
+`BookingChecklists.jsx` supports internal staff planning. (`BookingActivities.jsx` was never rendered and has been removed.)
 
 Tasks can be assigned to staff names from User Admin and are aggregated into the Jobs view.
 
@@ -296,7 +296,7 @@ Supported booking imports include:
 
 Master-sheet imports use merge logic intended to preserve populated existing values when imported cells are empty. Do not assume that behavior applies to every importer: Archive, Generic, and Guest Group Inquiry rows currently follow different upsert paths, so matching IDs can be overwritten by the imported representation.
 
-There is also a separate staff-contact import path. It reads a `staff_contacts` worksheet into the browser-local User Admin list; it does not import those contacts into Supabase.
+There is also a separate staff-contact import path. It reads a `staff_contacts` worksheet into the User Admin staff directory (the shared `staff_directory` table once its migration has run, otherwise this browser's list). People who were deactivated stay deactivated.
 
 Original imported spreadsheet information can be preserved in:
 
@@ -422,11 +422,7 @@ directory is git-ignored and can contain working copies of policy or portal docu
 
 The User Admin view is **not the authentication system**.
 
-Its staff directory is stored in that browser's `localStorage` under:
-
-```text
-toahNipiStaffUsers
-```
+Its staff directory is stored in the Supabase table `staff_directory` (migration `supabase/migrations/20261028000100_staff_directory.sql`), the same on every computer. Until that migration is run, each browser keeps its own list under `localStorage` key `toahNipiStaffUsers`, as before, and User Admin says so. Everyone currently shares one login, so "completed by" comes from the person chosen under "Working as" on each computer.
 
 It is used primarily for assigning staff names to tasks.
 
@@ -550,7 +546,6 @@ Important files include:
     │   ├── DashboardBackups.jsx
     │   ├── BookingHousingTab.jsx
     │   ├── BookingChecklists.jsx
-    │   ├── BookingActivities.jsx
     │   └── Other dashboard components
     │
     ├── constants/
@@ -580,6 +575,20 @@ runRetentionMaintenance()
 Because this infrastructure is outside the Git repository, a clone of this repository alone does **not** recreate the automated backup system.
 
 See [Backup and Recovery](#backup-and-recovery).
+
+---
+
+## Changes from the October 2026 audit fixes
+
+See `AUDIT_FIX_REPORT.md` for the full account. In short:
+
+- **Shared rules.** Record classification (`src/utils/bookingClassification.js`), duplicated-field reads (`src/utils/bookingFields.js`), lodging (`src/constants/lodgingConstants.js`, `src/utils/lodgingUtils.js`), reports (`src/utils/reportRules.js`), jobs, portal and backup rules each live in one module used by every screen.
+- **Booking status.** Master and staff bookings are bookings. Progress (contract, deposit, insurance) is tracked in Portal Admin. The edit forms only mark a booking Booked, Waitlist or Cancelled.
+- **Saves.** Every booking save is conditional on `updated_at`; a save based on an out-of-date copy is refused, and the screen keeps the unsaved edits.
+- **Master re-import.** Fields changed in the app are kept; status changes only when the sheet states one; lodging belongs to the Housing tab once it has been saved.
+- **Backups.** Version 2 files add website inquiries, portal tasks, portal documents and an uploaded-file list. Version 1 files (including the Google Apps Script daily backups, per this README) still restore.
+- **Database changes.** `supabase/migrations/` (additive tables and columns), `supabase/optional/` (portal write policies, review first), `supabase/repairs/` (diagnostics, data repairs, undo).
+- **Tests.** `npm test` runs the regression tests in `tests/`.
 
 ---
 
@@ -1207,7 +1216,7 @@ Records with matching IDs are updated with values from the backup. This means ed
 
 Records that exist only in the live database are left intact.
 
-If a booking existed in the backup but was later deleted from the live database, Merge can re-insert it. Because the current write mapping does not restore `portal_token`, that re-inserted booking can receive a new portal token.
+If a booking existed in the backup but was later deleted from the live database, Merge can re-insert it. Since the audit fixes, a re-inserted booking keeps its original `portal_token` and `created_at` when the backup has them (version 2 backups always do; version 1 backups have the token if the backup writer included it).
 
 Use Merge when the goal is to restore selected historical state without first erasing the entire database, but review the comparison carefully because Merge is not a conflict-preserving merge of individual fields.
 
@@ -1215,11 +1224,13 @@ Use Merge when the goal is to restore selected historical state without first er
 
 #### Replace restore
 
-Replace mode is destructive and requires the user to type:
+Replace mode is destructive. It is only offered with Dev Mode on, to accounts the database lets delete bookings (admins), and requires the user to type:
 
 ```text
-RESTORE
+REPLACE AND RISK PORTAL DATA
 ```
+
+Dev Mode only shows the option; the database still decides who may delete. Since the audit fixes, bookings re-inserted by a restore keep their `portal_token` and `created_at` when the backup has them (version 2 backups always do), and version 2 backups also restore missing website inquiries, portal tasks and portal documents. Uploaded files are never restored; the backup only lists where they are.
 
 Before deletion begins, the application downloads a pre-restore safety snapshot of the current booking records.
 
@@ -1502,7 +1513,7 @@ When adding a persistent booking field:
 8. Update reports if appropriate.
 9. Update backup mapping if the external Apps Script backup uses an explicit field-by-field mapper.
 
-This matters because the current `dbRowToBooking` only explicitly restores `rentalFormDetails` and `rawSpreadsheetData` from `raw_data`. A new top-level field that exists only inside `raw_data` can disappear after a reload, and because frontend backups are built from the mapped booking object, that field can also be absent from a manual backup. Do not assume that placing a new field somewhere in `raw_data` makes it durable.
+This matters because `dbRowToBooking` (now in `src/services/bookingMapping.js`) restores only `rentalFormDetails`, `rawSpreadsheetData`, `inquiryAddress` and the named keys in `RAW_DATA_RESTORED_KEYS` from `raw_data`. A new top-level field that exists only inside `raw_data` can disappear after a reload, and because frontend backups are built from the mapped booking object, that field can also be absent from a manual backup. Do not assume that placing a new field somewhere in `raw_data` makes it durable.
 
 The automatic Google Apps Script backup maintains its own equivalent of `dbRowToBooking()`. If the booking schema changes, verify that the automatic backup still captures the intended fields.
 

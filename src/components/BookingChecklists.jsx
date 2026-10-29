@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createSerialBookingSaver } from "../utils/serialBookingSaver";
 import {
   FaClipboardList,
   FaPlus,
@@ -141,11 +142,55 @@ export default function BookingChecklists({
     (checklist) => checklist.id === openChecklistId
   );
 
-  const saveChecklists = (nextChecklists) => {
-    onSaveBooking({
-      ...booking,
-      checklists: nextChecklists,
-    });
+  /*
+    Saves run one at a time, and each change is applied to the newest saved
+    copy, so quick clicks cannot undo each other (AUDIT-045). Controls are
+    disabled while a save is running.
+  */
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const latestBookingRef = useRef(booking);
+  const onSaveBookingRef = useRef(onSaveBooking);
+
+  useEffect(() => {
+    latestBookingRef.current = booking;
+    onSaveBookingRef.current = onSaveBooking;
+  }, [booking, onSaveBooking]);
+
+  const saverRef = useRef(null);
+
+  // Created on first use, from an event handler.
+  const getSaver = () => {
+    if (!saverRef.current) {
+      saverRef.current = createSerialBookingSaver({
+        getBooking: () => latestBookingRef.current,
+        save: (nextBooking) => onSaveBookingRef.current(nextBooking),
+      });
+    }
+
+    return saverRef.current;
+  };
+
+  const saveChecklists = (updateChecklists) => {
+    const saver = getSaver();
+    setIsSaving(true);
+    setSaveError("");
+
+    saver
+      .enqueue((latestBooking) => ({
+        ...latestBooking,
+        checklists: updateChecklists(getBookingChecklists(latestBooking)),
+      }))
+      .catch(() => {
+        setSaveError(
+          "The last checklist change was not saved. The list shows what is stored."
+        );
+      })
+      .finally(() => {
+        if (!saver.isBusy()) {
+          setIsSaving(false);
+        }
+      });
   };
 
   const handleAddChecklist = (event) => {
@@ -163,7 +208,7 @@ export default function BookingChecklists({
       items: [],
     };
 
-    saveChecklists([...checklists, nextChecklist]);
+    saveChecklists((current) => [...current, nextChecklist]);
     setNewChecklistName("");
     setOpenChecklistId(nextChecklist.id);
     setEditingItemId("");
@@ -177,8 +222,8 @@ export default function BookingChecklists({
       return;
     }
 
-    saveChecklists(
-      checklists.map((currentChecklist) =>
+    saveChecklists((current) =>
+      current.map((currentChecklist) =>
         currentChecklist.id === checklist.id
           ? {
               ...currentChecklist,
@@ -198,8 +243,8 @@ export default function BookingChecklists({
       return;
     }
 
-    saveChecklists(
-      checklists.filter((checklist) => checklist.id !== checklistId)
+    saveChecklists((current) =>
+      current.filter((checklist) => checklist.id !== checklistId)
     );
 
     if (openChecklistId === checklistId) {
@@ -254,13 +299,7 @@ export default function BookingChecklists({
       completedBy: "",
     };
 
-    let updatedOpenChecklist = openChecklist;
-
-    const nextChecklists = checklists.map((checklist) => {
-      if (checklist.id !== openChecklist.id) {
-        return checklist;
-      }
-
+    const applyItem = (checklist) => {
       const existingItems = checklist.items || [];
 
       const nextItems = editingItemId
@@ -277,15 +316,19 @@ export default function BookingChecklists({
           )
         : [...existingItems, nextItem];
 
-      updatedOpenChecklist = {
+      return {
         ...checklist,
         items: sortChecklistItems(nextItems),
       };
+    };
 
-      return updatedOpenChecklist;
-    });
+    const updatedOpenChecklist = applyItem(openChecklist);
 
-    saveChecklists(nextChecklists);
+    saveChecklists((current) =>
+      current.map((checklist) =>
+        checklist.id === openChecklist.id ? applyItem(checklist) : checklist
+      )
+    );
 
     setEditingItemId("");
     setItemForm(
@@ -295,10 +338,22 @@ export default function BookingChecklists({
 
   const toggleChecklistItem = (checklistId, itemId) => {
     const today = formatDateForInput(new Date());
-    const completedByName = currentStaffUser?.name || "Admin";
+    const completedByName = currentStaffUser?.name || "";
 
-    saveChecklists(
-      checklists.map((checklist) => {
+    /*
+      Everyone shares one login, so "completed by" comes from the person
+      chosen under "Working as" (AUDIT-017). Marking an item done needs that
+      choice; un-ticking does not.
+    */
+    const item = (openChecklist?.items || []).find((entry) => entry.id === itemId);
+
+    if (!item?.completed && !completedByName) {
+      alert('Choose your name under "Working as" in User Admin first, so the checklist records who completed it.');
+      return;
+    }
+
+    saveChecklists((current) =>
+      current.map((checklist) => {
         if (checklist.id !== checklistId) {
           return checklist;
         }
@@ -331,8 +386,8 @@ export default function BookingChecklists({
       return;
     }
 
-    saveChecklists(
-      checklists.map((checklist) => {
+    saveChecklists((current) =>
+      current.map((checklist) => {
         if (checklist.id !== checklistId) {
           return checklist;
         }
@@ -371,12 +426,21 @@ export default function BookingChecklists({
               onChange={(event) => setNewChecklistName(event.target.value)}
             />
 
-            <button className="primary-dashboard-button" type="submit">
+            <button className="primary-dashboard-button" type="submit" disabled={isSaving}>
               <FaPlus />
               Add Checklist
             </button>
           </form>
         </div>
+
+        {(isSaving || saveError) && (
+          <p
+            className={saveError ? "booking-checklist-save-error" : "booking-checklist-saving"}
+            role={saveError ? "alert" : "status"}
+          >
+            {saveError || "Saving…"}
+          </p>
+        )}
 
         {checklists.length > 0 ? (
           <div className="booking-checklist-table-wrap">
@@ -403,6 +467,7 @@ export default function BookingChecklists({
                           className="booking-checklist-icon-button"
                           type="button"
                           onClick={() => renameChecklist(checklist)}
+                          disabled={isSaving}
                           aria-label={`Rename ${checklist.name}`}
                         >
                           ✎
@@ -447,6 +512,7 @@ export default function BookingChecklists({
                           className="booking-checklist-delete-button"
                           type="button"
                           onClick={() => deleteChecklist(checklist.id)}
+                          disabled={isSaving}
                           aria-label={`Delete ${checklist.name}`}
                         >
                           <FaTrashAlt />
@@ -553,7 +619,7 @@ export default function BookingChecklists({
                   </button>
                 )}
 
-                <button className="primary-dashboard-button" type="submit">
+                <button className="primary-dashboard-button" type="submit" disabled={isSaving}>
                   {editingItemId ? "Save Item" : "Add Checklist Item"}
                 </button>
               </div>
@@ -595,6 +661,7 @@ export default function BookingChecklists({
                         <input
                           type="checkbox"
                           checked={Boolean(item.completed)}
+                          disabled={isSaving}
                           onChange={() =>
                             toggleChecklistItem(openChecklist.id, item.id)
                           }
@@ -618,6 +685,7 @@ export default function BookingChecklists({
                             item.completed ? "completed" : ""
                           }`}
                           type="button"
+                          disabled={isSaving}
                           onClick={() =>
                             toggleChecklistItem(openChecklist.id, item.id)
                           }
@@ -637,6 +705,7 @@ export default function BookingChecklists({
                         <button
                           className="booking-checklist-delete-button"
                           type="button"
+                          disabled={isSaving}
                           onClick={() =>
                             deleteChecklistItem(openChecklist.id, item.id)
                           }

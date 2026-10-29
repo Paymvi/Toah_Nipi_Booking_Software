@@ -1491,3 +1491,15 @@
     padding: 1.375rem 0.938rem;
   }
 }
+
+/* Partial backups or restores (a section could not be read or restored). */
+.backup-notice-warning {
+  border-color: #f0d9a8;
+  background: #fff8e8;
+  color: #7a4b00;
+}
+
+.backup-notice-warning .backup-notice-icon {
+  background: #fdecc8;
+  color: #9a6400;
+}

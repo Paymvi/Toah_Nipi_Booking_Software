@@ -25,6 +25,7 @@ import {
   formatSubmittedDate,
   formatDateRange,
   getLocalDate,
+  getBookingInquiryDateValue,
 } from "../utils/dateUtils";
 
 
@@ -509,10 +510,14 @@ const bookingSpreadsheetColumns = [
     label: "Source Row",
     value: (booking) => booking.sourceRowNumber,
   },
-  {
+    {
+    // The real inquiry date; Master and Archive rows have none (AUDIT-012).
     label: "Submitted",
-    value: (booking) => formatSubmittedDate(booking.submittedAt),
-    sortValue: (booking) => booking.submittedAt || "",
+    value: (booking) => {
+      const inquiryDate = getBookingInquiryDateValue(booking);
+      return inquiryDate ? formatSubmittedDate(`${inquiryDate}T12:00:00`) : "";
+    },
+    sortValue: (booking) => getBookingInquiryDateValue(booking),
   },
   {
     label: "Contact Name",
@@ -592,9 +597,15 @@ const bookingSpreadsheetColumns = [
     label: "Buildings / Rooms",
     value: (booking) => booking.buildingsRooms,
   },
-  {
+    {
+    // Staff meal notes appear with the meals (AUDIT-040).
     label: "Meals",
-    value: (booking) => booking.meals,
+    value: (booking) =>
+      [booking.meals, booking.rentalFormDetails?.mealNotes && booking.sourceType === "Staff Booking"
+        ? `Notes: ${booking.rentalFormDetails.mealNotes}`
+        : ""]
+        .filter(Boolean)
+        .join(" — "),
   },
   {
     label: "# Meals",
@@ -604,9 +615,15 @@ const bookingSpreadsheetColumns = [
     label: "Food Allergies",
     value: (booking) => booking.foodAllergies,
   },
-  {
+    {
+    // General operational notes for every source (AUDIT-040). Older staff
+    // bookings stored their meal notes here; those are shown with Meals.
     label: "Need To Know",
-    value: (booking) => booking.needToKnow,
+    value: (booking) =>
+      booking.sourceType === "Staff Booking" &&
+      booking.needToKnow === booking.rentalFormDetails?.mealNotes
+        ? ""
+        : booking.needToKnow,
   },
   {
     label: "Linen Sets",
@@ -1426,12 +1443,6 @@ function getSpreadsheetBuildingSearchText(booking) {
   return [
     booking.roomName,
     booking.buildingsRooms,
-    booking.housing,
-    booking.housingSummary,
-    booking.housingAssignments,
-    booking.lodging,
-    booking.lodgingSummary,
-    booking.lodgingAssignments,
     ...rawBuildingValues,
   ]
     .map(getSpreadsheetBuildingValueText)

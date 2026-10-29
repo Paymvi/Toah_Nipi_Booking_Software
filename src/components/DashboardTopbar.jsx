@@ -11,7 +11,6 @@ This file handles:
 - Opening the import dropdown menu
 - Triggering Master 2025 / 2026 / 2027 imports
 - Triggering staff contact imports
-- Triggering archive imports
 - Triggering Import Everything
 - Triggering Excel export
 - Refreshing booking data
@@ -44,7 +43,6 @@ export default function DashboardTopbar({
   master2027FileInputRef,
 
   staffContactsFileInputRef,
-  archiveFileInputRef,
   importEverythingFileInputRef,
 
   importDropdownRef,
@@ -60,7 +58,6 @@ export default function DashboardTopbar({
   handleImportMaster2027Spreadsheet,
 
   handleImportStaffContactsSpreadsheet,
-  handleImportArchiveSpreadsheet,
   handleImportEverythingSpreadsheet,
 
   openMasterImportPicker,
@@ -68,12 +65,12 @@ export default function DashboardTopbar({
   openMaster2027ImportPicker,
 
   openStaffContactsImportPicker,
-  openArchiveImportPicker,
   openEverythingImportPicker,
 
-  exportInquiriesToSpreadsheet,
+    exportInquiriesToSpreadsheet,
   refreshInquiries,
   deleteAllInquiries,
+  canImport = true,
 }) {
   const [isDevModeDialogOpen, setIsDevModeDialogOpen] = useState(false);
 
@@ -168,17 +165,8 @@ export default function DashboardTopbar({
           onChange={handleImportMaster2027Spreadsheet}
         />
 
-        {/* Hidden archive input */}
-        <input
-          className="dashboard-file-input"
-          ref={archiveFileInputRef}
-          type="file"
-          accept=".xlsx"
-          onChange={handleImportArchiveSpreadsheet}
-        />
-
-        {/* Import dropdown */}
-        {isDevMode && (
+                {/* Import dropdown (not for view-only accounts, AUDIT-023) */}
+        {isDevMode && canImport && (
         <div className="import-dropdown" ref={importDropdownRef}>
           <button
             className={`secondary-dashboard-button import-dropdown-button ${
@@ -241,22 +229,6 @@ export default function DashboardTopbar({
                 </span>
               </button>
 
-              {/* Archive importer currently hidden from the menu */}
-              {/*
-              <button
-                type="button"
-                role="menuitem"
-                onClick={openArchiveImportPicker}
-              >
-                <FaArchive />
-
-                <span>
-                  <strong>Import Archives</strong>
-                  <small>Upload historical archive spreadsheet</small>
-                </span>
-              </button>
-              */}
-
               {/* Staff Contacts */}
               <button
                 type="button"
@@ -296,8 +268,8 @@ export default function DashboardTopbar({
           type="button"
           onClick={exportInquiriesToSpreadsheet}
         >
-          <FaFileExport />
-          Export Excel
+                    <FaFileExport />
+          Export contact list
         </button>
 
         {/* Refresh */}
@@ -310,8 +282,8 @@ export default function DashboardTopbar({
           Refresh
         </button>
 
-        {/* Delete */}
-        {isDevMode && (
+                {/* Delete (admins only; the database refuses anyone else) */}
+        {isDevMode && deleteAllInquiries && (
         <button
           className="danger-dashboard-button"
           type="button"

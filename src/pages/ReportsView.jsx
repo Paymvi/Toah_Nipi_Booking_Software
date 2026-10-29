@@ -1,13 +1,30 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  getArrivalMonthKey,
+  getOfficialRetreatType,
+  getReportBookings,
+  getReportSourceLabel,
+  getReportStateLabel,
+  REPORT_INCLUSION_TEXT,
+  shouldUseStoredCamperDays,
+  toCsv,
+  UNDATED_MONTH_KEY,
+} from "../utils/reportRules";
+import {
+  getDuplicatedField,
+  getDetailFieldPreferringTopLevel,
+  getGuestCountNumber,
+} from "../utils/bookingFields";
+import { getBookingDisplayState } from "../utils/bookingClassification";
+import { LODGING_BUILDINGS } from "../constants/lodgingConstants";
+import { getBookingLodgingAssignments } from "../utils/lodgingUtils";
+import {
   FaBed,
   FaChartBar,
   FaClipboardList,
   FaClock,
-  FaDollarSign,
   FaExclamationTriangle,
   FaMoon,
-  FaQuestionCircle,
   FaRegCalendarCheck,
   FaTable,
   FaUsers,
@@ -74,14 +91,6 @@ function getReportsNumber(value) {
   return Number.isFinite(number) ? number : 0;
 }
 
-function formatReportsCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value || 0);
-}
-
 function formatReportsNumber(value) {
   return new Intl.NumberFormat("en-US").format(value || 0);
 }
@@ -101,39 +110,15 @@ function getReportsPercent(value, total) {
    RECORD / SOURCE HELPERS
 ========================================================= */
 
-function isReportsArchiveRecord(booking) {
-  const text = [
-    booking?.sourceType,
-    booking?.detectedImportType,
-    booking?.retreatType,
-    booking?.status,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  return text.includes("archive") || text.includes("archived visit");
-}
-
-function getBookingInputMethod(booking) {
-  const sourceType = String(booking?.sourceType || "").trim();
-  const detectedImportType = String(booking?.detectedImportType || "").trim();
-  const normalizedSource = sourceType.toLowerCase();
-
-  if (normalizedSource === "staff booking") return "Staff Booking";
-  if (!sourceType || normalizedSource === "form") return "Public Form";
-
-  return `Imported - ${detectedImportType || sourceType}`;
-}
-
+// "Forms" = entered in the app (by staff or from a website inquiry).
 function getReportsSourceMode(booking) {
-  const sourceType = String(booking?.sourceType || "").trim().toLowerCase();
+  const source = getReportSourceLabel(booking);
 
-  if (!sourceType || sourceType === "form" || sourceType === "staff booking") {
-    return "forms";
-  }
-
-  return "imports";
+  return source === "Staff entered" ||
+    source === "Website inquiry" ||
+    source === "Older public form"
+    ? "forms"
+    : "imports";
 }
 
 /* =========================================================
@@ -223,20 +208,18 @@ function getReportsDateRange(settings) {
   };
 }
 
-function bookingTouchesReportsDateRange(booking, dateRange) {
+/*
+  A stay belongs to the period it arrives in (Q-009 A), so a Dec 30 – Jan 2
+  stay counts in December everywhere: in the totals and in the monthly rows.
+*/
+function bookingArrivesInReportsDateRange(booking, dateRange) {
   if (!dateRange.startDate && !dateRange.endDate) return true;
 
   const start = getLocalDate(booking.startDate);
   if (!start) return false;
-
-  const end = booking.endDate ? getLocalDate(booking.endDate) : start;
-
-  if (dateRange.startDate && dateRange.endDate) {
-    return start <= dateRange.endDate && end >= dateRange.startDate;
-  }
-
-  if (dateRange.startDate) return end >= dateRange.startDate;
-  return start <= dateRange.endDate;
+  if (dateRange.startDate && start < dateRange.startDate) return false;
+  if (dateRange.endDate && start > dateRange.endDate) return false;
+  return true;
 }
 
 /* =========================================================
@@ -285,9 +268,13 @@ function getReportsGuestCountDetails(booking) {
     };
   }
 
+    // Master records keep a copy of the total; the column is the newest.
+  const approxTotalGuests =
+    getDetailFieldPreferringTopLevel(booking, "approxTotalGuests");
+
   if (!isBlankBookingValue(details.approxTotalGuests)) {
     return {
-      value: getReportsNumber(details.approxTotalGuests),
+      value: getGuestCountNumber(approxTotalGuests),
       source: "Estimated",
     };
   }
@@ -329,8 +316,9 @@ function getReportsGuestCountDetails(booking) {
     booking.persons
   );
 
+    // Ranges such as "40-50" count as their lower number (Q-029).
   if (!isBlankBookingValue(fallback)) {
-    return { value: getReportsNumber(fallback), source: "Recorded" };
+    return { value: getGuestCountNumber(fallback), source: "Recorded" };
   }
 
   return { value: 0, source: "Missing" };
@@ -341,19 +329,13 @@ function getReportsGuestCount(booking) {
 }
 
 function getReportsNightCount(booking) {
-  const details = getRentalFormDetails(booking);
-  return getReportsNumber(
-    firstReportsValue(details.numberOfNights, booking.nights)
-  );
+  return getReportsNumber(getDuplicatedField(booking, "nights"));
 }
 
 function getReportsMealCount(booking) {
   const details = getRentalFormDetails(booking);
 
-  const directValue = firstReportsValue(
-    details.numberOfMeals,
-    booking.mealCount
-  );
+    const directValue = getDuplicatedField(booking, "mealCount");
 
   if (!isBlankBookingValue(directValue)) {
     return getReportsNumber(directValue);
@@ -476,12 +458,12 @@ function getReportsCamperDaysDetails(booking) {
   const meals = getReportsMealCount(booking);
   const dayCampers = getReportsDayCamperDetails(booking);
 
-  /*
-    If an imported record already has a stored Camper Days value,
-    treat that as the canonical total and do not add anything on top.
-    This avoids double-counting historical/imported calculations.
+    /*
+    An imported Camper Days value is the canonical total (adding to it
+    would double count) until staff change the guest count, nights or
+    meals in the app; then the figure is recalculated (Q-028 A).
   */
-  if (storedValue > 0) {
+  if (storedValue > 0 && shouldUseStoredCamperDays(booking)) {
     return {
       value: storedValue,
       source: "Stored",
@@ -578,88 +560,16 @@ function getReportsDepositReceivedAmount(booking) {
    REVENUE
 ========================================================= */
 
-function getReportsRevenueDetails(booking) {
-  const details = getRentalFormDetails(booking);
-
-  const invoiceTotal = getReportsNumber(
-    firstReportsValue(
-      booking.invoiceTotal,
-      booking.invoiceLodgingMeals,
-      booking.invoice_total,
-      details.invoiceTotal
-    )
-  );
-
-  const expectedRevenue = getReportsNumber(
-    firstReportsValue(
-      booking.expectedRevenue,
-      booking.expectedMinimumRevenue,
-      booking.expected_revenue,
-      details.expectedRevenue
-    )
-  );
-
-  const monthlyProjection = getReportsNumber(
-    booking.monthlyProjectedIncome
-  );
-
-  const itemizedTotal =
-    getReportsNumber(booking.usageFee) +
-    getReportsNumber(booking.lodgingCost) +
-    getReportsNumber(booking.foodCost) +
-    getReportsNumber(booking.miscCost);
-
-  if (invoiceTotal) {
-    return { value: invoiceTotal, source: "Invoice Total", confidence: "high" };
-  }
-
-  if (expectedRevenue) {
-    return {
-      value: expectedRevenue,
-      source: "Expected Revenue",
-      confidence: "medium",
-    };
-  }
-
-  if (monthlyProjection) {
-    return {
-      value: monthlyProjection,
-      source: "Monthly Projection",
-      confidence: "medium",
-    };
-  }
-
-  if (itemizedTotal) {
-    return {
-      value: itemizedTotal,
-      source: "Itemized Fallback",
-      confidence: "low",
-    };
-  }
-
-  return { value: 0, source: "Missing", confidence: "missing" };
-}
-
-function getReportsRevenue(booking) {
-  return getReportsRevenueDetails(booking).value;
-}
-
 /* =========================================================
    MONTH / RETREAT TYPE
 ========================================================= */
 
 function getReportsMonthKey(booking) {
-  const date = getLocalDate(booking.startDate);
-  if (!date) return "";
-
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-    2,
-    "0"
-  )}`;
+  return getArrivalMonthKey(booking) || UNDATED_MONTH_KEY;
 }
 
 function formatReportsMonthLabel(monthKey) {
-  if (!monthKey) return "No Month";
+  if (!monthKey || monthKey === UNDATED_MONTH_KEY) return "Undated";
 
   const [year, month] = monthKey.split("-");
   const date = new Date(Number(year), Number(month) - 1, 1);
@@ -670,8 +580,9 @@ function formatReportsMonthLabel(monthKey) {
   }).format(date);
 }
 
+// Official Create Booking types; unknown shorthand stays visible as typed.
 function getReportsRetreatType(booking) {
-  return String(booking.retreatType || "").trim() || "No Retreat Type";
+  return getOfficialRetreatType(booking.retreatType).type;
 }
 
 /* =========================================================
@@ -679,168 +590,41 @@ function getReportsRetreatType(booking) {
 ========================================================= */
 
 const REPORTS_HOUSING_CONFIG = [
-  {
-    id: "bethel",
-    label: "Bethel",
-    field: "lodgingBethel",
-    aliases: ["bethel"],
-  },
-  {
-    id: "hebron-third",
-    label: "Hebron 3rd Floor",
-    field: "lodgingHebronThird",
-    aliases: ["hebron 3rd floor", "hebron third floor", "hebron 3rd"],
-  },
-  {
-    id: "hebron-bunks",
-    label: "Hebron Bunks",
-    field: "lodgingHebronBunks",
-    aliases: ["hebron bunks", "hebron bunk"],
-  },
-  {
-    id: "dothan",
-    label: "Dothan",
-    field: "lodgingDothan",
-    aliases: ["dothan"],
-  },
-  {
-    id: "ajalon",
-    label: "Ajalon",
-    field: "lodgingAjalon",
-    aliases: ["ajalon", "rustic: ajalon", "rustic ajalon"],
-  },
-  {
-    id: "capernaum",
-    label: "Capernaum",
-    field: "lodgingCapernaum",
-    aliases: ["capernaum", "rustic: capernaum", "rustic capernaum"],
-  },
-  {
-    id: "guest-house",
-    label: "Guest House",
-    field: "lodgingGuestHouse",
-    aliases: ["guest house", "guesthouse"],
-  },
-  {
-    id: "hebron-unspecified",
-    label: "Hebron — Unspecified",
-    field: null,
-    aliases: [],
-    genericHebron: true,
-  },
+  ...LODGING_BUILDINGS.map((building) => ({
+    id: building.id,
+    label: building.label,
+  })),
+  { id: "hebron", label: "Hebron — area not specified" },
 ];
 
-function getReportsHousingText(booking) {
-  return [booking?.roomName, booking?.buildingsRooms]
-    .filter(Boolean)
-    .join("; ")
-    .toLowerCase();
-}
-
-function getReportsHousingCountFromSummary(booking, row) {
-  const parts = String(booking?.buildingsRooms || "")
-    .split(/[;\n]+/)
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  for (const part of parts) {
-    const lowerPart = part.toLowerCase();
-
-    const matches = row.aliases.some((alias) =>
-      lowerPart.startsWith(alias.toLowerCase())
-    );
-
-    if (!matches) continue;
-
-    const countMatch = part.match(/:\s*(\d+)/);
-    if (countMatch) return Number(countMatch[1]);
-  }
-
-  return 0;
-}
-
-function reportsHasGenericHebron(booking) {
-  const text = getReportsHousingText(booking);
-
-  if (!/\bhebron\b/i.test(text)) return false;
-
-  const identifiesThird = /hebron\s+(3rd|third)/i.test(text);
-  const identifiesBunks = /hebron\s+bunks?/i.test(text);
-
-  return !identifiesThird && !identifiesBunks;
-}
-
+// Same reader as the Lodging Calendar and Housing tab (AUDIT-007, 031).
 function getReportsHousingUsage(booking, row) {
-  if (row.genericHebron) {
-    return {
-      used: reportsHasGenericHebron(booking),
-      assignedGuests: 0,
-      countKnown: false,
-    };
-  }
-
-  const details = getRentalFormDetails(booking);
-
-  const detailCount = row.field ? getReportsNumber(details[row.field]) : 0;
-  const summaryCount = getReportsHousingCountFromSummary(booking, row);
-  const assignedGuests = detailCount || summaryCount || 0;
-
-  const explicitlyUsed = row.field
-    ? details?.housingUsage?.[row.field] === true
-    : false;
-
-  const housingText = getReportsHousingText(booking);
-
-  const foundInText = row.aliases.some((alias) =>
-    housingText.includes(alias.toLowerCase())
+  const assignment = getBookingLodgingAssignments(booking).find(
+    (entry) => entry.buildingId === row.id
   );
 
-  const used = assignedGuests > 0 || explicitlyUsed || foundInText;
-
   return {
-    used,
-    assignedGuests,
-    countKnown: assignedGuests > 0,
+    used: Boolean(assignment),
+    assignedGuests: assignment?.count || 0,
+    countKnown: Boolean(assignment?.count),
   };
 }
 
 function reportsBookingHasHousing(booking) {
-  return REPORTS_HOUSING_CONFIG.some(
-    (row) => getReportsHousingUsage(booking, row).used
-  );
+  return getBookingLodgingAssignments(booking).length > 0;
 }
 
 function reportsBookingHasUnknownHousingCount(booking) {
-  return REPORTS_HOUSING_CONFIG.some((row) => {
-    const usage = getReportsHousingUsage(booking, row);
-    return usage.used && !usage.countKnown;
-  });
+  return getBookingLodgingAssignments(booking).some((entry) => !entry.count);
 }
 
 /* =========================================================
    CSV
 ========================================================= */
 
+// Numbers rounded like the screen; formula-like text neutralized.
 function downloadReportsCsv(filename, sections) {
-  const rows = [];
-
-  sections.forEach((section) => {
-    rows.push([section.title]);
-    rows.push(section.headers);
-    section.rows.forEach((row) => rows.push(row));
-    rows.push([]);
-  });
-
-  const csvContent = rows
-    .map((row) =>
-      row
-        .map((cell) => {
-          const value = String(cell ?? "");
-          return `"${value.replace(/"/g, '""')}"`;
-        })
-        .join(",")
-    )
-    .join("\n");
+  const csvContent = toCsv(sections);
 
   const blob = new Blob([csvContent], {
     type: "text/csv;charset=utf-8;",
@@ -1124,25 +908,18 @@ function ReportsView({ inquiryBookings }) {
     [reportsSettings]
   );
 
-  const operationalBookings = useMemo(
-    () =>
-      inquiryBookings.filter(
-        (booking) => !isReportsArchiveRecord(booking)
-      ),
+    // Q-008: everything except host records; converted inquiries once.
+  const reportSelection = useMemo(
+    () => getReportBookings(inquiryBookings),
     [inquiryBookings]
   );
 
-  const archiveExcludedCount =
-    inquiryBookings.length - operationalBookings.length;
+  const operationalBookings = reportSelection.bookings;
 
   const statusOptions = useMemo(
     () =>
       Array.from(
-        new Set(
-          operationalBookings
-            .map((booking) => booking.status)
-            .filter(Boolean)
-        )
+        new Set(operationalBookings.map(getReportStateLabel))
       ).sort(),
     [operationalBookings]
   );
@@ -1161,9 +938,9 @@ function ReportsView({ inquiryBookings }) {
 
   const filteredReportBookings = useMemo(() => {
     return operationalBookings.filter((booking) => {
-      if (
+            if (
         reportsSettings.status !== "all" &&
-        booking.status !== reportsSettings.status
+        getReportStateLabel(booking) !== reportsSettings.status
       ) {
         return false;
       }
@@ -1182,28 +959,27 @@ function ReportsView({ inquiryBookings }) {
         return false;
       }
 
-      return bookingTouchesReportsDateRange(booking, reportDateRange);
+            return bookingArrivesInReportsDateRange(booking, reportDateRange);
     });
   }, [operationalBookings, reportsSettings, reportDateRange]);
 
   const totalBookings = filteredReportBookings.length;
 
-  const confirmedBookings = filteredReportBookings.filter((booking) =>
-    String(booking.status || "").toLowerCase().includes("confirm")
+    // Shared labels; progress statuses such as "Contract Sent" no longer count.
+  const confirmedBookings = filteredReportBookings.filter(
+    (booking) => getBookingDisplayState(booking).key === "booked"
   );
 
-  const inquiryBookingsCount = filteredReportBookings.filter((booking) =>
-    String(booking.status || "").toLowerCase().includes("inquiry")
+  const inquiryBookingsCount = filteredReportBookings.filter(
+    (booking) => getBookingDisplayState(booking).key === "inquiry"
   ).length;
 
-  const cancelledBookings = filteredReportBookings.filter((booking) =>
-    String(booking.status || "").toLowerCase().includes("cancel")
+  const cancelledBookings = filteredReportBookings.filter(
+    (booking) => getBookingDisplayState(booking).key === "cancelled"
   );
 
   const waitlistBookings = filteredReportBookings.filter(
-    (booking) =>
-      String(booking.waitlist || "").toLowerCase() === "yes" ||
-      String(booking.status || "").toLowerCase().includes("wait")
+    (booking) => getBookingDisplayState(booking).key === "waitlist"
   );
 
   const totalGuests = filteredReportBookings.reduce(
@@ -1299,11 +1075,6 @@ function ReportsView({ inquiryBookings }) {
     ...camperDaysBreakdownRows.map((row) => row.count)
   );
 
-  const projectedRevenue = filteredReportBookings.reduce(
-    (sum, booking) => sum + getReportsRevenue(booking),
-    0
-  );
-
   const depositsReceived = filteredReportBookings.reduce(
     (sum, booking) => sum + getReportsDepositReceivedAmount(booking),
     0
@@ -1317,51 +1088,11 @@ function ReportsView({ inquiryBookings }) {
     (booking) => getReportsGuestCountDetails(booking).source === "Actual"
   ).length;
 
-  const revenueSourceRows = useMemo(() => {
-    const sourceMap = new Map();
-
-    filteredReportBookings.forEach((booking) => {
-      const revenue = getReportsRevenueDetails(booking);
-
-      if (!sourceMap.has(revenue.source)) {
-        sourceMap.set(revenue.source, {
-          label: revenue.source,
-          count: 0,
-          value: 0,
-          confidence: revenue.confidence,
-        });
-      }
-
-      const row = sourceMap.get(revenue.source);
-      row.count += 1;
-      row.value += revenue.value;
-    });
-
-    const order = {
-      high: 1,
-      medium: 2,
-      low: 3,
-      missing: 4,
-    };
-
-    return Array.from(sourceMap.values()).sort(
-      (a, b) =>
-        order[a.confidence] - order[b.confidence] ||
-        b.count - a.count
-    );
-  }, [filteredReportBookings]);
-
-  const maxRevenueSourceValue = Math.max(
-    0,
-    ...revenueSourceRows.map((row) => row.value)
-  );
-
   const monthlyRows = useMemo(() => {
     const monthMap = new Map();
 
     filteredReportBookings.forEach((booking) => {
-      const monthKey = getReportsMonthKey(booking);
-      if (!monthKey) return;
+            const monthKey = getReportsMonthKey(booking);
 
       if (!monthMap.has(monthKey)) {
         monthMap.set(monthKey, {
@@ -1369,9 +1100,7 @@ function ReportsView({ inquiryBookings }) {
           label: formatReportsMonthLabel(monthKey),
           bookings: 0,
           confirmed: 0,
-          guests: 0,
-          revenue: 0,
-
+                    guests: 0,
           // Camper Days
           camperDays: 0,
           camperDayBookings: 0,
@@ -1384,9 +1113,7 @@ function ReportsView({ inquiryBookings }) {
 
       row.bookings += 1;
       row.guests += getReportsGuestCount(booking);
-      row.revenue += getReportsRevenue(booking);
-
-      const camperDays = getReportsCamperDays(booking);
+            const camperDays = getReportsCamperDays(booking);
       const dayCamperDetails = getReportsDayCamperDetails(booking);
 
       row.dayCampers += dayCamperDetails.count;
@@ -1397,15 +1124,18 @@ function ReportsView({ inquiryBookings }) {
         row.camperDayBookings += 1;
       }
 
-      if (
-        String(booking.status || "").toLowerCase().includes("confirm")
-      ) {
+            if (getBookingDisplayState(booking).key === "booked") {
         row.confirmed += 1;
       }
     });
 
+        // "Undated" sorts last so the rows add up to the totals.
     return Array.from(monthMap.values()).sort((a, b) =>
-      a.monthKey.localeCompare(b.monthKey)
+      a.monthKey === UNDATED_MONTH_KEY
+        ? 1
+        : b.monthKey === UNDATED_MONTH_KEY
+          ? -1
+          : a.monthKey.localeCompare(b.monthKey)
     );
   }, [filteredReportBookings]);
 
@@ -1419,17 +1149,12 @@ function ReportsView({ inquiryBookings }) {
     ...monthlyRows.map((row) => row.guests)
   );
 
-  const maxMonthlyRevenue = Math.max(
-    0,
-    ...monthlyRows.map((row) => row.revenue)
-  );
-
   /* =========================================================
     CAMPER DAY ANALYTICS
   ========================================================= */
 
-  const camperDayMonthlyRows = monthlyRows.filter(
-    (row) => row.camperDays > 0
+    const camperDayMonthlyRows = monthlyRows.filter(
+    (row) => row.camperDays > 0 && row.monthKey !== UNDATED_MONTH_KEY
   );
 
   const hoveredCamperMonthGroups = useMemo(() => {
@@ -1574,76 +1299,6 @@ function ReportsView({ inquiryBookings }) {
     ...largestCamperDayBookings.map((row) => row.camperDays)
   );
 
-  const revenueBreakdown = [
-    {
-      label: "Invoice Totals",
-      value: filteredReportBookings.reduce(
-        (sum, booking) =>
-          sum +
-          getReportsNumber(
-            firstReportsValue(
-              booking.invoiceTotal,
-              booking.invoiceLodgingMeals,
-              booking.invoice_total
-            )
-          ),
-        0
-      ),
-    },
-    {
-      label: "Expected Revenue",
-      value: filteredReportBookings.reduce(
-        (sum, booking) =>
-          sum +
-          getReportsNumber(
-            firstReportsValue(
-              booking.expectedRevenue,
-              booking.expectedMinimumRevenue,
-              booking.expected_revenue
-            )
-          ),
-        0
-      ),
-    },
-    {
-      label: "Usage Fees",
-      value: filteredReportBookings.reduce(
-        (sum, booking) => sum + getReportsNumber(booking.usageFee),
-        0
-      ),
-    },
-    {
-      label: "Lodging",
-      value: filteredReportBookings.reduce(
-        (sum, booking) => sum + getReportsNumber(booking.lodgingCost),
-        0
-      ),
-    },
-    {
-      label: "Food",
-      value: filteredReportBookings.reduce(
-        (sum, booking) => sum + getReportsNumber(booking.foodCost),
-        0
-      ),
-    },
-    {
-      label: "Misc.",
-      value: filteredReportBookings.reduce(
-        (sum, booking) => sum + getReportsNumber(booking.miscCost),
-        0
-      ),
-    },
-    {
-      label: "Deposits Received",
-      value: depositsReceived,
-    },
-  ];
-
-  const maxRevenueBreakdown = Math.max(
-    0,
-    ...revenueBreakdown.map((item) => item.value)
-  );
-
   const retreatTypeRows = useMemo(() => {
     const map = new Map();
 
@@ -1654,15 +1309,14 @@ function ReportsView({ inquiryBookings }) {
         map.set(type, {
           label: type,
           bookings: 0,
-          guests: 0,
-          revenue: 0,
+                    guests: 0,
         });
       }
 
       const row = map.get(type);
+
       row.bookings += 1;
       row.guests += getReportsGuestCount(booking);
-      row.revenue += getReportsRevenue(booking);
     });
 
     return Array.from(map.values()).sort(
@@ -1712,7 +1366,7 @@ function ReportsView({ inquiryBookings }) {
     const map = new Map();
 
     filteredReportBookings.forEach((booking) => {
-      const status = String(booking.status || "No Status").trim();
+            const status = getReportStateLabel(booking);
       map.set(status, (map.get(status) || 0) + 1);
     });
 
@@ -1730,7 +1384,7 @@ function ReportsView({ inquiryBookings }) {
     const map = new Map();
 
     filteredReportBookings.forEach((booking) => {
-      const source = getBookingInputMethod(booking);
+            const source = getReportSourceLabel(booking);
       map.set(source, (map.get(source) || 0) + 1);
     });
 
@@ -1787,11 +1441,8 @@ function ReportsView({ inquiryBookings }) {
     {
       label: "Confirmed / Contract Missing Deposit Status",
       count: filteredReportBookings.filter((booking) => {
-        const status = String(booking.status || "").toLowerCase();
-
-        const shouldHaveDeposit =
-          status.includes("confirmed") ||
-          status.includes("contract");
+                const shouldHaveDeposit =
+          getBookingDisplayState(booking).key === "booked";
 
         return (
           shouldHaveDeposit &&
@@ -1799,14 +1450,7 @@ function ReportsView({ inquiryBookings }) {
         );
       }).length,
     },
-    {
-      label: "Missing Revenue",
-      count: filteredReportBookings.filter(
-        (booking) =>
-          getReportsRevenueDetails(booking).confidence === "missing"
-      ).length,
-    },
-  ];
+      ];
 
   const maxQualityCount = Math.max(
     0,
@@ -1814,13 +1458,27 @@ function ReportsView({ inquiryBookings }) {
   );
 
   const handleExportReports = () => {
-    downloadReportsCsv("toah-nipi-reports-summary.csv", [
+        downloadReportsCsv("toah-nipi-reports-summary.csv", [
+      {
+        title: "Filters Used",
+        headers: ["Filter", "Value"],
+        rows: [
+          ["Date range (by arrival date)", reportDateRange.label],
+          ["Booking label", reportsSettings.status === "all" ? "All" : reportsSettings.status],
+          ["Retreat type", reportsSettings.retreatType === "all" ? "All" : reportsSettings.retreatType],
+          ["Source", reportsSettings.sourceMode === "all" ? "All" : reportsSettings.sourceMode],
+          ["Included records", REPORT_INCLUSION_TEXT],
+          ["Host records left out", reportSelection.hostExcluded],
+          ["Converted inquiries counted as their booking", reportSelection.convertedExcluded],
+          ["Exported", new Date().toISOString()],
+        ],
+      },
       {
         title: "Executive Summary",
         headers: ["Metric", "Value"],
         rows: [
           ["Total Bookings", totalBookings],
-          ["Confirmed Bookings", confirmedBookings.length],
+                    ["Booked", confirmedBookings.length],
           ["Inquiry Bookings", inquiryBookingsCount],
           ["Cancelled Bookings", cancelledBookings.length],
           ["Waitlist Bookings", waitlistBookings.length],
@@ -1831,7 +1489,7 @@ function ReportsView({ inquiryBookings }) {
           ["Day Camper Meal Servings", totalDayCamperMealServings],
           ["Day Camper Camper Days", totalDayCamperCamperDays],
           ["Total Camper Days", totalCamperDays],
-          ["Projected Revenue", projectedRevenue],
+          
           ["Deposits Received - Count", depositsReceivedCount],
           ["Deposits Received - Amount", depositsReceived],
         ],
@@ -1841,12 +1499,11 @@ function ReportsView({ inquiryBookings }) {
         headers: [
           "Month",
           "Bookings",
-          "Confirmed",
+                    "Booked",
           "Guests",
           "Day Campers",
-          "Day Camper Meal Servings",
+                    "Day Camper Meal Servings",
           "Camper Days",
-          "Revenue",
         ],
         rows: monthlyRows.map((row) => [
           row.label,
@@ -1856,35 +1513,15 @@ function ReportsView({ inquiryBookings }) {
           row.dayCampers,
           row.dayCamperMealServings,
           row.camperDays,
-          row.revenue,
-        ]),
-      },
-      {
-        title: "Financial Field Totals",
-        headers: ["Category", "Value"],
-        rows: revenueBreakdown.map((item) => [
-          item.label,
-          item.value,
-        ]),
-      },
-      {
-        title: "Revenue Source Confidence",
-        headers: ["Source", "Rows", "Revenue", "Confidence"],
-        rows: revenueSourceRows.map((row) => [
-          row.label,
-          row.count,
-          row.value,
-          row.confidence,
         ]),
       },
       {
         title: "Retreat Type Breakdown",
-        headers: ["Retreat Type", "Bookings", "Guests", "Revenue"],
+                headers: ["Retreat Type", "Bookings", "Guests"],
         rows: retreatTypeRows.map((row) => [
           row.label,
           row.bookings,
           row.guests,
-          row.revenue,
         ]),
       },
       {
@@ -1903,8 +1540,8 @@ function ReportsView({ inquiryBookings }) {
         ]),
       },
       {
-        title: "Status Breakdown",
-        headers: ["Status", "Bookings"],
+                title: "Booking Labels",
+        headers: ["Label", "Bookings"],
         rows: statusRows.map((row) => [row.label, row.count]),
       },
       {
@@ -1932,18 +1569,26 @@ function ReportsView({ inquiryBookings }) {
             <div>
               <p className="dashboard-eyebrow">Reporting</p>
               <h2>Reports</h2>
-              <p>
-                Operational booking, attendance, housing, revenue, source,
-                and data-quality insights across the selected report range.
+                            <p>
+                Booking, attendance, housing, source and data-quality
+                insights for stays arriving in the selected range.
               </p>
 
-              {archiveExcludedCount > 0 && (
-                <span className="reports-header-note">
-                  {archiveExcludedCount} historical archive record
-                  {archiveExcludedCount === 1 ? "" : "s"} excluded from
-                  operational totals.
-                </span>
-              )}
+              <span className="reports-header-note">
+                {REPORT_INCLUSION_TEXT}
+                {reportSelection.hostExcluded > 0
+                  ? ` ${reportSelection.hostExcluded} host record${
+                      reportSelection.hostExcluded === 1 ? " is" : "s are"
+                    } left out.`
+                  : ""}
+                {reportSelection.convertedExcluded > 0
+                  ? ` ${reportSelection.convertedExcluded} converted inquir${
+                      reportSelection.convertedExcluded === 1 ? "y is" : "ies are"
+                    } counted as ${
+                      reportSelection.convertedExcluded === 1 ? "its booking" : "their bookings"
+                    }.`
+                  : ""}
+              </span>
             </div>
           </div>
 
@@ -2086,7 +1731,7 @@ function ReportsView({ inquiryBookings }) {
 
         <ReportSummaryCard
           icon={FaRegCalendarCheck}
-          label="Confirmed"
+                    label="Booked"
           value={formatReportsNumber(confirmedBookings.length)}
           helper={`${getReportsPercent(
             confirmedBookings.length,
@@ -2105,13 +1750,7 @@ function ReportsView({ inquiryBookings }) {
           tone="blue"
         />
 
-        <ReportSummaryCard
-          icon={FaDollarSign}
-          label="Projected Revenue"
-          value={formatReportsCurrency(projectedRevenue)}
-          helper="Uses one best stored revenue value per booking"
-          tone="gold"
-        />
+        
 
         <ReportSummaryCard
           icon={FaMoon}
@@ -2629,8 +2268,10 @@ function ReportsView({ inquiryBookings }) {
             <div>
               <p className="dashboard-eyebrow">Trends</p>
               <h3>Monthly Booking Trends</h3>
-              <span>
-                Bookings, guests, and revenue grouped by arrival month.
+                            <span>
+                Bookings and guests by the month each stay arrives. Records
+                without dates appear as "Undated", so the rows add up to the
+                totals.
               </span>
             </div>
           </div>
@@ -2653,7 +2294,7 @@ function ReportsView({ inquiryBookings }) {
                       valueLabel={`${row.bookings} booking${
                         row.bookings === 1 ? "" : "s"
                       }`}
-                      helper={`${row.confirmed} confirmed`}
+                                            helper={`${row.confirmed} booked`}
                     />
                   ))}
                 </div>
@@ -2678,24 +2319,6 @@ function ReportsView({ inquiryBookings }) {
                 </div>
               </div>
 
-              <div>
-                <h4 className="reports-monthly-heading">
-                  <FaDollarSign />
-                  Revenue by Month
-                </h4>
-
-                <div className="reports-bar-list">
-                  {monthlyRows.map((row) => (
-                    <ReportBarRow
-                      key={`revenue-${row.monthKey}`}
-                      label={row.label}
-                      value={row.revenue}
-                      maxValue={maxMonthlyRevenue}
-                      valueLabel={formatReportsCurrency(row.revenue)}
-                    />
-                  ))}
-                </div>
-              </div>
             </div>
           ) : (
             <div className="reports-empty-state">
@@ -2705,96 +2328,7 @@ function ReportsView({ inquiryBookings }) {
           )}
         </article>
 
-        <article className="dashboard-card reports-panel">
-          <div className="reports-panel-header">
-            <div>
-              <p className="dashboard-eyebrow">Revenue</p>
-              <h3>Financial Field Totals</h3>
-              <span>
-                Stored billing fields from Staff Bookings and imported
-                records. Categories can overlap and should not be added
-                together.
-              </span>
-            </div>
-          </div>
-
-          <div className="reports-bar-list">
-            {revenueBreakdown.map((item) => (
-              <ReportBarRow
-                key={item.label}
-                label={item.label}
-                value={item.value}
-                maxValue={maxRevenueBreakdown}
-                valueLabel={formatReportsCurrency(item.value)}
-              />
-            ))}
-          </div>
-
-          <div className="reports-revenue-confidence">
-            <div className="reports-help-heading">
-              <h4>Revenue Source Confidence</h4>
-
-              <details className="reports-help-popover">
-                <summary aria-label="Explain revenue source confidence">
-                  <FaQuestionCircle />
-                </summary>
-
-                <div className="reports-help-card">
-                  <strong>How projected revenue is chosen</strong>
-                  <p>
-                    Each booking contributes only one revenue number to
-                    Projected Revenue.
-                  </p>
-
-                  <ol>
-                    <li>
-                      <strong>Invoice Total</strong>
-                      <span>Highest-confidence stored billing total.</span>
-                    </li>
-                    <li>
-                      <strong>Expected Revenue</strong>
-                      <span>
-                        Used when an invoice total is not available.
-                      </span>
-                    </li>
-                    <li>
-                      <strong>Monthly Projection</strong>
-                      <span>Uses imported monthly projected income.</span>
-                    </li>
-                    <li>
-                      <strong>Itemized Fallback</strong>
-                      <span>
-                        Usage fee + lodging + food + miscellaneous costs.
-                      </span>
-                    </li>
-                    <li>
-                      <strong>Missing</strong>
-                      <span>
-                        No usable stored revenue value was found. Quoted guest
-                        rates are not turned into invented revenue.
-                      </span>
-                    </li>
-                  </ol>
-                </div>
-              </details>
-            </div>
-
-            <div className="reports-bar-list">
-              {revenueSourceRows.map((row) => (
-                <ReportBarRow
-                  key={row.label}
-                  label={row.label}
-                  value={row.value}
-                  maxValue={maxRevenueSourceValue}
-                  valueLabel={`${row.count} booking${
-                    row.count === 1 ? "" : "s"
-                  } · ${formatReportsCurrency(row.value)}`}
-                  helper={`${row.confidence} confidence`}
-                />
-              ))}
-            </div>
-          </div>
-        </article>
+        {/* Revenue reporting removed for now (Q-027); financial fields are kept on the bookings. */}
 
         <article className="dashboard-card reports-panel">
           <div className="reports-panel-header">
@@ -2818,8 +2352,7 @@ function ReportsView({ inquiryBookings }) {
                     <tr>
                       <th>Retreat Type</th>
                       <th>Bookings</th>
-                      <th>Guests</th>
-                      <th>Revenue</th>
+                                            <th>Guests</th>
                     </tr>
                   </thead>
 
@@ -2846,8 +2379,7 @@ function ReportsView({ inquiryBookings }) {
                           </div>
                         </td>
                         <td>{formatReportsNumber(row.bookings)}</td>
-                        <td>{formatReportsNumber(row.guests)}</td>
-                        <td>{formatReportsCurrency(row.revenue)}</td>
+                                                <td>{formatReportsNumber(row.guests)}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -1,4 +1,12 @@
 import { useMemo, useState } from "react";
+import {
+  CALENDAR_EXCEPTION_TOGGLES,
+  getBookingDisplayState,
+  getCalendarVisibilityKey,
+  getConvertedInquiryIds,
+  isConvertedInquiry,
+  isVisibleOnCalendar,
+} from "../utils/bookingClassification";
 
 import BookingCalendar from "../components/BookingCalendar";
 
@@ -200,6 +208,30 @@ function formatWeekRange(weekStart) {
   )}, ${weekEnd.getFullYear()}`;
 }
 
+const CALENDAR_EXCEPTION_STORAGE_KEY = "toahNipiCalendarShownExceptions";
+
+function readCalendarExceptionToggles() {
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem(CALENDAR_EXCEPTION_STORAGE_KEY) || "{}"
+    );
+    return stored && typeof stored === "object" ? stored : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeCalendarExceptionToggles(value) {
+  try {
+    localStorage.setItem(
+      CALENDAR_EXCEPTION_STORAGE_KEY,
+      JSON.stringify(value)
+    );
+  } catch {
+    // Storage unavailable (private window); the toggle still works for now.
+  }
+}
+
 export default function CalendarView({
   calendarCells,
   datedInquiries,
@@ -219,7 +251,60 @@ export default function CalendarView({
     getStartOfWeek(new Date())
   );
 
-  const safeDatedInquiries = datedInquiries || [];
+  /*
+    Ordinary bookings and inquiries always show. Cancelled, waitlisted,
+    archived and host records each have a toggle, off by default (Q-005).
+    An inquiry that became a booking is shown once, as the booking.
+    The toggles are remembered per browser.
+  */
+  const [shownExceptions, setShownExceptions] = useState(
+    readCalendarExceptionToggles
+  );
+
+  const convertedInquiryIds = useMemo(
+    () => getConvertedInquiryIds(datedInquiries || []),
+    [datedInquiries]
+  );
+
+  const safeDatedInquiries = useMemo(
+    () =>
+      (datedInquiries || []).filter(
+        (booking) =>
+          !isConvertedInquiry(booking, convertedInquiryIds) &&
+          isVisibleOnCalendar(booking, shownExceptions)
+      ),
+    [datedInquiries, convertedInquiryIds, shownExceptions]
+  );
+
+  const visibleSelectedMonthInquiries = useMemo(
+    () =>
+      (selectedMonthInquiries || []).filter(
+        (booking) =>
+          !isConvertedInquiry(booking, convertedInquiryIds) &&
+          isVisibleOnCalendar(booking, shownExceptions)
+      ),
+    [selectedMonthInquiries, convertedInquiryIds, shownExceptions]
+  );
+
+  const exceptionCounts = CALENDAR_EXCEPTION_TOGGLES.reduce(
+    (counts, toggle) => ({
+      ...counts,
+      [toggle.key]: (selectedMonthInquiries || []).filter(
+        (booking) =>
+          !isConvertedInquiry(booking, convertedInquiryIds) &&
+          getCalendarVisibilityKey(booking) === toggle.key
+      ).length,
+    }),
+    {}
+  );
+
+  const toggleCalendarException = (key) => {
+    setShownExceptions((current) => {
+      const next = { ...current, [key]: !current[key] };
+      writeCalendarExceptionToggles(next);
+      return next;
+    });
+  };
 
   const yearOptions = useMemo(() => {
     return Array.from(
@@ -336,7 +421,7 @@ export default function CalendarView({
       ? selectedWeekInquiries
       : calendarView === "year"
       ? selectedYearInquiries
-      : selectedMonthInquiries;
+      : visibleSelectedMonthInquiries;
 
   const agendaTitle =
     calendarView === "week"
@@ -436,6 +521,26 @@ export default function CalendarView({
             {calendarView === "month" ? "This Month" : "Today"}
           </button>
         </div>
+
+        <fieldset className="calendar-exception-toggles">
+          <legend>Also show</legend>
+
+          {CALENDAR_EXCEPTION_TOGGLES.map((toggle) => (
+            <label key={toggle.key}>
+              <input
+                type="checkbox"
+                checked={Boolean(shownExceptions[toggle.key])}
+                onChange={() => toggleCalendarException(toggle.key)}
+              />
+              {toggle.label}
+              {exceptionCounts[toggle.key] > 0 && (
+                <span className="calendar-exception-count">
+                  {exceptionCounts[toggle.key]} this month
+                </span>
+              )}
+            </label>
+          ))}
+        </fieldset>
 
         <div className="calendar-view-switcher" aria-label="Calendar views">
           {calendarViewOptions.map((option) => (
@@ -762,11 +867,11 @@ export default function CalendarView({
                   <strong>{inquiry.organizationName}</strong>
 
                   <span
-                    className={`calendar-agenda-status ${getCalendarEventColor(
-                      inquiry.status
-                    )}`}
+                    className={`calendar-agenda-status calendar-display-state is-${
+                      getBookingDisplayState(inquiry).key
+                    }`}
                   >
-                    {inquiry.status}
+                    {getBookingDisplayState(inquiry).label}
                   </span>
                 </div>
 

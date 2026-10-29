@@ -713,3 +713,71 @@
     min-width: 51.25rem;
   }
 }
+
+/* Shared staff directory status and unlisted names (AUDIT-017). */
+.admin-directory-status,
+.admin-unlisted-names {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #cfe5d7;
+  background: #edf6f0;
+  color: #2f6b47;
+  font-size: 0.9rem;
+}
+
+.admin-directory-status.is-local,
+.admin-unlisted-names {
+  border-color: #f0d9a8;
+  background: #fff8e8;
+  color: #7a4b00;
+}
+
+.admin-directory-status button {
+  justify-self: start;
+}
+
+.admin-unlisted-names ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-unlisted-names li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.25rem 0.25rem 0.6rem;
+  border: 1px solid #e8d6ad;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+/* Jobs: inactive-group toggle, facility completion, assigned pill. */
+.jobs-inactive-toggle,
+.job-task-complete-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.job-task-complete-toggle {
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
+
+.job-status-pill.assigned {
+  background: #e8edf8;
+  color: #344b87;
+}
+
+.jobs-member-task-assigned {
+  border-left-color: #4c65a9;
+}

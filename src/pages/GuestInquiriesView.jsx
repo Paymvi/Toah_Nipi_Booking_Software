@@ -28,12 +28,36 @@ import {
   FaUtensils,
 } from "react-icons/fa";
 
-// import CreateBooking from "./CreateBooking";
-
 import {
   declineGuestInquiry,
   getGuestInquiries,
+  markGuestInquiryConverted,
 } from "../services/guestInquiryService";
+
+/*
+  Bookings created from a website inquiry record it in
+  rentalFormDetails.sourceInquiryId (with sourceInquirySheet "Guest Web
+  Form"). A pending inquiry with such a booking was converted but never
+  marked (AUDIT-008), so staff are offered to finish that instead of
+  creating a second booking.
+*/
+function getBookingsByGuestInquiryId(bookings = []) {
+  const byInquiryId = new Map();
+
+  bookings.forEach((booking) => {
+    const details = booking?.rentalFormDetails || {};
+    const inquiryId = String(details.sourceInquiryId || "").trim();
+
+    if (
+      inquiryId &&
+      String(details.sourceInquirySheet || "").trim() === "Guest Web Form"
+    ) {
+      byInquiryId.set(inquiryId, [...(byInquiryId.get(inquiryId) || []), booking]);
+    }
+  });
+
+  return byInquiryId;
+}
 
 
 
@@ -519,6 +543,7 @@ function DetailField({
 function RequestCard({
   inquiry,
   onReview,
+  linkedBookings = [],
 }) {
   const key =
     statusKey(inquiry);
@@ -540,6 +565,12 @@ function RequestCard({
         >
           {statusLabel(inquiry)}
         </span>
+
+        {key === "pending" && linkedBookings.length > 0 && (
+          <span className="guest-request-status-badge guest-request-status-converted">
+            Booking already created
+          </span>
+        )}
       </div>
 
       <div className="guest-request-card-title">
@@ -651,7 +682,13 @@ function RequestCard({
 
 export default function GuestInquiriesView({
   onCreateBooking,
+  existingBookings = [],
 }) {
+  const bookingsByGuestInquiryId = useMemo(
+    () => getBookingsByGuestInquiryId(existingBookings),
+    [existingBookings]
+  );
+
   const [
     inquiries,
     setInquiries,
@@ -803,6 +840,33 @@ export default function GuestInquiriesView({
     setActionError("");
   };
 
+
+  const markSelectedInquiryConverted = async (booking) => {
+    if (!selectedInquiry || !booking?.id) {
+      return;
+    }
+
+    setIsUpdating(true);
+    setActionError("");
+
+    try {
+      const updated = await markGuestInquiryConverted(selectedInquiry.id, booking.id);
+
+      setInquiries((current) =>
+        current.map((inquiry) =>
+          inquiry.id === updated.id ? { ...inquiry, ...updated } : inquiry
+        )
+      );
+      setActionMessage(
+        `Marked converted to the booking for ${booking.organizationName || "this group"}.`
+      );
+      setSelectedInquiry(null);
+    } catch (error) {
+      setActionError(error?.message || "Could not mark the inquiry converted.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const openBookingForm = () => {
     if (!selectedInquiry) {
@@ -1146,6 +1210,9 @@ export default function GuestInquiriesView({
                           }
                           inquiry={
                             inquiry
+                          }
+                          linkedBookings={
+                            bookingsByGuestInquiryId.get(String(inquiry.id)) || []
                           }
                           onReview={
                             openReview
@@ -1801,6 +1868,29 @@ export default function GuestInquiriesView({
               >
                 Close
               </button>
+
+              {statusKey(
+                selectedInquiry
+              ) ===
+                "pending" &&
+                (bookingsByGuestInquiryId.get(String(selectedInquiry.id)) || []).map((booking) => (
+                  <div className="guest-request-linked-booking" key={booking.id}>
+                    <span>
+                      A booking for <strong>{booking.organizationName || "this group"}</strong> was
+                      already created from this inquiry, but the inquiry was never marked converted.
+                    </span>
+
+                    <button
+                      type="button"
+                      className="guest-request-primary-button"
+                      disabled={isUpdating}
+                      onClick={() => markSelectedInquiryConverted(booking)}
+                    >
+                      <FaCheckCircle />
+                      Mark converted to this booking
+                    </button>
+                  </div>
+                ))}
 
               {statusKey(
                 selectedInquiry

@@ -779,11 +779,11 @@ Known limitations may include:
 
 * Some UI settings may still use browser localStorage.
 * Staff management may still require manual Supabase SQL changes.
-* The portal may not yet be fully connected to Supabase.
-* File/document uploads may not yet be secured through Supabase Storage.
+* The portal uses Supabase tables `portal_checklist_items` and `portal_documents` and the Storage bucket `portal-uploads`; their definitions are not in this repository yet (export them with the queries in `supabase/repairs/01_diagnostics.sql`).
+* Uploads are stored in the Supabase Storage bucket `portal-uploads`; its access rules are not in this repository.
 * More detailed audit logging may still need to be added.
 * Multi-factor authentication may still need to be enabled.
-* Role-specific frontend UI restrictions may need improvement.
+* The app reads the role with `current_staff_role()`: delete and Replace restore are shown only to admins, and viewer accounts cannot save or import.
 
 The database RLS policies are more important than frontend button hiding.
 

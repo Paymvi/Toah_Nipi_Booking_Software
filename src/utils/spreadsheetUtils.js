@@ -61,17 +61,6 @@ export function cleanExcelCellValue(value) {
   return value;
 }
 
-// Converts different waitlist-looking values into either "Yes" or "No".
-export function normalizeWaitlistValue(value) {
-  const text = String(value || "").trim().toLowerCase();
-
-  if (["yes", "y", "true", "waitlist", "waitlisted"].includes(text)) {
-    return "Yes";
-  }
-
-  return "No";
-}
-
 // Checks whether a spreadsheet row has any real data.
 // Ignores metadata columns added during import.
 export function rowHasAnyData(row) {
@@ -259,87 +248,6 @@ export function getRowsFromWorksheetFlexible(worksheet) {
   });
 
   return rows;
-}
-
-// Checks whether a row has data in at least one of the possible column names.
-export function rowHasAnyColumn(row, possibleNames) {
-  return possibleNames.some((name) => {
-    const value = row[name];
-
-    return value !== undefined && value !== null && String(value).trim() !== "";
-  });
-}
-
-// Guesses what kind of imported spreadsheet row this is.
-export function detectSpreadsheetRowType(row) {
-
-  const rowColumnNames = new Set(
-    Object.keys(row || {}).map((key) => String(key).trim().toLowerCase())
-  );
-
-  const looksLikeArchive =
-    readSpreadsheetCell(row, ["Source_PDF_Link"]) ||
-    readSpreadsheetCell(row, ["All Prior Visit Dates"]) ||
-    readSpreadsheetCell(row, ["Visit Count"]) ||
-    readSpreadsheetCell(row, ["Organization_Confident"]) ||
-    readSpreadsheetCell(row, ["Visit_Date_Confident"]) ||
-    (
-      readSpreadsheetCell(row, ["Guest Group"]) &&
-      readSpreadsheetCell(row, ["Visit Date"])
-    );
-
-  if (looksLikeArchive) {
-    return "Archive";
-  }
-
-  const hasColumn = (columnName) =>
-    rowColumnNames.has(String(columnName).trim().toLowerCase());
-
-  const is2027Inquiry =
-    hasColumn("Guest Group Name") &&
-    hasColumn("Contact Person") &&
-    hasColumn("Contact Person Cell #") &&
-    hasColumn("Estimated Number of Guests") &&
-    (hasColumn("Exp. Minimum Revenue") || hasColumn("Schedule"));
-
-  if (is2027Inquiry) {
-    return "2027 Inquiry";
-  }
-  
-  if (
-    rowHasAnyColumn(row, ["Waitlist or No", "Desired Dates"]) &&
-    rowHasAnyColumn(row, ["Contact Name", "Guest Group Name", "Email Address"])
-  ) {
-    return "Waitlist";
-  }
-
-  if (
-    rowHasAnyColumn(row, [
-      "Stage of Group",
-      "Group Leader/Contact Person",
-      "Estimated Number of Guests",
-      "Contact Person Email",
-      "Exp. Minimum Revenue for Lodging/Meals",
-      "Deposit Received",
-      "Vacancy filled by another group?",
-    ])
-  ) {
-    return "Master 2026";
-  }
-
-  if (
-    rowHasAnyColumn(row, [
-      "Arrival Date",
-      "Departure Date",
-      "Contact Person Cell #",
-      "Actual Number of Guests",
-      "Food Allergies",
-    ])
-  ) {
-    return "Master";
-  }
-
-  return "Generic";
 }
 
 // Turns all non-empty raw spreadsheet values into a readable notes string.

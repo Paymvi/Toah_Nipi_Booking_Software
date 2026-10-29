@@ -1590,3 +1590,36 @@
     border-bottom: 1px solid #dfe4ec;
   }
 }
+
+/* Notice above the booking form after a save (AUDIT-008, AUDIT-026). */
+.booking-form-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 auto 1rem;
+  max-width: 72rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #cfe5d7;
+  background: #edf6f0;
+  color: #2f6b47;
+}
+
+.booking-form-notice.is-warning {
+  border-color: #f0d9a8;
+  background: #fff8e8;
+  color: #7a4b00;
+}
+
+.booking-form-notice p {
+  margin: 0;
+  flex: 1 1 20rem;
+}
+
+.booking-form-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

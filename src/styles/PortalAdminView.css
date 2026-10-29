@@ -1871,3 +1871,112 @@
     width: 100%;
   }
 }
+
+/* Corrections, warnings and shared-document list (AUDIT-022, 038, 050). */
+.portal-item-corrections {
+  position: relative;
+  font-size: 0.85rem;
+}
+
+.portal-item-corrections summary {
+  cursor: pointer;
+  color: #443a9c;
+  font-weight: 600;
+  list-style: none;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+}
+
+.portal-item-corrections summary::-webkit-details-marker {
+  display: none;
+}
+
+.portal-item-corrections[open] summary {
+  background: #f0eefb;
+}
+
+.portal-item-corrections-body {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #e4e8ee;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  min-width: min(18rem, 80vw);
+}
+
+.portal-item-corrections-body label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.portal-item-corrections-body input,
+.portal-item-corrections-body textarea {
+  border: 1px solid #dfe4ec;
+  border-radius: 0.375rem;
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+}
+
+.portal-item-remove-button {
+  border: 1px solid #f0c2c2;
+  border-radius: 0.375rem;
+  background: #fdeeee;
+  color: #a03a3a;
+  padding: 0.4rem 0.6rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.portal-item-review-note,
+.portal-due-date-warning {
+  display: block;
+  margin: 0.25rem 0 0;
+  color: #7a4b00;
+  font-size: 0.82rem;
+}
+
+.portal-record-link-warning {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: #a03a3a;
+  font-size: 0.8rem;
+}
+
+.portal-assigned-documents {
+  margin: 0.75rem 0;
+}
+
+.portal-assigned-documents h5 {
+  margin: 0 0 0.5rem;
+}
+
+.portal-assigned-documents ul {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portal-assigned-documents li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e4e8ee;
+  border-radius: 0.5rem;
+}
+
+.portal-assigned-documents li span {
+  display: grid;
+  min-width: 0;
+}
+
+.portal-assigned-documents small {
+  color: #6b7280;
+  overflow-wrap: anywhere;
+}

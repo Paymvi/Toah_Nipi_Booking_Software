@@ -354,10 +354,36 @@ export default function InquiryRecordDetailView({
       const cleanDisposition =
         formData.disposition.trim();
 
-      const nextStatus =
-        getStatusFromInquiryDisposition(
-          cleanDisposition
-        );
+      /*
+        Status follows the disposition only when staff changed the
+        disposition; any other edit keeps the saved status (AUDIT-019).
+      */
+      const originalDisposition = String(
+        getInquiryDisposition(booking) || ""
+      ).trim();
+
+      const dispositionChanged =
+        cleanDisposition !== originalDisposition;
+
+      const workflowFields = dispositionChanged
+        ? (() => {
+            const nextStatus =
+              getStatusFromInquiryDisposition(
+                cleanDisposition
+              );
+
+            return {
+              status: nextStatus,
+              waitlist:
+                nextStatus === "Waitlist"
+                  ? "Yes"
+                  : "No",
+            };
+          })()
+        : {
+            status: booking.status,
+            waitlist: booking.waitlist,
+          };
 
       /*
         Store the inquiry date at noon UTC.
@@ -419,21 +445,14 @@ export default function InquiryRecordDetailView({
         stageOfGroup:
           cleanDisposition,
 
-        /*
-          Also update the normalized workflow fields.
-        */
-        status:
-          nextStatus,
-
-        waitlist:
-          nextStatus === "Waitlist"
-            ? "Yes"
-            : "No",
+        ...workflowFields,
       };
 
       await onSaveBooking(updatedBooking);
 
       setIsEditing(false);
+    } catch {
+      // The save handler already explained the failure; keep the edits on screen.
     } finally {
       setIsSaving(false);
     }

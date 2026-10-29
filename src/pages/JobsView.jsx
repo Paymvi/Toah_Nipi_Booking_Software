@@ -6,13 +6,14 @@ import {
 } from "react-icons/fa";
 
 import {
-  getBookingChecklists,
-  sortChecklistItems,
-} from "../components/BookingChecklists";
+  filterJobs,
+  getAllBookingJobs,
+  getJobStatus,
+  isJobForInactiveGroup,
+  JOB_KIND,
+  setFacilityCompletion,
+} from "../utils/jobsUtils";
 
-import {
-  getLocalDate,
-} from "../utils/dateUtils";
 
 
 function normalizeStaffName(value) {
@@ -33,61 +34,6 @@ function formatDateForInput(date) {
 }
 
 
-function getProgramLogisticsAssignments(booking) {
-  return Array.isArray(booking.programLogisticsAssignments)
-    ? booking.programLogisticsAssignments
-    : [];
-}
-
-
-function getAllBookingJobs(inquiryBookings) {
-  return inquiryBookings.flatMap((booking) => {
-    const checklistJobs = getBookingChecklists(booking).flatMap((checklist) =>
-      sortChecklistItems(checklist.items || []).map((item) => ({
-        id: `checklist-${booking.id}-${checklist.id}-${item.id}`,
-        sourceType: "Checklist",
-        title: item.title || "Untitled checklist item",
-        role: checklist.name || "Checklist",
-        assignedTo: item.assignedTo || "",
-        notes: "",
-        dueDate: item.dueDate || "",
-        completed: Boolean(item.completed),
-        completedAt: item.completedAt || "",
-        completedBy: item.completedBy || "",
-
-        bookingId: booking.id,
-        bookingName: booking.organizationName,
-        bookingStartDate: booking.startDate,
-        bookingEndDate: booking.endDate,
-        bookingStatus: booking.status,
-      }))
-    );
-
-    const programLogisticsJobs = getProgramLogisticsAssignments(booking).map(
-      (assignment) => ({
-        id: `program-${booking.id}-${assignment.id}`,
-        sourceType: "Staff Assignment",
-        title: `${assignment.role || "General"} assignment`,
-        role: assignment.role || "General",
-        assignedTo: assignment.assignedTo || "",
-        notes: assignment.notes || "",
-        dueDate: booking.startDate || "",
-        completed: false,
-        completedAt: "",
-        completedBy: "",
-
-        bookingId: booking.id,
-        bookingName: booking.organizationName,
-        bookingStartDate: booking.startDate,
-        bookingEndDate: booking.endDate,
-        bookingStatus: booking.status,
-      })
-    );
-
-    return [...checklistJobs, ...programLogisticsJobs];
-  });
-}
-
 export function getAssignedStaffNamesFromBookings(inquiryBookings) {
   const assignedNames = new Set();
 
@@ -102,35 +48,16 @@ export function getAssignedStaffNamesFromBookings(inquiryBookings) {
   return Array.from(assignedNames).sort((a, b) => a.localeCompare(b));
 }
 
+function getTodayKey() {
+  return formatDateForInput(new Date());
+}
+
 function getTaskStatusClass(task) {
-  if (task.completed) {
-    return "completed";
-  }
-
-  if (!task.dueDate) {
-    return "open";
-  }
-
-  const today = getLocalDate(formatDateForInput(new Date()));
-  const dueDate = getLocalDate(task.dueDate);
-
-  if (dueDate && dueDate < today) {
-    return "overdue";
-  }
-
-  return "open";
+  return getJobStatus(task, getTodayKey()).key;
 }
 
 function getTaskStatusLabel(task) {
-  if (task.completed) {
-    return "Complete";
-  }
-
-  if (getTaskStatusClass(task) === "overdue") {
-    return "Overdue";
-  }
-
-  return "Open";
+  return getJobStatus(task, getTodayKey()).label;
 }
 
 function sortJobsByDueDate(tasks) {
@@ -152,7 +79,7 @@ function sortJobsByDueDate(tasks) {
 }
 
 
-function JobTaskCard({ task, openBookingDetail, booking }) {
+function JobTaskCard({ task, openBookingDetail, booking, onToggleFacility, isSaving }) {
   const statusClass = getTaskStatusClass(task);
 
   return (
@@ -163,10 +90,12 @@ function JobTaskCard({ task, openBookingDetail, booking }) {
             {getTaskStatusLabel(task)}
           </span>
 
-          <h4>{task.title}</h4>
-
+                    <h4>{task.title}</h4>
           <p>
             {task.bookingName} · {task.sourceType} · {task.role}
+            {isJobForInactiveGroup(task)
+              ? ` · ${task.bookingException === "cancelled" ? "Cancelled group" : "Waitlisted group"}`
+              : ""}
           </p>
         </div>
 
@@ -178,9 +107,9 @@ function JobTaskCard({ task, openBookingDetail, booking }) {
       </div>
 
       <div className="job-task-meta">
-        <span>
-          <strong>Due</strong>
-          {task.dueDate || "No due date"}
+                <span>
+          <strong>{task.kind === JOB_KIND.ASSIGNMENT ? "Group arrives" : "Due"}</strong>
+          {task.dueDate || "No date"}
         </span>
 
         <span>
@@ -194,7 +123,25 @@ function JobTaskCard({ task, openBookingDetail, booking }) {
         </span>
       </div>
 
-      {task.notes && <p className="job-task-notes">{task.notes}</p>}
+            {task.notes && <p className="job-task-notes">{task.notes}</p>}
+
+      {task.completed && task.completedBy && (
+        <p className="job-task-notes">
+          Completed {task.completedAt} by {task.completedBy}
+        </p>
+      )}
+
+      {task.sourceType === "Facility" && onToggleFacility && (
+        <label className="job-task-complete-toggle">
+          <input
+            type="checkbox"
+            checked={task.completed}
+            disabled={isSaving}
+            onChange={() => onToggleFacility(task)}
+          />
+          {task.completed ? "Done" : "Mark done"}
+        </label>
+      )}
 
       {booking && (
         <button
@@ -214,8 +161,11 @@ export default function JobsView({
   staffUsers,
   currentStaffUserId,
   openBookingDetail,
+  onSaveBooking,
 }) {
   const [statusFilter, setStatusFilter] = useState("open");
+  const [showInactiveGroups, setShowInactiveGroups] = useState(false);
+  const [savingJobId, setSavingJobId] = useState("");
 
   const allJobs = useMemo(
     () => getAllBookingJobs(inquiryBookings),
@@ -225,17 +175,41 @@ export default function JobsView({
   const currentUser = staffUsers.find((user) => user.id === currentStaffUserId);
   const activeStaffUsers = staffUsers.filter((user) => user.active);
 
-  const filteredJobs = allJobs.filter((job) => {
-    if (statusFilter === "all") {
-      return true;
-    }
-
-    if (statusFilter === "completed") {
-      return job.completed;
-    }
-
-    return !job.completed;
+    const filteredJobs = filterJobs(allJobs, {
+    statusFilter,
+    showInactiveGroups,
   });
+
+  const hiddenInactiveJobCount = allJobs.filter(isJobForInactiveGroup).length;
+
+  // Facilities rows are completed here; checklists on the booking's tab.
+  const toggleFacilityJob = async (job) => {
+    const booking = inquiryBookings.find((item) => item.id === job.bookingId);
+
+    if (!booking || !onSaveBooking) {
+      return;
+    }
+
+    if (!job.completed && !currentUser) {
+      alert('Choose your name under "Working as" in User Admin first, so the task records who completed it.');
+      return;
+    }
+
+    setSavingJobId(job.id);
+
+    try {
+      await onSaveBooking(
+        setFacilityCompletion(booking, job.facilityIndex, !job.completed, {
+          completedBy: currentUser?.name || "",
+          today: getTodayKey(),
+        })
+      );
+    } catch {
+      // The save handler already explained the failure.
+    } finally {
+      setSavingJobId("");
+    }
+  };
 
   const myJobs = currentUser
     ? filteredJobs.filter(
@@ -252,9 +226,13 @@ export default function JobsView({
   const findBookingForJob = (job) =>
     inquiryBookings.find((booking) => booking.id === job.bookingId);
 
-  const openJobCount = allJobs.filter((job) => !job.completed).length;
-  const completedJobCount = allJobs.filter((job) => job.completed).length;
-  const overdueJobCount = allJobs.filter(
+    // Totals count tasks only; staff assignments are informational.
+  const countedJobs = filterJobs(allJobs, { statusFilter: "all", showInactiveGroups }).filter(
+    (job) => job.kind === JOB_KIND.TASK
+  );
+  const openJobCount = countedJobs.filter((job) => !job.completed).length;
+  const completedJobCount = countedJobs.filter((job) => job.completed).length;
+  const overdueJobCount = countedJobs.filter(
     (job) => getTaskStatusClass(job) === "overdue"
   ).length;
 
@@ -270,9 +248,10 @@ export default function JobsView({
             <div>
               <p className="dashboard-eyebrow">Jobs</p>
               <h2>Staff Tasks</h2>
-              <span>
-                View checklist tasks and booking staff assignments by staff
-                member.
+                            <span>
+                Checklist and Facilities tasks, plus who is assigned to each
+                group (staff assignments show as "Assigned" and are never
+                overdue).
               </span>
             </div>
           </div>
@@ -286,8 +265,20 @@ export default function JobsView({
             >
               <option value="open">Open Jobs</option>
               <option value="completed">Completed Jobs</option>
-              <option value="all">All Jobs</option>
+                            <option value="all">All Jobs</option>
             </select>
+          </label>
+
+          <label className="jobs-inactive-toggle">
+            <input
+              type="checkbox"
+              checked={showInactiveGroups}
+              onChange={(event) => setShowInactiveGroups(event.target.checked)}
+            />
+            Show cancelled and waitlisted groups
+            {!showInactiveGroups && hiddenInactiveJobCount > 0
+              ? ` (${hiddenInactiveJobCount} hidden)`
+              : ""}
           </label>
         </div>
 
@@ -320,8 +311,8 @@ export default function JobsView({
             <div>
               <p className="dashboard-eyebrow">My Work</p>
               <h3>{currentUser ? `${currentUser.name}'s Jobs` : "My Jobs"}</h3>
-              <span>
-                Jobs assigned to the current staff user selected in User Admin.
+                            <span>
+                Jobs for the person chosen under "Working as" in User Admin.
               </span>
             </div>
           </div>
@@ -329,11 +320,13 @@ export default function JobsView({
           <div className="jobs-task-list">
             {sortJobsByDueDate(myJobs).length > 0 ? (
               sortJobsByDueDate(myJobs).map((job) => (
-                <JobTaskCard
+                                <JobTaskCard
                   key={job.id}
                   task={job}
                   booking={findBookingForJob(job)}
                   openBookingDetail={openBookingDetail}
+                  onToggleFacility={toggleFacilityJob}
+                  isSaving={savingJobId === job.id}
                 />
               ))
             ) : (
@@ -353,9 +346,9 @@ export default function JobsView({
             <div>
               <p className="dashboard-eyebrow">Team Workload</p>
               <h3>Active Members & Their Jobs</h3>
-              <span>
-                Grouped by the assigned staff name on checklists and
-                meals/activities.
+                            <span>
+                Grouped by the staff name on checklists, Facilities rows and
+                staff assignments.
               </span>
             </div>
           </div>

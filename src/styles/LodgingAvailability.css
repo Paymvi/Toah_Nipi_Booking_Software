@@ -448,3 +448,31 @@
     white-space: normal;
   }
 }
+
+/* Room-level conflicts and limits (AUDIT-037, Q-006). */
+.lodging-availability-status.conflict,
+.lodging-availability-summary-totals > span.conflict {
+  border: 1px solid #f0c2c2;
+  background: #fdeeee;
+  color: #a03a3a;
+}
+
+.lodging-availability-building-card.has-conflict {
+  border-color: #f0c2c2;
+}
+
+.lodging-availability-room-conflict,
+.lodging-availability-room-note {
+  margin: 0 0 0.5rem;
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.lodging-availability-room-conflict {
+  color: #a03a3a;
+  font-weight: 600;
+}
+
+.lodging-availability-room-note {
+  color: #6b5b2e;
+}

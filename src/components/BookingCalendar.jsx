@@ -5,20 +5,15 @@ Reusable booking calendar component for the dashboard.
 
 Displays bookings as horizontal multi-day calendar bars.
 
-Calendar colors:
-- Green = Confirmed
-- Gold = Unconfirmed
-
-The underlying booking.status can still contain:
-- Inquiry
-- Contract Sent
-- Confirmed
-- etc.
-
-This component translates workflow status into calendar meaning.
+Each bar's tooltip shows the shared booking label from
+src/utils/bookingClassification.js: Booked, Inquiry, Waitlist, Cancelled,
+Archived visit or Host. Legacy status values ("Inquiry", "Contract Sent")
+on Master and staff bookings no longer make them look unconfirmed;
+booking progress is tracked in the guest portal.
 -------------------------------------------------------------------------------
 */
 
+import { getBookingDisplayState } from "../utils/bookingClassification";
 import {
   addDays,
   daysBetween,
@@ -146,34 +141,6 @@ function getWeekEventSegments({
   });
 }
 
-function getCalendarStatusInfo(inquiry) {
-  const status = String(inquiry.status || "")
-    .trim()
-    .toLowerCase();
-
-  const sourceText = inquiry.statusSource
-    ? `${inquiry.statusSource.field} was "${inquiry.statusSource.value}"`
-    : `Current booking status is "${inquiry.status}"`;
-
-  if (
-    status.includes("confirmed") ||
-    status.includes("booked")
-  ) {
-    return {
-      label: "Confirmed",
-      color: "green",
-      explanation: `Confirmed because ${sourceText}.`,
-    };
-  }
-
-  return {
-    label: "Unconfirmed",
-    color: "gold",
-    explanation: `Unconfirmed because ${sourceText}.`,
-  };
-}
-
-
 export default function BookingCalendar({
   calendarCells,
   datedInquiries,
@@ -265,8 +232,9 @@ export default function BookingCalendar({
                   ? getRoomText(segment.inquiry)
                   : segment.inquiry.roomName || "Unassigned";
 
-              const statusInfo =
-                getCalendarStatusInfo(segment.inquiry);
+              // Shared label: ordinary bookings read "Booked" (AUDIT-020).
+              const displayState =
+                getBookingDisplayState(segment.inquiry);
 
               return (
                 <div
@@ -310,6 +278,12 @@ export default function BookingCalendar({
                     </p>
 
                     <p>{roomText}</p>
+
+                    <p
+                      className={`calendar-display-state is-${displayState.key}`}
+                    >
+                      {displayState.label}
+                    </p>
                   </div>
                 </div>
               );

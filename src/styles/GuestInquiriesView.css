@@ -1146,3 +1146,25 @@
     border-radius: 0;
   }
 }
+
+/* Pending inquiry that already has a booking (AUDIT-008). */
+.guest-request-modal-footer {
+  flex-wrap: wrap;
+}
+
+.guest-request-linked-booking {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #f0d9a8;
+  border-radius: 0.5rem;
+  background: #fff8e8;
+  color: #7a4b00;
+}
+
+.guest-request-linked-booking span {
+  flex: 1 1 18rem;
+}

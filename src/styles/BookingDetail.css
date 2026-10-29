@@ -682,6 +682,11 @@
   gap: 0.438rem;
 }
 
+.booking-edit-field-note {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
 .booking-edit-field span {
   color: #374151;
   font-size: 0.917rem;

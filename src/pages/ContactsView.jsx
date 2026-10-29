@@ -1,4 +1,19 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
+import {
+  contactMatchesSavedKeys,
+  groupByIdentities,
+} from "../utils/contactGrouping";
+import {
+  hideContactOnline,
+  loadContactPreferences,
+  setContactStarOnline,
+  unhideContactOnline,
+  uploadBrowserContactPreferences,
+} from "../services/contactPreferences";
+import { getBookingInquiryDateValue } from "../utils/dateUtils";
+
+const CONTACTS_PREFERENCES_UPLOADED_KEY = "toahNipiContactPreferencesUploaded";
 
 import {
   FaRegStar,
@@ -191,28 +206,29 @@ function normalizeNameIdentity(value) {
 function getBookingContactSnapshot(booking) {
   const details = getRentalFormDetails(booking);
 
+    // Column values first: every edit path writes them (AUDIT-003).
   const contactName = getFirstContactValue(
-    details.contactName,
     booking?.contactName,
     booking?.name,
+    details.contactName,
     `${booking?.firstName || ""} ${booking?.lastName || ""}`
   );
 
   const organizationName = getFirstContactValue(
-    details.organizationName,
     booking?.organizationName,
+    details.organizationName,
     booking?.churchOrMinistry,
     booking?.archiveGuestGroup
   );
 
   const email = getFirstContactValue(
-    details.email,
-    booking?.email
+    booking?.email,
+    details.email
   );
 
   const phone = getFirstContactValue(
-    details.phone,
-    booking?.phone
+    booking?.phone,
+    details.phone
   );
 
   const mailingAddress = getFirstContactValue(
@@ -221,9 +237,9 @@ function getBookingContactSnapshot(booking) {
     getArchiveAddress(booking)
   );
 
-  const retreatType = getFirstContactValue(
-    details.retreatType,
-    booking?.retreatType
+    const retreatType = getFirstContactValue(
+    booking?.retreatType,
+    details.retreatType
   );
 
   const sourceType = getFirstContactValue(
@@ -275,10 +291,11 @@ function getContactIdentityCandidates(snapshot) {
 function getBookingChronologyValue(booking) {
   const details = getRentalFormDetails(booking);
 
+    // The real inquiry date, never a Master/Archive import time (AUDIT-012).
   const dateCandidates = [
-    details.startDate,
     booking?.startDate,
-    booking?.submittedAt,
+    details.startDate,
+    getBookingInquiryDateValue(booking),
     booking?.updatedAt,
   ];
 
@@ -332,123 +349,135 @@ function buildStableContactId(contact) {
 }
 
 
+// Secondary contact on a booking, as a contact snapshot.
+// A contact may be starred under any of its keys (older saved ids).
+function isContactStarredIn(contact, starredKeys) {
+  return contactMatchesSavedKeys(
+    [contact.id, ...(contact.identityKeys || [])],
+    starredKeys
+  );
+}
+
+function getSecondaryContactSnapshot(booking) {
+  const details = getRentalFormDetails(booking);
+  const contactName = cleanContactText(
+    details.secondaryContactName || booking?.secondaryContactName
+  );
+  const email = cleanContactText(
+    details.secondaryContactEmail || booking?.secondaryContactEmail
+  );
+  const phone = cleanContactText(
+    details.secondaryContactPhone || booking?.secondaryContactPhone
+  );
+
+  if (!contactName && !email && !phone) {
+    return null;
+  }
+
+  const primary = getBookingContactSnapshot(booking);
+
+  return {
+    ...primary,
+    contactName,
+    email,
+    phone,
+    mailingAddress: "",
+  };
+}
+
+// Identity keys, plus the older single-id forms saved preferences used.
+function getAppearanceKeys(snapshot) {
+  const keys = getContactIdentityCandidates(snapshot);
+  const emailKey = normalizeEmailIdentity(snapshot.email);
+  const phoneKey = normalizePhoneIdentity(snapshot.phone);
+  const legacyNameKey = `${normalizeNameIdentity(snapshot.contactName)}-${normalizeNameIdentity(snapshot.organizationName)}`;
+
+  return [
+    ...keys,
+    emailKey,
+    phoneKey,
+    legacyNameKey !== "-" ? legacyNameKey : "",
+  ].filter(Boolean);
+}
+
+/*
+  One contact per person across bookings (AUDIT-049): appearances that
+  share an email, a phone, or a name + organization are merged, also
+  transitively. Secondary contacts are included and labeled (AUDIT-039).
+*/
 function getContactsFromBookings(bookings) {
-  const contactRecords = [];
-  const identityToRecord = new Map();
+  const appearances = [];
 
   bookings.forEach((booking) => {
-    const snapshot = getBookingContactSnapshot(booking);
-    const identityCandidates = getContactIdentityCandidates(snapshot);
-
-    if (identityCandidates.length === 0) {
-      return;
+    const primary = getBookingContactSnapshot(booking);
+    if (getContactIdentityCandidates(primary).length > 0) {
+      appearances.push({ booking, snapshot: primary, role: "primary" });
     }
 
-    let contact = null;
+    const secondary = getSecondaryContactSnapshot(booking);
+    if (secondary && getContactIdentityCandidates(secondary).length > 0) {
+      appearances.push({ booking, snapshot: secondary, role: "secondary" });
+    }
+  });
 
-    for (const identity of identityCandidates) {
-      const matchingContact = identityToRecord.get(identity);
+  const contactRecords = groupByIdentities(appearances, (appearance) =>
+    getContactIdentityCandidates(appearance.snapshot)
+  ).map((group, recordIndex) => {
+    const contact = {
+      recordIndex,
+      contactName: "",
+      organizationName: "",
+      email: "",
+      phone: "",
+      mailingAddress: "",
+      latestBookingTimestamp: -1,
+      bookings: [],
+      secondaryBookingIds: new Set(),
+      primaryBookingIds: new Set(),
+      identityKeys: new Set(),
+      contactNames: new Set(),
+      organizationNames: new Set(),
+      emails: new Set(),
+      phones: new Set(),
+      mailingAddresses: new Set(),
+      retreatTypes: new Set(),
+      sourceTypes: new Set(),
+      emailIdentities: [],
+      phoneIdentities: [],
+    };
 
-      if (matchingContact) {
-        contact = matchingContact;
-        break;
+    group.forEach(({ booking, snapshot, role }) => {
+      getAppearanceKeys(snapshot).forEach((key) => contact.identityKeys.add(key));
+
+      if (snapshot.contactName) contact.contactNames.add(snapshot.contactName);
+      if (snapshot.organizationName) contact.organizationNames.add(snapshot.organizationName);
+      if (snapshot.email) contact.emails.add(snapshot.email);
+      if (snapshot.phone) contact.phones.add(snapshot.phone);
+      if (snapshot.mailingAddress) contact.mailingAddresses.add(snapshot.mailingAddress);
+      if (snapshot.retreatType) contact.retreatTypes.add(snapshot.retreatType);
+      if (snapshot.sourceType) contact.sourceTypes.add(snapshot.sourceType);
+
+      const emailIdentity = normalizeEmailIdentity(snapshot.email);
+      const phoneIdentity = normalizePhoneIdentity(snapshot.phone);
+      if (emailIdentity) contact.emailIdentities.push(emailIdentity);
+      if (phoneIdentity) contact.phoneIdentities.push(phoneIdentity);
+
+      if (!contact.bookings.includes(booking)) contact.bookings.push(booking);
+      (role === "secondary" ? contact.secondaryBookingIds : contact.primaryBookingIds).add(booking.id);
+
+      const bookingTimestamp = getBookingChronologyValue(booking);
+
+      if (bookingTimestamp >= contact.latestBookingTimestamp) {
+        contact.latestBookingTimestamp = bookingTimestamp;
+        if (snapshot.contactName) contact.contactName = snapshot.contactName;
+        if (snapshot.organizationName) contact.organizationName = snapshot.organizationName;
+        if (snapshot.email) contact.email = snapshot.email;
+        if (snapshot.phone) contact.phone = snapshot.phone;
+        if (snapshot.mailingAddress) contact.mailingAddress = snapshot.mailingAddress;
       }
-    }
-
-    if (!contact) {
-      contact = {
-        recordIndex: contactRecords.length,
-        contactName: "",
-        organizationName: "",
-        email: "",
-        phone: "",
-        mailingAddress: "",
-        latestBookingTimestamp: -1,
-        bookings: [],
-        contactNames: new Set(),
-        organizationNames: new Set(),
-        emails: new Set(),
-        phones: new Set(),
-        mailingAddresses: new Set(),
-        retreatTypes: new Set(),
-        sourceTypes: new Set(),
-        emailIdentities: [],
-        phoneIdentities: [],
-      };
-
-      contactRecords.push(contact);
-    }
-
-    identityCandidates.forEach((identity) => {
-      identityToRecord.set(identity, contact);
     });
 
-    const emailIdentity = normalizeEmailIdentity(snapshot.email);
-    const phoneIdentity = normalizePhoneIdentity(snapshot.phone);
-
-    if (snapshot.contactName) {
-      contact.contactNames.add(snapshot.contactName);
-    }
-
-    if (snapshot.organizationName) {
-      contact.organizationNames.add(snapshot.organizationName);
-    }
-
-    if (snapshot.email) {
-      contact.emails.add(snapshot.email);
-    }
-
-    if (snapshot.phone) {
-      contact.phones.add(snapshot.phone);
-    }
-
-    if (snapshot.mailingAddress) {
-      contact.mailingAddresses.add(snapshot.mailingAddress);
-    }
-
-    if (snapshot.retreatType) {
-      contact.retreatTypes.add(snapshot.retreatType);
-    }
-
-    if (snapshot.sourceType) {
-      contact.sourceTypes.add(snapshot.sourceType);
-    }
-
-    if (emailIdentity) {
-      contact.emailIdentities.push(emailIdentity);
-    }
-
-    if (phoneIdentity) {
-      contact.phoneIdentities.push(phoneIdentity);
-    }
-
-    contact.bookings.push(booking);
-
-    const bookingTimestamp = getBookingChronologyValue(booking);
-
-    if (bookingTimestamp >= contact.latestBookingTimestamp) {
-      contact.latestBookingTimestamp = bookingTimestamp;
-
-      if (snapshot.contactName) {
-        contact.contactName = snapshot.contactName;
-      }
-
-      if (snapshot.organizationName) {
-        contact.organizationName = snapshot.organizationName;
-      }
-
-      if (snapshot.email) {
-        contact.email = snapshot.email;
-      }
-
-      if (snapshot.phone) {
-        contact.phone = snapshot.phone;
-      }
-
-      if (snapshot.mailingAddress) {
-        contact.mailingAddress = snapshot.mailingAddress;
-      }
-    }
+    return contact;
   });
 
   return contactRecords
@@ -497,9 +526,13 @@ function getContactsFromBookings(bookings) {
         ),
       };
 
-      return {
+            return {
         ...finalizedContact,
         id: buildStableContactId(finalizedContact),
+        identityKeys: Array.from(contact.identityKeys),
+        secondaryOnlyBookingCount: [...contact.secondaryBookingIds].filter(
+          (bookingId) => !contact.primaryBookingIds.has(bookingId)
+        ).length,
       };
     })
     .sort((a, b) =>
@@ -908,22 +941,91 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
     }
   });
 
+    /*
+    Hidden contacts are shared and stars are per login once the
+    contact_hidden / contact_stars tables exist; until then this browser's
+    lists are used (AUDIT-049, Q-038 A).
+  */
+  const [preferencesOnline, setPreferencesOnline] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    loadContactPreferences(supabase).then(async (result) => {
+      if (cancelled || !result.available) {
+        return;
+      }
+
+      let alreadyUploaded;
+
+      try {
+        alreadyUploaded =
+          localStorage.getItem(CONTACTS_PREFERENCES_UPLOADED_KEY) === "true";
+      } catch {
+        alreadyUploaded = true;
+      }
+
+      const browserHidden = getSavedDeletedContacts();
+      const browserStars = getSavedContactIdList(CONTACTS_VIEW_STARRED_STORAGE_KEY);
+
+      if (!alreadyUploaded && (browserHidden.length || browserStars.length)) {
+        try {
+          await uploadBrowserContactPreferences(supabase, {
+            hidden: browserHidden,
+            starredKeys: browserStars,
+          });
+          localStorage.setItem(CONTACTS_PREFERENCES_UPLOADED_KEY, "true");
+          const reloaded = await loadContactPreferences(supabase);
+          if (!cancelled && reloaded.available) {
+            result = reloaded;
+          }
+        } catch (error) {
+          console.error("Could not copy this browser's contact preferences online:", error);
+        }
+      }
+
+      if (!cancelled) {
+        setPreferencesOnline(true);
+        setDeletedContacts(result.hidden);
+        setStarredContactIds(result.starredKeys);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const savePreferenceOnline = (action) => {
+    if (!preferencesOnline) {
+      return;
+    }
+
+    action().catch((error) => {
+      console.error("Could not save the contact preference online:", error);
+      alert("That contact change could not be saved for other staff. Reload Contacts and try again.");
+    });
+  };
+
   const [copiedContactCell, setCopiedContactCell] = useState("");
   const [contactSearch, setContactSearch] = useState("");
   const [expandedContactId, setExpandedContactId] = useState(null);
 
 
-  useEffect(() => {
-    saveDeletedContacts(deletedContacts);
-  }, [deletedContacts]);
+    useEffect(() => {
+    if (!preferencesOnline) {
+      saveDeletedContacts(deletedContacts);
+    }
+  }, [deletedContacts, preferencesOnline]);
 
-
   useEffect(() => {
-    saveContactIdList(
-      CONTACTS_VIEW_STARRED_STORAGE_KEY,
-      starredContactIds
-    );
-  }, [starredContactIds]);
+    if (!preferencesOnline) {
+      saveContactIdList(
+        CONTACTS_VIEW_STARRED_STORAGE_KEY,
+        starredContactIds
+      );
+    }
+  }, [starredContactIds, preferencesOnline]);
 
 
   useEffect(() => {
@@ -951,9 +1053,14 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
     [starredContactIds]
   );
 
+    // Any key of a hidden contact hides it, so a new email cannot revive it.
   const deletedContactIdSet = useMemo(
     () => new Set(
-      deletedContacts.map((contact) => contact.id)
+      deletedContacts.flatMap((contact) =>
+        Array.isArray(contact.identityKeys) && contact.identityKeys.length
+          ? contact.identityKeys
+          : [contact.id]
+      )
     ),
     [deletedContacts]
   );
@@ -961,15 +1068,21 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
   const visibleContacts = useMemo(
     () =>
       contacts.filter(
-        (contact) => !deletedContactIdSet.has(contact.id)
+        (contact) =>
+          !contactMatchesSavedKeys(
+            [contact.id, ...(contact.identityKeys || [])],
+            deletedContactIdSet
+          )
       ),
     [contacts, deletedContactIdSet]
   );
 
+
+
   const visibleStarredCount = useMemo(
     () =>
-      visibleContacts.filter((contact) =>
-        starredContactIdSet.has(contact.id)
+            visibleContacts.filter((contact) =>
+        isContactStarredIn(contact, starredContactIdSet)
       ).length,
     [visibleContacts, starredContactIdSet]
   );
@@ -980,7 +1093,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
     return visibleContacts
       .map((contact) => ({
         ...contact,
-        isStarred: starredContactIdSet.has(contact.id),
+                isStarred: isContactStarredIn(contact, starredContactIdSet),
       }))
       .filter((contact) => {
         if (!searchValue) {
@@ -1040,14 +1153,22 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
   };
 
 
+  // A contact may be starred under any of its keys (older saved ids).
   const toggleContactStar = (contactId) => {
-    setStarredContactIds((currentIds) => {
-      if (currentIds.includes(contactId)) {
-        return currentIds.filter((id) => id !== contactId);
-      }
+    const contact = contacts.find((item) => item.id === contactId);
+    const keys = new Set([contactId, ...(contact?.identityKeys || [])]);
+    const starredKeys = starredContactIds.filter((id) => keys.has(id));
 
-      return [...currentIds, contactId];
-    });
+    if (starredKeys.length > 0) {
+      setStarredContactIds((currentIds) => currentIds.filter((id) => !keys.has(id)));
+      starredKeys.forEach((key) =>
+        savePreferenceOnline(() => setContactStarOnline(supabase, key, false))
+      );
+      return;
+    }
+
+    setStarredContactIds((currentIds) => [...currentIds, contactId]);
+    savePreferenceOnline(() => setContactStarOnline(supabase, contactId, true));
   };
 
 
@@ -1062,8 +1183,9 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
       return;
     }
 
-    const deletedContactSnapshot = {
+        const deletedContactSnapshot = {
       id: contact.id,
+      identityKeys: contact.identityKeys || [contact.id],
       contactName: contact.contactName,
       organizationName: contact.organizationName,
       email: contact.email,
@@ -1090,22 +1212,23 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
       ),
     ]);
 
-    setStarredContactIds((currentIds) =>
+        setStarredContactIds((currentIds) =>
       currentIds.filter((id) => id !== contact.id)
     );
-
     setExpandedContactId((currentId) =>
       currentId === contact.id ? null : currentId
     );
+    savePreferenceOnline(() => hideContactOnline(supabase, deletedContactSnapshot));
   };
 
 
-  const restoreDeletedContact = (contactId) => {
+    const restoreDeletedContact = (contactId) => {
     setDeletedContacts((currentContacts) =>
       currentContacts.filter(
         (contact) => contact.id !== contactId
       )
     );
+    savePreferenceOnline(() => unhideContactOnline(supabase, contactId));
   };
 
 
@@ -1439,13 +1562,20 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                             nameSortMode
                           )}
                         >
-                          <div className="contacts-view-name-cell">
+                                                    <div className="contacts-view-name-cell">
                             <strong>
                               {formatContactName(
                                 contact.contactName,
                                 nameSortMode
                               )}
                             </strong>
+                            {contact.secondaryOnlyBookingCount > 0 && (
+                              <small className="contacts-view-secondary-label">
+                                Secondary contact on{" "}
+                                {contact.secondaryOnlyBookingCount} booking
+                                {contact.secondaryOnlyBookingCount === 1 ? "" : "s"}
+                              </small>
+                            )}
                           </div>
                         </CopyableContactCell>
 

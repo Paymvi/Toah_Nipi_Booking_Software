@@ -309,6 +309,23 @@
   box-shadow: 0 0 0 0.188rem rgba(68, 58, 156, 0.12);
 }
 
+.booking-checklist-saving,
+.booking-checklist-save-error {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.booking-checklist-save-error {
+  color: #b42318;
+}
+
+.booking-checklist-page button:disabled,
+.booking-checklist-page input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .booking-checklist-table-wrap,
 .booking-checklist-items-table-wrap {
   width: 100%;

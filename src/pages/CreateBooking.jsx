@@ -14,9 +14,20 @@ import {
 } from "react-icons/fa";
 
 import {
-  upsertBooking,
-  getConsistentWaitlistState,
+  saveBooking,
+  getBookingSaveErrorMessage,
 } from "../services/bookingService";
+import {
+  applyBookingClassification,
+  BOOKING_CLASSIFICATION_OPTIONS,
+  getBookingClassificationValue,
+} from "../utils/bookingClassification";
+import { LODGING_BUILDINGS } from "../constants/lodgingConstants";
+import {
+  buildLinenSummary,
+  buildLodgingSummary as buildSharedLodgingSummary,
+} from "../utils/lodgingUtils";
+import { isHousingAuthoritative } from "../utils/masterImportMerge";
 
 import {
   parseDesiredDateRange,
@@ -307,50 +318,13 @@ const paymentMethods = [
   "Other",
 ];
 
-const lodgingFields = [
-  {
-    name: "lodgingBethel",
-    label: "Bethel",
-    capacity: "70",
-    image: "/lodges/Bethel.webp",
-  },
-  {
-    name: "lodgingHebronThird",
-    label: "Hebron 3rd Floor",
-    capacity: "14",
-    image: "/lodges/May-2025-Hebron.jpg",
-  },
-  {
-    name: "lodgingHebronBunks",
-    label: "Hebron Bunks",
-    capacity: "52",
-    image: "/lodges/May-2025-Hebron.jpg",
-  },
-  {
-    name: "lodgingDothan",
-    label: "Dothan",
-    capacity: "21",
-    image: "/lodges/Dothan.webp",
-  },
-  {
-    name: "lodgingAjalon",
-    label: "Ajalon",
-    capacity: "5–8",
-    image: "/lodges/Ajalon.png",
-  },
-  {
-    name: "lodgingCapernaum",
-    label: "Capernaum",
-    capacity: "5",
-    image: "/lodges/Capurnum.webp",
-  },
-  {
-    name: "lodgingGuestHouse",
-    label: "Guest House",
-    capacity: "9–12",
-    image: "/lodges/Guest-House.webp",
-  },
-];
+// One building list for every screen (src/constants/lodgingConstants.js).
+const lodgingFields = LODGING_BUILDINGS.map((building) => ({
+  name: building.field,
+  label: building.label,
+  capacity: building.capacity,
+  image: building.image,
+}));
 
 
 /* =========================================================
@@ -885,6 +859,7 @@ function createInitialFormState(
     lodgingAjalon: "",
     lodgingCapernaum: "",
     lodgingGuestHouse: "",
+    lodgingCamping: "",
 
     /* Linens */
     linenOption: "No",
@@ -1631,6 +1606,10 @@ function createExistingBookingFormState(booking) {
       details.lodgingGuestHouse ||
       "",
 
+    lodgingCamping:
+      details.lodgingCamping ||
+      "",
+
 
     /* =====================================================
        LINENS
@@ -1670,6 +1649,10 @@ function createExistingBookingFormState(booking) {
     waitlist:
       booking.waitlist ||
       "No",
+
+    // Booked / Waitlist / Cancelled. Progress lives in the portal.
+    classification:
+      getBookingClassificationValue(booking),
 
 
     /* =====================================================
@@ -1737,21 +1720,30 @@ function getGuestTotal(
 }
 
 
-function buildLodgingSummary(formData) {
-  return lodgingFields
-    .map((building) => {
-      const value = String(
-        formData[building.name] || ""
-      ).trim();
+/*
+  Builds the lodging text with the shared builder over the saved Housing
+  values plus this form's totals, so editing here keeps room and camping
+  detail the Housing tab recorded (AUDIT-005). A building whose total was
+  changed here stops claiming "used" from an earlier Housing save.
+*/
+function getLodgingSaveValues(formData, existingBooking) {
+  const existingDetails = existingBooking?.rentalFormDetails || {};
+  const existingUsage =
+    existingDetails.housingUsage && typeof existingDetails.housingUsage === "object"
+      ? existingDetails.housingUsage
+      : null;
+  const usage = { ...(existingUsage || {}) };
 
-      if (!value) {
-        return "";
-      }
+  lodgingFields.forEach(({ name }) => {
+    if (String(formData[name] || "") !== String(existingDetails[name] || "")) {
+      usage[name] = Number(formData[name]) > 0;
+    }
+  });
 
-      return `${building.label}: ${value}`;
-    })
-    .filter(Boolean)
-    .join("; ");
+  return {
+    summary: buildSharedLodgingSummary({ ...existingDetails, ...formData }, usage),
+    housingUsage: existingUsage ? usage : null,
+  };
 }
 
 function buildAllergiesSummary(formData) {
@@ -1875,16 +1867,15 @@ function buildScheduleSummary(formData) {
 }
 
 
-function getInitialBookingStatus(formData) {
-  if (formData.contractReturnedDate) {
-    return "Confirmed";
-  }
+// Active staff, plus a name already saved on the row so it is never lost.
+function getFacilityStaffOptions(staffUsers, currentValue) {
+  const names = staffUsers
+    .filter((user) => user.active !== false)
+    .map((user) => String(user.name || "").trim())
+    .filter(Boolean);
+  const current = String(currentValue || "").trim();
 
-  if (formData.contractSentDate) {
-    return "Contract Sent";
-  }
-
-  return "Inquiry";
+  return [...new Set(current ? [...names, current] : names)];
 }
 
 
@@ -1894,6 +1885,8 @@ function getInitialBookingStatus(formData) {
 
 export default function CreateBooking({
   initialInquiry = null,
+  isDevMode = false,
+  staffUsers = [],
 
   existingBooking = null,
 
@@ -2285,8 +2278,11 @@ export default function CreateBooking({
         actualGuestTotal ||
         approxGuestTotal;
 
+      const lodgingSave =
+        getLodgingSaveValues(formData, existingBooking);
+
       const lodgingSummary =
-        buildLodgingSummary(formData);
+        lodgingSave.summary;
 
       const mealsSummary =
         buildMealsSummary(formData);
@@ -2297,12 +2293,11 @@ export default function CreateBooking({
       const scheduleSummary =
         buildScheduleSummary(formData);
 
-      const linenSummary =
-        formData.linenOption === "No"
-          ? "No"
-          : formData.linenSets
-            ? `${formData.linenOption} - ${formData.linenSets} full set(s)`
-            : formData.linenOption;
+            const linenSummary = buildLinenSummary(
+        formData.linenOption,
+        formData.linenSets,
+        formData.linenPieces
+      );
 
       /*
         Noon UTC keeps a date from accidentally
@@ -2373,21 +2368,27 @@ export default function CreateBooking({
         retreatType:
           formData.retreatType,
 
+        /*
+          A booking entered by staff is a real booking, whether or not a
+          contract has gone out (Q-007, Q-015). Contract, deposit and other
+          progress is tracked in the guest portal.
+        */
         status:
           isEditMode
-            ? formData.status
-            : getInitialBookingStatus(
-                formData
-              ),
+            ? existingBooking?.status || "Confirmed"
+            : "Confirmed",
 
         waitlist:
           isEditMode
-            ? formData.waitlist
+            ? existingBooking?.waitlist || "No"
             : "No",
 
+        // Once Housing owns lodging the label follows the summary (AUDIT-007).
         roomName:
-          existingBooking?.roomName ||
-          "Unassigned",
+          existingBooking && isHousingAuthoritative(existingBooking)
+            ? lodgingSummary || "Unassigned"
+            : existingBooking?.roomName ||
+              "Unassigned",
 
         buildingsRooms:
           lodgingSummary,
@@ -2448,8 +2449,12 @@ export default function CreateBooking({
         foodAllergies:
           allergiesSummary,
 
+                // Operational notes; meal notes stay with the meals (AUDIT-040).
         needToKnow:
-          formData.mealNotes.trim(),
+          existingBooking?.needToKnow &&
+          existingBooking.needToKnow !== existingBooking?.rentalFormDetails?.mealNotes
+            ? existingBooking.needToKnow
+            : "",
 
         notes:
           formData.notes.trim(),
@@ -2474,6 +2479,11 @@ export default function CreateBooking({
             field values.
           */
           ...formData,
+
+          // Keep the Housing tab's used/unused marks in step with edits here.
+          ...(lodgingSave.housingUsage
+            ? { housingUsage: lodgingSave.housingUsage }
+            : {}),
 
           /* Optional secondary contact, saved with the booking details. */
           secondaryContactName:
@@ -2516,26 +2526,30 @@ export default function CreateBooking({
       };
 
       /*
-        Status and Waitlist are edited separately; save one
-        consistent pair (also mirrored in rentalFormDetails).
+        Status and waitlist change only when staff pick a different
+        classification; the pair is mirrored in rentalFormDetails.
       */
       if (isEditMode) {
-        const workflowState =
-          getConsistentWaitlistState(
-            existingBooking,
-            bookingToSave
+        const classified =
+          applyBookingClassification(
+            bookingToSave,
+            formData.classification
           );
 
-        Object.assign(
-          bookingToSave,
-          workflowState
-        );
-
-        Object.assign(
-          bookingToSave.rentalFormDetails,
-          workflowState
-        );
+        Object.assign(bookingToSave, {
+          status: classified.status,
+          waitlist: classified.waitlist,
+          rentalFormDetails: {
+            ...(classified.rentalFormDetails || bookingToSave.rentalFormDetails),
+          },
+        });
       }
+
+      bookingToSave.rentalFormDetails.status =
+        bookingToSave.status;
+      bookingToSave.rentalFormDetails.waitlist =
+        bookingToSave.waitlist;
+      delete bookingToSave.rentalFormDetails.classification;
 
 
       let savedBooking;
@@ -2550,7 +2564,7 @@ export default function CreateBooking({
           );
       } else {
         savedBooking =
-          await upsertBooking(
+          await saveBooking(
             bookingToSave
           );
       }
@@ -2605,8 +2619,11 @@ export default function CreateBooking({
         error
       );
 
+      // The form keeps every value the user typed.
       setSubmitError(
-        "The guest group could not be saved. Please try again."
+        error?.code
+          ? getBookingSaveErrorMessage(error)
+          : "The guest group could not be saved. Please try again."
       );
     } finally {
       setIsSubmitting(false);
@@ -2639,7 +2656,12 @@ export default function CreateBooking({
               : "Staff Facing: Group Booking Form"}
           </h1>
 
-            {!isEditMode && (
+            {/*
+              Test data only in Dev Mode, and never on a form opened from an
+              inquiry, where it would replace the real group's details
+              (AUDIT-044).
+            */}
+            {!isEditMode && isDevMode && !initialInquiry && (
               <button
                 className="rental-test-data-button"
                 type="button"
@@ -4197,10 +4219,10 @@ export default function CreateBooking({
                         }
                       />
 
-                      <input
-                        type="text"
-                        value={facility.assignedTo}
-                        placeholder="Staff member"
+                                            {/* Same staff list as Checklists and Staff Assignments (AUDIT-043). */}
+                      <select
+                        value={facility.assignedTo || ""}
+                        aria-label="Staff member"
                         onChange={(event) =>
                           handleFacilityChange(
                             index,
@@ -4208,7 +4230,17 @@ export default function CreateBooking({
                             event.target.value
                           )
                         }
-                      />
+                      >
+                        <option value="">Unassigned</option>
+                        {getFacilityStaffOptions(
+                          staffUsers,
+                          facility.assignedTo
+                        ).map((name) => (
+                          <option value={name} key={name}>
+                            {name}
+                          </option>
+                        ))}
+                      </select>
 
                       <button
                         type="button"
@@ -4292,9 +4324,11 @@ export default function CreateBooking({
                           {building.label}
                         </strong>
 
-                        <small>
-                          Capacity {building.capacity}
-                        </small>
+                        {building.capacity && (
+                          <small>
+                            Capacity {building.capacity}
+                          </small>
+                        )}
                       </span>
 
                     </div>
@@ -4386,11 +4420,11 @@ export default function CreateBooking({
 
                 <div>
                   <h2>
-                    Booking Status
+                    Booking
                   </h2>
 
                   <p>
-                    Internal workflow state for this booking.
+                    Mark a cancellation or waitlist here. Contract, deposit and other progress is tracked in the guest portal.
                   </p>
                 </div>
               </header>
@@ -4400,57 +4434,21 @@ export default function CreateBooking({
                 <div className="rental-field-grid">
 
                   <label className="rental-field">
-                    <span>Status</span>
+                    <span>Booking</span>
 
                     <select
-                      name="status"
+                      name="classification"
                       value={
-                        formData.status ||
-                        "Inquiry"
+                        formData.classification ||
+                        "booked"
                       }
                       onChange={handleChange}
                     >
-                      <option value="Inquiry">
-                        Inquiry
-                      </option>
-
-                      <option value="Contract Sent">
-                        Contract Sent
-                      </option>
-
-                      <option value="Confirmed">
-                        Confirmed
-                      </option>
-
-                      <option value="Waitlist">
-                        Waitlist
-                      </option>
-
-                      <option value="Cancelled">
-                        Cancelled
-                      </option>
-                    </select>
-                  </label>
-
-
-                  <label className="rental-field">
-                    <span>Waitlist</span>
-
-                    <select
-                      name="waitlist"
-                      value={
-                        formData.waitlist ||
-                        "No"
-                      }
-                      onChange={handleChange}
-                    >
-                      <option value="No">
-                        No
-                      </option>
-
-                      <option value="Yes">
-                        Yes
-                      </option>
+                      {BOOKING_CLASSIFICATION_OPTIONS.map((option) => (
+                        <option value={option.value} key={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </label>
 

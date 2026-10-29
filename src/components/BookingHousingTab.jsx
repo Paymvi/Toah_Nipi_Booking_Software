@@ -1,4 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
+import { LODGING_BUILDINGS } from "../constants/lodgingConstants";
+import { recordStaffEdits } from "../utils/bookingFields";
+import { isStaffBookingRecord } from "../utils/bookingClassification";
+import {
+  buildLinenSummary,
+  buildLodgingSummary,
+  getBookingLodgingAssignments,
+  getLegacyLodgingText,
+} from "../utils/lodgingUtils";
+import { isHousingAuthoritative } from "../utils/masterImportMerge";
 import {
   FaBed,
   FaCheck,
@@ -11,255 +21,50 @@ import {
 } from "react-icons/fa";
 
 /* =========================================================
-   CURRENT LODGING OPTIONS
-   These match the lodging fields used by CreateBooking.
+   LODGING OPTIONS
+   Built from the shared building list (src/constants/lodgingConstants.js)
+   in the row shape this tab renders: buildings with rooms list floors of
+   rooms; Hebron Bunks lists its bunk sections as floors without rooms;
+   Camping lists Tent and RV as rooms.
 ========================================================= */
 
-const housingRows = [
-  {
-    id: "bethel",
-    field: "lodgingBethel",
-    roomName: "Bethel",
-    housingArea: "Bethel Lodge",
-    roomCategory: "Family Style Rooms",
-    image: "/lodges/Bethel.webp",
-    floors: [
-      {
-        id: "upper",
-        label: "Upper Floor",
-        rooms: [
-          {
-            id: "room-1",
-            label: "Room 1",
-            field: "lodgingBethelUpperRoom1",
-          },
-          {
-            id: "room-2",
-            label: "Room 2",
-            field: "lodgingBethelUpperRoom2",
-          },
-        ],
-      },
-      {
-        id: "middle",
-        label: "Middle Floor",
-        rooms: [
-          {
-            id: "room-3",
-            label: "Room 3",
-            field: "lodgingBethelMiddleRoom3",
-          },
-          {
-            id: "room-4",
-            label: "Room 4",
-            field: "lodgingBethelMiddleRoom4",
-          },
-          {
-            id: "room-5",
-            label: "Room 5",
-            field: "lodgingBethelMiddleRoom5",
-          },
-          {
-            id: "room-6",
-            label: "Room 6",
-            field: "lodgingBethelMiddleRoom6",
-          },
-        ],
-      },
-      {
-        id: "lower",
-        label: "Lower Floor",
-        rooms: [
-          {
-            id: "room-7",
-            label: "Room 7",
-            field: "lodgingBethelLowerRoom7",
-          },
-          {
-            id: "room-8",
-            label: "Room 8",
-            field: "lodgingBethelLowerRoom8",
-          },
-          {
-            id: "room-9",
-            label: "Room 9",
-            field: "lodgingBethelLowerRoom9",
-          },
-          {
-            id: "room-10",
-            label: "Room 10",
-            field: "lodgingBethelLowerRoom10",
-          },
-          {
-            id: "room-11",
-            label: "Room 11",
-            field: "lodgingBethelLowerRoom11",
-          },
-        ],
-      },
-    ],
-  },
+const housingRows = LODGING_BUILDINGS.map((building) => {
+  const row = {
+    id: building.id,
+    field: building.field,
+    roomName: building.label,
+    housingArea: building.housingArea,
+    roomCategory: building.roomCategory,
+    image: building.image,
+    aliases: building.aliases,
+  };
 
-  {
-    id: "hebron-third",
-    field: "lodgingHebronThird",
-    roomName: "Hebron 3rd Floor",
-    housingArea: "Main Lodge",
-    roomCategory: "Private Rooms",
-    image: "/lodges/May-2025-Hebron.jpg",
-    aliases: [
-      "hebron 3rd floor",
-      "hebron third floor",
-      "hebron 3rd",
-    ],
-  },
+  if (building.floors) {
+    row.floors = building.floors.map((floor) => ({
+      id: floor.key.toLowerCase(),
+      label: floor.label,
+      rooms: floor.rooms.map((room) => ({
+        id: room.label.toLowerCase().replace(/\s+/g, "-"),
+        label: room.label,
+        field: room.key,
+      })),
+    }));
+  } else if (building.areas && building.id === "camping") {
+    row.rooms = building.areas.map((area) => ({
+      id: area.key,
+      label: area.label,
+      field: area.key,
+    }));
+  } else if (building.areas) {
+    row.floors = building.areas.map((area) => ({
+      id: area.key,
+      field: area.key,
+      label: area.label,
+    }));
+  }
 
-  {
-    id: "hebron-bunks",
-    field: "lodgingHebronBunks",
-    roomName: "Hebron Bunks",
-    housingArea: "Main Lodge",
-    roomCategory: "Dormitory / Bunks",
-    image: "/lodges/May-2025-Hebron.jpg",
-    aliases: [
-      "hebron bunks",
-      "hebron bunk",
-    ],
-    floors: [
-      {
-        id: "mens",
-        field: "lodgingHebronBunksMens",
-        label: "Men's Bunks",
-      },
-      {
-        id: "womens",
-        field: "lodgingHebronBunksWomens",
-        label: "Women's Bunks",
-      },
-    ],
-  },
-
-  {
-    id: "dothan",
-    field: "lodgingDothan",
-    roomName: "Dothan",
-    housingArea: "Dothan Lodge",
-    roomCategory: "Small Group Lodge",
-    image: "/lodges/Dothan.webp",
-    aliases: ["dothan"],
-    floors: [
-      {
-        id:"upper",
-        label:"Upper Floor",
-        rooms:[
-          {
-            id:"room-1",
-            label:"Room 1",
-            field:"lodgingDothanUpperRoom1"
-          },
-          {
-            id:"room-2",
-            label:"Room 2",
-            field:"lodgingDothanUpperRoom2"
-          }
-        ]
-      },
-      {
-        id:"middle",
-        label:"Middle Floor",
-        rooms:[
-          {
-            id:"room-3",
-            label:"Room 3",
-            field:"lodgingDothanMiddleRoom3"
-          },
-          {
-            id:"room-4",
-            label:"Room 4",
-            field:"lodgingDothanMiddleRoom4"
-          },
-          {
-            id:"room-5",
-            label:"Room 5",
-            field:"lodgingDothanMiddleRoom5"
-          },
-          {
-            id:"room-6",
-            label:"Room 6",
-            field:"lodgingDothanMiddleRoom6"
-          }
-        ]
-      }
-      ],
-  },
-
-  {
-    id: "ajalon",
-    field: "lodgingAjalon",
-    roomName: "Ajalon",
-    housingArea: "Rustic Cottages",
-    roomCategory: "Rustic Cottage",
-    image: "/lodges/Ajalon.png",
-    aliases: [
-      "ajalon",
-      "rustic: ajalon",
-      "rustic ajalon",
-    ],
-  },
-
-  {
-    id: "capernaum",
-    field: "lodgingCapernaum",
-    roomName: "Capernaum",
-    housingArea: "Rustic Cottages",
-    roomCategory: "Rustic Cottage",
-    image: "/lodges/Capurnum.webp",
-    aliases: [
-      "capernaum",
-      "rustic: capernaum",
-      "rustic capernaum",
-    ],
-  },
-
-  {
-    id: "guest-house",
-    field: "lodgingGuestHouse",
-    roomName: "Guest House",
-    housingArea: "Guest House",
-    roomCategory: "House Style Lodging",
-    image: "/lodges/Guest-House.webp",
-    aliases: [
-      "guest house",
-      "guesthouse",
-    ],
-  },
-
-  {
-    id: "camping",
-    field: "lodgingCamping",
-    roomName: "Camping",
-    housingArea: "Outdoor Areas",
-    roomCategory: "Tent / RV Sites",
-    image: "",
-    aliases: [
-      "camping",
-      "tent",
-      "rv",
-    ],
-    rooms: [
-      {
-        id: "tent",
-        label: "Tent",
-        field: "lodgingCampingTent",
-      },
-      {
-        id: "rv",
-        label: "RV",
-        field: "lodgingCampingRV",
-      },
-    ],
-  },
-];
+  return row;
+});
 
 /* =========================================================
    HELPERS
@@ -303,32 +108,7 @@ function getValueFromLodgingSummary(summary, roomName) {
 }
 
 function getBookingHousingText(booking) {
-  return [
-    booking?.roomName,
-    booking?.buildingsRooms,
-  ]
-    .filter(Boolean)
-    .join("; ")
-    .toLowerCase();
-}
-
-function importedBookingUsesHousingRow(
-  booking,
-  row
-) {
-  const housingText =
-    getBookingHousingText(booking);
-  if (!housingText) {
-    return false;
-  }
-  if (!Array.isArray(row.aliases)) {
-    return false;
-  }
-  return row.aliases.some((alias) =>
-    housingText.includes(
-      alias.toLowerCase()
-    )
-  );
+  return getLegacyLodgingText(booking).toLowerCase();
 }
 
 function getInitialKnownUsage(booking) {
@@ -338,6 +118,14 @@ function getInitialKnownUsage(booking) {
     getInitialHousingState(booking);
   const savedUsage =
     details.housingUsage || {};
+  // Imported text only suggests buildings until the tab has been saved.
+  const detectedBuildingIds = isHousingAuthoritative(booking)
+    ? new Set()
+    : new Set(
+        getBookingLodgingAssignments(booking).map(
+          (assignment) => assignment.buildingId
+        )
+      );
   const result = {};
   housingRows.forEach((row) => {
     const numericValue =
@@ -349,20 +137,23 @@ function getInitialKnownUsage(booking) {
       numericValue > 0;
     const explicitlyMarkedUsed =
       savedUsage[row.field] === true;
+    // Staff unticked this building on a previous save (AUDIT-007).
+    const explicitlyMarkedUnused =
+      savedUsage[row.field] === false;
     const detectedFromImport =
-      importedBookingUsesHousingRow(
-        booking,
-        row
-      );
+      detectedBuildingIds.has(row.id);
     result[row.field] =
       hasKnownCount ||
       explicitlyMarkedUsed ||
-      detectedFromImport;
+      (!explicitlyMarkedUnused && detectedFromImport);
   });
   return result;
 }
 
 function hasGenericHebronAssignment(booking) {
+  if (isHousingAuthoritative(booking)) {
+    return false;
+  }
   const text =
     getBookingHousingText(booking);
   if (!text) {
@@ -574,103 +365,6 @@ function getInitialLinenSets(booking) {
   const match =
     legacyText.match(/\d+/);
   return match ? match[0] : "";
-}
-
-function buildLodgingSummary(
-  values,
-  knownUsage
-) {
-  return housingRows
-    .map((row) => {
-      const value =
-        String(
-          values[row.field] || ""
-        ).trim();
-      const numberValue =
-        Number(value);
-      if (Array.isArray(row.rooms)) {
-        const breakdown =
-          row.rooms
-            .map((room)=>{
-              const amount =
-                values[room.field];
-              if(amount){
-                return `${room.label}: ${amount}`;
-              }
-              return "";
-            })
-            .filter(Boolean)
-            .join(", ");
-        if(breakdown){
-          return `${row.roomName}: ${breakdown}`;
-        }
-      }
-      if (
-        row.floors &&
-        Array.isArray(row.floors)
-      ) {
-        const breakdown = row.floors
-          .map((floor)=>{
-            // Buildings with rooms
-            if (floor.rooms) {
-              const roomText =
-                floor.rooms
-                  .map((room)=>{
-                    const amount =
-                      values[room.field];
-                    if(amount){
-                      return `${room.label}: ${amount}`;
-                    }
-                    return "";
-                  })
-                  .filter(Boolean)
-                  .join(", ");
-              if(roomText){
-                return `${floor.label} - ${roomText}`;
-              }
-              return "";
-            }
-            // Buildings without rooms
-            const floorValue =
-              values[floor.field];
-            if(floorValue){
-              return `${floor.label}: ${floorValue}`;
-            }
-            return "";
-          })
-          .filter(Boolean)
-          .join("; ");
-        if(breakdown){
-          return `${row.roomName}: ${breakdown}`;
-        }
-      }
-      if (
-        value &&
-        Number.isFinite(numberValue) &&
-        numberValue > 0
-      ) {
-        return `${row.roomName}: ${value}`;
-      }
-      if(knownUsage[row.field]){
-        return `${row.roomName}: count unknown`;
-      }
-      return "";
-    })
-    .filter(Boolean)
-    .join("; ");
-}
-
-function buildLinenSummary(
-  linenOption,
-  linenSets
-) {
-  if (linenOption === "No") {
-    return "No";
-  }
-  if (linenSets) {
-    return `${linenOption} - ${linenSets} full set(s)`;
-  }
-  return linenOption;
 }
 
 /* =========================================================
@@ -1061,24 +755,29 @@ export default function BookingHousingTab({
       housingValues,
       knownUsage
     );
-    const linenSummary =
+        const linenSummary =
       buildLinenSummary(
         linenOption,
-        linenSets
+        linenSets,
+        booking?.rentalFormDetails?.linenPieces
       );
-    const campingSummary =
-      [
-        housingValues.lodgingCampingTent
-          ? `Tent: ${housingValues.lodgingCampingTent}`
-          : "",
-        housingValues.lodgingCampingRV
-          ? `RV: ${housingValues.lodgingCampingRV}`
-          : "",
-      ]
-      .filter(Boolean)
-      .join(", ");
+    const previousDetails = booking.rentalFormDetails || {};
+    /*
+      The first Housing save on an imported booking keeps the sheet's
+      lodging text as a reference note; from then on this tab is the
+      lodging record and re-imports leave it alone (AUDIT-007, Q-024).
+    */
+    const importedLodgingNote =
+      previousDetails.importedLodgingText ||
+      (!isHousingAuthoritative(booking) && !isStaffBookingRecord(booking)
+        ? getLegacyLodgingText(booking)
+        : "");
     const updatedRentalFormDetails = {
-      ...(booking.rentalFormDetails || {}),
+      ...previousDetails,
+      ...(importedLodgingNote
+        ? { importedLodgingText: importedLodgingNote }
+        : {}),
+      housingSavedAt: new Date().toISOString(),
       housingUsage: {
         ...knownUsage,
       },
@@ -1156,30 +855,30 @@ export default function BookingHousingTab({
           ? ""
           : linenSets,
     };
+    const updatedBooking = recordStaffEdits(
+      booking,
+      {
+        ...booking,
+        buildingsRooms,
+        // Kept equal to the summary so no reader sees stale imported text.
+        roomName: buildingsRooms || "Unassigned",
+        linenSets: linenSummary,
+        rentalFormDetails:
+          updatedRentalFormDetails,
+      },
+      [],
+      { forceKeys: ["lodging", "linenSets"] }
+    );
     try {
-        await onSaveBooking({
-          ...booking,
-          buildingsRooms: [
-            buildingsRooms,
-            campingSummary,
-          ].filter(Boolean).join("; "),
-          linenSets: linenSummary,
-          rentalFormDetails:
-            updatedRentalFormDetails,
-          updatedAt:
-            new Date().toISOString(),
-        });
+        await onSaveBooking(updatedBooking);
         setIsEditing(false);
       } catch (error) {
+        // The save handler explains the failure; the edits stay on screen.
         console.error(
           "Failed saving housing:",
           error
         );
-        alert(
-          "Failed saving housing. Check console."
-        );
       }
-    setIsEditing(false);
   };
 
   /* =======================================================
@@ -1188,11 +887,16 @@ export default function BookingHousingTab({
      not the newer rentalFormDetails fields.
   ======================================================= */
 
-  const legacyHousingText =
-    String(
-      booking?.buildingsRooms ||
-      ""
-    ).trim();
+  const housingIsAuthoritative =
+    isHousingAuthoritative(booking);
+  const legacyHousingText = housingIsAuthoritative
+    ? String(
+        booking?.rentalFormDetails?.importedLodgingText || ""
+      ).trim()
+    : String(
+        booking?.buildingsRooms ||
+        ""
+      ).trim();
   return (
     <div className="booking-housing-tab">
       {/* ===================================================
@@ -1829,18 +1533,21 @@ export default function BookingHousingTab({
           LEGACY / IMPORTED ROOM INFORMATION
       =================================================== */}
       {legacyHousingText &&
-        !booking?.rentalFormDetails && (
+        (housingIsAuthoritative ||
+          !booking?.rentalFormDetails) && (
           <section className="dashboard-card booking-housing-legacy-card">
             <small>
-              Imported Housing Record
+              {housingIsAuthoritative
+                ? "Imported lodging note"
+                : "Imported Housing Record"}
             </small>
             <strong>
               {legacyHousingText}
             </strong>
             <p>
-              This booking came from an older or
-              imported record, so its original
-              housing text is shown here.
+              {housingIsAuthoritative
+                ? "The lodging text from the original spreadsheet, kept for reference. The assignments above are the lodging record."
+                : "This booking came from an older or imported record, so its original housing text is shown here."}
             </p>
           </section>
         )}

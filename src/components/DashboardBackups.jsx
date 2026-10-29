@@ -19,16 +19,33 @@ import {
 import {
   deleteAllBookings,
   fetchBookings,
-  upsertBookings,
 } from "../services/bookingService";
+import {
+  fetchBackupSections,
+  restoreBookingRows,
+  restoreSupportingSections,
+} from "../services/backupService";
+import {
+  BACKUP_SECTIONS,
+  createBackupEnvelope as createBackupFile,
+  getBackupSection,
+  validateBackupShape,
+  verifyBackupIntegrity,
+} from "../utils/backupFormat";
 
-
-
-const BACKUP_FORMAT = "toah-nipi-booking-backup";
-const BACKUP_SCHEMA_VERSION = 1;
 const LAST_BACKUP_STORAGE_KEY = "toahNipiLastManualBackup";
 const MAX_BACKUP_FILE_BYTES = 25 * 1024 * 1024;
-const UPSERT_CHUNK_SIZE = 150;
+
+/*
+  Full Replace deletes every booking first. It is only offered in Dev Mode
+  and needs this phrase typed, because deleting bookings can delete or
+  orphan their portal tasks and documents (depending on the database's
+  foreign-key rules, not visible from this app) and breaks any portal link
+  whose booking is not re-created with the same token (AUDIT-009/010,
+  Q-012 A). Dev Mode is a screen gate only; the database still decides who
+  may delete (only admins).
+*/
+const REPLACE_CONFIRMATION_PHRASE = "REPLACE AND RISK PORTAL DATA";
 
 function formatDateTime(value) {
   if (!value) return "Never";
@@ -93,75 +110,14 @@ function downloadJsonFile(data, filename) {
   return blob.size;
 }
 
-async function sha256Text(value) {
-  if (!window.crypto?.subtle) {
-    throw new Error(
-      "This browser does not support the integrity-check feature required for backups."
-    );
-  }
-
-  const encoded = new TextEncoder().encode(value);
-  const digest = await window.crypto.subtle.digest("SHA-256", encoded);
-
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function createBackupEnvelope(bookings, reason = "manual") {
-  const createdAt = new Date().toISOString();
-
-  const payload = {
-    bookings,
-  };
-
-  const checksum = await sha256Text(JSON.stringify(payload));
-
-  return {
-    format: BACKUP_FORMAT,
-    schemaVersion: BACKUP_SCHEMA_VERSION,
-    createdAt,
-    reason,
-    application: "Toah Nipi Booking Software",
-    summary: {
-      bookingCount: bookings.length,
-    },
-    integrity: {
-      algorithm: "SHA-256",
-      checksum,
-    },
-    payload,
-  };
+// Reads every section and writes a version 2 backup file object.
+async function createBackupEnvelope(reason = "manual") {
+  const { sections, sectionErrors } = await fetchBackupSections({ fetchBookings });
+  return createBackupFile(sections, { reason, sectionErrors });
 }
 
 function getBackupBookings(backup) {
-  return Array.isArray(backup?.payload?.bookings)
-    ? backup.payload.bookings
-    : [];
-}
-
-function getDuplicateBookingIds(bookings) {
-  const seen = new Set();
-  const duplicateIds = new Set();
-
-  bookings.forEach((booking) => {
-    const id = String(booking?.id || "").trim();
-
-    if (!id) return;
-
-    if (seen.has(id)) {
-      duplicateIds.add(id);
-      return;
-    }
-
-    seen.add(id);
-  });
-
-  return [...duplicateIds];
-}
-
-function getMissingIdCount(bookings) {
-  return bookings.filter((booking) => !String(booking?.id || "").trim()).length;
+  return getBackupSection(backup, "bookings");
 }
 
 function getStatusBreakdown(bookings) {
@@ -225,102 +181,8 @@ function saveLastBackupMetadata(metadata) {
   }
 }
 
-async function upsertInChunks(bookings, onProgress) {
-  let restored = 0;
-
-  for (let index = 0; index < bookings.length; index += UPSERT_CHUNK_SIZE) {
-    const chunk = bookings.slice(index, index + UPSERT_CHUNK_SIZE);
-    const saved = await upsertBookings(chunk);
-
-    restored += saved.length;
-
-    if (onProgress) {
-      onProgress(restored, bookings.length);
-    }
-  }
-
-  return restored;
-}
-
 function validateBasicBackupShape(backup) {
-  const errors = [];
-  const warnings = [];
-
-  if (!backup || typeof backup !== "object" || Array.isArray(backup)) {
-    errors.push("The selected file is not a valid backup object.");
-    return { errors, warnings };
-  }
-
-  if (backup.format !== BACKUP_FORMAT) {
-    errors.push(
-      "This file is not recognized as a Toah Nipi booking-system backup."
-    );
-  }
-
-  if (backup.schemaVersion !== BACKUP_SCHEMA_VERSION) {
-    errors.push(
-      `Unsupported backup schema version: ${String(
-        backup.schemaVersion ?? "missing"
-      )}. This version of the app expects schema version ${BACKUP_SCHEMA_VERSION}.`
-    );
-  }
-
-  const bookings = getBackupBookings(backup);
-
-  if (!Array.isArray(backup?.payload?.bookings)) {
-    errors.push("The backup does not contain a bookings array.");
-  }
-
-  const missingIds = getMissingIdCount(bookings);
-  const duplicateIds = getDuplicateBookingIds(bookings);
-
-  if (missingIds > 0) {
-    errors.push(
-      `${missingIds} booking record${missingIds === 1 ? " is" : "s are"} missing an ID.`
-    );
-  }
-
-  if (duplicateIds.length > 0) {
-    errors.push(
-      `${duplicateIds.length} duplicate booking ID${
-        duplicateIds.length === 1 ? " was" : "s were"
-      } found inside the backup.`
-    );
-  }
-
-  if (bookings.length === 0) {
-    warnings.push("This backup contains zero booking records.");
-  }
-
-  if (!backup?.integrity?.checksum) {
-    errors.push("The backup is missing its integrity checksum.");
-  }
-
-  return { errors, warnings };
-}
-
-async function verifyBackupIntegrity(backup) {
-  const expectedChecksum = String(backup?.integrity?.checksum || "").trim();
-
-  if (!expectedChecksum) {
-    return {
-      ok: false,
-      actualChecksum: "",
-      expectedChecksum: "",
-    };
-  }
-
-  const actualChecksum = await sha256Text(
-    JSON.stringify({
-      bookings: getBackupBookings(backup),
-    })
-  );
-
-  return {
-    ok: actualChecksum === expectedChecksum,
-    actualChecksum,
-    expectedChecksum,
-  };
+  return validateBackupShape(backup);
 }
 
 function BackupMetric({ label, value, helper, icon: Icon }) {
@@ -354,7 +216,14 @@ function BackupNotice({ tone = "info", icon: Icon, title, children }) {
   );
 }
 
-export default function DashboardBackups({ onRestoreComplete }) {
+export default function DashboardBackups({
+  onRestoreComplete,
+  isDevMode = false,
+  canReplace = true,
+  canRestore: accountCanRestore = true,
+}) {
+  // Replace needs Dev Mode AND an account the database lets delete bookings.
+  const replaceAvailable = isDevMode && canReplace;
   const fileInputRef = useRef(null);
 
   const [liveBookings, setLiveBookings] = useState([]);
@@ -444,11 +313,14 @@ export default function DashboardBackups({ onRestoreComplete }) {
     };
   }, [backupBookings, backupValidation?.valid, liveBookings, selectedBackup]);
 
-  const canRestore =
+    const canRestore =
+    accountCanRestore &&
     Boolean(selectedBackup) &&
     Boolean(backupValidation?.valid) &&
     !isRestoring &&
-    (restoreMode === "merge" || replaceConfirmation.trim() === "RESTORE");
+    (restoreMode === "merge" ||
+      (replaceAvailable &&
+        replaceConfirmation.trim() === REPLACE_CONFIRMATION_PHRASE));
 
   const loadLiveDatabaseSummary = async () => {
     try {
@@ -474,8 +346,8 @@ export default function DashboardBackups({ onRestoreComplete }) {
       setIsCreatingBackup(true);
       setRestoreResult(null);
 
-      const bookings = await fetchBookings();
-      const backup = await createBackupEnvelope(bookings, "manual");
+      const backup = await createBackupEnvelope("manual");
+      const bookings = backup.payload.bookings;
       const filename = createBackupFilename(new Date(backup.createdAt));
       const fileSize = downloadJsonFile(backup, filename);
 
@@ -491,12 +363,21 @@ export default function DashboardBackups({ onRestoreComplete }) {
       setLastBackup(metadata);
       setLiveBookings(bookings);
 
+      const missingSections = Object.keys(backup.coverage.sectionErrors);
       setRestoreResult({
-        tone: "success",
-        title: "Backup created",
-        message: `${bookings.length} booking record${
-          bookings.length === 1 ? " was" : "s were"
-        } exported successfully. Store the downloaded file somewhere outside this computer as well.`,
+        tone: missingSections.length ? "warning" : "success",
+        title: missingSections.length ? "Backup created with gaps" : "Backup created",
+        message:
+          `${bookings.length} bookings, ${backup.summary.guestInquiryCount} website inquiries, ` +
+          `${backup.summary.portalChecklistItemCount} portal tasks, ${backup.summary.portalDocumentCount} portal documents ` +
+          `and a list of ${backup.summary.storageManifestCount} uploaded files were saved. ` +
+          "The uploaded files themselves are not copied into the backup. " +
+          (missingSections.length
+            ? `Not included because they could not be read: ${missingSections
+                .map((key) => BACKUP_SECTIONS.find((section) => section.key === key)?.label || key)
+                .join(", ")}. `
+            : "") +
+          "Store the downloaded file somewhere outside this computer as well.",
       });
     } catch (error) {
       console.error("Could not create backup:", error);
@@ -607,8 +488,8 @@ export default function DashboardBackups({ onRestoreComplete }) {
     readBackupFile(file);
   };
 
-  const downloadSafetySnapshot = async (bookings) => {
-    const safetyBackup = await createBackupEnvelope(bookings, "pre-restore-safety");
+  const downloadSafetySnapshot = async () => {
+    const safetyBackup = await createBackupEnvelope("pre-restore-safety");
     const filename = createBackupFilename(
       new Date(safetyBackup.createdAt),
       "toah-nipi-pre-restore-safety"
@@ -667,7 +548,7 @@ export default function DashboardBackups({ onRestoreComplete }) {
           label: "Creating pre-restore safety backup…",
         });
 
-        const safetySnapshot = await downloadSafetySnapshot(originalBookings);
+        const safetySnapshot = await downloadSafetySnapshot();
         safetyFilename = safetySnapshot.filename;
 
         setRestoreProgress({
@@ -677,7 +558,14 @@ export default function DashboardBackups({ onRestoreComplete }) {
         });
 
         destructiveStepStarted = true;
-        await deleteAllBookings();
+        const deletedCount = await deleteAllBookings();
+
+        if (deletedCount < originalBookings.length) {
+          throw new Error(
+            `Only ${deletedCount} of ${originalBookings.length} bookings could be deleted. ` +
+              "Only administrators can delete bookings, and linked portal records can also block deletion."
+          );
+        }
       }
 
       setRestoreProgress({
@@ -689,16 +577,35 @@ export default function DashboardBackups({ onRestoreComplete }) {
             : "Merging backup records…",
       });
 
-      await upsertInChunks(bookingsToRestore, (current, total) => {
-        setRestoreProgress({
-          current,
-          total,
-          label:
-            restoreMode === "replace"
-              ? "Restoring backup records…"
-              : "Merging backup records…",
-        });
+      const liveIdsBeforeRestore =
+        restoreMode === "replace"
+          ? new Set()
+          : new Set(originalBookings.map((booking) => String(booking.id)));
+
+      await restoreBookingRows(bookingsToRestore, liveIdsBeforeRestore, {
+        onProgress: (current, total) => {
+          setRestoreProgress({
+            current,
+            total,
+            label:
+              restoreMode === "replace"
+                ? "Restoring backup records…"
+                : "Merging backup records…",
+          });
+        },
       });
+
+      // Version 2 backups also hold website inquiries and portal records.
+      let supportingResults = null;
+
+      if (selectedBackup.schemaVersion >= 2) {
+        setRestoreProgress({
+          current: bookingsToRestore.length,
+          total: bookingsToRestore.length,
+          label: "Restoring website inquiries and portal records…",
+        });
+        supportingResults = await restoreSupportingSections(selectedBackup.payload);
+      }
 
       setRestoreProgress({
         current: bookingsToRestore.length,
@@ -744,17 +651,35 @@ export default function DashboardBackups({ onRestoreComplete }) {
         label: "Restore complete",
       });
 
+      const supportingSummary = supportingResults
+        ? " " +
+          ["guestInquiries", "portalChecklistItems", "portalDocuments"]
+            .map((key) => {
+              const label = BACKUP_SECTIONS.find((section) => section.key === key)?.label;
+              const result = supportingResults[key];
+              return result.error
+                ? `${label}: not restored (${result.error}).`
+                : `${label}: ${result.inserted} added, ${result.alreadyPresent} already present and left unchanged.`;
+            })
+            .join(" ")
+        : " This version 1 backup holds bookings only; website inquiries and portal records were not touched.";
+      const supportingFailed = supportingResults
+        ? Object.values(supportingResults).some((result) => result.error)
+        : false;
+
       setRestoreResult({
-        tone: "success",
+        tone: supportingFailed ? "warning" : "success",
         title: restoreMode === "replace" ? "Backup restored" : "Backup merged",
         message:
-          restoreMode === "replace"
+          (restoreMode === "replace"
             ? `${bookingsToRestore.length} booking record${
                 bookingsToRestore.length === 1 ? " was" : "s were"
-              } restored and verified. A pre-restore safety backup was downloaded as “${safetyFilename}”.`
+              } restored and verified, with their original portal tokens and creation dates where the backup had them. A pre-restore safety backup was downloaded as “${safetyFilename}”.`
             : `${bookingsToRestore.length} backup record${
                 bookingsToRestore.length === 1 ? " was" : "s were"
-              } merged into the live database and verified. Records that existed only in the current database were left untouched.`,
+              } merged into the live database and verified. Records that existed only in the current database were left untouched.`) +
+          supportingSummary +
+          " Uploaded files are never restored by this page.",
       });
 
       setReplaceConfirmation("");
@@ -776,12 +701,15 @@ export default function DashboardBackups({ onRestoreComplete }) {
           });
 
           await deleteAllBookings();
-          await upsertInChunks(originalBookings, (current, total) => {
-            setRestoreProgress({
-              current,
-              total,
-              label: "Restore failed. Rolling back previous database…",
-            });
+          // Re-inserted with their original portal tokens and creation dates.
+          await restoreBookingRows(originalBookings, new Set(), {
+            onProgress: (current, total) => {
+              setRestoreProgress({
+                current,
+                total,
+                label: "Restore failed. Rolling back previous database…",
+              });
+            },
           });
 
           const rolledBackBookings = await fetchBookings();
@@ -924,7 +852,7 @@ export default function DashboardBackups({ onRestoreComplete }) {
             <div className="backup-coverage-heading">
               <div>
                 <span className="backup-coverage-kicker">Included in this backup</span>
-                <strong>Booking database records</strong>
+                <strong>Bookings, website inquiries and portal records</strong>
               </div>
 
               <span className="backup-covered-pill">
@@ -939,7 +867,10 @@ export default function DashboardBackups({ onRestoreComplete }) {
               <span><FaCheckCircle /> Rental form details</span>
               <span><FaCheckCircle /> Activities, facilities & assignments</span>
               <span><FaCheckCircle /> Checklists and booking-level metadata</span>
-              <span><FaCheckCircle /> Stable booking IDs used for restore</span>
+              <span><FaCheckCircle /> Booking IDs, portal link tokens and creation dates</span>
+              <span><FaCheckCircle /> Website inquiries</span>
+              <span><FaCheckCircle /> Portal tasks and portal documents</span>
+              <span><FaCheckCircle /> A list of uploaded files (names and locations only, not the files)</span>
             </div>
           </div>
 
@@ -1347,6 +1278,7 @@ export default function DashboardBackups({ onRestoreComplete }) {
                           name="backupRestoreMode"
                           value="replace"
                           checked={restoreMode === "replace"}
+                                                    disabled={!replaceAvailable}
                           onChange={() => setRestoreMode("replace")}
                         />
 
@@ -1359,32 +1291,44 @@ export default function DashboardBackups({ onRestoreComplete }) {
 
                           <strong>Full Replace</strong>
                           <p>
-                            Replaces the entire current booking database with exactly what
-                            is in this backup.
+                            Deletes every current booking, then restores the backup. Portal
+                            tasks and documents linked to deleted bookings may be deleted or
+                            orphaned by the database, and uploaded files are never restored.
                           </p>
 
-                          <em>Use only when rolling the database back</em>
+                                                    <em>
+                            {replaceAvailable
+                              ? "Disaster recovery only"
+                              : !canReplace
+                                ? "Administrators only"
+                                : "Available only in Dev Mode"}
+                          </em>
                         </div>
                       </label>
                     </div>
 
-                    {restoreMode === "replace" && (
+                                        {restoreMode === "replace" && replaceAvailable && (
                       <div className="backup-danger-confirmation">
                         <div className="backup-danger-confirmation-heading">
                           <FaExclamationTriangle />
                           <div>
                             <strong>Full Replace is destructive</strong>
                             <p>
-                              The app will automatically download a safety backup of the
-                              current database before deletion begins. It will also attempt
-                              an automatic rollback if the restore fails.
+                              Every current booking is deleted first. Depending on the
+                              database's rules, that can also delete or orphan their portal
+                              tasks and documents, and guests' portal links stop working for
+                              any booking the backup does not re-create with its original
+                              token. A safety backup of everything is downloaded before
+                              deletion, and an automatic rollback is attempted if the restore
+                              fails. Only administrator accounts can delete bookings; Dev Mode
+                              does not change that.
                             </p>
                           </div>
                         </div>
 
                         <label>
                           <span>
-                            Type <strong>RESTORE</strong> to enable Full Replace
+                            Type <strong>{REPLACE_CONFIRMATION_PHRASE}</strong> to enable Full Replace
                           </span>
                           <input
                             type="text"
@@ -1392,7 +1336,7 @@ export default function DashboardBackups({ onRestoreComplete }) {
                             onChange={(event) =>
                               setReplaceConfirmation(event.target.value)
                             }
-                            placeholder="RESTORE"
+                            placeholder={REPLACE_CONFIRMATION_PHRASE}
                             autoComplete="off"
                           />
                         </label>
@@ -1468,11 +1412,14 @@ export default function DashboardBackups({ onRestoreComplete }) {
         <div>
           <strong>What this version protects</strong>
           <p>
-            This backup system protects the booking records exposed by your existing
-            <code> bookingService </code>. Separate Supabase tables or Storage buckets—such
-            as uploaded portal files or a separate public-inquiry table—need their own
-            backup endpoint before they can be safely included here. The page deliberately
-            does not pretend those are covered when they are not.
+            New backups (version 2) hold bookings, website inquiries, portal tasks,
+            portal documents and a list of the uploaded files those records point to.
+            The files themselves stay in Supabase Storage and are not copied; a
+            section that could not be read is named in the file and when it is
+            loaded here. Older backups (version 1), including the daily Google
+            Drive backups the README describes, hold bookings only and still
+            restore. The staff directory, contact preferences and saved spreadsheet
+            views are not included.
           </p>
         </div>
       </section>

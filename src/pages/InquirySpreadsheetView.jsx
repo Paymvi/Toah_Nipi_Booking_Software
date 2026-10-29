@@ -11,19 +11,18 @@ import {
   formatSubmittedDate,
 } from "../utils/dateUtils";
 
-import {
-  getInquiryPipelineRecords,
-} from "./InquiryPipeline";
+import { getConvertedInquiryIds } from "../utils/bookingClassification";
 
 
 /*
-  Inquiry id -> the staff booking created from it, using the same
-  converted-inquiry rule as the Pipeline. Converted rows stay in this
+  Inquiry id -> the booking created from it, using the shared
+  converted-inquiry rule (src/utils/bookingClassification.js). Converted rows stay in this
   workbook view but open that booking instead of starting another.
 */
 function getConvertedBookingsByInquiryId(inquiryBookings) {
-  const { records, convertedInquiryIds } =
-    getInquiryPipelineRecords(inquiryBookings);
+  const records = inquiryBookings;
+  const convertedInquiryIds =
+    getConvertedInquiryIds(inquiryBookings);
 
   const bookingsByInquiryId = new Map();
 
