@@ -23,7 +23,9 @@ import {
 import {
   fetchBackupSections,
   restoreBookingRows,
+  restorePortalSnapshot,
   restoreSupportingSections,
+  SUPPORTING_SECTION_KEYS,
 } from "../services/backupService";
 import {
   BACKUP_SECTIONS,
@@ -528,6 +530,9 @@ export default function DashboardBackups({
     const bookingsToRestore = getBackupBookings(selectedBackup);
     let originalBookings = [];
     let safetyFilename = "";
+    // Live portal data read just before the delete; put back after it.
+    let safetyPayload = null;
+    let portalResults = null;
     let destructiveStepStarted = false;
 
     try {
@@ -550,6 +555,20 @@ export default function DashboardBackups({
 
         const safetySnapshot = await downloadSafetySnapshot();
         safetyFilename = safetySnapshot.filename;
+        safetyPayload = safetySnapshot.backup.payload;
+
+        // Deleting bookings deletes their portal rows; without a full copy they could not be put back.
+        const unreadable = SUPPORTING_SECTION_KEYS.filter(
+          (key) => key in safetySnapshot.backup.coverage.sectionErrors
+        );
+
+        if (unreadable.length > 0) {
+          throw new Error(
+            `Full Replace was not started. The safety backup could not read: ${unreadable
+              .map((key) => BACKUP_SECTIONS.find((section) => section.key === key)?.label || key)
+              .join(", ")}. Nothing was deleted.`
+          );
+        }
 
         setRestoreProgress({
           current: 0,
@@ -594,6 +613,19 @@ export default function DashboardBackups({
           });
         },
       });
+
+      // Live portal data first, so it wins over older copies in the backup.
+      if (restoreMode === "replace") {
+        setRestoreProgress({
+          current: bookingsToRestore.length,
+          total: bookingsToRestore.length,
+          label: "Putting back current portal tasks, documents and inquiry links…",
+        });
+        portalResults = await restorePortalSnapshot(
+          safetyPayload,
+          bookingsToRestore.map((booking) => booking.id)
+        );
+      }
 
       // Version 2 backups also hold website inquiries and portal records.
       let supportingResults = null;
@@ -662,7 +694,16 @@ export default function DashboardBackups({
                 : `${label}: ${result.inserted} added, ${result.alreadyPresent} already present and left unchanged.`;
             })
             .join(" ")
-        : " This version 1 backup holds bookings only; website inquiries and portal records were not touched.";
+        : " This version 1 backup holds bookings only; it added no website inquiries or portal records.";
+      const portalSummary = portalResults
+        ? ` Current portal data put back: ${portalResults.portalChecklistItems.restored} portal tasks, ${portalResults.portalDocuments.restored} portal documents, ${portalResults.guestInquiries.relinked} website-inquiry links.` +
+          (portalResults.portalChecklistItems.skipped +
+            portalResults.portalDocuments.skipped +
+            portalResults.guestInquiries.skipped >
+          0
+            ? ` Not put back because their booking is not in this backup: ${portalResults.portalChecklistItems.skipped} portal tasks, ${portalResults.portalDocuments.skipped} portal documents, ${portalResults.guestInquiries.skipped} website-inquiry links. They are kept in “${safetyFilename}”.`
+            : "")
+        : "";
       const supportingFailed = supportingResults
         ? Object.values(supportingResults).some((result) => result.error)
         : false;
@@ -678,6 +719,7 @@ export default function DashboardBackups({
             : `${bookingsToRestore.length} backup record${
                 bookingsToRestore.length === 1 ? " was" : "s were"
               } merged into the live database and verified. Records that existed only in the current database were left untouched.`) +
+          portalSummary +
           supportingSummary +
           " Uploaded files are never restored by this page.",
       });
@@ -711,11 +753,16 @@ export default function DashboardBackups({
               });
             },
           });
+          // Every original booking is back, so all of its portal rows and inquiry links can return.
+          await restorePortalSnapshot(
+            safetyPayload,
+            originalBookings.map((booking) => booking.id)
+          );
 
           const rolledBackBookings = await fetchBookings();
           setLiveBookings(rolledBackBookings);
           rollbackMessage =
-            " The previous booking database was restored automatically from the in-memory safety copy.";
+            " The previous bookings, portal tasks, portal documents and website-inquiry links were restored automatically from the in-memory safety copy.";
         } catch (rollbackError) {
           console.error("Automatic rollback also failed:", rollbackError);
           rollbackMessage =

@@ -111,15 +111,18 @@ export async function restoreBookingRows(bookings, liveIds, { client, onProgress
   rows that are missing. Each table is reported separately; one failing
   does not stop the others.
 */
+const SUPPORTING_TABLES = [
+  { key: "guestInquiries", table: "guest_inquiries" },
+  { key: "portalChecklistItems", table: "portal_checklist_items" },
+  { key: "portalDocuments", table: "portal_documents" },
+];
+
+export const SUPPORTING_SECTION_KEYS = SUPPORTING_TABLES.map(({ key }) => key);
+
 export async function restoreSupportingSections(sections, { client }) {
-  const tables = [
-    { key: "guestInquiries", table: "guest_inquiries" },
-    { key: "portalChecklistItems", table: "portal_checklist_items" },
-    { key: "portalDocuments", table: "portal_documents" },
-  ];
   const results = {};
 
-  for (const { key, table } of tables) {
+  for (const { key, table } of SUPPORTING_TABLES) {
     const rows = Array.isArray(sections[key]) ? sections[key] : [];
     if (rows.length === 0) {
       results[key] = { inserted: 0, alreadyPresent: 0 };
@@ -134,6 +137,84 @@ export async function restoreSupportingSections(sections, { client }) {
       results[key] = { error: error?.message || String(error) };
     }
   }
+
+  return results;
+}
+
+/*
+  Puts back what deleting bookings removed during a Full Replace.
+
+  In the live database, deleting a booking cascades to its
+  portal_checklist_items and portal_documents rows and sets
+  guest_inquiries.converted_booking_id to null. snapshot is the live data
+  read just before the delete (the pre-restore safety backup), so the
+  latest portal state wins:
+
+  - portal rows whose booking is back and whose id is missing are
+    inserted again; rows that are still live are left as they are;
+  - an inquiry link is set again only while the live link is empty.
+
+  Rows whose booking is not back are counted, not inserted (the database
+  would refuse them); they stay in the downloaded safety file. Any write
+  failure throws, so the caller can roll back, including an inquiry
+  update the database silently refused (row-level security returns zero
+  rows, not an error).
+*/
+export async function restorePortalSnapshot(snapshot, bookingIds, { client }) {
+  const restoredIds = new Set([...bookingIds].map(String));
+  const isLinked = (id) => id !== null && id !== undefined && String(id) !== "";
+  // A table read page by page while rows change can return one row twice; keep the first.
+  const sectionRows = (key) => {
+    const seen = new Set();
+    return (Array.isArray(snapshot?.[key]) ? snapshot[key] : []).filter((row) => {
+      const id = String(row?.id ?? "");
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  };
+  const results = {};
+
+  for (const { key, table } of SUPPORTING_TABLES.filter(({ table }) => table.startsWith("portal_"))) {
+    const rows = sectionRows(key);
+    const restorable = rows.filter((row) => restoredIds.has(String(row.booking_id)));
+    const liveRows = await fetchAllRows(table, client);
+    const missing = getRowsMissingFromLive(restorable, liveRows.map((row) => row.id));
+    const restored = await insertInChunks(table, missing, client);
+    if (restored !== missing.length) {
+      throw new Error(`Only ${restored} of ${missing.length} ${table} rows could be put back.`);
+    }
+    results[key] = {
+      restored,
+      skipped: rows.filter((row) => isLinked(row.booking_id) && !restoredIds.has(String(row.booking_id))).length,
+    };
+  }
+
+  // shortcut: one update per converted inquiry; fine for hundreds, batch it if this reaches many thousands.
+  const linked = sectionRows("guestInquiries").filter((row) => isLinked(row.converted_booking_id));
+  const toRelink = linked.filter((row) => restoredIds.has(String(row.converted_booking_id)));
+  let relinked = 0;
+  for (const row of toRelink) {
+    const { data, error } = await client
+      .from("guest_inquiries")
+      .update({ converted_booking_id: row.converted_booking_id })
+      .eq("id", row.id)
+      .is("converted_booking_id", null)
+      .select("id");
+    if (error) throw error;
+    relinked += Array.isArray(data) ? data.length : 0;
+  }
+  // Every link to a deleted booking was just emptied, so each attempt must update one row.
+  if (relinked < toRelink.length) {
+    throw new Error(
+      `Website-inquiry links could not be restored: only ${relinked} of ${toRelink.length} were re-linked to their bookings. ` +
+        "This account may not be allowed to update website inquiries."
+    );
+  }
+  results.guestInquiries = {
+    relinked,
+    skipped: linked.filter((row) => !restoredIds.has(String(row.converted_booking_id))).length,
+  };
 
   return results;
 }
