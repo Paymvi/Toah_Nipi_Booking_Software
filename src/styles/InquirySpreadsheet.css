@@ -278,3 +278,25 @@
     min-width: 0;
   }
 }
+
+
+/* =========================================================
+   Inquiry Spreadsheet: Soft Delete / Restore
+   Reuses the Contacts View deleted toggle, panel and trash button.
+========================================================= */
+
+.inquiry-spreadsheet-table .inquiry-booking-action-heading,
+.inquiry-spreadsheet-table .inquiry-booking-action-cell {
+  width: 8.75rem;
+  min-width: 8.75rem;
+  white-space: nowrap;
+}
+
+.inquiry-delete-button {
+  margin-left: 0.25rem;
+  vertical-align: middle;
+}
+
+.inquiry-spreadsheet-deleted-toggle {
+  align-self: center;
+}

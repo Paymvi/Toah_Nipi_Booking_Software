@@ -1,17 +1,31 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   FaCheck,
   FaPlus,
   FaSearch,
   FaTable,
+  FaTrashAlt,
+  FaUndo,
 } from "react-icons/fa";
+
+import { supabase } from "../lib/supabaseClient";
 
 import {
   formatSubmittedDate,
 } from "../utils/dateUtils";
 
 import { getConvertedInquiryIds } from "../utils/bookingClassification";
+
+import {
+  INQUIRY_HIDDEN_UPLOADED_KEY,
+  getSavedHiddenInquiries,
+  hideInquiryOnline,
+  loadHiddenInquiries,
+  saveHiddenInquiries,
+  unhideInquiryOnline,
+  uploadBrowserHiddenInquiries,
+} from "../services/inquiryHidden";
 
 
 /*
@@ -317,6 +331,123 @@ export default function InquirySpreadsheetView({
   const [searchText, setSearchText] =
     useState("");
 
+  const [deletedInquiries, setDeletedInquiries] =
+    useState(() => getSavedHiddenInquiries());
+
+  const [showDeletedInquiries, setShowDeletedInquiries] =
+    useState(false);
+
+  /*
+    Deleted rows are shared by all staff once the inquiry_hidden table
+    exists; until then this browser's list is used (same as Contacts).
+  */
+  const [hiddenOnline, setHiddenOnline] =
+    useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    loadHiddenInquiries(supabase).then(async (result) => {
+      if (cancelled || !result.available) {
+        return;
+      }
+
+      let alreadyUploaded;
+
+      try {
+        alreadyUploaded =
+          localStorage.getItem(INQUIRY_HIDDEN_UPLOADED_KEY) === "true";
+      } catch {
+        alreadyUploaded = true;
+      }
+
+      const browserHidden = getSavedHiddenInquiries();
+
+      if (!alreadyUploaded && browserHidden.length) {
+        try {
+          await uploadBrowserHiddenInquiries(supabase, browserHidden);
+          localStorage.setItem(INQUIRY_HIDDEN_UPLOADED_KEY, "true");
+          const reloaded = await loadHiddenInquiries(supabase);
+          if (!cancelled && reloaded.available) {
+            result = reloaded;
+          }
+        } catch (error) {
+          console.error("Could not copy this browser's deleted inquiry rows online:", error);
+        }
+      }
+
+      if (!cancelled) {
+        setHiddenOnline(true);
+        setDeletedInquiries(result.hidden);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hiddenOnline) {
+      saveHiddenInquiries(deletedInquiries);
+    }
+  }, [deletedInquiries, hiddenOnline]);
+
+  const saveHiddenOnline = (action) => {
+    if (!hiddenOnline) {
+      return;
+    }
+
+    action().catch((error) => {
+      console.error("Could not save the deleted inquiry change online:", error);
+      alert("That change could not be saved for other staff. Reload the Inquiry Spreadsheet and try again.");
+    });
+  };
+
+  const deletedInquiryIdSet = useMemo(
+    () => new Set(deletedInquiries.map((inquiry) => inquiry.id)),
+    [deletedInquiries]
+  );
+
+  const deleteInquiry = (booking) => {
+    const name =
+      booking.organizationName || booking.contactName || "this inquiry";
+
+    const confirmed = window.confirm(
+      `Remove ${name} from the Inquiry Spreadsheet?\n\n` +
+        "This will NOT delete the inquiry record. The row will be saved " +
+        "under Deleted so it can be restored later."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const snapshot = {
+      id: String(booking.id || ""),
+      organizationName: booking.organizationName || "",
+      contactName: booking.contactName || "",
+      email: booking.email || "",
+      phone: booking.phone || "",
+      year: getInquirySpreadsheetYear(booking),
+      desiredDatesText: booking.desiredDatesText || "",
+      deletedAt: new Date().toISOString(),
+    };
+
+    setDeletedInquiries((currentInquiries) => [
+      snapshot,
+      ...currentInquiries.filter((inquiry) => inquiry.id !== snapshot.id),
+    ]);
+    saveHiddenOnline(() => hideInquiryOnline(supabase, snapshot));
+  };
+
+  const restoreDeletedInquiry = (inquiryId) => {
+    setDeletedInquiries((currentInquiries) =>
+      currentInquiries.filter((inquiry) => inquiry.id !== inquiryId)
+    );
+    saveHiddenOnline(() => unhideInquiryOnline(supabase, inquiryId));
+  };
+
   const convertedBookingsByInquiryId =
     useMemo(
       () =>
@@ -331,9 +462,12 @@ export default function InquirySpreadsheetView({
       return inquiryBookings.filter((booking) =>
         Boolean(
           getInquirySpreadsheetYear(booking)
+        ) &&
+        !deletedInquiryIdSet.has(
+          String(booking.id || "")
         )
       );
-    }, [inquiryBookings]);
+    }, [inquiryBookings, deletedInquiryIdSet]);
 
   const yearCounts = useMemo(() => {
     return inquirySpreadsheetBookings.reduce(
@@ -491,8 +625,98 @@ export default function InquirySpreadsheetView({
               <strong>{yearView === "all" ? "All Years" : yearView}</strong>
               Spreadsheet Year
             </span>
+
+            <button
+              className={`contacts-view-deleted-toggle inquiry-spreadsheet-deleted-toggle ${
+                showDeletedInquiries ? "active" : ""
+              }`}
+              type="button"
+              onClick={() =>
+                setShowDeletedInquiries(
+                  (currentValue) => !currentValue
+                )
+              }
+            >
+              <FaTrashAlt />
+              Deleted ({deletedInquiries.length})
+            </button>
           </div>
         </div>
+
+
+        {showDeletedInquiries && (
+          <div className="contacts-view-deleted-panel">
+            <div className="contacts-view-deleted-panel-header">
+              <div>
+                <strong>Deleted Inquiry Rows</strong>
+                <p>
+                  These rows are hidden from the Inquiry Spreadsheet only.
+                  The inquiry records have not been deleted.
+                </p>
+              </div>
+
+              <button
+                className="contacts-view-deleted-close"
+                type="button"
+                onClick={() => setShowDeletedInquiries(false)}
+              >
+                Close
+              </button>
+            </div>
+
+            {deletedInquiries.length > 0 ? (
+              <div className="contacts-view-deleted-list">
+                {deletedInquiries.map((inquiry) => (
+                  <div
+                    className="contacts-view-deleted-item"
+                    key={inquiry.id}
+                  >
+                    <div className="contacts-view-deleted-copy">
+                      <strong>
+                        {inquiry.organizationName || "No group name"}
+                      </strong>
+                      <span>
+                        {inquiry.contactName || "No contact name"}
+                      </span>
+                      <small>
+                        {[inquiry.email, inquiry.phone]
+                          .filter(Boolean)
+                          .join(" · ") || "No email or phone"}
+                      </small>
+
+                      {inquiry.desiredDatesText && (
+                        <small>{inquiry.desiredDatesText}</small>
+                      )}
+
+                      <small>
+                        {inquiry.year ? `${inquiry.year} sheet · ` : ""}
+                        Deleted{" "}
+                        {inquiry.deletedAt
+                          ? new Date(inquiry.deletedAt).toLocaleString()
+                          : "previously"}
+                      </small>
+                    </div>
+
+                    <button
+                      className="contacts-view-restore-button"
+                      type="button"
+                      onClick={() =>
+                        restoreDeletedInquiry(inquiry.id)
+                      }
+                    >
+                      <FaUndo />
+                      Restore
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="contacts-view-deleted-empty">
+                No deleted inquiry rows.
+              </div>
+            )}
+          </div>
+        )}
 
 
         {inquirySpreadsheetBookings.length > 0 ? (
@@ -553,6 +777,16 @@ export default function InquirySpreadsheetView({
                             <span>Book</span>
                           </button>
                         )}
+
+                        <button
+                          className="contact-delete-button inquiry-delete-button"
+                          type="button"
+                          onClick={() => deleteInquiry(booking)}
+                          aria-label={`Delete ${booking.organizationName || "inquiry"} row`}
+                          title="Delete inquiry row"
+                        >
+                          <FaTrashAlt />
+                        </button>
                       </td>
 
                       {visibleColumns.map(
