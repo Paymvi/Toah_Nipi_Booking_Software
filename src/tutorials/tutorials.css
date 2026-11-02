@@ -1,0 +1,68 @@
+.tn-tour-station, .tn-tour-dialogue { font-family: inherit; color: #252936; font-size: 14px; line-height: 1.5; }
+.tn-tour-station *, .tn-tour-dialogue * { box-sizing: border-box; }
+.tn-tour-station { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); z-index: 6100; }
+.tn-tour-station button, .tn-tour-dialogue button { font: inherit; cursor: pointer; border: 1px solid #dfe4ec; background: white; color: #343049; border-radius: 8px; padding: 7px 10px; min-height: 36px; }
+.tn-tour-station button:hover, .tn-tour-dialogue button:hover { background: #f6f5ff; border-color: #9f98d4; }
+.tn-tour-station button:focus-visible, .tn-tour-dialogue button:focus-visible, .tn-tour-station input:focus-visible, .tn-tour-dialogue input:focus-visible, .tn-tour-dialogue select:focus-visible { outline: 3px solid #7565c0; outline-offset: 3px; }
+.tn-tour-dialogue button:disabled { opacity: .45; cursor: default; }
+.tn-tour-station h2, .tn-tour-dialogue h2 { font-size: 17px; line-height: 1.25; margin: 0 0 6px; color: #304f4d; }
+.tn-tour-station h3, .tn-tour-dialogue h3 { font-size: 15px; margin: 12px 0 8px; }
+.tn-tour-station p, .tn-tour-dialogue p { margin: 8px 0 12px; }
+.tn-tour-station small, .tn-tour-dialogue small { font-size: 12px; }
+.tn-gnome { width: 64px; height: 80px; flex-shrink: 0; overflow: visible; }
+.tn-tour-station .tn-tour-launcher { display: flex; flex-direction: column; align-items: center; padding: 4px 10px 7px; border-radius: 30px 30px 16px 16px; background: #fffdf8; border-color: #dce4dc; box-shadow: 0 5px 22px #233f3326; color: #304f4d; font-size: 11px; font-weight: 650; }
+.tn-tour-launcher .tn-gnome { width: 50px; height: 64px; }
+.tn-tour-launcher:hover .tn-gnome-hand, .tn-gnome-wave .tn-gnome-hand { transform-origin: 76px 78px; animation: tn-gnome-wave .8s ease-in-out 2; }
+.tn-gnome-idle { animation: tn-gnome-breathe 7s ease-in-out 2; }
+.tn-gnome-celebrate { animation: tn-gnome-celebrate .6s ease-in-out 2; }
+.tn-tour-panel { position: absolute; bottom: 104px; right: 0; width: min(370px, calc(100vw - 24px)); max-height: min(680px, calc(100dvh - 138px)); overflow: auto; padding: 18px; background: #fff; border: 1px solid #dfe4ec; border-radius: 16px; box-shadow: 0 14px 55px #1c23342b; }
+.tn-tour-panel header, .tn-tour-dialogue header { display: flex; align-items: flex-start; gap: 10px; }
+.tn-tour-panel header > div, .tn-tour-dialogue header > div { flex: 1; min-width: 0; }
+.tn-tour-panel header .tn-gnome, .tn-tour-dialogue header .tn-gnome { width: 46px; height: 58px; }
+.tn-tour-panel header > button, .tn-tour-dialogue header > button { padding: 0; min-width: 32px; min-height: 32px; font-size: 22px; line-height: 1; }
+.tn-tour-search { display: grid; gap: 5px; font-size: 12px; font-weight: 600; margin: 12px 0; }
+.tn-tour-search input, .tn-tour-practice input, .tn-tour-practice select { width: 100%; min-width: 0; min-height: 36px; border: 1px solid #cbd1dc; border-radius: 7px; background: #fff; color: #252936; font: inherit; padding: 6px 8px; }
+.tn-tour-category { border-top: 1px solid #edf0f4; margin-top: 12px; }
+.tn-tour-station .tn-tour-option { display: grid; width: 100%; text-align: left; gap: 4px; margin-bottom: 8px; padding: 10px; }
+.tn-tour-option span { font-size: 12px; color: #5a6170; }
+.tn-tour-option small { color: #51458e; }
+.tn-tour-station .tn-tour-mode { width: 100%; text-align: left; padding: 12px; margin-top: 10px; font-weight: 600; }
+.tn-tour-mode span { display: block; font-size: 12px; font-weight: 400; margin-top: 4px; }
+.tn-tour-spotlight { position: fixed; inset: 0; z-index: 6000; pointer-events: none; }
+.tn-tour-demo-shield { position: fixed; inset: 0; pointer-events: auto; background: transparent; }
+.tn-tour-hole { position: fixed; border: 3px solid #f3b562; border-radius: 9px; box-shadow: 0 0 0 200vmax #19202a8f, 0 0 18px #f3b562a0; pointer-events: none; }
+.tn-tour-dimmer { position: fixed; inset: 0; background: #19202a8f; }
+.tn-tour-pointer { position: fixed; color: #ffcc7c; font-size: 25px; filter: drop-shadow(0 1px 2px #252936); transition: top .35s ease, left .35s ease; }
+.tn-tour-dialogue { position: fixed; z-index: 6200; padding: 17px; border: 1px solid #dfe4ec; border-radius: 14px; background: #fff; box-shadow: 0 14px 50px #17203140; max-height: calc(100dvh - 24px); overflow: auto; overflow-wrap: anywhere; }
+.tn-tour-dialogue:focus { outline: none; }
+.tn-tour-dialogue header small { display: block; color: #51458e; margin-bottom: 4px; }
+.tn-tour-step { font-size: 12px; font-weight: 600; color: #4e7c59; }
+.tn-tour-hint { font-size: 12px; color: #5b6272; padding: 8px 10px; background: #f5f6f8; border-radius: 7px; }
+.tn-tour-dialogue footer, .tn-tour-recovery { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
+.tn-tour-dialogue footer button:last-child { margin-left: auto; background: #443a9c; color: #fff; }
+.tn-tour-secondary { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.tn-tour-secondary small { display: block; width: 100%; color: #5b6272; }
+.tn-tour-dialogue .tn-tour-secondary button { padding: 4px; min-height: 30px; background: transparent; border-color: transparent; font-size: 12px; text-decoration: underline; }
+.tn-tour-practice { padding: 12px; background: #fff9ed; border: 1px dashed #ab7636; border-radius: 9px; margin: 12px 0; }
+.tn-tour-practice > strong { font-size: 11px; letter-spacing: .04em; color: #79501c; }
+.tn-tour-practice-fields { display: grid; gap: 7px; margin-top: 8px; }
+.tn-tour-practice label { display: grid; gap: 3px; font-size: 12px; }
+.tn-tour-finished { border-top: 4px solid #4e7c59; }
+.tn-tour-finished button { margin: 5px 5px 0 0; }
+/* Reserve space so the launcher does not cover controls at the page end. */
+.dashboard-main { padding-bottom: 120px; }
+[data-tutorial] { scroll-margin-top: 24px; scroll-margin-bottom: 120px; }
+@keyframes tn-gnome-breathe { 0%, 90%, 100% { transform: translateY(0); } 95% { transform: translateY(-2px); } }
+@keyframes tn-gnome-wave { 0%,100% { transform: rotate(0); } 50% { transform: rotate(13deg); } }
+@keyframes tn-gnome-celebrate { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@media (max-width: 600px) {
+  .tn-tour-dialogue { font-size: 13px; padding: 12px; }
+  .tn-tour-panel { padding: 13px; }
+  .tn-tour-dialogue header .tn-gnome { width: 36px; height: 45px; }
+  .tn-tour-station { right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); }
+  .tn-tour-launcher .tn-gnome { width: 40px; height: 50px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tn-gnome, .tn-gnome-hand, .tn-tour-launcher:hover .tn-gnome-hand { animation: none !important; }
+  .tn-tour-pointer { transition: none; }
+}

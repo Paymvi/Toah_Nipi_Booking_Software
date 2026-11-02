@@ -1558,7 +1558,7 @@ function ReportsView({ inquiryBookings }) {
   };
 
   return (
-    <section className="reports-page">
+    <section data-tutorial="reports" data-tutorial-range={reportsSettings.dateRange} className="reports-page">
       <article className="dashboard-card reports-header-card">
         <div className="reports-header">
           <div className="dashboard-heading-with-icon">
@@ -1595,6 +1595,7 @@ function ReportsView({ inquiryBookings }) {
           <button
             className="primary-dashboard-button"
             type="button"
+            data-tutorial="reports-export"
             onClick={handleExportReports}
             disabled={filteredReportBookings.length === 0}
           >
@@ -1607,6 +1608,7 @@ function ReportsView({ inquiryBookings }) {
           <label className="reports-filter-field">
             <span>Date Range</span>
             <select
+              data-tutorial="reports-range"
               value={reportsSettings.dateRange}
               onChange={(event) =>
                 updateReportsSettings({
@@ -1624,7 +1626,7 @@ function ReportsView({ inquiryBookings }) {
 
           {reportsSettings.dateRange === "custom" && (
             <>
-              <label className="reports-filter-field">
+              <label data-tutorial="reports-custom" className="reports-filter-field">
                 <span>From</span>
                 <input
                   type="date"
@@ -1720,7 +1722,7 @@ function ReportsView({ inquiryBookings }) {
         </div>
       </article>
 
-      <section className="reports-summary-grid">
+      <section data-tutorial="reports-summary" className="reports-summary-grid">
         <ReportSummaryCard
           icon={FaClipboardList}
           label="Total Bookings"
@@ -2031,7 +2033,7 @@ function ReportsView({ inquiryBookings }) {
       they do not stay overnight.
     </p>
 
-    <div className="reports-camper-formula">
+    <div data-tutorial="reports-camper" className="reports-camper-formula">
       Overnight = Guests × ((Nights × 0.4) + (Meals × 0.2))
       <br />
       Day Campers = Day Campers × Meals per Camper × 0.2

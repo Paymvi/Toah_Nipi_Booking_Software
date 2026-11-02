@@ -493,7 +493,7 @@ export default function CalendarView({
   }
 
   return (
-    <section className="calendar-view-page">
+    <section className="calendar-view-page" data-tutorial="calendar" data-tutorial-mode={calendarView} data-tutorial-period={`${selectedYear}-${selectedMonth}`} data-tutorial-current={String(selectedYear === new Date().getFullYear() && selectedMonth === new Date().getMonth())}>
       <article className="dashboard-card calendar-view-card">
         <div className="calendar-view-header">
           <div>
@@ -516,13 +516,14 @@ export default function CalendarView({
           <button
             className="secondary-dashboard-button"
             type="button"
+            data-tutorial="calendar-today"
             onClick={goToTodayForCurrentView}
           >
             {calendarView === "month" ? "This Month" : "Today"}
           </button>
         </div>
 
-        <fieldset className="calendar-exception-toggles">
+        <fieldset data-tutorial="calendar-exceptions" className="calendar-exception-toggles">
           <legend>Also show</legend>
 
           {CALENDAR_EXCEPTION_TOGGLES.map((toggle) => (
@@ -545,6 +546,7 @@ export default function CalendarView({
         <div className="calendar-view-switcher" aria-label="Calendar views">
           {calendarViewOptions.map((option) => (
             <button
+              data-tutorial={`calendar-${option.value}`}
               className={calendarView === option.value ? "active" : ""}
               type="button"
               key={option.value}
@@ -588,7 +590,7 @@ export default function CalendarView({
                 ))}
               </select>
 
-              <button type="button" onClick={goToNextMonth}>
+              <button data-tutorial="calendar-next" aria-label="Next month" type="button" onClick={goToNextMonth}>
                 »
               </button>
             </div>

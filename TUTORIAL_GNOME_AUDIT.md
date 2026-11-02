@@ -1,0 +1,105 @@
+# Tutorial Gnome: application audit
+
+Audit completed before implementation, 2026-10-31. Initial and resumed `git status --short`, `git diff --stat`, and initial `git diff` were empty. No existing changes were present. No AGENTS.md was found in the repository. This is a source audit, not an audit of live Supabase data or the separately hosted guest application.
+
+## Application and navigation
+
+React 19 / Vite 8, JavaScript/JSX, React Router, global CSS, react-icons, ExcelJS and Supabase. App.jsx registers the staff routes beneath StaffAuthGate. Unauthenticated visitors see StaffLogin; no staff dashboard is mounted. Dashboard.jsx owns bookings, selected record, active view, booking detail tab, calendar dates, staff directory, import/export and save handlers. Route changes synchronize activeView; booking profiles and inquiry profiles use internal view state rather than their own URLs. Do not infer a booking profile from the current pathname alone.
+
+The sidebar contains Dashboard, Form, Portals, Guest Inquiries, Calendar, Lodging Calendar, Master Spreadsheet, Inquiry Spreadsheet, Contacts, Reports, User Admin, Jobs and reorganized backup navigation. `/` and unknown routes redirect to `/dashboard`. `/form`, `/portal-admin`, `/calendar`, `/lodging-calendar`, `/master-spreadsheet`, `/inquiry-spreadsheet`, `/contacts`, `/inquiry-pipeline`, `/reports`, `/user-admin`, `/jobs`, `/guest-inquiries`, `/backup` all mount Dashboard. There is no guest-facing route in App.jsx. Portal Admin builds links to a separately configured guest application; its UI source is not in this repository.
+
+Data: bookingService and bookingMapping translate Supabase rows into app records. bookingSave uses updated_at conditional updates and detects conflicts, missing records and denied writes. Bulk saves report per-record failures. Dashboard reloads bookings on many view switches. Record kind/classification, converted inquiry exclusion and display status are centralized in bookingClassification. Website inquiries live in guest_inquiries, independently of imported/staff inquiry records. Portal tasks and documents have separate tables and private Storage uploads. Do not treat a DOM click as proof of a successful save.
+
+State is predominantly React state and memoized derived collections, with browser settings for display preferences. Spreadsheet is kept mounted after its first opening, hidden with CSS when inactive. Targets must reject hidden nodes. Contacts uses deferred rendering. Portal Admin, guest inquiries and staff directory have their own loading/error behavior. Conditional tabs, menus, edit forms and modals require late target discovery.
+
+Authentication/permissions: Supabase session gates the entire staff UI. current_staff_role distinguishes admin/staff/viewer; deletion and restore/import controls have role-specific visibility. Unknown role does not prove permission; database policies remain authoritative. User Admin's “Working as” identity is a task attribution preference, not authentication or permission escalation. Dev Mode requires server verification and exposes import/deletion tools and retired pipeline code; it is not a replacement for database authorization.
+
+Styling: existing global CSS import order is deliberate. Purple staff controls, white rounded cards, muted gray surfaces; responsive stacked sidebar below 760px, collapsed desktop icon rail, tables with internal scrolling, several modal stacking levels (Dev Mode 5000). Tutorial CSS must be namespaced. Use a body portal above app stacking contexts, visible keyboard focus, restrained motion, reduced-motion rules and viewport-clamped dialogue. Launcher needs reserved bottom clearance; active tour controls must not cover the spotlight target.
+
+## Major views and actual functionality
+
+| View / source | Functionality and consequences |
+| --- | --- |
+| StaffLogin / StaffAuthGate | Email/password Supabase login, loading state, session subscription; local sign out. |
+| Dashboard.jsx home | Greeting, upcoming/current groups, dated inquiry filters, recent records, month preview, availability and operational summaries; New Booking opens Form; record links open profiles. Filters/settings can persist locally. |
+| CreateBooking.jsx / Form | Guest group, primary/secondary contacts, retreat classification, arrival/departure, approximate/actual guests, day campers, rates/stay, meals by day, dietary notes, activities, facilities/staff, lodging/linens, notes. Edit adds timeline/payments/documents. Required group, contact, retreat type, dates and guest count; date order and phone/day-camper validation. Save Guest Group writes a real record; errors do not signal success. Dev test-data fill is not a safe demo mechanism. |
+| BookingDetailView / BookingOverview in Dashboard.jsx | Profile header, status, Back, admin Delete, date-display dialog; Overview, Details (labelled Edit), Housing, Staff Assignments, Checklists tabs. Overview includes dates/counts, group/contact and operational summaries, incident notes and edit affordances. Some cards write data: Overview is not universally read-only. |
+| Booking editing | Staff records reuse CreateBooking; historical records use BookingDetailsEditForm. Save is conflict checked; imported/raw fields and authoritative app edits are tracked. Cancel/back does not mean successful save. |
+| BookingHousingTab | Building/floor/room and camping usage, counts, linens, expanded breakdowns; explicit save/cancel. Housing usage must remain consistent with form lodging. |
+| BookingStaffAssignmentsTab | Assign people by operational area; edit/save/remove assignment flows modify booking details. |
+| BookingChecklists | Create/delete checklists, sequence tasks, dates, assignees, notes and completion attribution; edit and completion persist booking changes. |
+| CalendarView /calendar | Month/week/year, current period, previous/next, month/year selectors; year heatmap/cards and month drill-down, exception toggles and dated agenda. This is a scheduling view, not a guaranteed booking-opening surface. |
+| LodgingCalendarView /lodging-calendar | Similar period controls, building groups, occupancy/availability derived from lodging rules, year/weekly views. Distinguish arrival/departure occupancy from booking counts. |
+| SpreadsheetView /master-spreadsheet | All Booking Data; year/building/date/source/status filters, Search Everything, sort, stars, raw/standard data and summary cards. Group-name links open profiles. Large customization/saved-view machinery exists, but some Settings/Edit View controls are commented out; do not teach them as currently accessible. Retained hidden view must not capture tutorial targets. |
+| InquirySpreadsheetView /inquiry-spreadsheet | Imported/staff inquiry records, years/search, inquiry details, converted-booking links, prefilled booking creation. Delete hides rows into a recoverable Deleted panel (inquiry_hidden or local fallback); it does not delete the record. |
+| InquiryRecordDetailView | Dedicated inquiry details with edit/cancel/save; actual booking conversion is a separate workflow. |
+| GuestInquiriesView /guest-inquiries | Website submissions grouped pending/converted/declined; review request detail, convert through prefilled booking form, link already-created booking, decline with reason. Booking save precedes marking converted; retry notice handles partial failure. Source matching prevents unrelated conversion; concurrent relinking is refused. |
+| InquiryPipeline /inquiry-pipeline | Retired outside Dev Mode, removed from normal sidebar. Kept code can change booking status/waitlist. Portal Admin now tracks contract/deposit/insurance progress. No V1 tutorial should direct normal staff here. |
+| ContactsView /contacts | Primary and secondary contacts matched across booking history by identity. Search/sort, copy contact cells, expand bookings and open a profile. Stars and hidden contacts can persist online; hidden state is shared, stars belong to login; local fallback exists. Delete hides contact, restore unhides; these are real preference changes. |
+| PortalAdminView /portal-admin | Search/filter groups and progress; expand group; copy/open external portal link; assign standard/custom tasks/documents with due dates, upload files, review guest response/upload, confirm or correct/reopen, remove documents. Progress weights reviewed completion 1 and needs-review 0.5; link configuration is validated. Corrections carry reasons/audit information. Assignment is mutating, not merely opening a dialog. |
+| ReportsView /reports | Date/status/retreat/source filters, custom dates, summary counts, attendance/camper days, lodging, trends and data-quality panels, CSV export. Arrival-based report selection excludes host and converted duplicates according to reportRules. Settings persist locally; filtering does not change booking records. |
+| UserAdminView in Dashboard.jsx | Staff directory add/edit/active status, shared-table availability and browser fallback/copy, Working as selection. Does not create Supabase Auth accounts or grant roles. |
+| JobsView /jobs | My Jobs, active staff/unassigned tasks, open/completed/inactive-group filters, booking links; facility completion writes booking and attribution, checklist completion occurs in booking tab. Informational staff assignments are not counted as tasks. |
+| DashboardTopbar | Current title, Refresh, contact export; Dev Mode import menu (master 2025/2026/2027, staff contacts, everything) and admin Delete All. Hidden file inputs trigger actual imports. Never automate these in a demo. |
+| DashboardBackups /backup | Versioned JSON download, coverage/checksum validation and preview, merge restore; Dev/admin replace, pre-restore safety snapshot and rollback paths. V2 includes bookings, website inquiries, portal rows, Storage manifest, not uploaded file bytes/Auth/full database. Replace can delete live rows; automatic Drive backups are external and cannot be verified from this repo. Current source supersedes stale limitations in older README sections. |
+| Guest/public services | Public Edge Function validates inquiry requests; guest portal is external, with token-based links and private signed upload URLs. Only staff-side integration is auditable here. Never add the gnome to external guest content. |
+
+## Tutorial opportunity inventory
+
+Every row is a future tutorial unless marked **V1**. “Both” means interactive with state/success verification plus a safe demonstration. Mutation steps in demonstrations always use explanation or clearly marked simulation. Difficulty B/I/A = beginner/intermediate/advanced; importance H/M/L = high/medium/low. Targets below name actual controls/regions; new stable data-tutorial identifiers are required as tutorials are added.
+
+| Tutorial / category | Learning outcome and actual sequence / highlighted targets | Modes | Difficulty / importance |
+| --- | --- | --- | --- |
+| **V1 Prepare a booking / Bookings** | Form navigation → Guest Group/contact/retreat → Guest Information dates/counts → meals/activities/facilities/lodging → review Save Guest Group. Practice fields are isolated simulated content; explain real validation and successful-save boundary. Never require saving practice. | Both | B/H |
+| **V1 View a booking and Overview / Bookings** | Master Spreadsheet navigation → Search Everything/year filters → group-name link → actual Booking Detail state → Overview tab → profile summary and other tabs. No rows: explicit unavailable/skip, never invent a live record. Demo uses a labelled fictional profile rather than selecting a private group. | Both | B/H |
+| **V1 Navigate Calendar / Calendar** | Calendar navigation → Week → Year → Month → next-month control → current-month control → exception toggles/agenda explanation. Check selected view and actual period state. | Both | B/H |
+| **V1 Access and read Reports / Reports** | Reports navigation → Date Range select → custom-date fields → totals → camper-days explanation → CSV explanation. State verifies custom range; demo explains filters without changing saved report preferences. | Both | B/H |
+| Find daily priorities / Getting Started | Dashboard → upcoming/current groups → date range/settings → jobs/portal needs-review links. Highlight home sections and drill-down links. | Both | B/H |
+| Edit a booking / Bookings | Find group → profile → Edit → staff form OR historical edit form → change valid field → explicit real-save consent → await accepted save → reload check. Demo fictional edit only. | Both | I/H |
+| Booking dates and classification / Bookings | Form/profile Edit → classification/status/waitlist → arrival/departure and counts → validation → explicit save. Highlight classification, dates and errors. | Both | I/H |
+| Meals and dietary requirements / Bookings | Edit → meals-by-day → times/counts → dietary rows → notes → review/save → Overview Meals. | Both | I/H |
+| Activities and facilities / Bookings | Edit → activity schedule rows → facility rows/assignee/completion → review/save → Overview. | Both | I/H |
+| Housing and camping / Bookings | Profile Housing → building/floor/room/camping → counts/usage → linens → save/cancel → verify. | Both | I/H |
+| Staff assignments / Bookings | Profile Staff Assignments → area → person/role → save → Jobs informational assignments. | Both | I/M |
+| Staff checklists / Bookings | Profile Checklists → create → add sequenced task/due/assignee → completion attribution → save verification. | Both | I/H |
+| Incident notes / Overview | Profile Overview → Incident Notes edit → text → save/cancel; explain access/privacy. | Both | I/M |
+| Date display / Overview | Profile Date Display → format/weekday → preview → close; local preference explanation. | Both | B/L |
+| Delete a booking / Bookings | Admin profile → Delete → explain linked portal consequences → confirmation → verify absence. Demo explanation only, no confirmation automation. | Both | A/H |
+| Lodging availability / Calendar | Lodging Calendar → period → building/group filters → occupancy/availability → year drill-down. | Both | I/H |
+| Find/sort/filter data / Spreadsheet | Master Spreadsheet → year → search → building/date/source/status → header sort → profile link. | Both | B/H |
+| Interpret imported fields / Spreadsheet | Spreadsheet → source/schema/raw vs standard fields → profile → app edits precedence. Only currently reachable controls; hidden customization is future product work. | Both | I/M |
+| Contacts search and booking history / Contacts | Contacts → search → expand Bookings → Open Booking → profile. | Both | B/H |
+| Contact organization / Contacts | Contacts → star → sort/starred-first → copy cell → Deleted hide/restore. Explain shared vs per-login preferences before changes. | Both | I/M |
+| Imported inquiry review / Inquiries | Inquiry Spreadsheet → year/search → inquiry record → edit/cancel/save → create prefilled booking → explicit save → linked-booking state. | Both | I/H |
+| Hide/restore inquiry rows / Inquiries | Inquiry Spreadsheet → Delete → confirm hide → Deleted → Restore; underlying record remains. | Both | I/M |
+| Website inquiry review/conversion / Inquiries | Guest Inquiries → pending Review → requested sections → Create Booking → prefilled form → explicit save → converted status/retry notice. | Both | I/H |
+| Decline/reconcile website inquiry / Inquiries | Review → decline reason/confirm OR match existing booking → mark converted → verify. | Both | I/H |
+| Retired pipeline migration / Inquiries | Explain retired route → Inquiry Spreadsheet/Guest Inquiries for requests → Portals for progress. Do not activate Dev Mode to teach legacy status changes. | Both (explanation) | B/M |
+| Guest portal orientation / Guest Portal | Portals → group expand → progress/tasks/docs → external link explanation; no automatic external navigation/token copying. External guest screens need separate audit. | Both | B/H |
+| Prepare portal tasks / Guest Portal | Group → Assign Tasks dialog → standard/custom selection → due date/duplicate warnings → explicit assign → verify. | Both | I/H |
+| Share portal documents / Guest Portal | Group → standard documents/custom upload → title/file validation → assign → verify; distinguish uploaded files from references. | Both | I/H |
+| Review guest submissions / Guest Portal | Needs Review filter → group → signed file/response → confirm OR correct with reason → weighted progress. | Both | I/H |
+| Report filtering and export / Reports | Reports → date/status/type/source → read inclusion/data coverage → CSV download; explain camper days vs guests/nights. | Both | I/H |
+| Choose staff identity / Administration | User Admin → Working as → select person → Jobs attribution; explain this does not change login/role. | Both | B/H |
+| Maintain staff directory / Administration | User Admin → add/edit/active person → save → shared/fallback indicator; optional browser-list migration. | Both | I/M |
+| Complete assigned work / Jobs | Jobs → open/My Jobs/unassigned → booking link → facility completion OR checklist tab → accepted save. | Both | B/H |
+| Export contacts / Data tools | Topbar → Export contact list → downloaded workbook; explain scope. | Both | B/M |
+| Import master data / Data tools | Dev Mode verification → Import → correct year/everything file → parsed preview/merge behavior and result failures → reload verify. Demo explanation only. | Both | A/H |
+| Manual backup / Backups | Backups → Create fresh backup → coverage → download and checksum/independent copy explanation. Demo explanation without download. | Both | I/H |
+| Validate/merge backup / Backups | Backups → file picker/drop → validation/coverage preview → Merge → explicit restore → results/errors → reload. | Both | A/H |
+| Replace recovery / Backups | Admin/Dev Mode → validated full snapshot → Replace warning → safety backup coverage → explicit restore → result/rollback limitations. Demo entirely simulated. | Both | A/H |
+| Account/session help / Getting Started | Staff login/loading/error → sign-in → sign-out; explain roles and task identity without operating credentials. | Both (explanation for auth) | B/M |
+
+## V1 architecture decision
+
+Implement four complete tutorials rather than ten shallow tours. All include both modes and an honest completion boundary. Booking preparation teaches the entire creation sequence with a fictional practice card at data-entry stages and explains saving; it does not claim a real booking was created. Viewing/Overview waits for an actual selected booking in interactive mode. Calendar uses explicit view/period state markers. Reports waits for the actual selected date-range state. Read-only explanations require an explicit Next acknowledgement, never a random click.
+
+Mount one TutorialGnome in Dashboard so it survives normal staff view transitions and never mounts in login or external guest portal. Registry metadata/steps remain separate from presentation. Stable data-tutorial targets and data state markers avoid arbitrary classes/nested selectors. Engine handles waiting, user acknowledgement, simulation, pause/resume, restart/back/exit, skipped steps and honest completion. Do not record skipped tutorials as completed.
+
+Demonstration navigation is an explicit allow-list of safe view navigation and Calendar display buttons, never generic selector.click from definitions. No imports from Supabase/save services. Demo uses explanations/simulation for record selection and every data change, blocks underlying app interaction while playing or paused, and does not fill real forms. Starting a tour does not navigate away from an existing draft until the user chooses to continue; a generic reminder cannot detect every unsaved local component state, so avoid automatic starts/restores. Completion persistence is local IDs only, no booking, contact, token or form content. Blocked storage must not break tours.
+
+Spotlight must observe delayed targets, hidden keepalive nodes, window/ancestor scroll, resize and layout changes. Scroll only on step entry/target discovery; avoid perpetual scroll loops. Missing targets get bounded wait then Retry/Skip/Exit. Interactive Next is disabled until a verified expected state; unavailable skips are explicit and excluded from completion. Pause stops timers and progression. Each step entry resets demo timing. React cleanup must remove every timer/listener/observer and restore focus.
+
+## Validation plan and limits
+
+Run existing node:test suite and production build. Add meaningful tests for registry integrity, verified progression vs click, demo action allow-list, missing target/skips, paused behavior, storage corruption and no sensitive persistence. Browser verification should cover staff-only mounting, keyboard/focus, both modes, dynamic profile target, empty data, scroll/resize, mobile, reduced motion, pause/back/restart/exit and zero record writes during demos. No production data, commits, pushes, deployment, schema changes or new dependencies are needed. Live role/RLS/guest UI behavior cannot be validated from source alone.

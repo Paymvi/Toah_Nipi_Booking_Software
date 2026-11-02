@@ -2786,6 +2786,7 @@ export default function CreateBooking({
 
 
         <form
+          data-tutorial="booking-form"
           className="rental-form"
           onSubmit={handleSubmit}
         >
@@ -2801,7 +2802,7 @@ export default function CreateBooking({
               </div>
 
               <div>
-                <h2>Guest Group</h2>
+                <h2 data-tutorial="booking-group">Guest Group</h2>
 
                 {/* <p>
                   Group and primary contact information.
@@ -3055,7 +3056,7 @@ export default function CreateBooking({
               </div>
 
               <div>
-                <h2>Guest Information</h2>
+                <h2 data-tutorial="booking-guests">Guest Information</h2>
 
                 {/* <p>
                   Attendance, guarantees, rates,
@@ -3581,7 +3582,7 @@ export default function CreateBooking({
               </div>
 
               <div>
-                <h2>Meals</h2>
+                <h2 data-tutorial="booking-services">Meals</h2>
                 {/* <p>
                   Meal schedule, dietary needs,
                   and food service information.
@@ -4502,6 +4503,7 @@ export default function CreateBooking({
 
           <div className="form-actions">
             <button
+              data-tutorial="booking-save"
               type="submit"
               disabled={isSubmitting}
             >

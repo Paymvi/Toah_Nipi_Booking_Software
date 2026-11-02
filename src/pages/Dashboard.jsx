@@ -97,6 +97,7 @@ import {
 import BookingHousingTab from "../components/BookingHousingTab";
 import BookingStaffAssignmentsTab from "../components/BookingStaffAssignmentsTab";
 import DashboardTopbar from "../components/DashboardTopbar";
+import TutorialGnome from "../tutorials/TutorialGnome.jsx";
 import BookingCalendar from "../components/BookingCalendar";
 import DashboardBackups from "../components/DashboardBackups";
 
@@ -5359,7 +5360,7 @@ const overviewLinenPieces =
           MAIN CONTENT
       ===================================================== */}
 
-      <main className="booking-overview-main">
+      <main data-tutorial="booking-overview" className="booking-overview-main">
 
         <div className="booking-overview-grid">
 
@@ -5755,7 +5756,7 @@ function BookingDetailView({
     );
 
   return (
-    <section className="booking-detail-page booking-profile-page">
+    <section className="booking-detail-page booking-profile-page" data-tutorial="booking-profile" data-tutorial-tab={activeTab}>
       <header className="booking-profile-header">
         <button
           className="secondary-dashboard-button booking-profile-back-button"
@@ -5807,9 +5808,10 @@ function BookingDetailView({
       )}
       </header>
 
-      <nav className="booking-detail-tabs booking-profile-tabs" aria-label="Booking detail tabs">
+      <nav data-tutorial="booking-tabs" className="booking-detail-tabs booking-profile-tabs" aria-label="Booking detail tabs">
         {bookingDetailTabs.map((tab) => (
           <button
+            data-tutorial={`tab-${tab}`}
             className={activeTab === tab ? "active" : ""}
             type="button"
             key={tab}
@@ -8508,6 +8510,8 @@ export default function Dashboard() {
 
   return (
     <main
+      data-tutorial="staff-view"
+      data-tutorial-view={activeView}
       className={`dashboard-shell ${
         isSidebarCollapsed ? "dashboard-shell-sidebar-collapsed" : ""
       }`}
@@ -8564,6 +8568,7 @@ export default function Dashboard() {
               activeView === "Form" ? "sidebar-link-active" : ""
             }`}
             type="button"
+            data-tutorial="nav-form"
             title="Form"
             onClick={() => {
               setSelectedBooking(null);
@@ -8644,6 +8649,9 @@ export default function Dashboard() {
                   }`}
                   key={item.label}
                   type="button"
+                  data-tutorial={
+                    { "Calendar View": "nav-calendar", "Spreadsheet View": "nav-spreadsheet", Reports: "nav-reports" }[targetView]
+                  }
                   title={item.label}
                   onClick={() => {
                     setSelectedBooking(null);
@@ -9586,6 +9594,7 @@ export default function Dashboard() {
 
 
       </section>
+      <TutorialGnome onNavigate={handleActiveViewChange} />
     </main>
   );
 }
