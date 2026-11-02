@@ -3053,7 +3053,10 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
           </span>
         </div>
 
-        <div className="booking-details-edit-actions">
+        <div
+          className="booking-details-edit-actions"
+          data-tutorial-target={isEditing ? "booking-edit-actions booking-edit-ready" : "booking-edit-actions"}
+        >
           {isEditing ? (
             <>
               <button
@@ -3064,7 +3067,12 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
                 Cancel
               </button>
 
-              <button className="primary-dashboard-button" type="submit" disabled={isSaving}>
+              <button
+                className="primary-dashboard-button"
+                type="submit"
+                disabled={isSaving}
+                data-tutorial-guard
+              >
                 {isSaving ? "Saving…" : "Save Changes"}
               </button>
             </>
@@ -3073,6 +3081,7 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
               className="primary-dashboard-button"
               type="button"
               onClick={() => setIsEditing(true)}
+              data-tutorial-target="booking-edit-entry"
             >
               Edit Entry
             </button>
@@ -5137,7 +5146,7 @@ const overviewLinenPieces =
           LEFT PROFILE COLUMN
       ===================================================== */}
 
-      <aside className="booking-overview-sidebar">
+      <aside className="booking-overview-sidebar" data-tutorial-target="booking-overview-summary">
 
         <div className="booking-overview-identity">
 
@@ -5279,7 +5288,7 @@ const overviewLinenPieces =
         )}
 
 
-        <div className="booking-overview-sidebar-stats">
+        <div className="booking-overview-sidebar-stats" data-tutorial-target="booking-overview-stats">
 
           <div>
             <small>Guests</small>
@@ -5324,6 +5333,7 @@ const overviewLinenPieces =
             onClick={() =>
               setActiveTab("Details")
             }
+            data-tutorial-target="booking-overview-edit"
           >
             Edit Booking
           </button>
@@ -5359,7 +5369,7 @@ const overviewLinenPieces =
           MAIN CONTENT
       ===================================================== */}
 
-      <main className="booking-overview-main">
+      <main className="booking-overview-main" data-tutorial-target="booking-overview-main">
 
         <div className="booking-overview-grid">
 
@@ -5755,12 +5765,13 @@ function BookingDetailView({
     );
 
   return (
-    <section className="booking-detail-page booking-profile-page">
+    <section className="booking-detail-page booking-profile-page" data-tutorial-target="booking-profile">
       <header className="booking-profile-header">
         <button
           className="secondary-dashboard-button booking-profile-back-button"
           type="button"
           onClick={onBack}
+          data-tutorial-target="booking-back"
         >
           <FaArrowLeft />
           Back
@@ -5807,13 +5818,18 @@ function BookingDetailView({
       )}
       </header>
 
-      <nav className="booking-detail-tabs booking-profile-tabs" aria-label="Booking detail tabs">
+      <nav
+        className="booking-detail-tabs booking-profile-tabs"
+        aria-label="Booking detail tabs"
+        data-tutorial-target="booking-tabs"
+      >
         {bookingDetailTabs.map((tab) => (
           <button
             className={activeTab === tab ? "active" : ""}
             type="button"
             key={tab}
             onClick={() => setActiveTab(tab)}
+            data-tutorial-target={tab === "Details" ? "booking-tab-edit" : undefined}
           >
             {tab === "Details" ? "Edit" : tab}
           </button>
@@ -5830,7 +5846,15 @@ function BookingDetailView({
       )}
 
 {activeTab === "Details" && (
-  <div className="booking-details-tab-stack">
+  <div
+    className="booking-details-tab-stack"
+    data-tutorial-target={
+      // The full form is editable straight away; the other editor needs Edit Entry.
+      isStaffBookingRecord(booking)
+        ? "booking-edit-panel booking-edit-ready"
+        : "booking-edit-panel"
+    }
+  >
 
     {isStaffBookingRecord(booking) ? (
             <CreateBooking
@@ -8407,6 +8431,13 @@ export default function Dashboard() {
   };
 
 
+  // Tutorial gnome anchors (src/tutorial/tutorials.js); add views as tutorials need them.
+  const sidebarTutorialTargets = {
+    "Calendar View": "nav-calendar",
+    [SPREADSHEET_VIEW_NAME]: "nav-master-spreadsheet",
+    "Contacts View": "nav-contacts",
+  };
+
   const sidebarItemLookup = Object.fromEntries(
     sidebarSections
       .flatMap((section) => section.items)
@@ -8565,6 +8596,7 @@ export default function Dashboard() {
             }`}
             type="button"
             title="Form"
+            data-tutorial-target="nav-form"
             onClick={() => {
               setSelectedBooking(null);
               setBookingFormSeed(null);
@@ -8645,6 +8677,7 @@ export default function Dashboard() {
                   key={item.label}
                   type="button"
                   title={item.label}
+                  data-tutorial-target={sidebarTutorialTargets[targetView]}
                   onClick={() => {
                     setSelectedBooking(null);
 

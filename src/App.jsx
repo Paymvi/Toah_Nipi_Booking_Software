@@ -32,11 +32,13 @@ import "./styles/InquirySpreadsheet.css";
 import "./styles/InquiryRecordDetail.css";
 import "./styles/StaffBookingDetails.css";
 import "./styles/DashboardBackups.css";
+import "./styles/TutorialGnome.css";
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import StaffAuthGate from "./auth/StaffAuthGate";
+import TutorialGnome from "./tutorial/TutorialGnome";
 
 
 export default function App() {
@@ -133,6 +135,9 @@ export default function App() {
           <Route path="/backup" element={<Dashboard />} />
 
         </Routes>
+
+        {/* Staff-only help; outside Routes so it stays put across views. */}
+        <TutorialGnome />
 
       </StaffAuthGate>
 

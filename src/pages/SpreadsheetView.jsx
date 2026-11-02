@@ -487,6 +487,7 @@ const bookingSpreadsheetColumns = [
         className="table-link spreadsheet-organization-button"
         type="button"
         onClick={() => openBookingDetail(booking)}
+        data-tutorial-target="spreadsheet-open-booking"
       >
         {booking.organizationName || "Unnamed Organization"}
       </button>
@@ -4095,7 +4096,7 @@ function BookingSpreadsheetView({
                 </div>
               </div>
 
-              <div className="spreadsheet-header-search">
+              <div className="spreadsheet-header-search" data-tutorial-target="spreadsheet-search">
                 <label htmlFor="spreadsheet-header-search-input">
                   Search Everything
                 </label>

@@ -2823,6 +2823,7 @@ export default function CreateBooking({
                     onChange={handleChange}
                     placeholder="Example: Community Bible Church"
                     required
+                    data-tutorial-target="booking-form-group-name"
                   />
                 </label>
 
@@ -2836,6 +2837,7 @@ export default function CreateBooking({
                     onChange={handleChange}
                     placeholder="Contact person's name"
                     required
+                    data-tutorial-target="booking-form-contact"
                   />
                 </label>
 
@@ -2848,6 +2850,7 @@ export default function CreateBooking({
                     value={formData.retreatType}
                     onChange={handleChange}
                     required
+                    data-tutorial-target="booking-form-retreat-type"
                   >
                     <option value="">
                       Select retreat type
@@ -2893,6 +2896,7 @@ export default function CreateBooking({
                           required
                           value={formData.startDate}
                           onChange={handleChange}
+                          data-tutorial-target="booking-form-arrival"
                         />
                       </label>
 
@@ -2926,6 +2930,7 @@ export default function CreateBooking({
                         <input
                           type="date"
                           name="endDate"
+                          data-tutorial-target="booking-form-departure"
                           value={formData.endDate}
                           onChange={handleChange}
                         />
@@ -3067,7 +3072,7 @@ export default function CreateBooking({
 
             <div className="rental-section-body">
 
-              <div className="rental-subsection">
+              <div className="rental-subsection" data-tutorial-target="booking-form-guests">
                 <h3>Approximate Guests</h3>
 
                 <div className="rental-field-grid rental-approx-guests-grid">
@@ -4500,10 +4505,11 @@ export default function CreateBooking({
               SAVE
           =================================================== */}
 
-          <div className="form-actions">
+          <div className="form-actions" data-tutorial-target="booking-form-save">
             <button
               type="submit"
               disabled={isSubmitting}
+              data-tutorial-guard
             >
               {isSubmitting
                 ? "Saving..."

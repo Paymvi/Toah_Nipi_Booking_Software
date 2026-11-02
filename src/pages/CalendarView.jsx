@@ -15,9 +15,9 @@ import { monthNames } from "../constants/dashboardConstants";
 import { formatDateRange } from "../utils/dateUtils";
 
 const calendarViewOptions = [
-  { value: "month", label: "Month" },
-  { value: "week", label: "Week" },
-  { value: "year", label: "Year" },
+  { value: "month", label: "Month", tutorialTarget: "calendar-view-month" },
+  { value: "week", label: "Week", tutorialTarget: "calendar-view-week" },
+  { value: "year", label: "Year", tutorialTarget: "calendar-view-year" },
 ];
 
 const yearDisplayViewOptions = [
@@ -493,13 +493,13 @@ export default function CalendarView({
   }
 
   return (
-    <section className="calendar-view-page">
+    <section className="calendar-view-page" data-tutorial-target="calendar-view">
       <article className="dashboard-card calendar-view-card">
         <div className="calendar-view-header">
           <div>
             <p className="dashboard-eyebrow">Rentals & Events</p>
 
-            <h2>
+            <h2 data-tutorial-target="calendar-title">
               {calendarView === "year"
                 ? selectedYear
                 : calendarView === "week"
@@ -517,12 +517,13 @@ export default function CalendarView({
             className="secondary-dashboard-button"
             type="button"
             onClick={goToTodayForCurrentView}
+            data-tutorial-target="calendar-today"
           >
             {calendarView === "month" ? "This Month" : "Today"}
           </button>
         </div>
 
-        <fieldset className="calendar-exception-toggles">
+        <fieldset className="calendar-exception-toggles" data-tutorial-target="calendar-exceptions">
           <legend>Also show</legend>
 
           {CALENDAR_EXCEPTION_TOGGLES.map((toggle) => (
@@ -542,13 +543,14 @@ export default function CalendarView({
           ))}
         </fieldset>
 
-        <div className="calendar-view-switcher" aria-label="Calendar views">
+        <div className="calendar-view-switcher" aria-label="Calendar views" data-tutorial-target="calendar-views">
           {calendarViewOptions.map((option) => (
             <button
               className={calendarView === option.value ? "active" : ""}
               type="button"
               key={option.value}
               onClick={() => handleCalendarViewChange(option.value)}
+              data-tutorial-target={option.tutorialTarget}
             >
               {option.label}
             </button>
@@ -588,7 +590,7 @@ export default function CalendarView({
                 ))}
               </select>
 
-              <button type="button" onClick={goToNextMonth}>
+              <button type="button" onClick={goToNextMonth} data-tutorial-target="calendar-next">
                 »
               </button>
             </div>
@@ -606,7 +608,7 @@ export default function CalendarView({
 
         {calendarView === "week" && (
           <div className="calendar-week-view">
-            <div className="calendar-week-controls">
+            <div className="calendar-week-controls" data-tutorial-target="calendar-week-controls">
               <button type="button" onClick={goToPreviousWeek}>
                 ‹ Previous Week
               </button>
@@ -660,7 +662,7 @@ export default function CalendarView({
         )}
 
         {calendarView === "year" && (
-          <div className="calendar-year-view">
+          <div className="calendar-year-view" data-tutorial-target="calendar-year-view">
             <div className="calendar-year-toolbar">
               <div className="calendar-controls calendar-controls-large calendar-year-controls">
                 <button
@@ -850,7 +852,7 @@ export default function CalendarView({
 
       </article>
 
-      <aside className="dashboard-card calendar-view-agenda">
+      <aside className="dashboard-card calendar-view-agenda" data-tutorial-target="calendar-agenda">
         <div className="dashboard-card-header">
           <div>
             <h2>{agendaTitle}</h2>
