@@ -99,6 +99,17 @@ test("demonstrations never click a save button", () => {
   }
 });
 
+test("demo examples follow one fictional booking and use values the screens accept", () => {
+  const example = (tutorialId, stepId) =>
+    TUTORIALS.find((tutorial) => tutorial.id === tutorialId).steps.find((step) => step.id === stepId).example;
+  const formSource = readFileSync("src/pages/CreateBooking.jsx", "utf8");
+  const retreatOptions = formSource.match(/const retreatTypes = \[([\s\S]*?)\];/)[1];
+
+  assert.ok(retreatOptions.includes(`"${example("create-booking", "retreat-type")}"`), "Retreat Type example is not an option");
+  assert.equal(example("open-booking", "search"), example("create-booking", "group-name"));
+  assert.equal(example("contacts", "search"), example("create-booking", "contact"));
+});
+
 test("both save buttons are guarded during practice", () => {
   const guarded = appSource.match(/data-tutorial-guard/g) || [];
   assert.ok(guarded.length >= 2);

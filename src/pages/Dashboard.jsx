@@ -8839,6 +8839,8 @@ export default function Dashboard() {
             currentStaffUserId={currentStaffUserId}
             onBack={() => {
               setSelectedBooking(null);
+              // Booking Detail has no URL of its own: when it was opened from /master-spreadsheet, navigate() alone changes nothing.
+              setActiveView(SPREADSHEET_VIEW_NAME);
               navigate("/master-spreadsheet");
             }}
           />

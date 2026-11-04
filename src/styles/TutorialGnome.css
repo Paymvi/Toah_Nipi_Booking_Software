@@ -26,6 +26,13 @@
   padding-bottom: 7rem;
 }
 
+/* Small screens: the docked dialogue covers up to half the screen, so leave room to scroll the last controls above it. */
+@media (max-width: 639.98px) {
+  body:has(.tg-runner) .dashboard-main {
+    padding-bottom: 55vh;
+  }
+}
+
 [data-tutorial-target] {
   scroll-margin-top: 1rem;
 }
@@ -717,6 +724,14 @@
   left: 0.75rem;
   width: auto;
   max-height: 45vh;
+  /* Only the text scrolls, so Back, Pause and Next always stay on screen. */
+  display: flex;
+  flex-direction: column;
+}
+
+.tg-dialog-docked .tg-dialog-body {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
 }
 

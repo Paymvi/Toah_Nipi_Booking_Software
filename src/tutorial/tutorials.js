@@ -13,8 +13,12 @@
                  already true on arrival is skipped (e.g. already on /form).
      capture     ctx => value handed to done as `start` (state when the step began)
      demoClick   demonstration mode clicks the target. Only for navigation,
-                 tabs and view switches: never saves, submits or deletes.
-     example     demonstration mode shows this labelled example; nothing is typed
+                 tabs, view switches and Edit Entry (unlocks fields): never
+                 saves, submits or deletes. Skipped when the step is already
+                 done, so going Back never undoes what the target opened.
+     example     demonstration mode shows this labelled example; nothing is typed.
+                 Use the same fictional group (Community Bible Church, led by
+                 Jordan Smith) across tutorials, with values the field accepts.
      missing     extra hint when the target is not on screen
 
   ctx (tutorialCore.js createStepContext): path(), visible(id), text(id),
@@ -40,7 +44,7 @@ export const TUTORIAL_TARGETS = {
   "booking-form-save": "Save button at the bottom of the form",
 
   "spreadsheet-search": "Search Everything box",
-  "spreadsheet-open-booking": "a group name in the spreadsheet",
+  "spreadsheet-open-booking": "group name in the spreadsheet",
 
   "booking-profile": "Booking Profile page",
   "booking-back": "Back button",
@@ -95,7 +99,7 @@ const openBookingStep = {
   id: "open-booking",
   target: "spreadsheet-open-booking",
   say: "Click any group's name to open its booking. I've highlighted the first one.",
-  show: "Clicking a group's name opens that booking's profile. Let's open this one.",
+  show: "Clicking a group's name opens that booking's profile. This is only a demo, so I'll open the first group on the list.",
   done: (ctx) => ctx.visible("booking-profile"),
   demoClick: true,
   missing:
@@ -140,7 +144,7 @@ export const TUTORIALS = [
         target: "booking-form-retreat-type",
         say: "Pick the kind of retreat from this list.",
         show: "Retreat Type groups bookings in reports and on the calendar.",
-        example: "Church Retreat",
+        example: "Church",
         done: (ctx) => ctx.hasValue("booking-form-retreat-type"),
       },
       {
@@ -148,7 +152,7 @@ export const TUTORIALS = [
         target: "booking-form-arrival",
         say: "When does the group arrive? Choose the arrival date.",
         show: "The arrival date puts the booking on the calendar. Times can be added next to it.",
-        example: "Friday, June 5",
+        example: "June 5",
         done: (ctx) => ctx.hasValue("booking-form-arrival"),
       },
       {
@@ -156,7 +160,7 @@ export const TUTORIALS = [
         target: "booking-form-departure",
         say: "And when do they leave? Choose the departure date.",
         show: "The departure date can't be before the arrival date. The form checks this when you save.",
-        example: "Sunday, June 7",
+        example: "June 7 (two nights later)",
         done: (ctx) => ctx.hasValue("booking-form-departure"),
       },
       {
@@ -190,10 +194,11 @@ export const TUTORIALS = [
       {
         id: "search",
         target: "spreadsheet-search",
-        say: "Type part of a group name, contact or note to narrow the list. Any word is fine.",
-        show: "Search Everything looks through names, contacts, rooms, notes and imported spreadsheet values.",
-        example: "Bible",
+        say: "Type a group's name, or part of it, to narrow the list. A contact's name, email or phone works too.",
+        show: "Search Everything finds bookings by group name, contact, email, phone, rooms and notes. Type a group's name to narrow the list.",
+        example: "Community Bible Church",
         done: (ctx) => ctx.filled("spreadsheet-search"),
+        missing: "If a booking is open, click its Back button to return to the spreadsheet. Otherwise, open Master Spreadsheet in the sidebar.",
       },
       openBookingStep,
       {
@@ -212,13 +217,13 @@ export const TUTORIALS = [
         id: "stats",
         target: "booking-overview-stats",
         say: "These totals show recorded guests, nights and meals.",
-        show: "Guests, Nights and Meals are calculated from the booking's details.",
+        show: "Guests, Nights and Meals show what's recorded on the booking. A dash means nothing has been entered yet.",
       },
       {
         id: "sections",
         target: "booking-overview-main",
-        say: "Scroll here for the full picture: timeline, payments and documents, lodging and linens, status and notes.",
-        show: "The main area has timeline, payments and documents, lodging and linens, booking status and notes.",
+        say: "Scroll here for the full picture: guest information, timeline, payments and documents, lodging and linens, status and notes.",
+        show: "The main area has guest information, timeline, payments and documents, lodging and linens, booking status and notes.",
       },
       {
         id: "edit-shortcut",
@@ -229,8 +234,8 @@ export const TUTORIALS = [
       {
         id: "back",
         target: "booking-back",
-        say: "Back returns you to the list you came from. You've found and read a booking!",
-        show: "Back takes you to the spreadsheet again. That's how you find and read a booking.",
+        say: "Back returns you to the Master Spreadsheet. Your search stays in the box, so clear it (×) to see every booking again. You've found and read a booking!",
+        show: "Back takes you to the spreadsheet again. A search stays in the box until you clear it (×). That's how you find and read a booking.",
       },
     ],
   },
@@ -259,13 +264,14 @@ export const TUTORIALS = [
         say: "Imported bookings start read-only. Click Edit Entry to unlock the fields.",
         show: "For imported bookings, Edit Entry unlocks the fields. Bookings made with the Form are editable straight away.",
         done: (ctx) => ctx.visible("booking-edit-ready"),
+        demoClick: true,
       },
       {
         id: "change-field",
         target: "booking-edit-panel",
-        say: "Now change any field, like the guest count or a note. It's practice, so nothing is saved.",
+        say: "Now change any field, like the phone number or a note. It's practice, so nothing is saved.",
         show: "Change any field here: dates, guest count, contacts, notes and more.",
-        example: "Guest Count: 45 → 50",
+        example: "Phone: the leader's new number, 555-010-2234",
         capture: (ctx) => ctx.fields("booking-edit-panel"),
         done: (ctx, start) => ctx.fields("booking-edit-panel") !== start,
       },
@@ -273,9 +279,9 @@ export const TUTORIALS = [
         id: "save-or-discard",
         target: ["booking-edit-actions", "booking-form-save"],
         say:
-          "Nice edit! For real changes you'd click Save Changes. It's switched off during practice. To throw away practice changes, click Cancel or switch back to the Overview tab.",
+          "For real changes you'd click Save Changes. It's switched off during practice. To throw away practice changes, switch back to the Overview tab (imported bookings also have a Cancel button).",
         show:
-          "Save Changes stores the edit for everyone. If someone else saved this booking in the meantime, you'll be asked to reload first so nothing is overwritten. Cancel, or leaving the tab, throws your changes away.",
+          "Save Changes stores the edit for everyone. If someone else saved this booking first, you'll be asked to reload so nothing is overwritten. Leaving the tab, or Cancel where shown, discards changes.",
       },
     ],
   },
@@ -379,22 +385,22 @@ export const TUTORIALS = [
       {
         id: "search",
         target: "contacts-search",
-        say: "Search by name, group, email, phone or address. Type anything you like.",
-        show: "The search box checks names, groups, addresses, emails, phone numbers and status.",
-        example: "church",
+        say: "Type a person's name, or part of it. Their group, email, phone or address works too.",
+        show: "Search by a person's name to find them. Groups, addresses, emails, phone numbers and status work too.",
+        example: "Jordan Smith",
         done: (ctx) => ctx.filled("contacts-search"),
       },
       {
         id: "sort",
         target: "contacts-sort",
         say: "Sort by first or last name here. Starred contacts can be pinned to the top with the checkbox next to it.",
-        show: "Sort by first or last name. Star a contact to keep them handy.",
+        show: "Sort by first or last name. Tick Show starred contacts first to keep starred people at the top.",
       },
       {
         id: "view-bookings",
         target: "contacts-view-bookings",
         say: "Click View Bookings to see every booking this person is part of.",
-        show: "View Bookings opens a contact's full booking history.",
+        show: "View Bookings opens a contact's full booking history. I'll open the first contact on the list.",
         done: (ctx) => ctx.visible("contacts-history"),
         demoClick: true,
         missing: "No contacts match the search. Clear the search box to see everyone.",
@@ -402,8 +408,8 @@ export const TUTORIALS = [
       {
         id: "history",
         target: "contacts-history",
-        say: "Here's their history. Open Booking jumps to any of these bookings. Tip: click an email or phone number to copy it.",
-        show: "Each past and upcoming booking is listed. Open Booking jumps to it, and clicking an email or phone copies it.",
+        say: "Here's their history. Open Booking jumps to any of these bookings. Tip: click an email or phone number in the contact's row to copy it.",
+        show: "Each past and upcoming booking is listed, and Open Booking jumps to it. Clicking an email or phone in the contact's row copies it.",
       },
       {
         id: "deleted",

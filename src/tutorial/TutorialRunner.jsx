@@ -195,7 +195,8 @@ export default function TutorialRunner({
       await wait(POINTER_TRAVEL_MS + getDemoStepDuration(step.show));
       if (run.cancelled) return;
 
-      const clickTarget = step.demoClick ? findTarget(step.target) : null;
+      // Already done (reached with Back): clicking again could undo it, e.g. View Bookings collapses the history.
+      const clickTarget = step.demoClick && !isAlreadyDone() ? findTarget(step.target) : null;
       if (clickTarget && canDemoClick(clickTarget)) {
         setDemoClickCount((count) => count + 1);
         // The guard below would stop our own click; dispatch is synchronous, so the flag covers just this one.
@@ -286,6 +287,8 @@ export default function TutorialRunner({
       dialog: dialog.dock ? dialog : { ...dialog, top: Math.round(dialog.top), left: Math.round(dialog.left) },
       pointer: pointer && { ...pointer, x: Math.round(pointer.x), y: Math.round(pointer.y) },
       isMoving: Date.now() - stepEnteredAtRef.current < 700,
+      // The previous step's control is on an earlier screen (e.g. the spreadsheet behind an open booking).
+      canGoBack: stepIndex > 0 && Boolean(findTarget(steps[stepIndex - 1].target)),
     };
   });
 
@@ -485,7 +488,9 @@ export default function TutorialRunner({
                 <strong>Hmm, I can't find the {getTargetLabel(step.target)} on this screen.</strong>
               </p>
               <p>{step.missing || "It may be on another page, or this screen may have changed."}</p>
-              <p className="tg-muted">I'll keep looking. You can also skip this step or go back one.</p>
+              <p className="tg-muted">
+                I'll keep looking. You can also skip this step{layout?.canGoBack ? " or go back one" : ""}.
+              </p>
             </div>
           ) : phase === "success" ? (
             <p className="tg-success">{PRAISE[stepIndex % PRAISE.length]}</p>
@@ -497,7 +502,7 @@ export default function TutorialRunner({
                 <p className="tg-example">
                   <span>Example</span>
                   {step.example}
-                  <small>Nothing is typed into the real form.</small>
+                  <small>Just an example. I won't type it in.</small>
                 </p>
               )}
             </>
@@ -520,7 +525,8 @@ export default function TutorialRunner({
             className="tg-button"
             type="button"
             onClick={() => goTo(stepIndex - 1, "back")}
-            disabled={stepIndex === 0}
+            disabled={!layout?.canGoBack}
+            title={stepIndex > 0 && !layout?.canGoBack ? "The step before this was on another screen. Use Restart to begin again." : undefined}
           >
             <FaChevronLeft aria-hidden="true" /> Back
           </button>
