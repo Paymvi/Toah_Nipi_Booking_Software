@@ -5,7 +5,12 @@
   Each step: wait for its target to be on screen (after 5 s explain that it
   can't be found, but keep looking), scroll it into view, then
   - guided: wait until the step's done(ctx) check is true, react, move on;
-  - demo:   explain, click the target if the step allows it, move on.
+  - demo:   explain, click the target if the step allows it, wait until the
+            page shows the result (or offer Try again), move on.
+
+  Next never jumps past a step's action: in demos it ends the reading time
+  early and the action still runs, and clicks during a transition are ignored
+  (phaseRef is checked synchronously, before React re-renders).
 
   While running (not paused), clicks outside the highlighted element are
   stopped and answered with a hint, and anything marked data-tutorial-guard
@@ -14,6 +19,7 @@
 */
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -31,10 +37,12 @@ import {
   createStepContext,
   findTarget,
   getDemoStepDuration,
+  getNextAction,
   matchesTarget,
   MOBILE_BREAKPOINT,
   placeDialogue,
   placePointer,
+  runDemoAction,
 } from "./tutorialCore";
 
 const SETTLE_MS = 80;
@@ -43,7 +51,6 @@ const MISSING_AFTER_MS = 5000;
 const DONE_POLL_MS = 200;
 const SUCCESS_PAUSE_MS = 950;
 const POINTER_TRAVEL_MS = 800;
-const AFTER_DEMO_CLICK_MS = 900;
 const SPOTLIGHT_PADDING = 6;
 
 const PRAISE = ["Perfect!", "Nice work!", "That's it!", "Great job!", "Lovely!"];
@@ -103,8 +110,10 @@ export default function TutorialRunner({
   const [stepIndex, setStepIndex] = useState(() =>
     Math.min(Math.max(startStep, 0), steps.length - 1)
   );
-  // seeking → (missing) → active → (success); "attempt" re-runs a step.
+  // seeking → (missing) → active → (working → failed) → (success); "attempt" re-runs a step.
   const [phase, setPhase] = useState("seeking");
+  const phaseRef = useRef("seeking");
+  const runRef = useRef(null);
   const [attempt, setAttempt] = useState(0);
   const [isWaitingForAction, setIsWaitingForAction] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -117,8 +126,20 @@ export default function TutorialRunner({
   const directionRef = useRef("forward");
   const stepEnteredAtRef = useRef(0);
   const isDemoClickingRef = useRef(false);
+  const { pathname } = useLocation();
+  const routerPathRef = useRef(pathname);
+
+  useEffect(() => {
+    routerPathRef.current = pathname;
+  }, [pathname]);
 
   const step = steps[stepIndex];
+  const isBusy = phase === "seeking" || phase === "working";
+
+  function changePhase(next) {
+    phaseRef.current = next;
+    setPhase(next);
+  }
 
   function goTo(nextIndex, direction = "forward") {
     if (nextIndex >= steps.length) {
@@ -129,11 +150,31 @@ export default function TutorialRunner({
     const index = Math.max(0, nextIndex);
     directionRef.current = direction;
     setStepIndex(index);
-    setPhase("seeking");
+    changePhase("seeking");
     setIsWaitingForAction(false);
     setNudge("");
     setAttempt((count) => count + 1);
     onStepChange(index);
+  }
+
+  function handleNext() {
+    const action = getNextAction(phaseRef.current, isDemo);
+
+    if (action === "hurry") {
+      changePhase("working");
+      runRef.current?.hurry();
+    } else if (action === "retry") {
+      changePhase("seeking");
+      setNudge("");
+      setAttempt((count) => count + 1);
+    } else if (action === "advance") {
+      goTo(stepIndex + 1);
+    }
+  }
+
+  function handleBack() {
+    if (phaseRef.current === "seeking" || phaseRef.current === "working") return;
+    goTo(stepIndex - 1, "back");
   }
 
   function pause() {
@@ -143,7 +184,7 @@ export default function TutorialRunner({
 
   function resume() {
     directionRef.current = "forward";
-    setPhase("seeking");
+    changePhase("seeking");
     setIsPaused(false);
   }
 
@@ -164,14 +205,17 @@ export default function TutorialRunner({
       return;
     }
 
+    // The router commits navigations in a transition, so the URL can change before the app does; a navigation
+    // still pending when this step acts would undo it (e.g. close the booking just opened) once it lands.
+    const findReadyTarget = () => (routerPathRef.current === window.location.pathname ? findTarget(step.target) : null);
     const seekStartedAt = Date.now();
-    let element = findTarget(step.target);
+    let element = findReadyTarget();
 
     while (!element) {
-      if (Date.now() - seekStartedAt > MISSING_AFTER_MS) setPhase("missing");
+      if (Date.now() - seekStartedAt > MISSING_AFTER_MS) changePhase("missing");
       await wait(SEEK_POLL_MS);
       if (run.cancelled) return;
-      element = findTarget(step.target);
+      element = findReadyTarget();
     }
 
     if (enteredForward && isAlreadyDone()) {
@@ -189,27 +233,41 @@ export default function TutorialRunner({
       start = undefined;
     }
 
-    setPhase("active");
-
     if (isDemo) {
-      await wait(POINTER_TRAVEL_MS + getDemoStepDuration(step.show));
+      // Reading time; Next (handleNext → hurry) ends it early.
+      const reading = new Promise((resolve) => {
+        run.hurry = resolve;
+        run.timers.push(window.setTimeout(resolve, POINTER_TRAVEL_MS + getDemoStepDuration(step.show)));
+      });
+      changePhase("active");
+      await reading;
       if (run.cancelled) return;
 
-      // Already done (reached with Back): clicking again could undo it, e.g. View Bookings collapses the history.
-      const clickTarget = step.demoClick && !isAlreadyDone() ? findTarget(step.target) : null;
-      if (clickTarget && canDemoClick(clickTarget)) {
-        setDemoClickCount((count) => count + 1);
-        // The guard below would stop our own click; dispatch is synchronous, so the flag covers just this one.
-        isDemoClickingRef.current = true;
-        clickTarget.click();
-        isDemoClickingRef.current = false;
-        await wait(AFTER_DEMO_CLICK_MS);
-        if (run.cancelled) return;
-      }
+      changePhase("working");
+      // Already done (reached with Back) skips the click: clicking again could undo it, e.g. View Bookings collapses the history.
+      const result = await runDemoAction(step, {
+        isDone: () => checkStep(step.done, ctx, start),
+        findClickable: () => {
+          const element = findTarget(step.target);
+          return element && canDemoClick(element) ? element : null;
+        },
+        click: (element) => {
+          setDemoClickCount((count) => count + 1);
+          // The guard below would stop our own click; dispatch is synchronous, so the flag covers just this one.
+          isDemoClickingRef.current = true;
+          element.click();
+          isDemoClickingRef.current = false;
+        },
+        wait,
+        isCancelled: () => run.cancelled,
+      });
 
-      goTo(stepIndex + 1);
+      if (result === "failed") changePhase("failed");
+      if (result === "done") goTo(stepIndex + 1);
       return;
     }
+
+    changePhase("active");
 
     // Info steps, and steps reached with Previous that are already done, wait for Next.
     if (!step.done || isAlreadyDone()) return;
@@ -223,18 +281,18 @@ export default function TutorialRunner({
 
       // The target went away mid-step (e.g. another screen): explain and stop blocking clicks.
       if (findTarget(step.target)) {
-        if (lostSince) setPhase("active");
+        if (lostSince) changePhase("active");
         lostSince = 0;
       } else if (!lostSince) {
         lostSince = Date.now();
       } else if (Date.now() - lostSince > MISSING_AFTER_MS) {
-        setPhase("missing");
+        changePhase("missing");
       }
     }
 
     setIsWaitingForAction(false);
     setNudge("");
-    setPhase("success");
+    changePhase("success");
     await wait(SUCCESS_PAUSE_MS);
     if (run.cancelled) return;
 
@@ -244,10 +302,12 @@ export default function TutorialRunner({
   useEffect(() => {
     if (isPaused) return undefined;
 
-    const run = { cancelled: false, timers: [] };
+    const run = { cancelled: false, timers: [], hurry: () => {} };
+    runRef.current = run;
     // Starts a moment later so a view that just changed has rendered.
     run.timers.push(window.setTimeout(() => runStep(run), SETTLE_MS));
 
+    // Leaving the step (Next, Back, Restart, Pause, End) stops this run: no later click, check or goTo.
     return () => {
       run.cancelled = true;
       run.timers.forEach((timer) => window.clearTimeout(timer));
@@ -404,14 +464,21 @@ export default function TutorialRunner({
   }
 
   const spot = phase !== "missing" ? layout?.spot : null;
-  const pointer = phase === "active" || phase === "success" ? layout?.pointer : null;
+  const pointer = phase !== "seeking" && phase !== "missing" ? layout?.pointer : null;
   const dialog = layout?.dialog || { dock: window.innerWidth < MOBILE_BREAKPOINT ? "bottom" : null };
   const isDocked = dialog.dock === "bottom";
   const isLastStep = stepIndex === steps.length - 1;
 
   const gnomeMood =
-    phase === "success" ? "excited" : phase === "missing" ? "surprised" : phase === "seeking" ? "thinking" : nudge ? "thinking" : "happy";
-  const gnomePose = phase === "success" ? "celebrate" : phase === "active" ? "point" : phase === "seeking" ? "think" : "idle";
+    phase === "success"
+      ? "excited"
+      : phase === "missing" || phase === "failed"
+        ? "surprised"
+        : isBusy || nudge
+          ? "thinking"
+          : "happy";
+  const gnomePose =
+    phase === "success" ? "celebrate" : phase === "active" || phase === "working" ? "point" : phase === "seeking" ? "think" : "idle";
 
   return (
     <div className={`tg-runner ${layout?.isMoving ? "tg-is-moving" : ""}`} data-tutorial-ui>
@@ -492,6 +559,14 @@ export default function TutorialRunner({
                 I'll keep looking. You can also skip this step{layout?.canGoBack ? " or go back one" : ""}.
               </p>
             </div>
+          ) : phase === "failed" ? (
+            <div className="tg-missing">
+              <p>
+                <strong>Hmm, that didn't work.</strong>
+              </p>
+              <p>I used the {getTargetLabel(step.target)}, but the screen didn't change as expected.</p>
+              <p className="tg-muted">Press Try again, or Pause to have a look yourself.</p>
+            </div>
           ) : phase === "success" ? (
             <p className="tg-success">{PRAISE[stepIndex % PRAISE.length]}</p>
           ) : (
@@ -505,6 +580,8 @@ export default function TutorialRunner({
                   <small>Just an example. I won't type it in.</small>
                 </p>
               )}
+
+              {phase === "working" && <p className="tg-muted">Getting ready…</p>}
             </>
           )}
 
@@ -524,8 +601,9 @@ export default function TutorialRunner({
           <button
             className="tg-button"
             type="button"
-            onClick={() => goTo(stepIndex - 1, "back")}
+            onClick={handleBack}
             disabled={!layout?.canGoBack}
+            aria-disabled={isBusy || undefined}
             title={stepIndex > 0 && !layout?.canGoBack ? "The step before this was on another screen. Use Restart to begin again." : undefined}
           >
             <FaChevronLeft aria-hidden="true" /> Back
@@ -545,12 +623,20 @@ export default function TutorialRunner({
             <FaRedo aria-hidden="true" />
           </button>
 
+          {/* aria-disabled, not disabled: keeps keyboard focus on the button while a step gets ready. */}
           <button
             className={`tg-button ${isWaitingForAction || phase === "missing" ? "" : "tg-button-primary"}`}
             type="button"
-            onClick={() => goTo(stepIndex + 1)}
+            onClick={handleNext}
+            aria-disabled={getNextAction(phase, isDemo) === "ignore" || undefined}
           >
-            {isLastStep ? "Finish" : isWaitingForAction || phase === "missing" ? "Skip" : "Next"}
+            {phase === "failed"
+              ? "Try again"
+              : isLastStep
+                ? "Finish"
+                : isWaitingForAction || phase === "missing"
+                  ? "Skip"
+                  : "Next"}
             <FaChevronRight aria-hidden="true" />
           </button>
         </footer>

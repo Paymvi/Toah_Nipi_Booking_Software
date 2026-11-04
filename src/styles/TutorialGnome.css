@@ -148,12 +148,13 @@
   transition: background-color 150ms ease, border-color 150ms ease;
 }
 
-.tg-button:hover:not(:disabled) {
+.tg-button:hover:not(:disabled, [aria-disabled="true"]) {
   background: #f4f6f4;
   border-color: #cfd6d1;
 }
 
-.tg-button:disabled {
+.tg-button:disabled,
+.tg-button[aria-disabled="true"] {
   opacity: 0.45;
   cursor: default;
 }
@@ -164,7 +165,7 @@
   color: #ffffff;
 }
 
-.tg-button-primary:hover:not(:disabled) {
+.tg-button-primary:hover:not(:disabled, [aria-disabled="true"]) {
   border-color: var(--tg-green-dark);
   background: var(--tg-green-dark);
 }

@@ -14,10 +14,12 @@ import {
   clipRect,
   emptyProgress,
   getDemoStepDuration,
+  getNextAction,
   groupTutorialsByCategory,
   loadTutorialProgress,
   placeDialogue,
   placePointer,
+  runDemoAction,
   saveTutorialProgress,
   searchTutorials,
   TUTORIAL_PROGRESS_STORAGE_KEY,
@@ -158,6 +160,107 @@ test("demo steps stay up long enough to read, but not forever", () => {
   assert.equal(getDemoStepDuration(""), 3800);
   assert.equal(getDemoStepDuration("word ".repeat(20)), 5800);
   assert.equal(getDemoStepDuration("word ".repeat(200)), 9000);
+});
+
+/* ---------- Step transitions ---------- */
+
+// A fake page for runDemoAction: the click "lands" after `delay` polls; wait() just counts.
+function fakeDemo({ delay = 2, clickable = true, alreadyDone = false } = {}) {
+  const page = { clicks: 0, polls: 0, cancelled: false, time: 0 };
+  let doneAtPoll = alreadyDone ? 0 : Infinity;
+
+  page.options = {
+    isDone: () => page.polls >= doneAtPoll,
+    findClickable: () => (clickable ? "target" : null),
+    click: () => {
+      page.clicks += 1;
+      doneAtPoll = page.polls + delay;
+    },
+    wait: async (ms) => {
+      page.polls += 1;
+      page.time += ms;
+    },
+    isCancelled: () => page.cancelled,
+    now: () => page.time,
+  };
+  return page;
+}
+
+test("every demo click has a done check, so the result can be confirmed", () => {
+  for (const tutorial of TUTORIALS) {
+    for (const step of tutorial.steps.filter((item) => item.demoClick)) {
+      assert.equal(typeof step.done, "function", `${tutorial.id}/${step.id}`);
+    }
+  }
+});
+
+test("rapid Next clicks run one transition: the first hurries the demo, the rest are ignored", () => {
+  // Phase after each click, as TutorialRunner sets it synchronously (phaseRef).
+  const afterClick = { hurry: "working", advance: "seeking", retry: "seeking", ignore: null };
+
+  for (const isDemo of [true, false]) {
+    let phase = "active";
+    const actions = [];
+    for (let click = 0; click < 5; click += 1) {
+      const action = getNextAction(phase, isDemo);
+      actions.push(action);
+      phase = afterClick[action] ?? phase;
+    }
+    assert.deepEqual(actions, [isDemo ? "hurry" : "advance", "ignore", "ignore", "ignore", "ignore"]);
+  }
+
+  for (const phase of ["seeking", "working", "success"]) {
+    assert.equal(getNextAction(phase, true), "ignore", phase);
+    assert.equal(getNextAction(phase, false), "ignore", phase);
+  }
+  assert.equal(getNextAction("failed", true), "retry");
+  assert.equal(getNextAction("missing", true), "advance", "Skip stays available when a target can't be found");
+});
+
+test("a demo action only completes once the page shows its result", async () => {
+  const page = fakeDemo({ delay: 3 });
+  const result = await runDemoAction({ demoClick: true }, page.options);
+
+  assert.equal(result, "done");
+  assert.equal(page.clicks, 1);
+  assert.equal(page.polls, 3, "kept waiting until the page changed, not a fixed delay");
+});
+
+test("a demo action is not repeated when the step is already done (reached with Back)", async () => {
+  const page = fakeDemo({ alreadyDone: true });
+
+  assert.equal(await runDemoAction({ demoClick: true }, page.options), "done");
+  assert.equal(page.clicks, 0);
+  assert.equal(await runDemoAction({}, fakeDemo().options), "done", "steps without an action just continue");
+});
+
+test("a demo action that can't click, or never shows a result, fails instead of continuing", async () => {
+  const missing = fakeDemo({ clickable: false });
+  assert.equal(await runDemoAction({ demoClick: true }, missing.options), "failed");
+  assert.equal(missing.clicks, 0);
+
+  const stuck = fakeDemo({ delay: Infinity });
+  assert.equal(await runDemoAction({ demoClick: true }, { ...stuck.options, pollMs: 100, timeoutMs: 1000 }), "failed");
+  assert.equal(stuck.time, 1000, "gives up after the time limit");
+});
+
+test("a demo action left mid-transition (Next, Back, Restart, End) stops without reporting", async () => {
+  const page = fakeDemo({ delay: 5 });
+  const wait = page.options.wait;
+  const result = await runDemoAction(
+    { demoClick: true },
+    {
+      ...page.options,
+      wait: async (ms) => {
+        await wait(ms);
+        if (page.polls === 2) page.cancelled = true;
+      },
+    }
+  );
+
+  assert.equal(result, "cancelled", "an older step's work can't advance the newer one");
+  assert.equal(page.clicks, 1);
+  assert.equal(page.polls, 2, "no more checks after the step was left");
 });
 
 /* ---------- Placement ---------- */

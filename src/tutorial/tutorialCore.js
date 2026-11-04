@@ -95,6 +95,51 @@ export function checkStep(check, ctx, start) {
 }
 
 /* =========================================================
+   STEP TRANSITIONS (pure, unit tested)
+========================================================= */
+
+export const DEMO_ACTION_TIMEOUT_MS = 8000;
+
+/*
+  What Next does in each phase. One transition runs at a time: while a step
+  is getting ready, doing its demo action or celebrating, extra clicks are
+  ignored so they can't skip a step or the action that leads to it.
+  In demonstrations Next ends the reading time early; the action still runs.
+*/
+export function getNextAction(phase, isDemo) {
+  if (phase === "seeking" || phase === "working" || phase === "success") return "ignore";
+  if (phase === "failed") return "retry";
+  if (isDemo && phase === "active") return "hurry";
+  return "advance";
+}
+
+/*
+  A demonstration step's action: click the target (unless the step is
+  already done, e.g. reached with Back), then wait until the page shows the
+  result. Resolves "done", "failed" (nothing to click, or no result within
+  timeoutMs) or "cancelled" (the step was left: nothing more happens).
+*/
+export async function runDemoAction(
+  step,
+  { isDone, findClickable, click, wait, isCancelled, pollMs = 100, timeoutMs = DEMO_ACTION_TIMEOUT_MS, now = Date.now }
+) {
+  if (!step.demoClick || isDone()) return "done";
+
+  const target = findClickable();
+  if (!target) return "failed";
+  click(target);
+
+  const clickedAt = now();
+  while (!isDone()) {
+    if (now() - clickedAt >= timeoutMs) return "failed";
+    await wait(pollMs);
+    if (isCancelled()) return "cancelled";
+  }
+
+  return "done";
+}
+
+/* =========================================================
    PLACEMENT (pure)
 ========================================================= */
 
