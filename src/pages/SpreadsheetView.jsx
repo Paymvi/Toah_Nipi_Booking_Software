@@ -272,12 +272,12 @@ const SPREADSHEET_QUICK_SORT_OPTIONS = [
     label: "Retreat date: Newest first",
   },
   {
-    value: "standard:Submitted|desc",
+    value: "standard:Submitted|asc",
     label: "Entry added: Oldest first",
   },
   {
-    value: "standard:Submitted|asc",
-    label: "Entry added: Most Recent first",
+    value: "standard:Submitted|desc",
+    label: "Entry added: Most recent first",
   },
   {
     value: "standard:Organization|asc",
