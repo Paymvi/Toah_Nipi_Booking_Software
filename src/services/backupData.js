@@ -60,10 +60,18 @@ export async function fetchBackupSections({ client, fetchBookings }) {
   };
 }
 
+// Restored portal rows come back with email options off (and their
+// assignment time reset), so a restore can never re-enable or replay emails.
+export function withoutEmailOptions(row) {
+  return Object.fromEntries(Object.entries(row).filter(([key]) => !key.startsWith("email_")));
+}
+
 async function insertInChunks(table, rows, client, onProgress) {
   let inserted = 0;
   for (let index = 0; index < rows.length; index += INSERT_CHUNK_SIZE) {
-    const chunk = rows.slice(index, index + INSERT_CHUNK_SIZE);
+    const chunk = rows
+      .slice(index, index + INSERT_CHUNK_SIZE)
+      .map((row) => (table.startsWith("portal_") ? withoutEmailOptions(row) : row));
     const { data, error } = await client
       .from(table)
       .upsert(chunk, { onConflict: "id", ignoreDuplicates: true })

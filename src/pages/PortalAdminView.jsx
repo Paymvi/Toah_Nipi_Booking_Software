@@ -19,9 +19,17 @@ import {
   FaChevronDown,
   FaChevronUp,
   FaUpload,
+  FaEnvelope,
 } from "react-icons/fa";
 
 import { supabase } from "../lib/supabaseClient";
+import PortalEmailPanel, {
+  PortalEmailSettingsCard,
+} from "../components/PortalEmailPanel";
+import {
+  isMissingEmailSetup,
+  loadEmailAdmin,
+} from "../services/portalEmailService";
 import {
   getAlreadyAssignedDocumentIds,
   getAlreadyAssignedTaskIds,
@@ -3068,6 +3076,7 @@ function PortalRecordCard({
   onAssignTasks,
   onAssignDocuments,
   onUploadCustomDocument,
+  emailAdmin,
 }) {
   const [
     openManager,
@@ -3328,6 +3337,30 @@ function PortalRecordCard({
           </button>
 
           <button
+            className="portal-assign-document-button"
+            type="button"
+            aria-expanded={openManager === "emails"}
+            onClick={() =>
+              setOpenManager(
+                (current) =>
+                  current === "emails"
+                    ? ""
+                    : "emails"
+              )
+            }
+          >
+            <FaEnvelope />
+
+            {openManager === "emails"
+              ? "Hide Emails"
+              : "Emails"}
+
+            {openManager === "emails"
+              ? <FaChevronUp />
+              : <FaChevronDown />}
+          </button>
+
+          <button
             className="secondary-dashboard-button"
             type="button"
             onClick={() =>
@@ -3429,6 +3462,15 @@ function PortalRecordCard({
           }
         />
       )}
+
+
+      {openManager === "emails" && (
+        <PortalEmailPanel
+          record={record}
+          emailAdmin={emailAdmin}
+          onClose={() => setOpenManager("")}
+        />
+      )}
     </article>
   );
 }
@@ -3507,6 +3549,17 @@ export default function PortalAdminView({
   const latestLoadRequestRef =
     useRef(0);
 
+  // Portal email settings; { missing: true } until the migration is run.
+  const [emailAdmin, setEmailAdmin] = useState(null);
+
+  async function loadEmailSettings() {
+    try {
+      setEmailAdmin(await loadEmailAdmin());
+    } catch (error) {
+      setEmailAdmin(isMissingEmailSetup(error) ? { missing: true } : null);
+    }
+  }
+
 
   async function loadPortalRecords() {
     // Overlapping reloads can resolve out of order; only the newest
@@ -3571,6 +3624,7 @@ export default function PortalAdminView({
   useEffect(
     () => {
       loadPortalRecords();
+      loadEmailSettings();
     },
     []
   );
@@ -4372,6 +4426,12 @@ export default function PortalAdminView({
       </article>
 
 
+      <PortalEmailSettingsCard
+        emailAdmin={emailAdmin}
+        onReload={loadEmailSettings}
+      />
+
+
       <article className="dashboard-card portal-admin-toolbar">
         <label>
           <span>
@@ -4515,6 +4575,7 @@ export default function PortalAdminView({
                 onUploadCustomDocument={
                   handleUploadCustomDocument
                 }
+                emailAdmin={emailAdmin}
               />
             )
           )}

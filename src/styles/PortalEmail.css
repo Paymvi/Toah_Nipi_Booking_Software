@@ -1,0 +1,463 @@
+/* Guest portal emails in Portal Admin. Same palette as PortalAdminView.css. */
+
+.portal-email-panel {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.875rem;
+  padding: 1rem;
+  border: 1px solid #dfe4ec;
+  border-radius: 0.75rem;
+  background: #fbfbfe;
+  min-width: 0;
+}
+
+.portal-email-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.portal-email-panel-header h4,
+.portal-email-settings-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.25rem;
+  color: #22242a;
+}
+
+.portal-email-panel-header p {
+  margin: 0;
+  color: #4b5563;
+}
+
+.portal-email-section {
+  display: grid;
+  gap: 0.625rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0.875rem;
+  border: 1px solid #e4e8ee;
+  border-radius: 0.625rem;
+  background: #ffffff;
+}
+
+.portal-email-section legend {
+  padding: 0 0.375rem;
+  font-weight: 600;
+  color: #22242a;
+}
+
+.portal-email-section h5 {
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+}
+
+.portal-email-muted {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.portal-email-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.portal-email-check input {
+  margin-top: 0.2rem;
+}
+
+.portal-email-recipients,
+.portal-email-items,
+.portal-email-history,
+.portal-email-upcoming,
+.portal-email-readiness,
+.portal-email-problems {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portal-email-recipients li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+}
+
+.portal-email-recipients span {
+  overflow-wrap: anywhere;
+}
+
+.portal-email-recipients small {
+  color: #6b7280;
+}
+
+.portal-email-link-button {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: #b42318;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.portal-email-add,
+.portal-email-inline,
+.portal-email-test {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem 0.75rem;
+}
+
+.portal-email-add label,
+.portal-email-test label:not(.portal-email-check),
+.portal-email-template label {
+  display: grid;
+  gap: 0.25rem;
+  flex: 1 1 14rem;
+}
+
+.portal-email-panel input:not([type="checkbox"]):not([type="radio"]),
+.portal-email-panel select,
+.portal-email-settings input:not([type="checkbox"]):not([type="radio"]),
+.portal-email-settings textarea {
+  min-width: 0;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font: inherit;
+  background: #ffffff;
+  color: #22242a;
+}
+
+.portal-email-inline input {
+  width: 5.5rem;
+}
+
+.portal-email-items li {
+  display: grid;
+  gap: 0.375rem;
+  padding: 0.625rem 0;
+  border-top: 1px solid #eef0f4;
+}
+
+.portal-email-items li:first-child {
+  border-top: 0;
+}
+
+.portal-email-item-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+}
+
+.portal-email-item-title small {
+  color: #6b7280;
+}
+
+.portal-email-item-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 1rem;
+}
+
+.portal-email-item-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.92rem;
+}
+
+.portal-email-item-options label:has(input:disabled) {
+  color: #9ca3af;
+}
+
+.portal-email-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.portal-email-actions button,
+.portal-email-history button,
+.portal-email-test button,
+.portal-email-add button,
+.portal-email-inline button,
+.portal-email-template button,
+.portal-email-panel-header button {
+  min-height: 2.375rem;
+  padding: 0 0.875rem;
+  border-radius: 0.5rem;
+  border: 1px solid #cfc9f1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.portal-email-actions .primary-dashboard-button {
+  background: #4f46c7;
+  border-color: #4f46c7;
+}
+
+.portal-email-actions button:disabled,
+.portal-email-history button:disabled,
+.portal-email-test button:disabled,
+.portal-email-template button:disabled,
+.portal-email-inline button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.portal-email-notice {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d9dbf3;
+  background: #f4f3fd;
+  color: #312a7a;
+  overflow-wrap: anywhere;
+}
+
+.portal-email-notice-success {
+  border-color: #bbebcb;
+  background: #effaf3;
+  color: #236b3a;
+}
+
+.portal-email-notice-error {
+  border-color: #f3c2bd;
+  background: #fdf1ef;
+  color: #9b2a1f;
+}
+
+.portal-email-mode-badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.portal-email-mode-disabled {
+  background: #eef0f4;
+  color: #374151;
+}
+
+.portal-email-mode-test {
+  background: #fff3d6;
+  color: #7a4d00;
+}
+
+.portal-email-mode-live {
+  background: #fde2e0;
+  color: #9b2a1f;
+}
+
+.portal-email-preview-frame {
+  width: 100%;
+  min-height: 26rem;
+  border: 1px solid #e4e8ee;
+  border-radius: 0.5rem;
+  background: #ffffff;
+}
+
+.portal-email-upcoming li {
+  overflow-wrap: anywhere;
+}
+
+.portal-email-upcoming time {
+  font-weight: 600;
+  margin-right: 0.375rem;
+}
+
+.portal-email-history li {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid #eef0f4;
+}
+
+.portal-email-history-main,
+.portal-email-history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.portal-email-history-meta {
+  color: #4b5563;
+  font-size: 0.88rem;
+}
+
+.portal-email-history small {
+  color: #6b7280;
+}
+
+.portal-email-status {
+  padding: 0.0625rem 0.5rem;
+  border-radius: 999px;
+  background: #eef0f4;
+  color: #374151;
+  font-weight: 600;
+}
+
+.portal-email-status-accepted,
+.portal-email-status-delivered {
+  background: #effaf3;
+  color: #236b3a;
+}
+
+.portal-email-status-failed,
+.portal-email-status-bounced,
+.portal-email-status-blocked {
+  background: #fdf1ef;
+  color: #9b2a1f;
+}
+
+.portal-email-status-uncertain,
+.portal-email-status-queued,
+.portal-email-status-sending {
+  background: #fff3d6;
+  color: #7a4d00;
+}
+
+/* Global settings card */
+
+.portal-email-settings > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.875rem;
+  padding: 1rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.portal-email-settings > summary::-webkit-details-marker {
+  display: none;
+}
+
+.portal-email-settings h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 1rem 1rem 0.25rem;
+}
+
+.portal-email-settings > p {
+  padding: 0 1rem 1rem;
+}
+
+.portal-email-settings-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.portal-email-settings-body {
+  display: grid;
+  gap: 1.25rem;
+  padding: 0 1rem 1rem;
+}
+
+.portal-email-settings-body section {
+  display: grid;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.portal-email-settings-body h4 {
+  margin: 0;
+}
+
+.portal-email-mode-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+}
+
+.portal-email-mode-options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.portal-email-readiness li {
+  padding-left: 1.25rem;
+  position: relative;
+  overflow-wrap: anywhere;
+}
+
+.portal-email-readiness li::before {
+  position: absolute;
+  left: 0;
+  font-weight: 700;
+}
+
+.portal-email-readiness li.ok::before {
+  content: "✓";
+  color: #236b3a;
+}
+
+.portal-email-readiness li.no::before {
+  content: "✕";
+  color: #9b2a1f;
+}
+
+.portal-email-template {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid #e4e8ee;
+  border-radius: 0.625rem;
+}
+
+.portal-email-template legend {
+  font-weight: 600;
+  padding: 0 0.375rem;
+}
+
+.portal-email-template button {
+  justify-self: start;
+}
+
+.portal-email-problems {
+  color: #9b2a1f;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 720px) {
+  .portal-email-panel,
+  .portal-email-section {
+    padding: 0.75rem;
+  }
+
+  .portal-email-panel-header {
+    flex-direction: column;
+  }
+
+  .portal-email-actions button,
+  .portal-email-test button,
+  .portal-email-add button {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .portal-email-preview-frame {
+    min-height: 22rem;
+  }
+}

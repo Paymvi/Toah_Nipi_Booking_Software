@@ -427,6 +427,13 @@ entrypoint = "./functions/submit-guest-inquiry/index.ts"
 
 # The function checks the user's session itself, so the gateway JWT check is off
 # (this also lets the browser's CORS preflight through).
+[functions.portal-email]
+enabled = true
+# Scheduler and webhook calls carry no user JWT; the function authenticates
+# every request itself (cron secret, webhook signature, or staff session).
+verify_jwt = false
+entrypoint = "./functions/portal-email/index.ts"
+
 [functions.verify-dev-mode]
 enabled = true
 verify_jwt = false

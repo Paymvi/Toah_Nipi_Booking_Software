@@ -38,6 +38,15 @@ export function getPortalProgress(checklistItems = []) {
   };
 }
 
+/*
+  100% complete: every task confirmed by staff. A submission waiting for
+  review is not complete. Same as getPortalProgress().percent === 100,
+  without its rounding (199 of 200 confirmed + 1 in review rounds to 100).
+*/
+export function isPortalComplete(checklistItems = []) {
+  return checklistItems.length > 0 && checklistItems.every((item) => item.status === "completed");
+}
+
 export function portalItemHasGuestSubmission(item) {
   return Boolean(
     (item?.uploadedFileName && item?.uploadedFilePath) ||
