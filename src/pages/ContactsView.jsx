@@ -1351,7 +1351,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
 
 
         <div className="contacts-view-toolbar">
-          <div className="contacts-view-search">
+          <div className="contacts-view-search" data-tutorial-target="contacts-search">
             <input
               type="text"
               placeholder="Search contacts, groups, address, email, phone, status, or retreat type..."
@@ -1362,7 +1362,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
             />
           </div>
 
-          <div className="contacts-view-name-sort">
+          <div className="contacts-view-name-sort" data-tutorial-target="contacts-sort">
             <span>Sort:</span>
 
             <button
@@ -1412,6 +1412,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                 (currentValue) => !currentValue
               )
             }
+            data-tutorial-target="contacts-deleted"
           >
             <FaTrashAlt />
             Deleted ({deletedContacts.length})
@@ -1625,6 +1626,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                               onClick={() =>
                                 toggleContactBookings(contact.id)
                               }
+                              data-tutorial-target="contacts-view-bookings"
                             >
                               {expandedContactId === contact.id
                                 ? "Hide Bookings"
@@ -1648,7 +1650,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                       {expandedContactId === contact.id && (
                         <tr className="contacts-bookings-expanded-row">
                           <td colSpan="7">
-                            <div className="contacts-bookings-expanded">
+                            <div className="contacts-bookings-expanded" data-tutorial-target="contacts-history">
                               <div className="contacts-bookings-header">
                                 <strong>Booking History</strong>
 
