@@ -382,7 +382,7 @@ export default function TutorialGnome() {
       >
         <span key={hopCount} className={hopCount > 0 ? "tg-launcher-hop" : ""}>
           <GnomeMascot
-            crop="bust"
+            crop="seated"
             pose={view === "panel" || isLauncherHovered ? "wave" : "idle"}
             mood={view === "panel" ? "excited" : "happy"}
             className="tg-launcher-gnome"

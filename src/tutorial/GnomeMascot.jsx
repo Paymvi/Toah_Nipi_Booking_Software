@@ -1,94 +1,162 @@
+import { useId } from "react";
+
 /*
   The tutorial gnome, drawn once as SVG so it is the same character at every
-  size. pose changes the arms, mood changes the face. crop="bust" frames
-  hat to belt (raised hands stay in view) for the launcher; crop="head"
+  size. pose changes the arms, mood changes the face. crop="seated" sits the
+  gnome down (boots forward) and frames it for the launcher; crop="head"
   frames just the hat, face and beard for very small spots. Animations live in
   TutorialGnome.css (tg-gnome-*) and switch off with reduced motion.
 
-  Palette from the character sheet.
+  Palette from the character sheet; soft shading comes from the gradients.
 */
 
-const HAT = "#E4573F";
-const HAT_SHADE = "#C4432F";
-const TUNIC = "#4E7C59";
-const TUNIC_SHADE = "#436D4D";
+const HAT_SHADE = "#B73C29";
+const SLEEVE = "#4A7756";
+const SLEEVE_EDGE = "#3B6146";
 const BELT = "#8B6B3E";
-const BOOTS = "#5A4632";
+const BELT_SHADE = "#76592F";
+const TROUSERS = "#5E4330";
+const SOLE = "#3E3025";
 const SKIN = "#F7C9A5";
-const SKIN_LINE = "#E8B48E";
-const BEARD = "#F7F3EA";
-const BEARD_LINE = "#E3D8C5";
+const SKIN_LINE = "#E3A07F";
+const BEARD_LINE = "#E0D3BE";
 const ACCENT = "#F3B562";
 const INK = "#2A2321";
-const MOUTH = "#9A3F33";
+const MOUTH = "#8E3B2E";
 
-const VIEW_BOXES = { full: "0 0 120 160", bust: "14 0 92 112", head: "26 0 68 98" };
+const VIEW_BOXES = { full: "0 0 120 160", seated: "18 2 84 152", head: "24 2 72 122.5" };
 
-// Sleeve path and hand position for each arm, per pose.
+// Sleeve path and hand placement [x, y, rotation, flipped] for each arm, per pose.
 const ARMS = {
-  idle: { left: ["M41 98 Q34 108 32 119", 32, 122], right: ["M79 98 Q86 108 88 119", 88, 122] },
-  wave: { left: ["M41 98 Q34 108 32 119", 32, 122], right: ["M79 97 Q90 90 95 79", 96, 74] },
-  point: { left: ["M41 98 Q34 108 32 119", 32, 122], right: ["M79 99 Q92 99 102 96", 105, 95] },
-  think: { left: ["M41 98 Q34 108 32 119", 32, 122], right: ["M79 99 Q80 92 71 88", 67, 87] },
-  celebrate: { left: ["M41 97 Q31 88 26 77", 25, 72], right: ["M79 97 Q89 88 94 77", 95, 72] },
+  idle: { left: ["M40 105 Q35 114 33.5 123", 33, 127.5, 0, true], right: ["M80 105 Q85 114 86.5 123", 87, 127.5, 0] },
+  wave: { left: ["M40 105 Q35 114 33.5 123", 33, 127.5, 0, true], right: ["M80 104 Q91 99 94 87", 95, 81.5, 12] },
+  point: { left: ["M40 105 Q35 114 33.5 123", 33, 127.5, 0, true], right: ["M80 105 Q92 107 100 102.5", 103.5, 101.5, -5] },
+  think: { left: ["M40 105 Q35 114 33.5 123", 33, 127.5, 0, true], right: ["M86.5 115 Q81 106 73.5 104", 69.5, 102.5, -35] },
+  celebrate: { left: ["M40 104 Q29 97 26 86", 25, 80.5, -12, true], right: ["M80 104 Q91 97 94 86", 95, 80.5, 12] },
 };
 
-function Hand({ x, y }) {
-  return <circle cx={x} cy={y} r="5" fill={SKIN} stroke={SKIN_LINE} strokeWidth="0.8" />;
+function Hand({ x, y, rotate, flip, point }) {
+  return (
+    <g transform={`translate(${x} ${y}) rotate(${rotate}) scale(${flip ? -1 : 1} 1)`}>
+      {point && <rect x="2" y="-2.6" width="8.5" height="3.6" rx="1.8" fill={SKIN} />}
+      <ellipse rx="4.8" ry="5" fill={SKIN} />
+      <ellipse cx="1.2" cy="1.6" rx="3.2" ry="2.8" fill={SKIN_LINE} opacity="0.3" />
+      <ellipse cx="-3.5" cy="-2.4" rx="1.9" ry="2.8" transform="rotate(-25 -3.5 -2.4)" fill={SKIN} />
+    </g>
+  );
 }
 
-function Arm({ arm, className }) {
-  const [path, handX, handY] = arm;
+function Arm({ arm, className, point }) {
+  const [path, handX, handY, rotate, flip] = arm;
 
   return (
     <g className={className}>
-      <path d={path} stroke={TUNIC_SHADE} strokeWidth="10" strokeLinecap="round" fill="none" />
-      <Hand x={handX} y={handY} />
+      <path d={path} stroke={SLEEVE_EDGE} strokeWidth="11.4" strokeLinecap="round" fill="none" opacity="0.45" />
+      <path d={path} stroke={SLEEVE} strokeWidth="10" strokeLinecap="round" fill="none" />
+      <Hand x={handX} y={handY} rotate={rotate} flip={flip} point={point} />
     </g>
   );
 }
 
 function Eyes({ mood }) {
   const closedEye = (x) => (
-    <path d={`M${x - 2.8} 65 Q${x} 61.2 ${x + 2.8} 65`} stroke={INK} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+    <path d={`M${x - 3.2} 78 Q${x} 73.4 ${x + 3.2} 78`} stroke={INK} strokeWidth="2" strokeLinecap="round" fill="none" />
   );
-  const openEye = (x, ry = 3.5, dx = 0, dy = 0) => (
+  const openEye = (x, ry = 4, dx = 0, dy = 0) => (
     <g>
-      <ellipse cx={x + dx} cy={64 + dy} rx="2.7" ry={ry} fill={INK} />
-      <circle cx={x + dx + 0.8} cy={62.8 + dy} r="0.9" fill="#ffffff" />
+      <ellipse cx={x + dx} cy={77 + dy} rx="3" ry={ry} fill={INK} />
+      <circle cx={x + dx + 1.1} cy={75.5 + dy} r="1.15" fill="#ffffff" />
+      <circle cx={x + dx - 0.9} cy={78.5 + dy} r="0.5" fill="#ffffff" opacity="0.8" />
     </g>
   );
 
-  if (mood === "excited") return <g className="tg-gnome-eyes">{closedEye(52.5)}{closedEye(67.5)}</g>;
-  if (mood === "wink") return <g className="tg-gnome-eyes">{openEye(52.5)}{closedEye(67.5)}</g>;
-  if (mood === "surprised") return <g className="tg-gnome-eyes">{openEye(52.5, 4.2)}{openEye(67.5, 4.2)}</g>;
-  if (mood === "thinking") return <g className="tg-gnome-eyes">{openEye(52.5, 3.5, 1, -1)}{openEye(67.5, 3.5, 1, -1)}</g>;
-  return <g className="tg-gnome-eyes">{openEye(52.5)}{openEye(67.5)}</g>;
+  if (mood === "excited") return <g className="tg-gnome-eyes">{closedEye(51.5)}{closedEye(68.5)}</g>;
+  if (mood === "wink") return <g className="tg-gnome-eyes">{openEye(51.5)}{closedEye(68.5)}</g>;
+  if (mood === "surprised") return <g className="tg-gnome-eyes">{openEye(51.5, 4.6)}{openEye(68.5, 4.6)}</g>;
+  if (mood === "thinking") return <g className="tg-gnome-eyes">{openEye(51.5, 4, 1, -1)}{openEye(68.5, 4, 1, -1)}</g>;
+  return <g className="tg-gnome-eyes">{openEye(51.5)}{openEye(68.5)}</g>;
 }
 
 function Brows({ mood }) {
-  const lift = mood === "surprised" ? -2.2 : 0;
-  const rightLift = mood === "thinking" ? -2 : lift;
+  const lift = mood === "surprised" ? -1.4 : 0;
+  const rightLift = mood === "thinking" ? -1.4 : lift;
+  const left = `M47.5 ${71 + lift} Q51.5 ${68.8 + lift} 55.5 ${70.6 + lift}`;
+  const right = `M64.5 ${70.6 + rightLift} Q68.5 ${68.8 + rightLift} 72.5 ${71 + rightLift}`;
 
   return (
-    <g stroke="#D7C8B3" strokeWidth="1.6" strokeLinecap="round" fill="none">
-      <path d={`M49 ${58.6 + lift} Q52.5 ${56.8 + lift} 56 ${58.4 + lift}`} />
-      <path d={`M64 ${58.4 + rightLift} Q67.5 ${56.8 + rightLift} 71 ${58.6 + rightLift}`} />
+    <g strokeLinecap="round" fill="none">
+      <g stroke="#D9A98A" strokeWidth="2.8" opacity="0.45" transform="translate(0 0.7)">
+        <path d={left} />
+        <path d={right} />
+      </g>
+      <g stroke="#FFFBF3" strokeWidth="2.2">
+        <path d={left} />
+        <path d={right} />
+      </g>
     </g>
   );
 }
 
 function Mouth({ mood }) {
-  if (mood === "excited") return <path d="M55.5 79 Q60 85.5 64.5 79 Z" fill={MOUTH} />;
-  if (mood === "surprised") return <ellipse cx="60" cy="81" rx="2" ry="2.5" fill={MOUTH} />;
+  if (mood === "surprised") return <ellipse cx="60" cy="94.8" rx="2.3" ry="2.9" fill={MOUTH} />;
   if (mood === "thinking") {
-    return <path d="M57 80.6 Q60.5 81.4 63.5 79.6" stroke={MOUTH} strokeWidth="1.6" strokeLinecap="round" fill="none" />;
+    return <path d="M57 94.2 Q60.5 95.2 63.5 93.4" stroke={MOUTH} strokeWidth="1.7" strokeLinecap="round" fill="none" />;
   }
-  return <path d="M56 79.5 Q60 83 64 79.5" stroke={MOUTH} strokeWidth="1.6" strokeLinecap="round" fill="none" />;
+  const open = mood === "excited" ? "M54.8 92.2 Q60 100.6 65.2 92.2 Q60 93.8 54.8 92.2 Z" : "M55.8 92.4 Q60 98.4 64.2 92.4 Q60 93.8 55.8 92.4 Z";
+
+  return (
+    <g>
+      <path d={open} fill={MOUTH} />
+      <ellipse cx="60" cy={mood === "excited" ? 96.6 : 95.4} rx="2.2" ry="1.1" fill="#E27D6B" />
+    </g>
+  );
+}
+
+function Boots({ seated, fill }) {
+  if (seated) {
+    // Toes up toward the viewer, peeking out from under the tunic.
+    const boot = (
+      <g>
+        <ellipse cx="45" cy="143.2" rx="8.2" ry="5.8" transform="rotate(-12 45 143.2)" fill={fill} />
+        <path d="M37.4 145.6 Q44 151.4 52.4 146" stroke={SOLE} strokeWidth="1.8" strokeLinecap="round" fill="none" />
+        <ellipse cx="42.6" cy="140.8" rx="2.6" ry="1.2" fill="#ffffff" opacity="0.18" />
+      </g>
+    );
+
+    return (
+      <g>
+        {boot}
+        <g transform="translate(120 0) scale(-1 1)">{boot}</g>
+      </g>
+    );
+  }
+
+  const leg = (
+    <g>
+      <rect x="44" y="137" width="10" height="8" fill={TROUSERS} />
+      <path
+        d="M42 140.5 H53.5 Q55.5 140.5 55.5 142.5 V149 Q55.5 152.5 52 152.5 H40 Q34.5 152.5 34.5 149 Q34.5 145.5 40 145.2 Q42 145 42 143 Z"
+        fill={fill}
+      />
+      <rect x="34.5" y="151" width="21" height="2" rx="1" fill={SOLE} />
+      <ellipse cx="39.5" cy="147.4" rx="2.4" ry="1.1" fill="#ffffff" opacity="0.18" />
+    </g>
+  );
+
+  return (
+    <g>
+      {leg}
+      <g transform="translate(120 0) scale(-1 1)">{leg}</g>
+    </g>
+  );
 }
 
 export default function GnomeMascot({ pose = "idle", mood = "happy", crop = "full", className = "" }) {
+  // Gradient ids must be unique per instance; several gnomes can be on screen at once.
+  const uid = `tg${useId().replace(/[^\w-]/g, "")}`;
+  const url = (name) => `url(#${uid}-${name})`;
   const arms = ARMS[pose] || ARMS.idle;
+  const seated = crop === "seated";
   const showSparkles = pose === "celebrate" || mood === "excited";
 
   return (
@@ -98,79 +166,135 @@ export default function GnomeMascot({ pose = "idle", mood = "happy", crop = "ful
       aria-hidden="true"
       focusable="false"
     >
+      <defs>
+        <linearGradient id={`${uid}-hat`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#F07A5E" />
+          <stop offset="0.45" stopColor="#E4573F" />
+          <stop offset="1" stopColor="#BF3F2C" />
+        </linearGradient>
+        <linearGradient id={`${uid}-brim`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#EE6D53" />
+          <stop offset="0.55" stopColor="#DE523C" />
+          <stop offset="1" stopColor="#B93D2A" />
+        </linearGradient>
+        <radialGradient id={`${uid}-skin`} cx="0.45" cy="0.4" r="0.65">
+          <stop offset="0" stopColor="#FCDCC2" />
+          <stop offset="0.6" stopColor="#F7C9A5" />
+          <stop offset="1" stopColor="#EBB089" />
+        </radialGradient>
+        <radialGradient id={`${uid}-beard`} cx="0.45" cy="0.25" r="0.85">
+          <stop offset="0" stopColor="#FFFFFF" />
+          <stop offset="0.5" stopColor="#F7F3EA" />
+          <stop offset="1" stopColor="#E2D6C2" />
+        </radialGradient>
+        <linearGradient id={`${uid}-tunic`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#5E9069" />
+          <stop offset="0.5" stopColor="#4E7C59" />
+          <stop offset="1" stopColor="#3E6548" />
+        </linearGradient>
+        <linearGradient id={`${uid}-boot`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#6E5640" />
+          <stop offset="1" stopColor="#4A3A2A" />
+        </linearGradient>
+        <radialGradient id={`${uid}-nose`} cx="0.4" cy="0.35" r="0.7">
+          <stop offset="0" stopColor="#F8AE8C" />
+          <stop offset="1" stopColor="#E9825F" />
+        </radialGradient>
+      </defs>
+
       <g className="tg-gnome-figure">
-        <ellipse cx="60" cy="152" rx="30" ry="4.5" fill="#000000" opacity="0.1" />
+        <ellipse cx="60" cy={seated ? 149.5 : 153.5} rx={seated ? 34 : 31} ry="4" fill="#000000" opacity="0.12" />
 
-        {/* Boots, under the tunic hem */}
-        <g fill={BOOTS}>
-          <rect x="39" y="128" width="14" height="18" rx="3" />
-          <ellipse cx="44" cy="146.5" rx="9" ry="4.6" />
-          <rect x="67" y="128" width="14" height="18" rx="3" />
-          <ellipse cx="76" cy="146.5" rx="9" ry="4.6" />
-        </g>
+        {!seated && <Boots fill={url("boot")} />}
 
-        {/* Satchel at the hip */}
-        <rect x="25" y="109" width="12" height="14" rx="3" fill={BELT} />
-        <path d="M25 112 Q31 117 37 112 L37 110 Q31 108 25 110 Z" fill="#76592F" />
+        {/* Satchel at the hip, behind the arm */}
+        <rect x="23.5" y="113" width="13" height="15" rx="3.5" fill={BELT} />
+        <path d="M23.5 117 Q30 122 36.5 117 V116.5 Q36.5 113 33 113 H27 Q23.5 113 23.5 116.5 Z" fill={BELT_SHADE} />
+        <circle cx="30" cy="119.2" r="1" fill={ACCENT} />
 
         <g className="tg-gnome-body">
-          <path d="M39 96 C41 90 49 87 60 87 C71 87 79 90 81 96 L87 132 C79 137 41 137 33 132 Z" fill={TUNIC} />
-          <path d="M70 88 C76 89 80 92 81 96 L87 132 C84 134 80 135 76 135.5 Z" fill={TUNIC_SHADE} opacity="0.55" />
-          <rect x="35" y="117" width="50" height="7" rx="1.5" fill={BELT} />
-          <rect x="55" y="115.5" width="10" height="10" rx="2" fill="none" stroke={ACCENT} strokeWidth="2.2" />
+          <path
+            d="M37 106 C39 98.5 48 95 60 95 C72 95 81 98.5 83 106 L87.5 133.5 C88.3 137.5 86 139.6 81.5 140 C67 141.3 53 141.3 38.5 140 C34 139.6 31.7 137.5 32.5 133.5 Z"
+            fill={url("tunic")}
+          />
+          <path d="M34 123.5 Q60 127 86 123.5 L87.1 130.5 Q60 134 32.9 130.5 Z" fill={BELT} />
+          <path d="M33.3 129 Q60 132.5 86.8 129 L87.1 130.5 Q60 134 32.9 130.5 Z" fill={BELT_SHADE} />
+          <rect x="54.6" y="123.9" width="10.8" height="9.2" rx="2" fill="none" stroke={ACCENT} strokeWidth="2.2" />
+          <path d="M60 125.6 V131.4" stroke="#C98E3C" strokeWidth="1.2" strokeLinecap="round" />
+
+          {seated && <Boots seated fill={url("boot")} />}
 
           <Arm arm={arms.left} className="tg-gnome-arm-left" />
-          {pose !== "think" && <Arm arm={arms.right} className="tg-gnome-arm-right" />}
+          {pose !== "think" && <Arm arm={arms.right} className="tg-gnome-arm-right" point={pose === "point"} />}
 
           <g className="tg-gnome-head">
-            <ellipse cx="41.5" cy="66" rx="4.5" ry="5.5" fill={SKIN} />
-            <ellipse cx="78.5" cy="66" rx="4.5" ry="5.5" fill={SKIN} />
-            <circle cx="60" cy="64" r="19" fill={SKIN} />
+            {/* Ears */}
+            <ellipse cx="35.2" cy="76" rx="4.6" ry="6" fill={url("skin")} />
+            <ellipse cx="84.8" cy="76" rx="4.6" ry="6" fill={url("skin")} />
+            <path d="M36.2 72.5 Q33.2 76 35.7 79.5 M83.8 72.5 Q86.8 76 84.3 79.5" stroke={SKIN_LINE} strokeWidth="1.3" strokeLinecap="round" fill="none" />
+
+            <ellipse cx="60" cy="77" rx="24" ry="20.5" fill={url("skin")} />
+
+            {/* Shadow the brim casts on the forehead */}
+            <path d="M38 68.4 C48 63.6 72 63.6 82 68.4 L81 70 C72 66.6 48 66.6 39 70 Z" fill="#D99A78" opacity="0.45" />
 
             <Brows mood={mood} />
             <Eyes mood={mood} />
 
-            <ellipse cx="47" cy="71" rx="4" ry="2.6" fill="#F09A86" opacity="0.6" />
-            <ellipse cx="73" cy="71" rx="4" ry="2.6" fill="#F09A86" opacity="0.6" />
+            <ellipse cx="46" cy="84.5" rx="4.8" ry="3" fill="#F29A85" opacity="0.55" />
+            <ellipse cx="74" cy="84.5" rx="4.8" ry="3" fill="#F29A85" opacity="0.55" />
 
+            {/* Beard: sideburns below the ears, under the cheeks, tapering to a soft point */}
             <path
-              d="M40 66 C38 83 44 101 60 115 C76 101 82 83 80 66 C76 73 70 77 60 77 C50 77 44 73 40 66 Z"
-              fill={BEARD}
-              stroke={BEARD_LINE}
-              strokeWidth="1"
+              d="M37.5 78 C31 88 31.5 103 40.5 112 C46 117.5 53 120.8 57.5 122.4 Q60 123.4 62.5 122.4 C67 120.8 74 117.5 79.5 112 C88.5 103 89 88 82.5 78 C80.5 83 77.5 86.8 73 88 C69.5 89.3 65 88.3 60 88.3 C55 88.3 50.5 89.3 47 88 C42.5 86.8 39.5 83 37.5 78 Z"
+              fill={url("beard")}
             />
-            <path d="M48 96 Q52 99 55 96 M65 96 Q68 99 72 96 M55 106 Q60 109 65 106" stroke={BEARD_LINE} strokeWidth="1.1" fill="none" strokeLinecap="round" />
+            <path
+              d="M43.5 96 C42 101.5 44.5 107.5 50 111 M76.5 96 C78 101.5 75.5 107.5 70 111 M60 110.5 Q59.2 114.5 60 118.5"
+              stroke={BEARD_LINE}
+              strokeWidth="1.1"
+              strokeLinecap="round"
+              fill="none"
+            />
 
             <Mouth mood={mood} />
 
+            {/* Moustache, with a soft shadow on the beard below it */}
             <path
-              d="M60 73.2 C56 71 50 72 47.5 76 C52 78.6 57 77.6 60 75.6 C63 77.6 68 78.6 72.5 76 C70 72 64 71 60 73.2 Z"
-              fill="#FBF8F1"
-              stroke={BEARD_LINE}
-              strokeWidth="0.8"
+              d="M60 88 C56 85.6 50.5 86 47.2 90.6 C51 93.4 56.5 92.8 60 90.2 C63.5 92.8 69 93.4 72.8 90.6 C69.5 86 64 85.6 60 88 Z"
+              fill={BEARD_LINE}
             />
-            <ellipse cx="60" cy="70" rx="4.3" ry="3.7" fill="#EE8E78" />
-            <ellipse cx="58.6" cy="68.7" rx="1.2" ry="0.9" fill="#ffffff" opacity="0.55" />
+            <path
+              d="M60 87 C56 84.6 50.5 85 47.2 89.6 C51 92.4 56.5 91.8 60 89.2 C63.5 91.8 69 92.4 72.8 89.6 C69.5 85 64 84.6 60 87 Z"
+              fill={url("beard")}
+            />
 
-            {/* Hat */}
+            <ellipse cx="60" cy="84" rx="5.2" ry="4.4" fill={url("nose")} />
+            <ellipse cx="58.3" cy="82.4" rx="1.5" ry="1" fill="#ffffff" opacity="0.6" />
+
+            {/* Hat: soft cone leaning a little to the right, then the folded brim over the forehead */}
             <path
-              d="M30 58 C31 44 40 33 50 22 C56 15 61 8 66 3 C67.2 1.8 68.8 2.6 68.6 4.2 C70 20 79 38 90 58 C72 52 48 52 30 58 Z"
-              fill={HAT}
+              d="M33.5 60 C33 42 45 24 58.5 9.5 C61 6.8 64.6 5.6 66.6 7.4 C68.2 8.9 68 11.4 67.6 13.6 C69.6 28 78.5 43 86.5 60 Z"
+              fill={url("hat")}
             />
-            <path d="M30 58 C48 52 72 52 90 58 C89 61 87 62.4 84.5 62.2 C68 57.4 52 57.4 35.5 62.2 C33 62.4 31 61 30 58 Z" fill={HAT_SHADE} />
-            <path d="M45 33 C51 25 57 16 63 9" stroke="#F08A72" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.5" />
+            <path d="M67.6 13.6 C69.6 28 78.5 43 86.5 60 L75.5 60 C72 44 68.6 29 66.8 15 Z" fill={HAT_SHADE} opacity="0.3" />
+            <path d="M40 52 C41.5 38 48.5 25 57.5 14 C51.5 27 46.5 40 45 53 Z" fill="#ffffff" opacity="0.14" />
+            <path
+              d="M30.5 61 C42 52.5 78 52.5 89.5 61 C92.5 63 92 69.5 88.5 70.5 C77 63.5 43 63.5 31.5 70.5 C28 69.5 27.5 63 30.5 61 Z"
+              fill={url("brim")}
+            />
+            <path d="M35 60.5 C46 54.5 74 54.5 85 60.5" stroke="#F59A80" strokeWidth="1.6" strokeLinecap="round" fill="none" opacity="0.55" />
           </g>
 
           {pose === "think" && <Arm arm={arms.right} className="tg-gnome-arm-right" />}
-          {pose === "point" && <rect x="108" y="93.4" width="7" height="3.2" rx="1.6" fill={SKIN} stroke={SKIN_LINE} strokeWidth="0.6" />}
         </g>
 
         {showSparkles && (
           <g className="tg-gnome-sparkles" stroke={ACCENT} strokeWidth="2.6" strokeLinecap="round">
-            <path d="M24 34 L18 29" />
-            <path d="M20 46 L13 46" />
-            <path d="M96 34 L102 29" />
-            <path d="M100 46 L107 46" />
+            <path d="M22 44 L16 39" />
+            <path d="M19 56 L12 56" />
+            <path d="M98 44 L104 39" />
+            <path d="M101 56 L108 56" />
           </g>
         )}
       </g>

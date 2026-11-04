@@ -69,20 +69,21 @@
 
 .tg-gnome-pose-wave .tg-gnome-arm-right {
   transform-box: view-box;
-  transform-origin: 79px 97px;
-  animation: tg-wave 1.6s ease-in-out infinite;
+  transform-origin: 80px 104px;
+  animation: tg-wave 1.6s ease-in-out 3;
 }
 
+/* Gestures play a few times and settle; only breathing and blinking keep going. */
 .tg-gnome-pose-point .tg-gnome-arm-right {
-  animation: tg-nudge-x 1.4s ease-in-out infinite;
+  animation: tg-nudge-x 1.4s ease-in-out 3;
 }
 
 .tg-gnome-pose-celebrate .tg-gnome-figure {
-  animation: tg-jump 0.9s ease-in-out infinite;
+  animation: tg-jump 0.9s ease-in-out 2;
 }
 
 .tg-gnome-sparkles {
-  animation: tg-sparkle 1.2s ease-in-out infinite;
+  animation: tg-sparkle 1.2s ease-in-out 3;
 }
 
 @keyframes tg-breathe {
@@ -210,7 +211,6 @@
   border-radius: 999px;
   background: radial-gradient(circle at 50% 40%, #f4f8f4 0%, var(--tg-green-soft) 70%);
   box-shadow: 0 0.5rem 1.5rem rgba(28, 37, 31, 0.18);
-  overflow: hidden;
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
@@ -220,15 +220,19 @@
   box-shadow: 0 0.75rem 1.75rem rgba(28, 37, 31, 0.24);
 }
 
+/* The seated gnome sits on the bottom of the circle and its hat tip rises above it,
+   which keeps the face big enough to read. The top stays below the panel and bubble. */
 .tg-launcher > span {
+  position: absolute;
+  right: 0;
+  bottom: 0.3rem;
+  left: 0;
   display: block;
 }
 
-/* The bust is cut off by the circle, so the gnome peeks out of the launcher. */
 .tg-launcher-gnome {
-  width: 3.9rem;
-  height: 4.75rem;
-  margin-top: 1.1rem;
+  width: 100%;
+  height: 5.4rem;
 }
 
 .tg-launcher-hop {
@@ -244,7 +248,7 @@
 .tg-launcher-bubble {
   position: fixed;
   right: 1.25rem;
-  bottom: 6.75rem;
+  bottom: 7.25rem;
   z-index: 900;
   max-width: min(17rem, calc(100vw - 2.5rem));
   margin: 0;
@@ -265,7 +269,7 @@
 .tg-panel {
   position: fixed;
   right: 1.25rem;
-  bottom: 6.75rem;
+  bottom: 7.25rem;
   z-index: 905;
   display: flex;
   flex-direction: column;
@@ -931,16 +935,18 @@
     height: 3.9rem;
   }
 
+  .tg-launcher > span {
+    bottom: 0.25rem;
+  }
+
   .tg-launcher-gnome {
-    width: 3.2rem;
-    height: 3.9rem;
-    margin-top: 0.9rem;
+    height: 4.5rem;
   }
 
   .tg-panel,
   .tg-launcher-bubble {
     right: 0.75rem;
-    bottom: 5.4rem;
+    bottom: 5.75rem;
   }
 
   .tg-panel {
