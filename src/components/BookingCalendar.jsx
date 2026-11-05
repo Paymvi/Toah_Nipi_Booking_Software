@@ -14,6 +14,7 @@ booking progress is tracked in the guest portal.
 */
 
 import { getBookingDisplayState } from "../utils/bookingClassification";
+import { getBookingOpenProps } from "../utils/bookingOpenProps";
 import {
   addDays,
   daysBetween,
@@ -150,6 +151,7 @@ export default function BookingCalendar({
   getEventColor,
   getEventLabel,
   getRoomText,
+  onOpenBooking,
   isLarge = false,
 }) {
   const calendarWeeks =
@@ -252,7 +254,7 @@ export default function BookingCalendar({
                       : "calendar-span-continues-after"
                   }`}
                   key={`${segment.inquiry.id}-week-${weekIndex}`}
-                  tabIndex={0}
+                  {...getBookingOpenProps(segment.inquiry, onOpenBooking)}
                   style={{
                     "--event-start-column":
                       segment.startColumn,

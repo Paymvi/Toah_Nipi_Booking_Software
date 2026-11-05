@@ -218,12 +218,46 @@
   z-index: 9999;
 }
 
-.calendar-span-event:hover .calendar-event-tooltip,
 .calendar-span-event:focus .calendar-event-tooltip,
 .calendar-span-event:focus-within .calendar-event-tooltip {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+}
+
+/* Hover-only: a tooltip appearing on touch can swallow the tap that opens the booking. */
+@media (hover: hover) {
+  .calendar-span-event:hover .calendar-event-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+}
+
+/* Calendar entries that open their booking */
+
+.calendar-span-event[role="button"],
+.calendar-week-event[role="button"],
+.calendar-agenda-card[role="button"],
+.lodging-availability-conflicts li[role="button"] {
+  cursor: pointer;
+  transition: filter 120ms ease, box-shadow 120ms ease;
+}
+
+.calendar-span-event[role="button"]:hover,
+.calendar-week-event[role="button"]:hover,
+.calendar-agenda-card[role="button"]:hover,
+.lodging-availability-conflicts li[role="button"]:hover {
+  filter: brightness(0.96);
+  box-shadow: 0 0.25rem 0.625rem rgba(28, 35, 52, 0.14);
+}
+
+.calendar-span-event[role="button"]:focus-visible,
+.calendar-week-event[role="button"]:focus-visible,
+.calendar-agenda-card[role="button"]:focus-visible,
+.lodging-availability-conflicts li[role="button"]:focus-visible {
+  outline: 2px solid #2f6f5f;
+  outline-offset: 2px;
 }
 
 .calendar-event-tooltip::before {

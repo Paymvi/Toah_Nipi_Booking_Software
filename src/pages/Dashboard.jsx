@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import {
@@ -47,6 +47,7 @@ import {
 } from "react-icons/fa";
 
 import {
+  fetchBookingById,
   fetchBookings,
   saveBooking,
   saveBookings,
@@ -87,6 +88,7 @@ import {
   getBookingDisplayState,
   getConvertedInquiryIds,
   getRecordKind,
+  isInquirySpreadsheetRecord,
   isActiveBooking,
   RECORD_KIND,
 } from "../utils/bookingClassification";
@@ -7758,7 +7760,40 @@ export default function Dashboard() {
 
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [bookingDetailTab, setBookingDetailTab] = useState("Overview");
+  const [bookingReturnView, setBookingReturnView] = useState(SPREADSHEET_VIEW_NAME);
   const [bookingFormSeed, setBookingFormSeed] = useState(null);
+
+  /*
+    A calendar stays mounted (hidden) behind the booking it opened, so its
+    view, week, filters and availability summary are still there on Back.
+    A hidden element loses its scroll offsets, so those are put back here.
+  */
+  const isRecordDetailOpen =
+    activeView === "Booking Detail" ||
+    activeView === "Inquiry Record Detail";
+  const keptCalendarView = isRecordDetailOpen ? bookingReturnView : activeView;
+  const calendarReturnPointRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const returnPoint = calendarReturnPointRef.current;
+
+    if (!returnPoint) return;
+
+    if (isRecordDetailOpen) {
+      window.scrollTo(0, 0);
+      return;
+    }
+
+    calendarReturnPointRef.current = null;
+
+    if (activeView !== returnPoint.view) return;
+
+    window.scrollTo(0, returnPoint.scrollY);
+    returnPoint.scrollers.forEach(([element, scrollLeft]) => {
+      element.scrollLeft = scrollLeft;
+    });
+    returnPoint.focusTarget?.focus({ preventScroll: true });
+  }, [activeView, isRecordDetailOpen]);
 
   const [
     guestBookingSource,
@@ -7953,6 +7988,13 @@ export default function Dashboard() {
     }
   };
 
+  const closeBookingDetail = () => {
+    setSelectedBooking(null);
+    // Detail views have no URL of their own: navigate() alone changes nothing when the path already matches.
+    setActiveView(bookingReturnView);
+    navigate(routes[bookingReturnView]);
+  };
+
   const deleteSingleBooking = async (booking) => {
     if (!booking?.id) {
       return;
@@ -7978,10 +8020,8 @@ export default function Dashboard() {
         )
       );
 
-      setSelectedBooking(null);
       setBookingDetailTab("Overview");
-
-      navigate("/master-spreadsheet")
+      closeBookingDetail();
     } catch (error) {
       console.error("Could not delete booking:", error);
 
@@ -9392,16 +9432,73 @@ export default function Dashboard() {
     navigate(routes[nextView] || "/dashboard");
   };
 
-  const openBookingDetail = (booking) => {
+  const openBookingDetail = (booking, returnView = SPREADSHEET_VIEW_NAME) => {
+    setBookingReturnView(returnView);
     setSelectedBooking(booking);
     setBookingDetailTab("Overview");
     setActiveView("Booking Detail");
   };
 
-  const openInquiryRecordDetail = (booking) => {
+  const openInquiryRecordDetail = (
+    booking,
+    returnView = INQUIRY_SPREADSHEET_VIEW_NAME
+  ) => {
+    setBookingReturnView(returnView);
     setSelectedBooking(booking);
     setBookingDetailTab("Overview");
     setActiveView("Inquiry Record Detail");
+  };
+
+  /*
+    Calendars pass only an id. The row is read fresh because a calendar can
+    stay open for hours while other staff change or delete bookings.
+  */
+  const openCalendarBooking = async (bookingId) => {
+    const returnView = activeView;
+    const focused = document.activeElement;
+    const returnPoint = {
+      view: returnView,
+      scrollY: window.scrollY,
+      scrollers: [
+        ...document.querySelectorAll(".calendar-view-card, .calendar-week-grid"),
+      ].map((element) => [element, element.scrollLeft]),
+      // Only for keyboard use: after a mouse click it would pop the tooltip open.
+      focusTarget: focused?.matches(":focus-visible") ? focused : null,
+    };
+
+    let latestBooking;
+
+    try {
+      latestBooking = await fetchBookingById(bookingId);
+    } catch (error) {
+      console.error("Could not open booking:", error);
+      alert("Could not open this booking. Check your connection and try again.");
+      return;
+    }
+
+    if (!latestBooking) {
+      alert("This booking no longer exists. It may have been deleted, so the calendar will refresh.");
+      loadBookingsFromSupabase();
+      return;
+    }
+
+    // Staff moved to another page while the booking was loading.
+    if (window.location.pathname !== routes[returnView]) return;
+
+    setPublicInquiries((currentInquiries) =>
+      currentInquiries.map((inquiry) =>
+        inquiry.id === latestBooking.id ? latestBooking : inquiry
+      )
+    );
+
+    calendarReturnPointRef.current = returnPoint;
+
+    const booking = normalizeInquiry(latestBooking);
+    const openDetail = isInquirySpreadsheetRecord(booking)
+      ? openInquiryRecordDetail
+      : openBookingDetail;
+
+    openDetail(booking, returnView);
   };
 
   const startBookingFromInquiry = (booking) => {
@@ -9895,6 +9992,60 @@ export default function Dashboard() {
         )}
 
 
+        {keptCalendarView === "Calendar View" && (
+          <section
+            className={`dashboard-keepalive-view ${
+              activeView === "Calendar View"
+                ? "dashboard-keepalive-view-active"
+                : ""
+            }`}
+            aria-hidden={activeView !== "Calendar View"}
+          >
+            <CalendarView
+              calendarCells={calendarCells}
+              datedInquiries={datedInquiries}
+              selectedMonthInquiries={selectedMonthInquiries}
+              selectedMonth={selectedMonth}
+              selectedYear={selectedYear}
+              setSelectedMonth={setSelectedMonth}
+              setSelectedYear={setSelectedYear}
+              goToCurrentMonth={goToCurrentMonth}
+              goToPreviousMonth={goToPreviousMonth}
+              goToNextMonth={goToNextMonth}
+              getCalendarEventColor={getCalendarEventColor}
+              onOpenBooking={openCalendarBooking}
+            />
+          </section>
+        )}
+
+
+        {keptCalendarView === "Lodging Calendar" && (
+          <section
+            className={`dashboard-keepalive-view ${
+              activeView === "Lodging Calendar"
+                ? "dashboard-keepalive-view-active"
+                : ""
+            }`}
+            aria-hidden={activeView !== "Lodging Calendar"}
+          >
+            <LodgingCalendarView
+              calendarCells={calendarCells}
+              datedInquiries={datedInquiries}
+              selectedMonthInquiries={selectedMonthInquiries}
+              selectedMonth={selectedMonth}
+              selectedYear={selectedYear}
+              setSelectedMonth={setSelectedMonth}
+              setSelectedYear={setSelectedYear}
+              goToCurrentMonth={goToCurrentMonth}
+              goToPreviousMonth={goToPreviousMonth}
+              goToNextMonth={goToNextMonth}
+              getCalendarEventColor={getCalendarEventColor}
+              onOpenBooking={openCalendarBooking}
+            />
+          </section>
+        )}
+
+
         {activeView === "Form" ? (
           <section className="dashboard-form-view">
             {bookingFormNotice && (
@@ -9942,10 +10093,7 @@ export default function Dashboard() {
           <InquiryRecordDetailView
             booking={selectedBooking}
             onSaveBooking={saveBookingEdits}
-            onBack={() => {
-              setSelectedBooking(null);
-              navigate("/inquiry-spreadsheet");
-            }}
+            onBack={closeBookingDetail}
           />
         ) : activeView === "Booking Detail" ? (
           <BookingDetailView
@@ -9957,42 +10105,11 @@ export default function Dashboard() {
             canDeleteBookings={canDeleteBookings}
             staffUsers={staffUsers}
             currentStaffUserId={currentStaffUserId}
-            onBack={() => {
-              setSelectedBooking(null);
-              // Booking Detail has no URL of its own: when it was opened from /master-spreadsheet, navigate() alone changes nothing.
-              setActiveView(SPREADSHEET_VIEW_NAME);
-              navigate("/master-spreadsheet");
-            }}
+            onBack={closeBookingDetail}
           />
-        ) : activeView === "Calendar View" ? (
-          <CalendarView
-            calendarCells={calendarCells}
-            datedInquiries={datedInquiries}
-            selectedMonthInquiries={selectedMonthInquiries}
-            selectedMonth={selectedMonth}
-            selectedYear={selectedYear}
-            setSelectedMonth={setSelectedMonth}
-            setSelectedYear={setSelectedYear}
-            goToCurrentMonth={goToCurrentMonth}
-            goToPreviousMonth={goToPreviousMonth}
-            goToNextMonth={goToNextMonth}
-            getCalendarEventColor={getCalendarEventColor}
-          />
-        ) : activeView === "Lodging Calendar" ? (
-          <LodgingCalendarView
-            calendarCells={calendarCells}
-            datedInquiries={datedInquiries}
-            selectedMonthInquiries={selectedMonthInquiries}
-            selectedMonth={selectedMonth}
-            selectedYear={selectedYear}
-            setSelectedMonth={setSelectedMonth}
-            setSelectedYear={setSelectedYear}
-            goToCurrentMonth={goToCurrentMonth}
-            goToPreviousMonth={goToPreviousMonth}
-            goToNextMonth={goToNextMonth}
-            getCalendarEventColor={getCalendarEventColor}
-          />
-        ) : activeView === SPREADSHEET_VIEW_NAME ? null : activeView === INQUIRY_SPREADSHEET_VIEW_NAME ? (
+        ) : activeView === "Calendar View" ||
+          activeView === "Lodging Calendar" ||
+          activeView === SPREADSHEET_VIEW_NAME ? null : activeView === INQUIRY_SPREADSHEET_VIEW_NAME ? (
                 <InquirySpreadsheetView
                   inquiryBookings={inquiryBookings}
                   openBookingDetail={openInquiryRecordDetail}

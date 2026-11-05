@@ -14,6 +14,7 @@ import BookingCalendar from "../components/BookingCalendar";
 
 import { monthNames } from "../constants/dashboardConstants";
 
+import { getBookingOpenProps } from "../utils/bookingOpenProps";
 import { formatDateRange } from "../utils/dateUtils";
 
 
@@ -254,6 +255,7 @@ export default function LodgingCalendarView({
   goToPreviousMonth,
   goToNextMonth,
   getCalendarEventColor,
+  onOpenBooking,
 }) {
   const [selectedBuilding, setSelectedBuilding] =
     useState("all");
@@ -984,7 +986,7 @@ export default function LodgingCalendarView({
 
                           <span>Groups staying these nights</span>
 
-                          <ul>
+                          <ul role="presentation">
                             {building.overlappingBookings
                               .slice(0, 3)
                               .map((booking, index) => (
@@ -992,6 +994,7 @@ export default function LodgingCalendarView({
                                   key={`${building.id}-${
                                     booking.id || index
                                   }`}
+                                  {...getBookingOpenProps(booking, onOpenBooking)}
                                 >
                                   <div>
                                     <strong>
@@ -1167,6 +1170,7 @@ export default function LodgingCalendarView({
             getEventColor={getLodgingCalendarEventColor}
             getEventLabel={getLodgingCalendarEventLabel}
             getRoomText={getBookingLodgingDisplayText}
+            onOpenBooking={onOpenBooking}
             isLarge
           />
         )}
@@ -1206,6 +1210,7 @@ export default function LodgingCalendarView({
                             inquiry.status
                           )}`}
                           key={`${inquiry.id}-${day.date.toISOString()}`}
+                          {...getBookingOpenProps(inquiry, onOpenBooking)}
                         >
                           <strong>{inquiry.organizationName}</strong>
 
@@ -1441,6 +1446,7 @@ export default function LodgingCalendarView({
                 <div
                   className="calendar-agenda-card lodging-calendar-agenda-card"
                   key={booking.id}
+                  {...getBookingOpenProps(booking, onOpenBooking)}
                 >
                   <div>
                     <strong>

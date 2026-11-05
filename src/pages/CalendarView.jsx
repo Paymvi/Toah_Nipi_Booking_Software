@@ -12,6 +12,7 @@ import BookingCalendar from "../components/BookingCalendar";
 
 import { monthNames } from "../constants/dashboardConstants";
 
+import { getBookingOpenProps } from "../utils/bookingOpenProps";
 import { formatDateRange } from "../utils/dateUtils";
 
 const calendarViewOptions = [
@@ -244,6 +245,7 @@ export default function CalendarView({
   goToPreviousMonth,
   goToNextMonth,
   getCalendarEventColor,
+  onOpenBooking,
 }) {
   const [calendarView, setCalendarView] = useState("month");
   const [yearDisplayView, setYearDisplayView] = useState("heatmap");
@@ -601,6 +603,7 @@ export default function CalendarView({
               selectedYear={selectedYear}
               selectedMonth={selectedMonth}
               getCalendarEventColor={getCalendarEventColor}
+              onOpenBooking={onOpenBooking}
               isLarge
             />
           </>
@@ -641,6 +644,7 @@ export default function CalendarView({
                             inquiry.status
                           )}`}
                           key={`${inquiry.id}-${day.date.toISOString()}`}
+                          {...getBookingOpenProps(inquiry, onOpenBooking)}
                         >
                           <strong>{inquiry.organizationName}</strong>
 
@@ -864,7 +868,11 @@ export default function CalendarView({
         {visibleAgendaItems.length > 0 ? (
           <div className="calendar-agenda-list">
             {visibleAgendaItems.map((inquiry) => (
-              <div className="calendar-agenda-card" key={inquiry.id}>
+              <div
+                className="calendar-agenda-card"
+                key={inquiry.id}
+                {...getBookingOpenProps(inquiry, onOpenBooking)}
+              >
                 <div>
                   <strong>{inquiry.organizationName}</strong>
 
