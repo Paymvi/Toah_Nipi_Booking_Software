@@ -298,8 +298,13 @@ export default function TutorialRunner({
     // Only navigation is skipped: a field that already has a value is still taught, or Restart would pass it by.
     const skipIfDone = () => {
             if (!enteredForward || !(step.demoClick || step.pickScope) || !isAlreadyDone()) return false;
-      skippedStepsRef.current.add(stepIndex);
+            skippedStepsRef.current.add(stepIndex);
       goTo(stepIndex + 1);
+
+      if (step.pickScope && !isDemo && !hasUsedStartScopeRef.current) {
+        hasUsedStartScopeRef.current = true;
+        setNudge(`I'll use ${findTarget(step.pickScope)?.querySelector("h3")?.textContent}, the group you already had open.`);
+      }
       return true;
     };
 
@@ -371,14 +376,7 @@ export default function TutorialRunner({
     // A group chosen earlier is reused unless a filter or a refresh has taken it off the list.
     if (step.pickScope && getTargetScope() && !findTarget(step.pickScope)) setTargetScope(null);
 
-    const reusedName = !isDemo && !hasUsedStartScopeRef.current && step.pickScope ? findTarget(step.pickScope)?.querySelector("h3")?.textContent : "";
-    if (skipIfDone()) {
-      if (reusedName) {
-        hasUsedStartScopeRef.current = true;
-        setNudge(`I'll use ${reusedName}, the group you already had open.`);
-      }
-      return;
-    }
+        if (skipIfDone()) return;
 
     scrollTargetIntoView(element);
     stepEnteredAtRef.current = Date.now();

@@ -48,6 +48,9 @@ function isInScope(element) {
 export function isShown(element) {
   // The Master Spreadsheet stays mounted but aria-hidden when another view is open.
   if (element.getClientRects().length === 0) return false;
+  // Chrome still reports a size for what's inside a closed <details>.
+  const closed = element.parentElement?.closest("details:not([open])");
+  if (closed && !closed.querySelector(":scope > summary")?.contains(element)) return false;
   if (element.closest('[aria-hidden="true"]')) return false;
   return window.getComputedStyle(element).visibility !== "hidden";
 }

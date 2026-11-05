@@ -1,6 +1,6 @@
 # Tutorial Gnome: portal management walkthrough
 
-Date: 2026-11-05 · Built on commit `fe78bb4` · Not committed
+Date: 2026-11-05 · Built on `fe78bb4`. The first version was committed as `ec98e27` while work continued, so later fixes are in the working tree.
 
 This report covers the staff-side portal walkthrough: what it teaches, how it's protected, how it was checked, and how to change it. The separate guest portal app has no tutorials.
 
@@ -31,7 +31,7 @@ Each section is written once in `src/tutorial/portalTutorial.js`. `composeWalkth
 
 - **Setup steps.** Every topic starts with Open Portals and, where needed, Choose a group. These are marked `prep`: they pass without stopping when already true, and aren't counted in the step numbers or reached with Back.
 - **Finishing a topic.** The complete card offers **Continue the full walkthrough** and **Done**. Continuing starts at the next topic, in the same mode, with the same group. After the last topic it goes to the recap.
-- **Position.** The dialogue shows "Topic 3 of 10: Share documents" and "Step 14 of 53" in the walkthrough. A standalone topic shows only its own steps.
+- **Position.** The dialogue shows "Topic 3 of 10: Share documents" and "Step 14 of 56" in the walkthrough. A standalone topic shows only its own steps.
 - **Back.** It crosses topic boundaries in the walkthrough, because a step can reopen its own panel (`opens`). In a topic it stops at the topic's first step.
 - **Restart.** It restarts whichever was chosen. In practice it also forgets the group.
 - **Resume.** After leaving, it restarts the topic you were in, not the exact step. The panels and chosen group are gone by then, and this also makes an outdated saved step harmless.

@@ -1355,7 +1355,7 @@ function PortalChecklistPreview({
                     <button
                       className="portal-checklist-file-button"
                       type="button"
-                      data-tutorial-target="portal-item-inspect"
+                      data-tutorial-target={item.status === "needsReview" ? "portal-item-inspect" : undefined}
                       data-tutorial-guard={isDemo ? "" : undefined}
                       onClick={() =>
                         openPortalChecklistUpload(
@@ -1371,7 +1371,7 @@ function PortalChecklistPreview({
                     <button
                       className="portal-checklist-info-button"
                       type="button"
-                      data-tutorial-target="portal-item-inspect"
+                      data-tutorial-target={item.status === "needsReview" ? "portal-item-inspect" : undefined}
                       aria-expanded={
                         isItemExpanded
                       }
@@ -3680,11 +3680,11 @@ function PortalAdminScreen({
 
   useEffect(
     () => {
-      if (demo) return;
+            if (demo) return;
       loadPortalRecords();
       loadEmailSettings();
     },
-        []
+    [demo]
   );
 
 

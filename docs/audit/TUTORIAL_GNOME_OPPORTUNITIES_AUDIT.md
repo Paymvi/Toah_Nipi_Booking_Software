@@ -7,6 +7,8 @@ This report does two jobs:
 1. It records the repairs made to the existing gnome and its five tutorials.
 2. It proposes what to teach next. **No new tutorial was built in this pass.** Section 7 recommends a batch for you to approve.
 
+> **Update 2026-11-05, later the same day:** portal management is now built. [TUTORIAL_GNOME_PORTAL_WALKTHROUGH.md](TUTORIAL_GNOME_PORTAL_WALKTHROUGH.md) covers it. **Implemented:** N-04, S-01, S-02, S-03 and S-04, plus the Open Guest Portal explanation from E-2 (inside the walkthrough, not the Open a booking tutorial). Those items below are kept as a record. **Still proposed:** everything else, including N-01, N-02, N-03 and N-05, and S-05 to S-07. Show me now has fictional data for the portal tutorials only; the other five tutorials still work as section 6 describes.
+
 How it relates to the earlier reports:
 
 | Document | Status |
@@ -183,7 +185,7 @@ Five tutorials, about 4 to 7 days in total. None needs new engine work or fictio
 | 1 | N-01 What needs my attention today? | Small | The first screen every staff member sees, with nothing teaching it. Read-only, so it is safe. |
 | 2 | N-02 What's on my plate? | Small | "Working as" is easy to miss, and without it My Work looks empty. Everyone needs this once. |
 | 3 | N-03 Is a building free on these dates? | Medium | A frequent question from guests, and the summary's counting rules aren't obvious. Read-only. |
-| 4 | N-04 Where is this group with their portal? | Medium | The status words are the base for all later portal and email training. Read-only as designed. |
+| 4 | N-04 Where is this group with their portal? **(Built: portal walkthrough, topics 1 and 5)** | Medium | The status words are the base for all later portal and email training. Read-only as designed. |
 | 5 | N-05 How do I turn a website request into a booking? | Medium | The highest-value real workflow that is still safe: the existing save guard already covers it. |
 
 **Why these:** they cover the daily questions the current five leave out, in the order a new person meets them. They only look or use the existing guard, so the risky portal and email work can wait for its own decisions. N-06 (housing) is the natural sixth, but it needs new save guards first.
@@ -269,7 +271,7 @@ Five tutorials, about 4 to 7 days in total. None needs new engine work or fictio
 - **Prerequisites:** about 7 new targets; `nav-lodging-calendar`.
 - **Overlap:** Calendar tutorial's month navigation. **Effort:** Medium.
 
-#### N-04 · Where is this group with their portal?
+#### N-04 · Where is this group with their portal? (Built: portal walkthrough, topics 1 and 5)
 - **Teaches:** Portal Progress: the summary cards, search and Status filter, and what No Checklist, Waiting on Guest, Needs Review and Complete mean. Includes Copy Link.
 - **Audience:** general staff. **Priority:** High, the foundation for all portal work.
 - **Screen and start:** Portals.
@@ -381,10 +383,10 @@ No change is needed for Reports' included-records note or the per-booking email 
 
 | ID | Title | Risk | Safe teaching approach | Audience · Priority · Effort |
 |---|---|---|---|---|
-| S-01 | How do I give a group their checklist and documents? | Assigned items appear to the real guest straight away. Uploads are stored. | Show me only, nothing clicked. Guard Assign, Remove, Upload and Due date first. Fictional record preferred. Overlaps N-04. | Experienced · High · Medium, Large with fixtures |
-| S-02 | How do I review what a guest sent in? | Confirm, Send back and Reopen change a real guest's portal. Send back can trigger an email. Uploads are private. | Fictional record needed: real submissions may not exist and must not be opened for demonstration. Explains Confirm vs guest-submitted, and that Needs Review isn't done. | Experienced · High · Large |
-| S-03 | How do I set up emails for a group? | **Enable sends a welcome email at once in Live mode.** Send now and Resend too. | Show me only. Guard every email control, including Enable, Save, Pause, Resume, Send now, Resend and Test send. Preview says nothing is sent; confirm this before allowing it. Must say which mode is active. | Experienced · High · Medium |
-| S-04 | What do Dry run, Test and Live mean? | Changing mode cancels queued mail and resets every booking's enable. | Admin only, explanation only. Never touch the mode control or cap. Cover delivery statuses: accepted isn't delivered, uncertain, blocked, and why mail stops. | Administrators · Medium · Small |
+| S-01 | How do I give a group their checklist and documents? **(Built: topics 2 to 4)** | Assigned items appear to the real guest straight away. Uploads are stored. | Show me only, nothing clicked. Guard Assign, Remove, Upload and Due date first. Fictional record preferred. Overlaps N-04. | Experienced · High · Medium, Large with fixtures |
+| S-02 | How do I review what a guest sent in? **(Built: topics 8 to 10)** | Confirm, Send back and Reopen change a real guest's portal. Send back can trigger an email. Uploads are private. | Fictional record needed: real submissions may not exist and must not be opened for demonstration. Explains Confirm vs guest-submitted, and that Needs Review isn't done. | Experienced · High · Large |
+| S-03 | How do I set up emails for a group? **(Built: topic 6)** | **Enable sends a welcome email at once in Live mode.** Send now and Resend too. | Show me only. Guard every email control, including Enable, Save, Pause, Resume, Send now, Resend and Test send. Preview says nothing is sent; confirm this before allowing it. Must say which mode is active. | Experienced · High · Medium |
+| S-04 | What do Dry run, Test and Live mean? **(Built: topic 7)** | Changing mode cancels queued mail and resets every booking's enable. | Admin only, explanation only. Never touch the mode control or cap. Cover delivery statuses: accepted isn't delivered, uncertain, blocked, and why mail stops. | Administrators · Medium · Small |
 | S-05 | How do I restore from a backup? | Full Replace deletes every booking first. Portal rows and uploads can be lost. | Show me only, and no file chosen. Explain validation, Compare, Safe Merge vs Full Replace, and the safety backup. Never start a restore, even in development. | Administrators · Medium · Small |
 | S-06 | How do I delete a booking? | Permanent, and removes email state. | Better as a line in existing tutorial text than a tutorial of its own: suggest cancelling instead, name the admin-only button, never click it. | Administrators · Low · Small |
 | S-07 | Dev Mode, imports and Delete All | Bulk changes. | Don't tutorial. A short written note is enough. If taught, Show me with the toggle untouched, since Dev Mode needs a password. | Administrators · Low · Small |

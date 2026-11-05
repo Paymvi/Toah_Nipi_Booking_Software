@@ -45,7 +45,7 @@ function task(id, itemId, title, status, guestAction, details = {}) {
   };
 }
 
-function document(id, title, documentType, fileName, details = {}) {
+function sharedDocument(id, title, documentType, fileName, details = {}) {
   return { id, title, documentType, fileName, note: "", status: "ready", uploadedByGuest: false, lastChangedAt: "", ...details };
 }
 
@@ -97,7 +97,7 @@ function createGroup() {
       }),
       task("demo-deposit", "deposit", "Pay deposit", "notStarted", "none"),
     ],
-    [document("demo-welcome", "Welcome & Reservation Information", "Information Sheet", "Welcome & Reservation Information.pdf")]
+    [sharedDocument("demo-welcome", "Welcome & Reservation Information", "Information Sheet", "Welcome & Reservation Information.pdf")]
   );
 }
 
@@ -106,7 +106,7 @@ const EFFECTS = {
     group.checklistItems.push(task("demo-schedule", "schedule", "Submit Schedule", "notStarted", "upload_file", { dueDate: fromToday(10) }));
   },
   assignDocument: ({ group }) => {
-    group.documents.push(document("demo-map", "Toah Nipi Campus Map", "Map", "TN Campus Map.pdf"));
+    group.documents.push(sharedDocument("demo-map", "Toah Nipi Campus Map", "Map", "TN Campus Map.pdf"));
   },
   changeDueDate: ({ group }) => {
     group.checklistItems.find((item) => item.id === "demo-insurance").dueDate = fromToday(18);

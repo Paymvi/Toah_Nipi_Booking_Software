@@ -25,7 +25,8 @@ async function finishGuidedStep(page, step) {
     await sleep(1700);
     await page.locator(`${target(first)} input`).fill("");
   } else if (/\.(tick|standard)$/.test(step.id)) {
-    await page.locator(`${target(first)} input[type=checkbox] >> visible=true`).first().check();
+    // The real checkboxes are styled away, so this clicks one the way its label does.
+    await page.locator(`${target(first)} input[type=checkbox]`).first().evaluate((box) => box.click());
   }
 }
 

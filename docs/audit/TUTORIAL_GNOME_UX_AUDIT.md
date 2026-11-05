@@ -2,7 +2,7 @@
 
 Audit date: 2026-11-04 · Branch: `main` (uncommitted changes) · Base commit: `f1c32b0`
 
-> **Update 2026-11-05:** findings continue from TG-21 in [TUTORIAL_GNOME_OPPORTUNITIES_AUDIT.md](TUTORIAL_GNOME_OPPORTUNITIES_AUDIT.md).
+> **Update 2026-11-05:** findings continue from TG-21 in [TUTORIAL_GNOME_OPPORTUNITIES_AUDIT.md](TUTORIAL_GNOME_OPPORTUNITIES_AUDIT.md). The portal tutorials added since then are in [TUTORIAL_GNOME_PORTAL_WALKTHROUGH.md](TUTORIAL_GNOME_PORTAL_WALKTHROUGH.md), and they do use fictional demo data.
 
 ## Scope and method
 

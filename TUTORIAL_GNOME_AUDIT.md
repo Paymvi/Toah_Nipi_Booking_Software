@@ -194,6 +194,8 @@ Legend — Modes: **I** = interactive ("walk me through it"), **D** = demonstrat
 
 ### Guest Portal (Portal Admin)
 
+> **Update 2026-11-05:** built. See [docs/audit/TUTORIAL_GNOME_PORTAL_WALKTHROUGH.md](docs/audit/TUTORIAL_GNOME_PORTAL_WALKTHROUGH.md).
+
 **P-1 · Understand Portal Progress** — Beginner · High · I + D
 - Steps: Portals → summary cards → search/status filter → a group card → checklist/document progress.
 

@@ -502,7 +502,13 @@ export default function TutorialGnome() {
                                                         </button>
 
                             {getShownTopics(tutorial).length > 0 && (
-                              <details className="tg-topics" open={Boolean(query)}>
+                              <details
+                                className="tg-topics"
+                                open={Boolean(query)}
+                                onToggle={(event) =>
+                                  event.currentTarget.open && event.currentTarget.scrollIntoView({ block: "start" })
+                                }
+                              >
                                 <summary>
                                   Or learn just one topic
                                   <small>

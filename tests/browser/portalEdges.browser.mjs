@@ -19,6 +19,9 @@ const RESTART = '.tg-controls button[aria-label="Restart tutorial"]';
 const pick = (page, name) => page.locator(".tg-choices-list .tg-button", { hasText: name }).click();
 const visible = (page, id) => page.locator(`${target(id)} >> visible=true`).first();
 const next = (page) => page.locator(NEXT).click({ force: true });
+const tick = (page) => visible(page, "portal-task-table").locator("input[type=checkbox]").first().evaluate((box) => box.click());
+const ticked = (page) => visible(page, "portal-task-table").locator("input[type=checkbox]").first().isChecked();
+const inGroup = (id, group) => `[data-tutorial-scope="${group}"] ${target(id)}`;
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
@@ -96,8 +99,8 @@ await test("reuses the booking already open", async ({ page }) => {
 await test("reuses the group whose panel is open, and a list searched to one", async ({ page }) => {
   await page.locator(`[data-tutorial-scope="b2"] ${target("portal-assign-documents")}`).click();
   await start(page, "Assign tasks", "guided");
-  await waitForStep(page, "tasks.open-tasks");
-  await visible(page, "portal-assign-tasks").click();
+    await waitForStep(page, "tasks.open-tasks");
+  await page.locator(inGroup("portal-assign-tasks", "b2")).click();
   await waitForStep(page, "tasks.catalog");
   const inB2 = await page.locator(`[data-tutorial-scope="b2"] ${target("portal-task-panel")}`).count();
   assert(inB2 === 1, "worked on the wrong group");
@@ -171,7 +174,7 @@ await test("a completed portal can be reopened but not reviewed", async ({ page 
   await waitForStep(page, "corrections.choose-group");
   await pick(page, "Lakeside");
   await waitForStep(page, "corrections.correct");
-  await visible(page, "portal-correct-completed").click();
+    await page.locator(inGroup("portal-correct-completed", "b3")).click();
   await waitForStep(page, "corrections.reopen");
   assert((await dialog(page)).includes("switched off"), "doesn't say it's off");
 }, { path: "/portal-admin" });
@@ -261,8 +264,9 @@ const GUARDED_IN_CARD = ["portal-confirm", "portal-copy-link", "portal-open-port
 
 await test("every guarded control refuses click, keyboard and script in practice", async ({ context, page }) => {
   await practiseToPanel(page);
-  await visible(page, "portal-task-table").locator("input[type=checkbox]").first().check({ force: true }).catch(() => {});
-  await page.locator(NEXT).click({ force: true });
+    await page.locator(NEXT).click({ force: true });
+  await waitForStep(page, "tasks.tick");
+  await tick(page);
   await sleep(1200);
 
   const pagesBefore = context.pages().length;
@@ -270,16 +274,24 @@ await test("every guarded control refuses click, keyboard and script in practice
   assert(guards >= 6, `only ${guards} guards on screen`);
 
   for (let index = 0; index < guards; index += 1) {
-    const control = page.locator("[data-tutorial-guard]").nth(index);
+        const control = page.locator("[data-tutorial-guard]").nth(index);
     await control.click({ force: true, timeout: 1000 }).catch(() => {});
     await control.evaluate((element) => element.click()).catch(() => {});
-    await control.focus().catch(() => {});
-    await page.keyboard.press("Enter");
-    await page.keyboard.press("Space");
     await control.click({ button: "middle", force: true, timeout: 1000 }).catch(() => {});
+
+    // Only on the control itself: if it can't take focus, these keys would press whatever has it, such as End tutorial.
+    const hasFocus = await control.evaluate((element) => {
+      element.focus();
+      return document.activeElement === element;
+    });
+    if (hasFocus) {
+      await page.keyboard.press("Enter");
+      await page.keyboard.press("Space");
+    }
   }
 
-  await sleep(600);
+    await sleep(600);
+  assert((await page.locator(".tg-runner").count()) === 1, "the tutorial ended during the check");
   assert(context.pages().length === pagesBefore, "a new tab opened");
   for (const id of GUARDED_IN_CARD) assert((await page.locator(target(id)).count()) > 0, `${id} not exercised`);
 }, { path: "/portal-admin" });
@@ -333,7 +345,9 @@ await test("the network lock refuses writes in practice, and lifts on Pause", as
 }, { path: "/portal-admin" });
 
 await test("the fictional demo refuses writes, even paused, and only reads", async ({ page, requests }) => {
-  await start(page, "Set up a group's emails", "demo");
+    await start(page, "Set up a group's emails", "demo");
+  await page.waitForSelector(DEMO_BANNER);
+  requests.length = 0; // The real page's own load came before the demo.
   await waitForStep(page, "group-emails.state", 30000);
   const running = await tryWrites(page);
   assert(running.every((entry) => entry.endsWith("refused")), running.join(" "));
@@ -364,7 +378,7 @@ const fictionalStored = (page) =>
 await test("demo cleans up on End and keeps the real filter and panel", async ({ page }) => {
   await page.locator(`${target("portal-search")} input`).fill("Lakeside");
   await page.locator(`[data-tutorial-scope="b3"] ${target("portal-assign-tasks")}`).click();
-  await visible(page, "portal-task-table").locator("input[type=checkbox]").first().check();
+    await tick(page);
   await sleep(300);
 
   await start(page, "Review and approve a submission", "demo");
@@ -375,7 +389,7 @@ await test("demo cleans up on End and keeps the real filter and panel", async ({
   await page.waitForSelector(DEMO_BANNER, { state: "detached" });
 
   assert((await page.locator(`${target("portal-search")} input`).inputValue()) === "Lakeside", "search lost");
-  assert(await visible(page, "portal-task-table").locator("input[type=checkbox]").first().isChecked(), "draft lost");
+  assert(await ticked(page), "draft lost");
   assert((await page.getByText("Riverside Youth Fellowship").count()) === 0, "fictional group left behind");
   assert(!(await fictionalStored(page)), "fictional data stored");
 }, { path: "/portal-admin" });
@@ -461,7 +475,7 @@ await test("Housing edits are detected, and going back keeps them", async ({ pag
   await page.locator(`${target("spreadsheet-open-booking")} >> visible=true`).first().click();
   await page.waitForSelector(target("booking-tabs"));
   await page.locator(`${target("booking-tabs")} button`, { hasText: "Housing" }).click();
-  await page.getByRole("button", { name: /Edit/ }).first().click();
+  await page.locator(".booking-housing-tab-actions button").first().click();
   await expectWarning(page, "Assign tasks", "Housing edits");
   await page.getByRole("button", { name: "Go back and save it" }).click();
   await sleep(300);
@@ -491,8 +505,8 @@ await test("the Form is only flagged once something is typed, in every tutorial"
 });
 
 await test("Portal choices are detected for practice but stay safe under a demo", async ({ page }) => {
-  await visible(page, "portal-assign-tasks").click();
-  await visible(page, "portal-task-table").locator("input[type=checkbox]").first().check();
+    await visible(page, "portal-assign-tasks").click();
+  await tick(page);
   await sleep(300);
   await expectWarning(page, "Assign tasks", "task choices");
   await page.getByRole("button", { name: "Go back and save it" }).click();
@@ -580,12 +594,12 @@ await test("Back crosses into a closed panel in the demo and the outcome rewinds
   await page.locator(BACK).click();
   await waitForStep(page, "documents.open-documents", 30000);
   await page.locator(BACK).click();
-  await waitForStep(page, "tasks.assigned", 30000);
-  assert((await page.getByText("Submit Schedule").count()) > 0, "the earlier outcome is missing");
+    await waitForStep(page, "tasks.assigned", 30000);
+  assert((await page.locator(inGroup("portal-checklist", "portal-demo-community-bible")).getByText("Submit Schedule").count()) > 0, "the earlier outcome is missing");
   await page.locator(BACK).click();
   await waitForStep(page, "tasks.assign", 30000);
   await page.waitForSelector(target("portal-task-panel"));
-  assert((await page.locator(`${target("portal-checklist")}`).getByText("Submit Schedule").count()) === 0, "the outcome didn't rewind");
+  assert((await page.locator(inGroup("portal-checklist", "portal-demo-community-bible")).getByText("Submit Schedule").count()) === 0, "the outcome didn't rewind");
 }, { path: "/portal-admin" });
 
 await test("an outdated saved step resumes safely", async ({ page }) => {
