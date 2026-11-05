@@ -1775,9 +1775,8 @@ export default function ContactsView({
 }) {
   const [shouldRenderContacts, setShouldRenderContacts] = useState(false);
 
+  // Shown on the way in only: re-showing it after a bookings refresh would clear the search people typed.
   useEffect(() => {
-    setShouldRenderContacts(false);
-
     let firstFrameId = 0;
     let secondFrameId = 0;
     let loadingTimerId = 0;

@@ -9,13 +9,17 @@
      say         guided mode ("walk me through it"): what to do now
      show        demonstration mode ("show me"): what this does
      done        (ctx, start) => true once the page shows the step was done.
-                 Guided steps without it wait for Next. A step whose done is
-                 already true on arrival is skipped (e.g. already on /form).
+                 Guided steps without it wait for Next, and their highlighted
+                 area can only be looked at: it may hold real actions.
      capture     ctx => value handed to done as `start` (state when the step began)
      demoClick   demonstration mode clicks the target. Only for navigation,
                  tabs, view switches and Edit Entry (unlocks fields): never
-                 saves, submits or deletes. Skipped when the step is already
-                 done, so going Back never undoes what the target opened.
+                 saves, submits or deletes. Needs done. The later steps rely on
+                 it, so guided mode offers no Skip, and it is passed over when
+                 already done (e.g. already on /form). The click is also left
+                 out when reached with Back, so Back never undoes what it opened.
+     explore     a step without done may let people use its highlighted area.
+                 Only where everything inside is harmless.
      example     demonstration mode shows this labelled example; nothing is typed.
                  Use the same fictional group (Community Bible Church, led by
                  Jordan Smith) across tutorials, with values the field accepts.
@@ -23,6 +27,9 @@
 
   ctx (tutorialCore.js createStepContext): path(), visible(id), text(id),
   hasValue(id), filled(id), fields(id).
+
+  A tutorial may also set `finished`: shown when a guided run ends, for what
+  is left on screen now that saving works again.
 
   Saving is blocked while a tutorial runs: any element with
   data-tutorial-guard (Save Guest Group, Save Changes) cannot be clicked or
@@ -53,6 +60,7 @@ export const TUTORIAL_TARGETS = {
   "booking-overview-summary": "booking summary",
   "booking-overview-stats": "guest and stay counts",
   "booking-overview-edit": "Edit Booking button",
+  "booking-overview-density": "Density buttons",
   "booking-overview-main": "booking sections",
   "booking-edit-panel": "booking editor",
   "booking-edit-entry": "Edit Entry button",
@@ -91,7 +99,7 @@ const openMasterSpreadsheetStep = {
   target: "nav-master-spreadsheet",
   say: "First, open Master Spreadsheet in the sidebar. It lists every booking.",
   show: "Every booking lives in the Master Spreadsheet, so that's where we start.",
-  done: (ctx) => ctx.visible("spreadsheet-search") || ctx.visible("booking-profile"),
+  done: (ctx) => ctx.visible("spreadsheet-search"),
   demoClick: true,
 };
 
@@ -106,6 +114,8 @@ const openBookingStep = {
     "If the list is empty, clear the search box. If there are no bookings yet, create one first.",
 };
 
+const OVERVIEW_MISSING = "This is on the Overview tab. Click Overview in the booking's tabs to bring it back.";
+
 export const TUTORIALS = [
   {
     id: "create-booking",
@@ -114,6 +124,7 @@ export const TUTORIALS = [
     category: "Bookings",
     difficulty: "Beginner",
     keywords: ["new", "form", "add", "group", "reservation"],
+    finished: "Saving is back on, and any practice details stay in the form until you leave it. Leave the Form so they aren't saved by mistake.",
     steps: [
       {
         id: "open-form",
@@ -212,30 +223,42 @@ export const TUTORIALS = [
         target: "booking-overview-summary",
         say: "The Overview opens first. This is the quick summary: stay dates, booking type and contacts.",
         show: "This is the at-a-glance summary: stay dates, retreat type and contacts.",
+        missing: OVERVIEW_MISSING,
       },
       {
         id: "stats",
         target: "booking-overview-stats",
         say: "These counts show what's recorded for this group.",
         show: "These counts show what's recorded on the booking. A dash means nothing has been entered yet.",
+        missing: OVERVIEW_MISSING,
       },
       {
         id: "sections",
         target: "booking-overview-main",
         say: "The rest of the booking is on this one page: guests, meals, activities, facilities, housing and linens, payments, timeline and notes.",
         show: "This page has guests, meals, activities, facilities, housing and linens, payments, timeline and notes.",
+        missing: OVERVIEW_MISSING,
+      },
+      {
+        id: "density",
+        target: "booking-overview-density",
+        say: "Prefer more room? Compact fits more on screen and Large spreads it out. It's the same booking either way, and this browser remembers your choice.",
+        show: "Compact fits more on screen and Large spreads it out. It's the same booking either way, and this browser remembers the choice.",
+        missing: OVERVIEW_MISSING,
       },
       {
         id: "edit-shortcut",
         target: "booking-overview-edit",
         say: "Edit Booking jumps to the Edit tab. There's a separate tutorial for editing.",
         show: "Edit Booking jumps straight to the Edit tab.",
+        missing: OVERVIEW_MISSING,
       },
       {
         id: "back",
         target: "booking-back",
-        say: "Back returns you to the Master Spreadsheet. Your search stays in the box, so clear it (×) to see every booking again. You've found and read a booking!",
-        show: "Back takes you to the spreadsheet again. A search stays in the box until you clear it (×). That's how you find and read a booking.",
+        say: "Back leaves the booking. You came from the Master Spreadsheet, so it returns you there (from a calendar, it returns you to that calendar). Your search stays in the box, so clear it (×) to see every booking again. You've found and read a booking!",
+        show: "Back leaves the booking: to the spreadsheet here, or to the calendar if you opened it from one. A search stays in the box until you clear it (×). That's how you find and read a booking.",
+        explore: true,
       },
     ],
   },
@@ -247,8 +270,10 @@ export const TUTORIALS = [
     category: "Bookings",
     difficulty: "Intermediate",
     keywords: ["change", "update", "modify", "details", "save"],
+    finished: "Saving is back on, and any practice changes are still on the Edit tab. Switch to the Overview tab to discard them.",
     steps: [
-      openMasterSpreadsheetStep,
+      // A booking that's already open is a fine place to start.
+      { ...openMasterSpreadsheetStep, done: (ctx) => ctx.visible("spreadsheet-search") || ctx.visible("booking-profile") },
       openBookingStep,
       {
         id: "edit-tab",
@@ -282,6 +307,7 @@ export const TUTORIALS = [
           "For real changes you'd click Save Changes. It's switched off during practice. To throw away practice changes, switch back to the Overview tab (imported bookings also have a Cancel button).",
         show:
           "Save Changes stores the edit for everyone. If someone else saved this booking first, you'll be asked to reload so nothing is overwritten. Leaving the tab, or Cancel where shown, discards changes.",
+        explore: true,
       },
     ],
   },
@@ -298,7 +324,7 @@ export const TUTORIALS = [
         id: "open-calendar",
         target: "nav-calendar",
         say: "Open Main Calendar in the sidebar.",
-        show: "The Main Calendar shows every dated booking.",
+        show: "The Main Calendar shows your dated bookings at a glance.",
         done: (ctx) => ctx.visible("calendar-view"),
         demoClick: true,
       },
@@ -356,12 +382,14 @@ export const TUTORIALS = [
         target: "calendar-exceptions",
         say: "Cancelled, waitlisted, archived and host records only appear when you tick them here. This browser remembers your choice.",
         show: "Also show adds cancelled, waitlisted, archived or host records. The count shows how many there are this month.",
+        explore: true,
       },
       {
         id: "agenda",
         target: "calendar-agenda",
-        say: "The agenda lists every group in the period you're viewing, with dates and guest counts. That's the calendar!",
-        show: "The agenda lists every group shown, with dates, status and guest counts.",
+        say: "The agenda lists every group in the period you're viewing. Click a group here or on the calendar to open its booking, and its Back button brings you right back. That's the calendar!",
+        show: "The agenda lists every group shown, with dates, status and guest counts. Clicking a group here or on the calendar opens its booking, and Back returns to this view.",
+        explore: true,
       },
     ],
   },
@@ -395,6 +423,7 @@ export const TUTORIALS = [
         target: "contacts-sort",
         say: "Sort by first or last name here. Starred contacts can be pinned to the top with the checkbox next to it.",
         show: "Sort by first or last name. Tick Show starred contacts first to keep starred people at the top.",
+        explore: true,
       },
       {
         id: "view-bookings",
@@ -403,13 +432,14 @@ export const TUTORIALS = [
         show: "View Bookings opens a contact's full booking history. I'll open the first contact on the list.",
         done: (ctx) => ctx.visible("contacts-history"),
         demoClick: true,
-        missing: "No contacts match the search. Clear the search box to see everyone.",
+        missing: "No contacts match the search, so clear the search box to see everyone. If it's still empty, contacts appear once bookings exist.",
       },
       {
         id: "history",
         target: "contacts-history",
         say: "Here's their history. Open Booking jumps to any of these bookings. Tip: click an email or phone number in the contact's row to copy it.",
         show: "Each past and upcoming booking is listed, and Open Booking jumps to it. Clicking an email or phone in the contact's row copies it.",
+        missing: "The history is closed. Click View Bookings in the contact's row to open it again.",
       },
       {
         id: "deleted",

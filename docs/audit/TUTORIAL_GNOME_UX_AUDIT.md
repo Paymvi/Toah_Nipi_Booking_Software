@@ -2,6 +2,8 @@
 
 Audit date: 2026-11-04 · Branch: `main` (uncommitted changes) · Base commit: `f1c32b0`
 
+> **Update 2026-11-05:** findings continue from TG-21 in [TUTORIAL_GNOME_OPPORTUNITIES_AUDIT.md](TUTORIAL_GNOME_OPPORTUNITIES_AUDIT.md).
+
 ## Scope and method
 
 **Scope:** All 5 tutorials in `src/tutorial/tutorials.js`, in both modes: **Guided** ("Walk me through it") and **Demo** ("Show me how"). The review also covered the engine (`TutorialRunner.jsx`, `tutorialCore.js`), the gnome styles (`TutorialGnome.css`) and the screens each step describes (`CreateBooking.jsx`, `SpreadsheetView.jsx`, `Dashboard.jsx` booking profile, `CalendarView.jsx`, `ContactsView.jsx`).

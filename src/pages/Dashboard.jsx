@@ -4257,6 +4257,7 @@ function BookingOverviewDensityControl({ density, onChange }) {
       className="booking-overview-density"
       role="group"
       aria-label="Overview density"
+      data-tutorial-target="booking-overview-density"
     >
       <span>Density</span>
 
@@ -7659,6 +7660,8 @@ export default function Dashboard() {
     setActiveView(pathMap[location.pathname] || "Dashboard");
   }, [location.pathname]);
   const [hasOpenedSpreadsheetView, setHasOpenedSpreadsheetView] = useState(false);
+  // Every way in counts (Back from a booking, a direct link), not just the sidebar: without this the page is blank.
+  if (activeView === SPREADSHEET_VIEW_NAME && !hasOpenedSpreadsheetView) setHasOpenedSpreadsheetView(true);
   const [isSpreadsheetRevealLoading, setIsSpreadsheetRevealLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 

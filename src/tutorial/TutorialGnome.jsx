@@ -1,6 +1,8 @@
 /*
   The tutorial gnome: floating launcher (bottom-right of the staff app), the
-  help panel that opens above it, and the hand-off to TutorialRunner.
+  help panel that opens above it, and the hand-off to TutorialRunner. A
+  demonstration puts the screen back afterwards, unless the person paused it
+  and took over.
 
   Mounted once in App.jsx inside StaffAuthGate, so it is on every staff
   view and never on the login screen. (The guest portal is a separate app.)
@@ -8,6 +10,7 @@
 */
 
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaArrowLeft,
   FaBook,
@@ -61,7 +64,21 @@ function writeProgress(progress) {
   if (storage) saveTutorialProgress(storage, progress);
 }
 
+function getOpenBookingName() {
+  return findTarget("booking-profile")?.querySelector("h2")?.textContent ?? null;
+}
+
+// What a demonstration moves away from. Booking Detail has no URL, so the open booking and tab are noted too.
+function captureScreen() {
+  return {
+    path: window.location.pathname,
+    bookingName: getOpenBookingName(),
+    bookingTab: findTarget("booking-tabs")?.querySelector(".active")?.textContent ?? null,
+  };
+}
+
 export default function TutorialGnome() {
+  const navigate = useNavigate();
   // closed | panel | running | complete
   const [view, setView] = useState("closed");
   const [query, setQuery] = useState("");
@@ -74,6 +91,7 @@ export default function TutorialGnome() {
 
   const launcherRef = useRef(null);
   const messageTimerRef = useRef(0);
+  const screenToRestoreRef = useRef(null);
 
   const tutorialsById = Object.fromEntries(TUTORIALS.map((tutorial) => [tutorial.id, tutorial]));
   const visibleGroups = groupTutorialsByCategory(searchTutorials(TUTORIALS, query));
@@ -112,22 +130,48 @@ export default function TutorialGnome() {
 
   function startTutorial(tutorial, mode, startStep = 0) {
     updateProgress(withUnfinished(progress, tutorial.id, startStep, mode));
-    setRun({ tutorial, mode, startStep, key: Date.now() });
+    setRun({ tutorial, mode, startStep, key: Date.now(), screen: captureScreen() });
     setView("running");
   }
 
-  // run?. throughout: the React Compiler reads these closures' dependencies during render, while run can be null.
-  function handleExit(stepIndex) {
-    updateProgress(withUnfinished(progress, run?.tutorial.id, stepIndex, run?.mode));
-    setRun(null);
-    setView("closed");
-    showLauncherMessage("No problem! Click me anytime to pick up where you left off.");
+  // Never after a pause: anything on screen by then is the person's own work.
+  function queueRestore(hasPaused) {
+    if (run?.mode === "demo" && !hasPaused) screenToRestoreRef.current = run?.screen;
   }
 
-  function handleComplete() {
+  // run?. throughout: the React Compiler reads these closures' dependencies during render, while run can be null.
+  function handleExit(stepIndex, hasPaused) {
+    updateProgress(withUnfinished(progress, run?.tutorial.id, stepIndex, run?.mode));
+    queueRestore(hasPaused);
+    const note = run?.mode === "guided" ? run?.tutorial.finished : "";
+    setRun(null);
+    setView("closed");
+    showLauncherMessage(note || "No problem! Click me anytime to pick up where you left off.");
+  }
+
+  function handleComplete(hasPaused) {
     updateProgress(withCompleted(progress, run?.tutorial.id));
+    queueRestore(hasPaused);
     setView("complete");
   }
+
+  // After the runner has gone, so its click guard can't stop these. Uses the app's own controls, so views reset as they do for a person.
+  useEffect(() => {
+    const screen = screenToRestoreRef.current;
+    if (!screen || view === "running") return;
+    screenToRestoreRef.current = null;
+
+    const openBookingName = getOpenBookingName();
+
+    if (openBookingName && openBookingName === screen.bookingName) {
+      const tabs = findTarget("booking-tabs")?.querySelectorAll("button") ?? [];
+      Array.from(tabs).find((tab) => tab.textContent === screen.bookingTab)?.click();
+      return;
+    }
+
+    if (openBookingName) findTarget("booking-back")?.click();
+    navigate(screen.path);
+  }, [view, navigate]);
 
   // Close the panel on Escape or a click elsewhere on the page.
   useEffect(() => {
@@ -187,6 +231,12 @@ export default function TutorialGnome() {
           <p>
             You finished <strong>{run.tutorial.title}</strong>. Replay it anytime from my help station.
           </p>
+
+          {run.mode === "guided" && run.tutorial.finished && (
+            <p className="tg-warning" role="note">
+              {run.tutorial.finished}
+            </p>
+          )}
 
           <div className="tg-complete-actions">
             <button className="tg-button" type="button" onClick={() => startTutorial(run?.tutorial, run?.mode)}>
@@ -275,7 +325,7 @@ export default function TutorialGnome() {
                   <FaEye aria-hidden="true" />
                   <span>
                     <strong>Show me how</strong>
-                    <small>Sit back and watch. Nothing is typed or saved.</small>
+                    <small>Sit back and watch. Nothing is typed or saved, and I'll bring you back here after.</small>
                   </span>
                 </button>
               </div>
@@ -288,7 +338,8 @@ export default function TutorialGnome() {
                   <div>
                     <strong>Pick up where you left off?</strong>
                     <span>
-                      {tutorialsById[unfinished.id].title}, step {unfinished.step + 1} of{" "}
+                      {tutorialsById[unfinished.id].title}, step{" "}
+                      {Math.min(unfinished.step + 1, tutorialsById[unfinished.id].steps.length)} of{" "}
                       {tutorialsById[unfinished.id].steps.length}
                     </span>
                   </div>
@@ -370,6 +421,7 @@ export default function TutorialGnome() {
 
       <button
         ref={launcherRef}
+        autoFocus={Boolean(launcherMessage)}
         className={`tg-launcher ${view === "panel" ? "tg-launcher-open" : ""}`}
         type="button"
         aria-label="Tutorial gnome: learn how to use the booking software"

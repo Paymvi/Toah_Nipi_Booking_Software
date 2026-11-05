@@ -49,6 +49,14 @@ export function matchesTarget(node, target) {
   return ids.some((id) => node?.closest?.(targetSelector(id)));
 }
 
+// What a person may use to find their way back when a step's target is missing. Nothing here saves.
+export function isWayBack(node) {
+  return (
+    Boolean(node?.closest?.(".sidebar-link")) ||
+    matchesTarget(node, ["booking-back", "booking-tabs", "spreadsheet-search", "contacts-search"])
+  );
+}
+
 function getFields(element) {
   if (!element) return [];
   if (element.matches("input, select, textarea")) return [element];
@@ -105,12 +113,14 @@ export const DEMO_ACTION_TIMEOUT_MS = 8000;
   is getting ready, doing its demo action or celebrating, extra clicks are
   ignored so they can't skip a step or the action that leads to it.
   In demonstrations Next ends the reading time early; the action still runs.
+  needsAction: the step opens the screen the next steps are on and hasn't
+  happened yet, so skipping it would strand them ("wait").
 */
-export function getNextAction(phase, isDemo) {
+export function getNextAction(phase, isDemo, needsAction = false) {
   if (phase === "seeking" || phase === "working" || phase === "success") return "ignore";
   if (phase === "failed") return "retry";
   if (isDemo && phase === "active") return "hurry";
-  return "advance";
+  return needsAction ? "wait" : "advance";
 }
 
 /*

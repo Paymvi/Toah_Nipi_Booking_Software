@@ -16,6 +16,7 @@ import {
   getDemoStepDuration,
   getNextAction,
   groupTutorialsByCategory,
+  isWayBack,
   loadTutorialProgress,
   placeDialogue,
   placePointer,
@@ -162,6 +163,52 @@ test("demo steps stay up long enough to read, but not forever", () => {
   assert.equal(getDemoStepDuration("word ".repeat(200)), 9000);
 });
 
+/* ---------- Practice safety ---------- */
+
+const findStep = (tutorialId, stepId) =>
+  TUTORIALS.find((tutorial) => tutorial.id === tutorialId).steps.find((step) => step.id === stepId);
+
+test("steps that highlight real actions stay look-only", () => {
+  // Incident Notes saves from inside the Overview sections; other tabs hold their own saves; Open Booking leaves the tutorial.
+  for (const [tutorialId, stepId] of [["open-booking", "sections"], ["open-booking", "tabs"], ["contacts", "history"]]) {
+    const step = findStep(tutorialId, stepId);
+    assert.ok(!step.done && !step.explore, `${tutorialId}/${stepId} would let clicks through`);
+  }
+});
+
+test("explore is only for steps that would otherwise be look-only", () => {
+  for (const tutorial of TUTORIALS) {
+    for (const step of tutorial.steps.filter((item) => item.explore)) {
+      assert.ok(!step.done, `${tutorial.id}/${step.id}`);
+    }
+  }
+});
+
+test("when a target is missing, only ways back are usable", () => {
+  // closest() for a node whose nearest match is the given selector text.
+  const nodeInside = (match) => ({ closest: (selector) => (selector.includes(match) ? {} : null) });
+
+  for (const wayBack of [".sidebar-link", "booking-back", "booking-tabs", "spreadsheet-search", "contacts-search"]) {
+    assert.ok(isWayBack(nodeInside(wayBack)), wayBack);
+  }
+  assert.ok(!isWayBack(nodeInside("booking-overview-main")), "a highlighted area is not a way back");
+  assert.ok(!isWayBack({ closest: () => null }));
+  assert.ok(!isWayBack(null));
+});
+
+test("guided runs that leave practice input behind say so when they end", () => {
+  for (const id of ["create-booking", "edit-booking"]) {
+    assert.match(TUTORIALS.find((tutorial) => tutorial.id === id).finished, /Saving is back on/);
+  }
+});
+
+test("an open booking only counts as a head start for Edit a booking", () => {
+  const bookingOpen = { visible: (id) => id === "booking-profile" };
+
+  assert.equal(findStep("open-booking", "open-spreadsheet").done(bookingOpen), false, "Open a booking teaches the search, so it must go to the spreadsheet");
+  assert.equal(findStep("edit-booking", "open-spreadsheet").done(bookingOpen), true);
+});
+
 /* ---------- Step transitions ---------- */
 
 // A fake page for runDemoAction: the click "lands" after `delay` polls; wait() just counts.
@@ -215,6 +262,15 @@ test("rapid Next clicks run one transition: the first hurries the demo, the rest
   }
   assert.equal(getNextAction("failed", true), "retry");
   assert.equal(getNextAction("missing", true), "advance", "Skip stays available when a target can't be found");
+});
+
+test("a step the rest depends on can't be skipped until it has happened", () => {
+  assert.equal(getNextAction("active", false, true), "wait", "guided: waiting on a navigation step");
+  assert.equal(getNextAction("missing", false, true), "wait", "guided: its target can't be found");
+  assert.equal(getNextAction("missing", true, true), "wait", "demo: its target can't be found");
+  assert.equal(getNextAction("active", false, false), "advance", "a field step can still be skipped");
+  assert.equal(getNextAction("active", true, true), "hurry", "demo: Next still only shortens the reading time");
+  assert.equal(getNextAction("seeking", false, true), "ignore");
 });
 
 test("a demo action only completes once the page shows its result", async () => {

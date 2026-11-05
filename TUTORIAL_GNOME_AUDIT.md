@@ -2,6 +2,8 @@
 
 Audit date: 2026-11-02 · Branch: `comparison/claude` · Scope: the whole staff booking application in this repository.
 
+> **Update 2026-11-05:** sections 3 and 4 are superseded by [docs/audit/TUTORIAL_GNOME_OPPORTUNITIES_AUDIT.md](docs/audit/TUTORIAL_GNOME_OPPORTUNITIES_AUDIT.md), which also lists claims here that are out of date (for example, calendar entries now open bookings).
+
 This document was written **before** any tutorial code. It records how the application actually works (from the code, not from feature names), lists every workflow that deserves a tutorial, picks the V1 library, and notes the technical constraints the tutorial system has to respect.
 
 ---

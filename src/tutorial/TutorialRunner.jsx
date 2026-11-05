@@ -12,10 +12,11 @@
   early and the action still runs, and clicks during a transition are ignored
   (phaseRef is checked synchronously, before React re-renders).
 
-  While running (not paused), clicks outside the highlighted element are
-  stopped and answered with a hint, and anything marked data-tutorial-guard
-  (the save buttons) cannot be clicked or submitted, so practice never
-  saves real data. Pausing gives full control back.
+  While running (not paused), clicks are stopped and answered with a hint
+  unless the step asks for them (its highlighted element, on a step with
+  done or explore), and anything marked data-tutorial-guard (the save
+  buttons) cannot be clicked or submitted, so practice never saves real
+  data. Pausing gives full control back.
 */
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
@@ -38,6 +39,7 @@ import {
   findTarget,
   getDemoStepDuration,
   getNextAction,
+  isWayBack,
   matchesTarget,
   MOBILE_BREAKPOINT,
   placeDialogue,
@@ -51,12 +53,15 @@ const MISSING_AFTER_MS = 5000;
 const DONE_POLL_MS = 200;
 const SUCCESS_PAUSE_MS = 950;
 const POINTER_TRAVEL_MS = 800;
+const RESUME_WAIT_MS = 1500;
 const SPOTLIGHT_PADDING = 6;
 
 const PRAISE = ["Perfect!", "Nice work!", "That's it!", "Great job!", "Lovely!"];
 const SAVE_BLOCKED_NUDGE =
   "Saving is switched off while we practise, so nothing changes. Pause or end the tutorial to save for real.";
 const DEMO_NUDGE = "I'm showing you this one. Sit back, or press Pause to take over.";
+const LOOK_ONLY_NUDGE = "This one's just to look at. Press Next when you're ready, or Pause to try it yourself.";
+const RESUME_NUDGE = "That screen isn't open any more, so let's take it from the top.";
 
 function prefersReducedMotion() {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -68,11 +73,17 @@ function scrollTargetIntoView(element) {
   // On small screens the dialogue covers the lower part of the screen.
   const visibleBottom = window.innerHeight * (isDocked ? 0.55 : 1);
 
-  if (rect.top >= 8 && rect.bottom <= visibleBottom - 8) return;
+  const behavior = prefersReducedMotion() ? "auto" : "smooth";
+
+  if (rect.top >= 8 && rect.bottom <= visibleBottom - 8) {
+    // Tall enough to see, but it can still sit sideways inside a wide table (View Bookings on narrower screens).
+    element.scrollIntoView({ behavior, block: "nearest", inline: "nearest" });
+    return;
+  }
 
   const isTall = rect.height > visibleBottom * 0.8;
   element.scrollIntoView({
-    behavior: prefersReducedMotion() ? "auto" : "smooth",
+    behavior,
     block: isDocked || isTall ? "start" : "center",
     inline: "nearest",
   });
@@ -89,6 +100,11 @@ function canDemoClick(element) {
 function getTargetLabel(target) {
   const id = Array.isArray(target) ? target[0] : target;
   return TUTORIAL_TARGETS[id] || "the highlighted item";
+}
+
+function getFocusable(element) {
+  const controls = "button, a, input, select, textarea";
+  return element.matches(controls) ? element : element.querySelector(controls);
 }
 
 function stopEvent(event) {
@@ -126,6 +142,10 @@ export default function TutorialRunner({
   const directionRef = useRef("forward");
   const stepEnteredAtRef = useRef(0);
   const isDemoClickingRef = useRef(false);
+  const isResumingRef = useRef(startStep > 0);
+  const hasPausedRef = useRef(false);
+  const isKeyboardRef = useRef(false);
+  const skippedStepsRef = useRef(new Set());
   const { pathname } = useLocation();
   const routerPathRef = useRef(pathname);
 
@@ -135,6 +155,8 @@ export default function TutorialRunner({
 
   const step = steps[stepIndex];
   const isBusy = phase === "seeking" || phase === "working";
+  // A demoClick step opens the screen later steps are on: until it has happened, there is nothing to skip to.
+  const needsAction = Boolean(step.demoClick) && (isWaitingForAction || phase === "missing");
 
   function changePhase(next) {
     phaseRef.current = next;
@@ -143,7 +165,7 @@ export default function TutorialRunner({
 
   function goTo(nextIndex, direction = "forward") {
     if (nextIndex >= steps.length) {
-      onComplete();
+      onComplete(hasPausedRef.current);
       return;
     }
 
@@ -158,9 +180,13 @@ export default function TutorialRunner({
   }
 
   function handleNext() {
-    const action = getNextAction(phaseRef.current, isDemo);
+    const action = getNextAction(phaseRef.current, isDemo, needsAction);
 
-    if (action === "hurry") {
+    if (action === "wait") {
+      if (phaseRef.current !== "missing") {
+        setNudge(`Use the ${getTargetLabel(step.target)} to carry on, or press Pause to look around.`);
+      }
+    } else if (action === "hurry") {
       changePhase("working");
       runRef.current?.hurry();
     } else if (action === "retry") {
@@ -172,12 +198,25 @@ export default function TutorialRunner({
     }
   }
 
+  // Steps skipped on the way here (already done, e.g. Edit Entry on a Form booking) are skipped on the way back too.
+  function getPreviousIndex() {
+    let index = stepIndex - 1;
+    while (skippedStepsRef.current.has(index)) index -= 1;
+    return index;
+  }
+
   function handleBack() {
-    if (phaseRef.current === "seeking" || phaseRef.current === "working") return;
-    goTo(stepIndex - 1, "back");
+    if (phaseRef.current === "seeking" || phaseRef.current === "working" || !layout?.canGoBack) return;
+    goTo(getPreviousIndex(), "back");
+  }
+
+  function restart() {
+    skippedStepsRef.current.clear();
+    goTo(0);
   }
 
   function pause() {
+    hasPausedRef.current = true;
     setIsPaused(true);
     setNudge("");
   }
@@ -199,11 +238,15 @@ export default function TutorialRunner({
     const enteredForward = directionRef.current === "forward";
     // Relative checks (capture) compare against the moment the step began, so they never count as already done.
     const isAlreadyDone = () => !step.capture && step.done && checkStep(step.done, ctx);
-
-    if (enteredForward && isAlreadyDone()) {
+    // Only navigation is skipped: a field that already has a value is still taught, or Restart would pass it by.
+    const skipIfDone = () => {
+      if (!enteredForward || !step.demoClick || !isAlreadyDone()) return false;
+      skippedStepsRef.current.add(stepIndex);
       goTo(stepIndex + 1);
-      return;
-    }
+      return true;
+    };
+
+    if (skipIfDone()) return;
 
     // The router commits navigations in a transition, so the URL can change before the app does; a navigation
     // still pending when this step acts would undo it (e.g. close the booking just opened) once it lands.
@@ -212,16 +255,23 @@ export default function TutorialRunner({
     let element = findReadyTarget();
 
     while (!element) {
+      // A step saved from another screen can't be reached from here, and the steps that open it are behind us.
+      if (isResumingRef.current && Date.now() - seekStartedAt > RESUME_WAIT_MS) {
+        isResumingRef.current = false;
+        goTo(0);
+        setNudge(RESUME_NUDGE);
+        return;
+      }
+
       if (Date.now() - seekStartedAt > MISSING_AFTER_MS) changePhase("missing");
       await wait(SEEK_POLL_MS);
       if (run.cancelled) return;
       element = findReadyTarget();
     }
 
-    if (enteredForward && isAlreadyDone()) {
-      goTo(stepIndex + 1);
-      return;
-    }
+    isResumingRef.current = false;
+    if (phaseRef.current === "missing") setNudge("");
+    if (skipIfDone()) return;
 
     scrollTargetIntoView(element);
     stepEnteredAtRef.current = Date.now();
@@ -273,6 +323,11 @@ export default function TutorialRunner({
     if (!step.done || isAlreadyDone()) return;
 
     setIsWaitingForAction(true);
+    // The dialogue is last on the page, so keyboard users would otherwise tab through everything to get here.
+    // Never from a field: text steps move on after a pause in typing, and the rest of the word would land in the next one.
+    if (isKeyboardRef.current && !document.activeElement?.matches("input, textarea, select")) {
+      getFocusable(element)?.focus({ preventScroll: true });
+    }
     let lostSince = 0;
 
     while (!checkStep(step.done, ctx, start)) {
@@ -348,7 +403,7 @@ export default function TutorialRunner({
       pointer: pointer && { ...pointer, x: Math.round(pointer.x), y: Math.round(pointer.y) },
       isMoving: Date.now() - stepEnteredAtRef.current < 700,
       // The previous step's control is on an earlier screen (e.g. the spreadsheet behind an open booking).
-      canGoBack: stepIndex > 0 && Boolean(findTarget(steps[stepIndex - 1].target)),
+      canGoBack: getPreviousIndex() >= 0 && Boolean(findTarget(steps[getPreviousIndex()].target)),
     };
   });
 
@@ -385,10 +440,12 @@ export default function TutorialRunner({
     }
 
     if (event.type === "keydown") {
+      isKeyboardRef.current = true;
       if (event.key === "Escape" && !isPaused) pause();
       return;
     }
 
+    if (event.type === "pointerdown") isKeyboardRef.current = false;
     if (isPaused || isDemoClickingRef.current) return;
 
     const node = event.target;
@@ -405,9 +462,12 @@ export default function TutorialRunner({
       return;
     }
 
-    // While a target is missing, let people find their own way back.
-    if (phase === "missing") return;
-    if (!isDemo && phase === "active" && matchesTarget(node, step.target)) return;
+    // While a target is missing, let people find their own way back, but not reach controls that save.
+    if (phase === "missing" && isWayBack(node)) return;
+
+    const isOnTarget = matchesTarget(node, step.target);
+    // Highlighted areas can hold real actions (Incident Notes saves from the Overview), so only steps that ask for a click allow one.
+    if (!isDemo && phase === "active" && isOnTarget && (step.done || step.explore)) return;
 
     stopEvent(event);
 
@@ -416,7 +476,11 @@ export default function TutorialRunner({
       setNudge(
         isDemo
           ? DEMO_NUDGE
-          : `That's not the highlighted spot. Use the ${getTargetLabel(step.target)}, or press Pause to look around freely.`
+          : phase === "missing"
+            ? "That's not available here. Press Pause to look around freely."
+            : isOnTarget || !step.done
+              ? LOOK_ONLY_NUDGE
+              : `That's not the highlighted spot. Use the ${getTargetLabel(step.target)}, or press Pause to look around freely.`
       );
     }
   });
@@ -431,7 +495,7 @@ export default function TutorialRunner({
 
   useEffect(() => {
     dialogRef.current?.focus({ preventScroll: true });
-  }, []);
+  }, [isPaused]);
 
   /* ---------------------------------------------------------
      Render
@@ -447,14 +511,14 @@ export default function TutorialRunner({
           <span>You're in full control. Anything you save now is real.</span>
         </div>
 
-        <button className="tg-button tg-button-primary" type="button" onClick={resume}>
+        <button className="tg-button tg-button-primary" type="button" onClick={resume} autoFocus>
           <FaPlay aria-hidden="true" /> Resume
         </button>
 
         <button
           className="tg-icon-button"
           type="button"
-          onClick={() => onExit(stepIndex)}
+          onClick={() => onExit(stepIndex, hasPausedRef.current)}
           aria-label="End tutorial"
         >
           <FaTimes aria-hidden="true" />
@@ -537,7 +601,7 @@ export default function TutorialRunner({
           <button
             className="tg-icon-button"
             type="button"
-            onClick={() => onExit(stepIndex)}
+            onClick={() => onExit(stepIndex, hasPausedRef.current)}
             aria-label="End tutorial"
           >
             <FaTimes aria-hidden="true" />
@@ -556,7 +620,9 @@ export default function TutorialRunner({
               </p>
               <p>{step.missing || "It may be on another page, or this screen may have changed."}</p>
               <p className="tg-muted">
-                I'll keep looking. You can also skip this step{layout?.canGoBack ? " or go back one" : ""}.
+                {step.demoClick
+                  ? `I'll keep looking. The next steps need this one, so you can ${layout?.canGoBack ? "go back one, or " : ""}end the tutorial and try again later.`
+                  : `I'll keep looking. You can also skip this step${layout?.canGoBack ? " or go back one" : ""}.`}
               </p>
             </div>
           ) : phase === "failed" ? (
@@ -602,8 +668,7 @@ export default function TutorialRunner({
             className="tg-button"
             type="button"
             onClick={handleBack}
-            disabled={!layout?.canGoBack}
-            aria-disabled={isBusy || undefined}
+            aria-disabled={isBusy || !layout?.canGoBack || undefined}
             title={stepIndex > 0 && !layout?.canGoBack ? "The step before this was on another screen. Use Restart to begin again." : undefined}
           >
             <FaChevronLeft aria-hidden="true" /> Back
@@ -616,7 +681,7 @@ export default function TutorialRunner({
           <button
             className="tg-icon-button"
             type="button"
-            onClick={() => goTo(0)}
+            onClick={restart}
             aria-label="Restart tutorial"
             title="Restart"
           >
@@ -628,13 +693,13 @@ export default function TutorialRunner({
             className={`tg-button ${isWaitingForAction || phase === "missing" ? "" : "tg-button-primary"}`}
             type="button"
             onClick={handleNext}
-            aria-disabled={getNextAction(phase, isDemo) === "ignore" || undefined}
+            aria-disabled={["ignore", "wait"].includes(getNextAction(phase, isDemo, needsAction)) || undefined}
           >
             {phase === "failed"
               ? "Try again"
               : isLastStep
                 ? "Finish"
-                : isWaitingForAction || phase === "missing"
+                : (isWaitingForAction || phase === "missing") && !needsAction
                   ? "Skip"
                   : "Next"}
             <FaChevronRight aria-hidden="true" />
