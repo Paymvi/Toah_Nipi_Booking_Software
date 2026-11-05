@@ -23,11 +23,9 @@ import {
   FaSignOutAlt,
   FaUsers,
   FaDollarSign,
-  FaFileContract,
   FaInfoCircle,
   FaUtensils,
   FaHiking,
-  FaCheck,
   FaChevronDown,
   FaChevronLeft,
   FaChevronRight,
@@ -109,6 +107,11 @@ import GuestInquiriesView from "../pages/GuestInquiriesView";
 import StaffSignOutButton from "../components/StaffSignOutButton";
 
 import PortalAdminView from "../pages/PortalAdminView";
+import {
+  buildPortalUrl,
+  getPortalBaseUrl,
+  PORTAL_BASE_URL_MISSING_MESSAGE,
+} from "../utils/portalRules";
 
 
 import {
@@ -329,7 +332,12 @@ function parseBookingDietarySummary(summary = "") {
   };
 }
 
-function BookingMealsProgramOverview({ booking, details, setActiveTab }) {
+function BookingMealsProgramOverview({
+  booking,
+  details,
+  setActiveTab,
+  isLarge = false,
+}) {
   const mealPlanText = getOverviewDisplayValue(
     booking.meals
   );
@@ -376,35 +384,34 @@ function BookingMealsProgramOverview({ booking, details, setActiveTab }) {
     );
 
   const serviceTimes = [
-    getOverviewDisplayValue(
-      details?.breakfastTime,
-      parsedMealSummary.breakfastTime
-    ),
-    getOverviewDisplayValue(
-      details?.lunchTime,
-      parsedMealSummary.lunchTime
-    ),
-    getOverviewDisplayValue(
-      details?.dinnerTime,
-      parsedMealSummary.dinnerTime
-    ),
+    {
+      label: "Breakfast",
+      time: getOverviewDisplayValue(
+        details?.breakfastTime,
+        parsedMealSummary.breakfastTime
+      ),
+    },
+    {
+      label: "Lunch",
+      time: getOverviewDisplayValue(
+        details?.lunchTime,
+        parsedMealSummary.lunchTime
+      ),
+    },
+    {
+      label: "Dinner",
+      time: getOverviewDisplayValue(
+        details?.dinnerTime,
+        parsedMealSummary.dinnerTime
+      ),
+    },
   ];
 
-  const hasServiceTimes = serviceTimes.some(Boolean);
-
-  // The parser defaults per-meal counts to "0", so only trust them when the plan recorded totals.
-  const mealCounts = parsedMealSummary.totalMeals
-    ? [
-        parsedMealSummary.breakfastCount,
-        parsedMealSummary.lunchCount,
-        parsedMealSummary.dinnerCount,
-      ]
-    : ["—", "—", "—"];
-
-  const hasMealTable =
-    parsedMealSummary.dateRows.length > 0 ||
-    hasServiceTimes ||
-    hasOverviewDisplayValue(totalMeals);
+  const hasMealSummary =
+    hasOverviewDisplayValue(totalMeals) ||
+    hasOverviewDisplayValue(firstMeal) ||
+    hasOverviewDisplayValue(lastMeal) ||
+    serviceTimes.some(({ time }) => hasOverviewDisplayValue(time));
 
   const hasDietaryAlerts =
     parsedDietarySummary.items.length > 0 ||
@@ -415,10 +422,21 @@ function BookingMealsProgramOverview({ booking, details, setActiveTab }) {
     hasDietaryAlerts ||
     hasOverviewDisplayValue(mealNotesText) ||
     hasOverviewDisplayValue(needToKnowText) ||
-    hasMealTable;
+    hasMealSummary;
 
   if (!hasAnyContent) {
-    return (
+    return isLarge ? (
+      <BookingOverviewLargeSection
+        icon={FaUtensils}
+        eyebrow="Food Service"
+        title="Meals"
+        wide
+      >
+        <div className="booking-overview-program-empty">
+          No meal information has been added yet.
+        </div>
+      </BookingOverviewLargeSection>
+    ) : (
       <BookingOverviewEmptyRow
         icon={FaUtensils}
         title="Meals"
@@ -428,125 +446,274 @@ function BookingMealsProgramOverview({ booking, details, setActiveTab }) {
     );
   }
 
-  return (
-    <BookingOverviewSection icon={FaUtensils} title="Meals">
-      <div className="booking-compact-meals">
-        <div className="booking-compact-meals-plan">
-          <BookingOverviewFields
-            fields={[
-              { label: "First Meal", value: firstMeal },
-              { label: "Last Meal", value: lastMeal },
-            ]}
-          />
+  const emptyPanelAction = !isLarge && (
+    <BookingOverviewEditButton setActiveTab={setActiveTab} />
+  );
 
-          {hasMealTable ? (
-            <table className="booking-compact-sheet booking-compact-sheet-numeric booking-compact-meal-table">
-              <thead>
-                <tr>
-                  <th scope="col">Meal Service Plan</th>
-                  <th scope="col">Breakfast</th>
-                  <th scope="col">Lunch</th>
-                  <th scope="col">Dinner</th>
-                </tr>
-              </thead>
+  const mealContent = (
+    <>
+      {(isLarge || hasMealSummary) && (
+        <div className="booking-overview-program-summary">
+          <div className="booking-overview-program-summary-block">
+            <span className="booking-overview-program-summary-icon">
+              <FaUtensils />
+            </span>
 
-              <tbody>
-                {hasServiceTimes && (
-                  <tr className="booking-compact-sheet-subhead">
-                    <th scope="row">Service time</th>
-                    {serviceTimes.map((time, index) => (
-                      <td key={index}>{formatBookingOverviewTime(time)}</td>
-                    ))}
+            <div className="booking-overview-program-summary-copy">
+              <small>Total Meals</small>
+              <strong>{totalMeals || "—"}</strong>
+
+              {/* The parser defaults per-meal counts to "0", so only trust them when the plan recorded totals. */}
+              {parsedMealSummary.totalMeals && (
+                <span>
+                  (Breakfast: {parsedMealSummary.breakfastCount}, Lunch:{" "}
+                  {parsedMealSummary.lunchCount}, Dinner:{" "}
+                  {parsedMealSummary.dinnerCount})
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="booking-overview-program-summary-block">
+            <span className="booking-overview-program-summary-icon">
+              <FaConciergeBell />
+            </span>
+
+            <div className="booking-overview-program-summary-copy">
+              <small>First Meal</small>
+              <strong>{firstMeal || "—"}</strong>
+            </div>
+          </div>
+
+          <div className="booking-overview-program-summary-block">
+            <span className="booking-overview-program-summary-icon">
+              <FaClipboardList />
+            </span>
+
+            <div className="booking-overview-program-summary-copy">
+              <small>Last Meal</small>
+              <strong>{lastMeal || "—"}</strong>
+            </div>
+          </div>
+
+          <div className="booking-overview-program-summary-block">
+            <span className="booking-overview-program-summary-icon">
+              <FaClock />
+            </span>
+
+            <div className="booking-overview-program-summary-copy">
+              <small>Service Times</small>
+
+              <div className="booking-overview-program-service-times">
+                {serviceTimes.map(({ label, time }) => (
+                  <div key={label}>
+                    <strong>{formatBookingOverviewTime(time) || "—"}</strong>
+                    <span>{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="booking-overview-program-cards-row">
+        <div className="booking-overview-program-panel booking-overview-program-panel-meals">
+          <div className="booking-overview-program-panel-header">
+            <span className="booking-overview-program-panel-icon">
+              <FaCalendarAlt />
+            </span>
+
+            <div>
+              <h4>Meal Service Plan</h4>
+              <p>Detailed meal plan for this retreat.</p>
+            </div>
+          </div>
+
+          {parsedMealSummary.dateRows.length > 0 ? (
+            <div className="booking-overview-program-table-wrap">
+              <table className="booking-overview-program-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Breakfast</th>
+                    <th>Lunch</th>
+                    <th>Dinner</th>
                   </tr>
-                )}
+                </thead>
 
-                {parsedMealSummary.dateRows.map((row) => (
-                  <tr key={row.dateLabel}>
-                    <th scope="row">{row.dateLabel}</th>
-                    {[row.breakfast, row.lunch, row.dinner].map((isServed, index) => (
-                      <td key={index}>
-                        {isServed ? (
-                          <FaCheck className="booking-compact-meal-check" title="Served" />
+                <tbody>
+                  {parsedMealSummary.dateRows.map((row) => (
+                    <tr key={row.dateLabel}>
+                      <td className="booking-overview-program-date-cell">
+                        {row.dateLabel}
+                      </td>
+
+                      <td>
+                        {row.breakfast ? (
+                          <span className="booking-overview-meal-chip">
+                            Breakfast
+                          </span>
                         ) : (
-                          <span className="booking-compact-muted">—</span>
+                          <span className="booking-overview-program-dash">—</span>
                         )}
                       </td>
-                    ))}
-                  </tr>
-                ))}
 
-                {parsedMealSummary.dateRows.length === 0 && (
-                  <tr>
-                    <td className="booking-compact-muted" colSpan={4}>
-                      No detailed meal schedule added
-                    </td>
-                  </tr>
-                )}
-              </tbody>
+                      <td>
+                        {row.lunch ? (
+                          <span className="booking-overview-meal-chip">
+                            Lunch
+                          </span>
+                        ) : (
+                          <span className="booking-overview-program-dash">—</span>
+                        )}
+                      </td>
 
-              {hasOverviewDisplayValue(totalMeals) && (
-                <tfoot>
-                  <tr>
-                    <th scope="row">Total meals: {totalMeals}</th>
-                    {mealCounts.map((count, index) => (
-                      <td key={index}>{count}</td>
-                    ))}
-                  </tr>
-                </tfoot>
-              )}
-            </table>
+                      <td>
+                        {row.dinner ? (
+                          <span className="booking-overview-meal-chip booking-overview-meal-chip-dinner">
+                            Dinner
+                          </span>
+                        ) : (
+                          <span className="booking-overview-program-dash">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <BookingOverviewEmptyRow
-              title="Meal Service Plan"
-              explanation="A detailed meal schedule added in Create Booking will appear here."
-              action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
-            />
+            <div className="booking-overview-program-empty">
+              No detailed meal schedule has been added yet.
+              {emptyPanelAction}
+            </div>
           )}
         </div>
 
-        <div className="booking-compact-meals-notes">
-          {hasDietaryAlerts ? (
-            <div className="booking-compact-dietary">
-              <h4>
-                <FaExclamationTriangle aria-hidden="true" />
-                Dietary Alerts
-              </h4>
+        <div className="booking-overview-program-panel booking-overview-program-panel-diet">
+          <div className="booking-overview-program-panel-header">
+            <span className="booking-overview-program-panel-icon">
+              <FaShieldAlt />
+            </span>
 
+            <div>
+              <h4>Dietary Alerts</h4>
+              <p>Allergen and dietary information for this group.</p>
+            </div>
+          </div>
+
+          {hasDietaryAlerts ? (
+            <div className="booking-overview-dietary-table">
               {parsedDietarySummary.items.length > 0 && (
-                <ul>
-                  {parsedDietarySummary.items.map((item, index) => (
-                    <li key={`${item.label}-${index}`}>
-                      <strong>{item.quantity}</strong>
-                      <span>{item.label}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="booking-overview-dietary-table-head">
+                  <span>Dietary Item</span>
+                  <span>Quantity</span>
+                </div>
               )}
 
+              {parsedDietarySummary.items.map((item, index) => (
+                <div
+                  className="booking-overview-dietary-row"
+                  key={`${item.label}-${index}`}
+                >
+                  <span>{item.label}</span>
+                  <strong>{item.quantity}</strong>
+                </div>
+              ))}
+
               {parsedDietarySummary.additionalNotes && (
-                <p>{parsedDietarySummary.additionalNotes}</p>
+                <div className="booking-overview-dietary-alert-note">
+                  <strong>Additional Dietary Note</strong>
+                  <p>{parsedDietarySummary.additionalNotes}</p>
+                </div>
               )}
             </div>
           ) : (
-            <BookingOverviewEmptyRow
-              title="Dietary Alerts"
-              explanation="Allergen and dietary information added in Create Booking will appear here."
-              action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
-            />
+            <div className="booking-overview-program-empty">
+              No dietary alerts were added for this booking.
+              {emptyPanelAction}
+            </div>
           )}
-
-          <BookingOverviewFields
-            fields={[
-              { label: "Meal Notes", value: mealNotesText, multiline: true },
-              { label: "Need To Know", value: needToKnowText, multiline: true },
-            ]}
-          />
         </div>
       </div>
-    </BookingOverviewSection>
+
+      {(mealNotesText || needToKnowText) && (
+        <div className="booking-overview-program-panel booking-overview-program-panel-notes">
+          <div className="booking-overview-program-panel-header">
+            <span className="booking-overview-program-panel-icon">
+              <FaStickyNote />
+            </span>
+
+            <div>
+              <h4>Meal Notes</h4>
+              <p>Important details for food-service coordination.</p>
+            </div>
+          </div>
+
+          <div className="booking-overview-program-notes-grid">
+            {mealNotesText && (
+              <div className="booking-overview-program-note-block">
+                <div className="booking-overview-program-note-heading">
+                  <FaStickyNote />
+                  <span>Meal Notes</span>
+                </div>
+
+                <p className="booking-overview-program-note-value">
+                  {mealNotesText}
+                </p>
+              </div>
+            )}
+
+            {needToKnowText && (
+              <div className="booking-overview-program-note-block">
+                <div className="booking-overview-program-note-heading">
+                  <FaInfoCircle />
+                  <span>Need To Know</span>
+                </div>
+
+                <p className="booking-overview-program-note-value">
+                  {needToKnowText}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  if (!isLarge) {
+    return (
+      <BookingOverviewSection icon={FaUtensils} title="Meals">
+        <div className="booking-compact-meals">{mealContent}</div>
+      </BookingOverviewSection>
+    );
+  }
+
+  return (
+    <section className="booking-overview-card booking-overview-card-wide booking-overview-program-showcase">
+      <div className="booking-overview-program-header">
+        <div className="booking-overview-program-title">
+          <span className="booking-overview-program-title-icon">
+            <FaUtensils />
+          </span>
+
+          <div>
+            <p>Food Service</p>
+            <h3>Meals</h3>
+            <span>
+              Meal schedule, service times, dietary requirements,
+              and food-service notes.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {mealContent}
+    </section>
   );
 }
-
 
 function getBookingOverviewScheduleRows(value) {
   if (!Array.isArray(value)) {
@@ -4050,6 +4217,38 @@ function BookingOverviewSummary({ booking, dateSettings }) {
 }
 
 
+function BookingOverviewPortalLink({ booking }) {
+  const portalUrl = buildPortalUrl(booking.portalToken);
+
+  if (!portalUrl) {
+    return (
+      <span
+        className="booking-overview-portal-link booking-overview-portal-unavailable"
+        title={
+          getPortalBaseUrl()
+            ? "This booking has no portal token yet."
+            : PORTAL_BASE_URL_MISSING_MESSAGE
+        }
+      >
+        Guest Portal Unavailable
+      </span>
+    );
+  }
+
+  return (
+    <a
+      className="secondary-dashboard-button booking-overview-portal-link"
+      href={portalUrl}
+      target="_blank"
+      rel="noreferrer"
+    >
+      <FaExternalLinkAlt aria-hidden="true" />
+      Open Guest Portal
+    </a>
+  );
+}
+
+
 function BookingOverviewDensityControl({ density, onChange }) {
   return (
     <div
@@ -4131,352 +4330,6 @@ function BookingOverviewSourceData({
    LARGE OVERVIEW LAYOUT
    The original profile layout, kept as the Large density option.
 ========================================================= */
-
-
-function BookingMealsProgramLargeOverview({ booking, details }) {
-  const mealPlanText = getOverviewDisplayValue(
-    booking.meals
-  );
-
-  const dietaryText = getOverviewDisplayValue(
-    booking.foodAllergies
-  );
-
-  const mealNotesText = getOverviewDisplayValue(
-    details?.mealNotes
-  );
-
-  const needToKnowText =
-    String(booking.needToKnow || "").trim() !==
-    String(details?.mealNotes || "").trim()
-      ? getOverviewDisplayValue(
-          booking.needToKnow
-        )
-      : "";
-
-  const parsedMealSummary =
-    parseBookingMealSummary(mealPlanText);
-
-  const parsedDietarySummary =
-    parseBookingDietarySummary(dietaryText);
-
-  const totalMeals =
-    getOverviewDisplayValue(
-      details?.numberOfMeals,
-      parsedMealSummary.totalMeals,
-      booking.mealCount
-    ) || "—";
-
-  const firstMeal =
-    getOverviewDisplayValue(
-      details?.firstMeal,
-      parsedMealSummary.firstMeal
-    ) || "—";
-
-  const lastMeal =
-    getOverviewDisplayValue(
-      details?.lastMeal,
-      parsedMealSummary.lastMeal
-    ) || "—";
-
-  const breakfastTime =
-    formatBookingOverviewTime(
-      getOverviewDisplayValue(
-        details?.breakfastTime,
-        parsedMealSummary.breakfastTime
-      )
-    ) || "—";
-
-  const lunchTime =
-    formatBookingOverviewTime(
-      getOverviewDisplayValue(
-        details?.lunchTime,
-        parsedMealSummary.lunchTime
-      )
-    ) || "—";
-
-  const dinnerTime =
-    formatBookingOverviewTime(
-      getOverviewDisplayValue(
-        details?.dinnerTime,
-        parsedMealSummary.dinnerTime
-      )
-    ) || "—";
-
-  const breakfastCount =
-    getOverviewDisplayValue(
-      parsedMealSummary.breakfastCount
-    ) || "0";
-
-  const lunchCount =
-    getOverviewDisplayValue(
-      parsedMealSummary.lunchCount
-    ) || "0";
-
-  const dinnerCount =
-    getOverviewDisplayValue(
-      parsedMealSummary.dinnerCount
-    ) || "0";
-
-  const hasAnyContent =
-    hasOverviewDisplayValue(mealPlanText) ||
-    hasOverviewDisplayValue(dietaryText) ||
-    hasOverviewDisplayValue(mealNotesText) ||
-    hasOverviewDisplayValue(needToKnowText) ||
-    hasOverviewDisplayValue(details?.numberOfMeals) ||
-    hasOverviewDisplayValue(booking.mealCount);
-
-  if (!hasAnyContent) {
-    return null;
-  }
-
-  return (
-    <section className="booking-overview-card booking-overview-card-wide booking-overview-program-showcase">
-      <div className="booking-overview-program-header">
-        <div className="booking-overview-program-title">
-          <span className="booking-overview-program-title-icon">
-            <FaUtensils />
-          </span>
-
-          <div>
-            <p>Food Service</p>
-            <h3>Meals</h3>
-            <span>
-              Meal schedule, service times, dietary requirements,
-              and food-service notes.
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="booking-overview-program-summary">
-        <div className="booking-overview-program-summary-block">
-          <span className="booking-overview-program-summary-icon">
-            <FaUtensils />
-          </span>
-
-          <div className="booking-overview-program-summary-copy">
-            <small>Total Meals</small>
-            <strong>{totalMeals}</strong>
-            <span>
-              (Breakfast: {breakfastCount}, Lunch: {lunchCount}, Dinner:{" "}
-              {dinnerCount})
-            </span>
-          </div>
-        </div>
-
-        <div className="booking-overview-program-summary-block">
-          <span className="booking-overview-program-summary-icon">
-            <FaConciergeBell />
-          </span>
-
-          <div className="booking-overview-program-summary-copy">
-            <small>First Meal</small>
-            <strong>{firstMeal}</strong>
-          </div>
-        </div>
-
-        <div className="booking-overview-program-summary-block">
-          <span className="booking-overview-program-summary-icon">
-            <FaClipboardList />
-          </span>
-
-          <div className="booking-overview-program-summary-copy">
-            <small>Last Meal</small>
-            <strong>{lastMeal}</strong>
-          </div>
-        </div>
-
-        <div className="booking-overview-program-summary-block">
-          <span className="booking-overview-program-summary-icon">
-            <FaClock />
-          </span>
-
-          <div className="booking-overview-program-summary-copy">
-            <small>Service Times</small>
-
-            <div className="booking-overview-program-service-times">
-              <div>
-                <strong>{breakfastTime}</strong>
-                <span>Breakfast</span>
-              </div>
-
-              <div>
-                <strong>{lunchTime}</strong>
-                <span>Lunch</span>
-              </div>
-
-              <div>
-                <strong>{dinnerTime}</strong>
-                <span>Dinner</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="booking-overview-program-cards-row">
-        <div className="booking-overview-program-panel booking-overview-program-panel-meals">
-          <div className="booking-overview-program-panel-header">
-            <span className="booking-overview-program-panel-icon">
-              <FaCalendarAlt />
-            </span>
-
-            <div>
-              <h4>Meal Service Plan</h4>
-              <p>Detailed meal plan for this retreat.</p>
-            </div>
-          </div>
-
-          {parsedMealSummary.dateRows.length > 0 ? (
-            <div className="booking-overview-program-table-wrap">
-              <table className="booking-overview-program-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Breakfast</th>
-                    <th>Lunch</th>
-                    <th>Dinner</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {parsedMealSummary.dateRows.map((row) => (
-                    <tr key={row.dateLabel}>
-                      <td className="booking-overview-program-date-cell">
-                        {row.dateLabel}
-                      </td>
-
-                      <td>
-                        {row.breakfast ? (
-                          <span className="booking-overview-meal-chip">
-                            Breakfast
-                          </span>
-                        ) : (
-                          <span className="booking-overview-program-dash">—</span>
-                        )}
-                      </td>
-
-                      <td>
-                        {row.lunch ? (
-                          <span className="booking-overview-meal-chip">
-                            Lunch
-                          </span>
-                        ) : (
-                          <span className="booking-overview-program-dash">—</span>
-                        )}
-                      </td>
-
-                      <td>
-                        {row.dinner ? (
-                          <span className="booking-overview-meal-chip booking-overview-meal-chip-dinner">
-                            Dinner
-                          </span>
-                        ) : (
-                          <span className="booking-overview-program-dash">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="booking-overview-program-empty">
-              No detailed meal schedule has been added yet.
-            </div>
-          )}
-        </div>
-
-        <div className="booking-overview-program-panel booking-overview-program-panel-diet">
-          <div className="booking-overview-program-panel-header">
-            <span className="booking-overview-program-panel-icon">
-              <FaShieldAlt />
-            </span>
-
-            <div>
-              <h4>Dietary Alerts</h4>
-              <p>Allergen and dietary information for this group.</p>
-            </div>
-          </div>
-
-          {parsedDietarySummary.items.length > 0 ? (
-            <div className="booking-overview-dietary-table">
-              <div className="booking-overview-dietary-table-head">
-                <span>Dietary Item</span>
-                <span>Quantity</span>
-              </div>
-
-              {parsedDietarySummary.items.map((item, index) => (
-                <div
-                  className="booking-overview-dietary-row"
-                  key={`${item.label}-${index}`}
-                >
-                  <span>{item.label}</span>
-                  <strong>{item.quantity}</strong>
-                </div>
-              ))}
-
-              {parsedDietarySummary.additionalNotes && (
-                <div className="booking-overview-dietary-alert-note">
-                  <strong>Additional Dietary Note</strong>
-                  <p>{parsedDietarySummary.additionalNotes}</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="booking-overview-program-empty">
-              No dietary alerts were added for this booking.
-            </div>
-          )}
-        </div>
-      </div>
-
-      {(mealNotesText || needToKnowText) && (
-        <div className="booking-overview-program-panel booking-overview-program-panel-notes">
-          <div className="booking-overview-program-panel-header">
-            <span className="booking-overview-program-panel-icon">
-              <FaStickyNote />
-            </span>
-
-            <div>
-              <h4>Meal Notes</h4>
-              <p>Important details for food-service coordination.</p>
-            </div>
-          </div>
-
-          <div className="booking-overview-program-notes-grid">
-            {mealNotesText && (
-              <div className="booking-overview-program-note-block">
-                <div className="booking-overview-program-note-heading">
-                  <FaStickyNote />
-                  <span>Meal Notes</span>
-                </div>
-
-                <p className="booking-overview-program-note-value">
-                  {mealNotesText}
-                </p>
-              </div>
-            )}
-
-            {needToKnowText && (
-              <div className="booking-overview-program-note-block">
-                <div className="booking-overview-program-note-heading">
-                  <FaInfoCircle />
-                  <span>Need To Know</span>
-                </div>
-
-                <p className="booking-overview-program-note-value">
-                  {needToKnowText}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
 
 
 function BookingActivitiesLargeOverview({
@@ -5998,9 +5851,12 @@ const overviewLinenPieces =
 
   const statusFields = [
     {
-      label: "Status",
-      value: booking.status,
-      showEmpty: true,
+      label: "Recorded Status",
+      value:
+        String(booking.status || "").trim().toLowerCase() ===
+        getBookingDisplayState(booking).label.toLowerCase()
+          ? ""
+          : booking.status,
     },
 
     {
@@ -6095,6 +5951,12 @@ const overviewLinenPieces =
     )
       ? booking.archivePriorVisitLinks
       : [];
+
+  const hasTimelineCard = hasVisibleOverviewFields([
+    ...timelineFields,
+    ...statusFields,
+    ...cancellationFields,
+  ]);
 
 
   if (isLarge) {
@@ -6297,6 +6159,8 @@ const overviewLinenPieces =
               Edit Booking
             </button>
 
+            <BookingOverviewPortalLink booking={booking} />
+
           </div>
 
 
@@ -6352,24 +6216,6 @@ const overviewLinenPieces =
 
 
             {/* =====================================================
-                TIMELINE
-            ===================================================== */}
-
-            <BookingOverviewLargeSection
-              icon={FaCalendarAlt}
-              eyebrow="Administration"
-              title="Booking Timeline"
-              groups={[
-                {
-                  title: "Contract Dates",
-                  fields: timelineFields,
-                  columns: 2,
-                },
-              ]}
-            />
-
-
-            {/* =====================================================
                 PAYMENTS + DOCUMENTS
             ===================================================== */}
 
@@ -6377,6 +6223,8 @@ const overviewLinenPieces =
               icon={FaDollarSign}
               eyebrow="Administration"
               title="Payments & Documents"
+              wide
+              className="booking-overview-payments-card"
               groups={[
                 {
                   title: "Deposit & Documents",
@@ -6401,9 +6249,10 @@ const overviewLinenPieces =
                 MEALS
             ===================================================== */}
 
-            <BookingMealsProgramLargeOverview
+            <BookingMealsProgramOverview
               booking={booking}
               details={details}
+              isLarge
             />
 
 
@@ -6571,43 +6420,6 @@ const overviewLinenPieces =
 
 
             {/* =====================================================
-                BOOKING STATUS
-            ===================================================== */}
-
-            <BookingOverviewLargeSection
-              icon={FaFileContract}
-              eyebrow="Workflow"
-              title="Booking Status"
-              groups={[
-                {
-                  title: "Current State",
-                  fields: statusFields,
-                  columns: 2,
-                },
-                {
-                  title: "Cancellation",
-                  fields:
-                    cancellationFields,
-                  columns: 1,
-                },
-              ]}
-            />
-
-
-            {/* =====================================================
-                NOTES
-            ===================================================== */}
-
-            <BookingOverviewLargeSection
-              icon={FaInfoCircle}
-              eyebrow="Internal"
-              title="Additional Notes"
-              fields={notesFields}
-              columns={1}
-            />
-
-
-            {/* =====================================================
                 ARCHIVE
             ===================================================== */}
 
@@ -6657,18 +6469,62 @@ const overviewLinenPieces =
               </BookingOverviewLargeSection>
             )}
 
+
+            {/* =====================================================
+                TIMELINE
+            ===================================================== */}
+
+            <BookingOverviewLargeSection
+              icon={FaCalendarAlt}
+              eyebrow="Administration"
+              title="Booking Timeline"
+              groups={[
+                {
+                  title: "Contract Dates",
+                  fields: timelineFields,
+                  columns: 2,
+                },
+                {
+                  title: "Group Status",
+                  fields: statusFields,
+                  columns: 2,
+                },
+                {
+                  title: "Cancellation",
+                  fields: cancellationFields,
+                  columns: 1,
+                },
+              ]}
+            />
+
+
+            {/* =====================================================
+                NOTES
+            ===================================================== */}
+
+            <div
+              className={
+                hasTimelineCard
+                  ? "booking-overview-notes-stack"
+                  : "booking-overview-notes-stack booking-overview-card-wide"
+              }
+            >
+              <BookingOverviewLargeSection
+                icon={FaInfoCircle}
+                eyebrow="Internal"
+                title="Additional Notes"
+                fields={notesFields}
+                columns={1}
+              />
+
+              <BookingIncidentNotesCard
+                booking={booking}
+                onSaveBooking={onSaveBooking}
+                isLarge
+              />
+            </div>
+
           </div>
-
-
-          {/* ===================================================
-              INCIDENT NOTES
-          =================================================== */}
-
-          <BookingIncidentNotesCard
-            booking={booking}
-            onSaveBooking={onSaveBooking}
-            isLarge
-          />
 
 
           {/* ===================================================
@@ -6771,65 +6627,85 @@ const overviewLinenPieces =
         </div>
 
 
-        <div className="booking-compact-side">
-          <div className="booking-compact-column">
-            <BookingOverviewSection
-              icon={FaBed}
-              title="Housing & Linens"
-              actions={
-                <button
-                  className="secondary-dashboard-button booking-compact-action"
-                  type="button"
-                  onClick={() => setActiveTab("Housing")}
-                >
-                  Go to Housing
-                  <FaChevronRight aria-hidden="true" />
-                </button>
-              }
-            >
-              {isMasterRecord && (
-                <BookingOverviewFields
-                  fields={[
-                    {
-                      label: isHousingAuthoritative(booking)
-                        ? "Imported lodging note (reference only; the Housing tab is the lodging record)"
-                        : "Spreadsheet Lodging",
-                      value: details.importedLodgingText,
-                      multiline: true,
-                    },
-                    {
-                      label: "Spreadsheet Linen Instructions",
-                      value: details.importedLinenText,
-                      multiline: true,
-                    },
-                  ]}
-                />
-              )}
-
-              {hasAssignedLodging ? (
-                lodgingTable
-              ) : (
-                <BookingOverviewEmptyRow
-                  title="Buildings"
-                  label={isMasterRecord ? "None recorded" : "None assigned"}
-                  explanation="Assignments made on the Housing tab appear here. Building capacities:"
-                >
-                  {lodgingTable}
-                </BookingOverviewEmptyRow>
-              )}
-
-              <BookingOverviewFieldGroup
-                title="Linens"
+        <div className="booking-compact-column">
+          <BookingOverviewSection
+            icon={FaBed}
+            title="Housing & Linens"
+            actions={
+              <button
+                className="secondary-dashboard-button booking-compact-action"
+                type="button"
+                onClick={() => setActiveTab("Housing")}
+              >
+                Go to Housing
+                <FaChevronRight aria-hidden="true" />
+              </button>
+            }
+          >
+            {isMasterRecord && (
+              <BookingOverviewFields
                 fields={[
-                  { label: "Linen Option", value: overviewLinenOption, showEmpty: true },
-                  { label: "Linen Sets", value: overviewLinenSets, showEmpty: true },
-                  { label: "Linen Pieces", value: overviewLinenPieces, showEmpty: true },
+                  {
+                    label: isHousingAuthoritative(booking)
+                      ? "Imported lodging note (reference only; the Housing tab is the lodging record)"
+                      : "Spreadsheet Lodging",
+                    value: details.importedLodgingText,
+                    multiline: true,
+                  },
+                  {
+                    label: "Spreadsheet Linen Instructions",
+                    value: details.importedLinenText,
+                    multiline: true,
+                  },
                 ]}
               />
-            </BookingOverviewSection>
+            )}
 
-            <BookingOverviewSection icon={FaFileContract} title="Booking Status">
-              <BookingOverviewFields fields={statusFields} />
+            {hasAssignedLodging ? (
+              lodgingTable
+            ) : (
+              <BookingOverviewEmptyRow
+                title="Buildings"
+                label={isMasterRecord ? "None recorded" : "None assigned"}
+                explanation="Assignments made on the Housing tab appear here. Building capacities:"
+              >
+                {lodgingTable}
+              </BookingOverviewEmptyRow>
+            )}
+
+            <BookingOverviewFieldGroup
+              title="Linens"
+              fields={[
+                { label: "Linen Option", value: overviewLinenOption, showEmpty: true },
+                { label: "Linen Sets", value: overviewLinenSets, showEmpty: true },
+                { label: "Linen Pieces", value: overviewLinenPieces, showEmpty: true },
+              ]}
+            />
+          </BookingOverviewSection>
+
+          {paymentGroups.some((group) => hasVisibleOverviewFields(group.fields)) ? (
+            <BookingOverviewSection icon={FaDollarSign} title="Payments & Documents">
+              {paymentGroups.map((group) => (
+                <BookingOverviewFieldGroup key={group.title} {...group} />
+              ))}
+            </BookingOverviewSection>
+          ) : (
+            <BookingOverviewEmptyRow
+              icon={FaDollarSign}
+              title="Payments & Documents"
+              explanation="Rates, deposits, documents and billing amounts will appear here once they are recorded."
+              action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
+            />
+          )}
+
+          {hasTimelineCard ? (
+            <BookingOverviewSection icon={FaCalendarAlt} title="Booking Timeline">
+              <BookingOverviewFields fields={timelineFields} />
+
+              <BookingOverviewFieldGroup
+                title="Group Status"
+                fields={statusFields}
+              />
 
               <BookingOverviewFieldGroup
                 title="Cancellation"
@@ -6837,90 +6713,66 @@ const overviewLinenPieces =
                 className="booking-compact-cancellation"
               />
             </BookingOverviewSection>
-
-            {hasVisibleOverviewFields(notesFields) ? (
-              <BookingOverviewSection icon={FaInfoCircle} title="Additional Notes">
-                <BookingOverviewFields fields={notesFields} />
-              </BookingOverviewSection>
-            ) : (
-              <BookingOverviewEmptyRow
-                icon={FaInfoCircle}
-                title="Additional Notes"
-                explanation="Internal booking notes and import review messages will appear here."
-                action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
-              />
-            )}
-
-            <BookingIncidentNotesCard
-              booking={booking}
-              onSaveBooking={onSaveBooking}
+          ) : (
+            <BookingOverviewEmptyRow
+              icon={FaCalendarAlt}
+              title="Booking Timeline"
+              explanation="Inquiry and contract dates will appear here once they are recorded."
+              action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
             />
+          )}
 
-            {isArchiveRecord && (
-              <BookingOverviewSection icon={FaClock} title="Archive Information">
-                <BookingOverviewFields fields={archiveFields} />
+          {isArchiveRecord && (
+            <BookingOverviewSection icon={FaClock} title="Archive Information">
+              <BookingOverviewFields fields={archiveFields} />
 
-                {(booking.archiveSourcePdfLink ||
-                  archiveLinks.length > 0) && (
-                  <div className="booking-compact-archive-links">
-                    {booking.archiveSourcePdfLink && (
-                      <a
-                        href={booking.archiveSourcePdfLink}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <FaExternalLinkAlt aria-hidden="true" />
-                        Source PDF
-                      </a>
-                    )}
+              {(booking.archiveSourcePdfLink ||
+                archiveLinks.length > 0) && (
+                <div className="booking-compact-archive-links">
+                  {booking.archiveSourcePdfLink && (
+                    <a
+                      href={booking.archiveSourcePdfLink}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <FaExternalLinkAlt aria-hidden="true" />
+                      Source PDF
+                    </a>
+                  )}
 
-                    {archiveLinks.map((link, index) => (
-                      <a
-                        href={link}
-                        target="_blank"
-                        rel="noreferrer"
-                        key={`${link}-${index}`}
-                      >
-                        <FaExternalLinkAlt aria-hidden="true" />
-                        Prior Visit {index + 1}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </BookingOverviewSection>
-            )}
-          </div>
+                  {archiveLinks.map((link, index) => (
+                    <a
+                      href={link}
+                      target="_blank"
+                      rel="noreferrer"
+                      key={`${link}-${index}`}
+                    >
+                      <FaExternalLinkAlt aria-hidden="true" />
+                      Prior Visit {index + 1}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </BookingOverviewSection>
+          )}
 
+          {hasVisibleOverviewFields(notesFields) ? (
+            <BookingOverviewSection icon={FaInfoCircle} title="Additional Notes">
+              <BookingOverviewFields fields={notesFields} />
+            </BookingOverviewSection>
+          ) : (
+            <BookingOverviewEmptyRow
+              icon={FaInfoCircle}
+              title="Additional Notes"
+              explanation="Internal booking notes and import review messages will appear here."
+              action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
+            />
+          )}
 
-          <div className="booking-compact-column">
-            {hasVisibleOverviewFields(timelineFields) ? (
-              <BookingOverviewSection icon={FaCalendarAlt} title="Booking Timeline">
-                <BookingOverviewFields fields={timelineFields} />
-              </BookingOverviewSection>
-            ) : (
-              <BookingOverviewEmptyRow
-                icon={FaCalendarAlt}
-                title="Booking Timeline"
-                explanation="Inquiry and contract dates will appear here once they are recorded."
-                action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
-              />
-            )}
-
-            {paymentGroups.some((group) => hasVisibleOverviewFields(group.fields)) ? (
-              <BookingOverviewSection icon={FaDollarSign} title="Payments & Documents">
-                {paymentGroups.map((group) => (
-                  <BookingOverviewFieldGroup key={group.title} {...group} />
-                ))}
-              </BookingOverviewSection>
-            ) : (
-              <BookingOverviewEmptyRow
-                icon={FaDollarSign}
-                title="Payments & Documents"
-                explanation="Rates, deposits, documents and billing amounts will appear here once they are recorded."
-                action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
-              />
-            )}
-          </div>
+          <BookingIncidentNotesCard
+            booking={booking}
+            onSaveBooking={onSaveBooking}
+          />
         </div>
       </div>
 
@@ -7040,6 +6892,10 @@ function BookingDetailView({
             <FaCog />
             Date Display
           </button>
+
+          {isCompactOverview && (
+            <BookingOverviewPortalLink booking={booking} />
+          )}
 
           {isCompactOverview && (
             <button

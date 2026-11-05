@@ -1,7 +1,35 @@
 /*
-  Guest-portal rules shared by Portal Admin and backups (AUDIT-029,
+  Guest-portal rules shared by Portal Admin, Overview and backups (AUDIT-029,
   AUDIT-038, AUDIT-050, Q-016, Q-017, Q-018).
 */
+
+/*
+  A production build without VITE_GUEST_PORTAL_BASE_URL has no portal
+  address, so no link is built (AUDIT-022). Development builds keep the
+  local portal default.
+*/
+export const PORTAL_BASE_URL_MISSING_MESSAGE =
+  "The guest portal address (VITE_GUEST_PORTAL_BASE_URL) is not set for this build, so portal links cannot be created. Ask the site administrator to set it.";
+
+export function getPortalBaseUrl() {
+  const configured = String(import.meta.env.VITE_GUEST_PORTAL_BASE_URL || "").trim();
+
+  if (!configured && import.meta.env.PROD) {
+    return "";
+  }
+
+  return (configured || "http://localhost:5173").replace(/\/$/, "");
+}
+
+export function buildPortalUrl(portalToken) {
+  const baseUrl = getPortalBaseUrl();
+
+  if (!portalToken || !baseUrl) {
+    return "";
+  }
+
+  return `${baseUrl}/?portal=${portalToken}`;
+}
 
 /*
   Progress (Q-016): a guest submission waiting for review counts half of

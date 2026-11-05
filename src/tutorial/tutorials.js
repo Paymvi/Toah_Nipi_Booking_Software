@@ -222,8 +222,8 @@ export const TUTORIALS = [
       {
         id: "sections",
         target: "booking-overview-main",
-        say: "The rest of the booking is on this one page: guests, meals, activities, facilities, housing and linens, status, timeline, payments and notes.",
-        show: "This page has guests, meals, activities, facilities, housing and linens, status, timeline, payments and notes.",
+        say: "The rest of the booking is on this one page: guests, meals, activities, facilities, housing and linens, payments, timeline and notes.",
+        show: "This page has guests, meals, activities, facilities, housing and linens, payments, timeline and notes.",
       },
       {
         id: "edit-shortcut",

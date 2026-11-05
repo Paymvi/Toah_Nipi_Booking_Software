@@ -31,10 +31,13 @@ import {
   loadEmailAdmin,
 } from "../services/portalEmailService";
 import {
+  buildPortalUrl,
   getAlreadyAssignedDocumentIds,
   getAlreadyAssignedTaskIds,
   getDueDateWarning,
+  getPortalBaseUrl,
   getPortalProgress,
+  PORTAL_BASE_URL_MISSING_MESSAGE,
   portalItemHasGuestSubmission,
   sanitizePortalDocumentFileName,
 } from "../utils/portalRules";
@@ -978,51 +981,6 @@ async function insertCustomPortalDocument(
   return normalizePortalDocument(
     data
   );
-}
-
-
-/* =========================================================
-   PORTAL URL
-========================================================= */
-
-/*
-  A production build without VITE_GUEST_PORTAL_BASE_URL has no portal
-  address, so no link is built (AUDIT-022). Development builds keep the
-  local portal default.
-*/
-const PORTAL_BASE_URL_MISSING_MESSAGE =
-  "The guest portal address (VITE_GUEST_PORTAL_BASE_URL) is not set for this build, so portal links cannot be created. Ask the site administrator to set it.";
-
-function getPortalBaseUrl() {
-  const configured = String(
-    import.meta.env
-      .VITE_GUEST_PORTAL_BASE_URL || ""
-  ).trim();
-
-  if (!configured && import.meta.env.PROD) {
-    return "";
-  }
-
-  return (
-    configured ||
-    "http://localhost:5173"
-  ).replace(
-    /\/$/,
-    ""
-  );
-}
-
-
-function buildPortalUrl(
-  portalToken
-) {
-    const baseUrl = getPortalBaseUrl();
-
-  if (!portalToken || !baseUrl) {
-    return "";
-  }
-
-  return `${baseUrl}/?portal=${portalToken}`;
 }
 
 
