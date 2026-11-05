@@ -31,16 +31,23 @@
   A tutorial may also set `finished`: shown when a guided run ends, for what
   is left on screen now that saving works again.
 
-  Saving is blocked while a tutorial runs: any element with
-  data-tutorial-guard (Save Guest Group, Save Changes) cannot be clicked or
-  submitted until the tutorial is paused or ended.
+    Saving is blocked while a tutorial runs: any element with
+  data-tutorial-guard (Save Guest Group, Save Changes, every Portal Admin
+  action) cannot be clicked or submitted until the tutorial is paused or ended.
+
+  A long tutorial made of sections, each also offered as a topic of its own,
+  is built by composeWalkthrough: see portalTutorial.js.
 */
+
+import { PORTAL_TOPICS, PORTAL_WALKTHROUGH } from "./portalTutorial.js";
 
 export const TUTORIAL_TARGETS = {
   "nav-form": "Form button in the sidebar",
   "nav-master-spreadsheet": "Master Spreadsheet in the sidebar",
   "nav-calendar": "Main Calendar in the sidebar",
-  "nav-contacts": "Contacts in the sidebar",
+    "nav-contacts": "Contacts in the sidebar",
+  "nav-portals": "Portals in the sidebar",
+
 
   "booking-form-group-name": "Guest Group Name field",
   "booking-form-contact": "Primary Contact field",
@@ -84,7 +91,69 @@ export const TUTORIAL_TARGETS = {
   "contacts-sort": "First Name / Last Name sort",
   "contacts-view-bookings": "View Bookings button",
   "contacts-history": "booking history",
-  "contacts-deleted": "Deleted contacts button",
+    "contacts-deleted": "Deleted contacts button",
+
+  "portal-page": "Portal Progress page",
+  "portal-summary": "summary tiles",
+  "portal-toolbar": "Search and Status boxes",
+  "portal-search": "Search box",
+  "portal-status": "Status list",
+  "portal-loading": "loading message",
+  "portal-list": "list of groups",
+  "portal-card": "group's card",
+  "portal-status-pill": "group's status",
+  "portal-progress": "group's percentage",
+  "portal-metrics": "Complete, Review, Open and Docs counts",
+  "portal-checklist": "task list",
+  "portal-checklist-empty": "task list",
+  "portal-checklist-more": "button that shows the rest of the tasks",
+  "portal-item-review": "task that needs review",
+  "portal-item-inspect": "Open Upload or View Info button",
+  "portal-item-sent-back": "note under the task",
+  "portal-confirm": "Confirm button",
+  "portal-correct": "Correct… link",
+  "portal-correct-needsReview": "Correct… link on a task that needs review",
+  "portal-correct-completed": "Correct… link on a completed task",
+  "portal-due-input": "Due date box",
+  "portal-save-due": "Save due date button",
+  "portal-note": "Note to the guest box",
+  "portal-send-back": "Send back for changes button",
+  "portal-reopen": "Reopen task button",
+  "portal-remove-task": "Remove task button",
+  "portal-link": "Portal Link",
+  "portal-copy-link": "Copy Link button",
+  "portal-open-portal": "Open Portal button",
+  "portal-open-booking": "Open Booking button",
+  "portal-assign-tasks": "Assign Tasks button",
+  "portal-task-panel": "task list",
+  "portal-task-table": "approved task list",
+  "portal-task-selected": "ticked task",
+  "portal-task-count": "number of ticked tasks",
+  "portal-task-assign": "Assign Task button",
+  "portal-assign-documents": "Assign Documents button",
+  "portal-doc-panel": "document panel",
+  "portal-doc-remove": "Remove button",
+  "portal-doc-standard": "standard documents",
+  "portal-doc-count": "number of ticked documents",
+  "portal-doc-assign": "Assign Document button",
+  "portal-custom-upload": "Custom Staff Document section",
+  "portal-emails": "Emails button",
+  "portal-email-panel": "Portal emails panel",
+  "portal-email-state": "email status line",
+  "portal-email-recipients": "Recipients section",
+  "portal-email-items": "Which items send emails section",
+  "portal-email-enable": "Enable section",
+  "portal-email-send-now": "Send now section",
+  "portal-email-preview": "Preview section",
+  "portal-email-history": "History section",
+  "portal-email-card": "Guest portal emails card",
+  "portal-email-summary": "Guest portal emails heading",
+  "portal-email-mode": "Sending mode options",
+  "portal-email-automatic": "Automatic emails checkbox",
+  "portal-email-timing": "reminder timing note",
+  "portal-email-readiness": "Server readiness list",
+  "portal-email-templates": "Templates section",
+
 };
 
 export const TUTORIAL_DIFFICULTIES = ["Beginner", "Intermediate", "Advanced"];
@@ -445,8 +514,13 @@ export const TUTORIALS = [
         id: "deleted",
         target: "contacts-deleted",
         say: "Deleting a contact only hides them from this list, for everyone. Hidden contacts wait here and can be restored anytime.",
-        show: "Deleted contacts are only hidden. They can be restored from here at any time.",
+                show: "Deleted contacts are only hidden. They can be restored from here at any time.",
       },
     ],
   },
+
+  PORTAL_WALKTHROUGH,
 ];
+
+// Everything that can be started, including topics, which the library shows under their walkthrough.
+export const ALL_TUTORIALS = [...TUTORIALS, ...PORTAL_TOPICS];

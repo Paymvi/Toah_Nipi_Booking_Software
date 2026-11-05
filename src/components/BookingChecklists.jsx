@@ -401,7 +401,10 @@ export default function BookingChecklists({
   };
 
   return (
-    <section className="booking-checklist-page">
+    <section
+      className="booking-checklist-page"
+      data-tutorial-unsaved={newChecklistName.trim() || editingItemId || itemForm.title.trim() ? "a checklist item" : undefined}
+    >
       <article className="dashboard-card booking-checklist-card">
         <div className="booking-checklist-header">
           <div className="dashboard-heading-with-icon">

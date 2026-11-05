@@ -987,3 +987,72 @@
     display: none;
   }
 }
+
+/* ---------- Walkthrough topics ---------- */
+
+.tg-section-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #5a6b5f;
+}
+
+.tg-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tg-choices-list {
+  flex-direction: column;
+  max-height: 11.5rem;
+  overflow-y: auto;
+}
+
+.tg-choices-list .tg-button {
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+}
+
+.tg-choices-list small {
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.tg-topics {
+  margin-top: 6px;
+}
+
+.tg-topics summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tg-topics summary:focus-visible {
+  outline: 2px solid #3f6f52;
+  outline-offset: 2px;
+}
+
+.tg-topics summary small {
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.tg-topics h4 {
+  margin: 10px 10px 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.tg-topics .tg-tutorial-item {
+  width: 100%;
+  margin-bottom: 4px;
+}

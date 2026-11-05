@@ -4,6 +4,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import {
+    ALL_TUTORIALS,
   getCurrentMonthLabel,
   TUTORIAL_DIFFICULTIES,
   TUTORIAL_TARGETS,
@@ -11,10 +12,16 @@ import {
 } from "../src/tutorial/tutorials.js";
 import {
   checkStep,
-  clipRect,
+    clipRect,
+  composeWalkthrough,
   emptyProgress,
+  getContinueStep,
+  getDemoEffects,
   getDemoStepDuration,
   getNextAction,
+  getResumeStep,
+  getSectionAt,
+  getStepPosition,
   groupTutorialsByCategory,
   isWayBack,
   loadTutorialProgress,
@@ -27,6 +34,17 @@ import {
   withCompleted,
   withUnfinished,
 } from "../src/tutorial/tutorialCore.js";
+import { PORTAL_TOPICS, PORTAL_WALKTHROUGH } from "../src/tutorial/portalTutorial.js";
+import {
+  buildPortalDemoScene,
+  endPortalDemo,
+  getPortalDemo,
+  PORTAL_DEMO_GROUP_ID,
+  portalDemoEmailApi,
+  showPortalDemo,
+} from "../src/tutorial/portalDemo.js";
+import { guardedFetch, isRequestAllowed, setTutorialWriteLock } from "../src/tutorial/tutorialSafety.js";
+import { REMINDER_OPTIONS } from "../src/utils/portalEmail.js";
 
 function readSourceFiles(dir) {
   return readdirSync(dir).flatMap((name) => {
@@ -69,7 +87,7 @@ test("every tutorial is complete and uses registered targets", () => {
       const where = `${tutorial.id}/${step.id}`;
       const targets = Array.isArray(step.target) ? step.target : [step.target];
 
-      assert.ok(step.say && step.show, `${where} needs guided and demo text`);
+      assert.ok((step.say || step.demoOnly) && step.show, `${where} needs guided and demo text`);
       targets.forEach((id) => assert.ok(TUTORIAL_TARGETS[id], `${where} uses unregistered target ${id}`));
       if (step.done) assert.equal(typeof step.done, "function", where);
       if (step.capture) assert.ok(step.done, `${where} captures without a done check`);
@@ -77,8 +95,7 @@ test("every tutorial is complete and uses registered targets", () => {
   }
 });
 
-test("V1 ships three to five tutorials, each with at least one real interaction", () => {
-  assert.ok(TUTORIALS.length >= 3 && TUTORIALS.length <= 5);
+test("every tutorial has at least one real interaction", () => {
   for (const tutorial of TUTORIALS) {
     assert.ok(tutorial.steps.some((step) => step.done), `${tutorial.id} never waits for the person`);
   }
@@ -408,4 +425,267 @@ test("loaded progress drops unexpected fields", () => {
   });
 
   assert.deepEqual(loadTutorialProgress(storage).unfinished, { id: "calendar", step: 1, mode: "guided" });
+});
+
+/* ---------- Walkthroughs and topics ---------- */
+
+const stepText = (step) => [step.target, step.say, step.show];
+const textOf = (steps) => steps.map(stepText);
+
+test("every portal topic is the same steps as its part of the walkthrough", () => {
+  assert.equal(PORTAL_TOPICS.length, PORTAL_WALKTHROUGH.sections.length);
+
+  for (const topic of PORTAL_TOPICS) {
+    const section = PORTAL_WALKTHROUGH.sections.find((entry) => entry.id === topic.sectionId);
+    const part = PORTAL_WALKTHROUGH.steps.slice(section.start, section.end + 1);
+    assert.deepEqual(textOf(topic.steps), textOf(part), topic.id);
+    assert.equal(topic.steps.every((step) => step.sectionId === topic.sectionId), true, topic.id);
+  }
+});
+
+test("portal topics and the walkthrough all use registered targets and unique ids", () => {
+  const tutorialIds = new Set(ALL_TUTORIALS.map((tutorial) => tutorial.id));
+  assert.equal(tutorialIds.size, ALL_TUTORIALS.length);
+
+  for (const tutorial of [PORTAL_WALKTHROUGH, ...PORTAL_TOPICS]) {
+    assert.equal(new Set(tutorial.steps.map((step) => step.id)).size, tutorial.steps.length, tutorial.id);
+
+    for (const step of tutorial.steps) {
+      [step.target].flat().forEach((id) => assert.ok(TUTORIAL_TARGETS[id], `${tutorial.id}/${step.id}: ${id}`));
+      assert.ok(step.show && (step.say || step.demoOnly), `${tutorial.id}/${step.id}`);
+      (step.opens ?? []).forEach((opener) => assert.ok(TUTORIAL_TARGETS[opener.click], opener.click));
+    }
+  }
+});
+
+test("a topic starts by getting to its own screen, so it works from anywhere", () => {
+  for (const topic of PORTAL_TOPICS) {
+    assert.equal(topic.steps[0].target, "nav-portals", topic.id);
+    assert.equal(topic.steps[0].demoClick, true, topic.id);
+  }
+});
+
+test("steps that touch a group's card come after one has been chosen", () => {
+  for (const topic of PORTAL_TOPICS) {
+    const pick = topic.steps.findIndex((step) => step.pickScope);
+    const needsGroup = topic.steps.findIndex((step) => /^portal-(card|status-pill|progress|metrics|checklist|item|correct|assign|emails|link|copy|open)/.test([step.target].flat()[0]));
+    if (needsGroup >= 0) assert.ok(pick >= 0 && pick < needsGroup, topic.id);
+  }
+});
+
+test("section helpers find sections, resume points and the next topic", () => {
+  const { walkthrough, topics } = composeWalkthrough({
+    id: "w",
+    keywords: [],
+    intro: [{ id: "intro", target: "a" }],
+    recap: [{ id: "recap", target: "a" }],
+    sections: [
+      { id: "one", title: "One", keywords: ["x"], steps: [{ id: "p", prep: true }, { id: "a" }, { id: "b", demoOnly: true }] },
+      { id: "two", title: "Two", keywords: [], steps: [{ id: "p", prep: true }, { id: "a" }] },
+    ],
+  });
+
+  assert.deepEqual(walkthrough.steps.map((step) => step.id), ["intro", "one.p", "one.a", "one.b", "two.p", "two.a", "recap"]);
+  assert.equal(getSectionAt(walkthrough, 0), null);
+  assert.equal(getSectionAt(walkthrough, 3).id, "one");
+  assert.equal(getResumeStep(walkthrough, 3), 1);
+  assert.equal(getResumeStep(walkthrough, 5), 4);
+  assert.equal(getResumeStep(walkthrough, 99), walkthrough.recapStart);
+  assert.equal(getResumeStep(topics[1], 1), 0);
+  assert.equal(getContinueStep(walkthrough, "one"), 4);
+  assert.equal(getContinueStep(walkthrough, "two"), walkthrough.recapStart);
+  assert.equal(getResumeStep({ steps: [] }, 7), 7, "an ordinary tutorial keeps its saved step");
+});
+
+test("step numbers skip setup steps and steps for the other mode", () => {
+  const steps = [{ prep: true }, { id: "a" }, { demoOnly: true }, { id: "b" }];
+  assert.deepEqual(getStepPosition(steps, 0, false), { current: 1, total: 2 });
+  assert.deepEqual(getStepPosition(steps, 3, false), { current: 2, total: 2 });
+  assert.deepEqual(getStepPosition(steps, 3, true), { current: 3, total: 3 });
+});
+
+test("finishing a topic does not finish the walkthrough, and old progress still loads", () => {
+  const done = withCompleted(emptyProgress(), PORTAL_TOPICS[0].id);
+  assert.ok(done.completed[PORTAL_TOPICS[0].id]);
+  assert.equal(done.completed[PORTAL_WALKTHROUGH.id], undefined);
+
+  const unfinished = withUnfinished(emptyProgress(), PORTAL_WALKTHROUGH.id, 5, "guided");
+  assert.equal(withCompleted(unfinished, PORTAL_TOPICS[0].id).unfinished.id, PORTAL_WALKTHROUGH.id);
+
+  const old = JSON.stringify({ completed: { "create-booking": "2026-01-01" }, unfinished: { id: "calendar", step: 2, mode: "demo" } });
+  const loaded = loadTutorialProgress(memoryStorage({ [TUTORIAL_PROGRESS_STORAGE_KEY]: old }));
+  assert.equal(loaded.unfinished.id, "calendar");
+  assert.ok(loaded.completed["create-booking"]);
+});
+
+test("searching finds a topic by what it teaches", () => {
+  const ids = (query) => searchTutorials(ALL_TUTORIALS, query).map((tutorial) => tutorial.id);
+  assert.ok(ids("send back").includes("portal/send-back"));
+  assert.ok(ids("dry run").includes("portal/sending"));
+  assert.ok(ids("due date").includes("portal/due-dates"));
+});
+
+/* ---------- Portal practice is honest and can't write ---------- */
+
+const portalSteps = PORTAL_TOPICS.flatMap((topic) => topic.steps);
+
+test("a step on a control that saves never clicks it and never claims it happened", () => {
+  for (const step of portalSteps.filter((entry) => entry.writes)) {
+    assert.ok(!step.demoClick, step.id);
+    assert.ok(!(step.opens ?? []).some((opener) => opener.click === step.target), step.id);
+    assert.doesNotMatch(step.say, /\b(saved|assigned|sent|confirmed|done)!/i, step.id);
+  }
+});
+
+test("guided steps on real actions say they are switched off", () => {
+  const actions = ["portal-task-assign", "portal-doc-assign", "portal-save-due", "portal-send-back", "portal-reopen", "portal-remove-task", "portal-copy-link", "portal-email-send-now"];
+
+  for (const step of portalSteps.filter((entry) => actions.includes([entry.target].flat()[0]))) {
+    assert.match(step.say, /switched off/, step.id);
+  }
+});
+
+test("every control that saves or sends carries the practice guard", () => {
+  const portal = readFileSync("src/pages/PortalAdminView.jsx", "utf8");
+  const guarded = ["portal-save-due", "portal-send-back", "portal-reopen", "portal-remove-task", "portal-confirm", "portal-task-assign", "portal-doc-assign", "portal-doc-remove", "portal-copy-link", "portal-open-portal"];
+
+  for (const id of guarded) {
+    assert.match(portal, new RegExp(`data-tutorial-target="${id}"\\s+data-tutorial-guard`), id);
+  }
+
+  const panel = readFileSync("src/components/PortalEmailPanel.jsx", "utf8");
+  const buttons = panel.match(/<button[^>]*onClick=\{(?:handleSave|handleTestSend|\(\) => (?:handleAutomation|handleManualSend|onRetry)[^}]*)\}/g);
+  assert.ok(buttons.length >= 6);
+  buttons.forEach((button) => assert.match(button, /data-tutorial-guard/, button));
+  assert.match(panel, /aria-label="Sending mode" data-tutorial-target="portal-email-mode" data-tutorial-guard/);
+  assert.match(panel, /data-tutorial-target="portal-email-automatic" data-tutorial-guard/);
+});
+
+test("the email steps use the app's real labels and timings", () => {
+  const items = portalSteps.find((step) => step.id === "group-emails.items").say.toLowerCase();
+  REMINDER_OPTIONS.forEach((option) => assert.ok(items.includes(option.label.toLowerCase()), option.label));
+
+  const timing = portalSteps.find((step) => step.id === "sending.timing").say;
+  assert.match(timing, /9:00 New York time/);
+});
+
+test("the write lock lets reads through and refuses everything that changes data or sends", () => {
+  const base = "https://x.supabase.co";
+  const allowed = (level, method, path, body) => isRequestAllowed(base + path, method, body, level);
+
+  for (const level of ["practice", "demo"]) {
+    assert.equal(allowed(level, "GET", "/rest/v1/bookings"), true);
+    assert.equal(allowed(level, "POST", "/auth/v1/token?grant_type=refresh_token"), true);
+    assert.equal(allowed(level, "POST", "/rest/v1/rpc/current_staff_role"), true);
+    assert.equal(allowed(level, "PATCH", "/rest/v1/portal_checklist_items?id=eq.1"), false);
+    assert.equal(allowed(level, "POST", "/rest/v1/portal_documents"), false);
+    assert.equal(allowed(level, "DELETE", "/rest/v1/portal_documents?id=eq.1"), false);
+    assert.equal(allowed(level, "POST", "/rest/v1/rpc/anything_else"), false);
+    assert.equal(allowed(level, "POST", "/storage/v1/object/portal-uploads/a.pdf"), false);
+    assert.equal(allowed(level, "POST", "/storage/v1/object/move"), false);
+    for (const action of ["activate", "deactivate", "pause", "resume", "send", "testSend", "retry"]) {
+      assert.equal(allowed(level, "POST", "/functions/v1/portal-email", JSON.stringify({ action })), false, action);
+    }
+    assert.equal(allowed(level, "POST", "/functions/v1/portal-email", "not json"), false);
+    assert.equal(allowed(level, "POST", "/functions/v1/verify-dev-mode", "{}"), false);
+  }
+
+  assert.equal(allowed("practice", "POST", "/functions/v1/portal-email", '{"action":"overview"}'), true);
+  assert.equal(allowed("practice", "POST", "/storage/v1/object/sign/portal-uploads/a.pdf"), true);
+  assert.equal(allowed("demo", "POST", "/functions/v1/portal-email", '{"action":"overview"}'), false);
+  assert.equal(allowed("demo", "POST", "/storage/v1/object/sign/portal-uploads/a.pdf"), false);
+  assert.equal(allowed(null, "PATCH", "/rest/v1/bookings"), true);
+});
+
+test("a locked write is refused before fetch is called", async () => {
+  const realFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    return new Response("{}");
+  };
+
+  try {
+    setTutorialWriteLock("practice");
+    await assert.rejects(guardedFetch("https://x.supabase.co/rest/v1/bookings", { method: "PATCH" }), /Blocked by the tutorial/);
+    assert.equal(calls, 0);
+    await guardedFetch("https://x.supabase.co/rest/v1/bookings", {});
+    assert.equal(calls, 1);
+
+    setTutorialWriteLock(null);
+    await guardedFetch("https://x.supabase.co/rest/v1/bookings", { method: "PATCH" });
+    assert.equal(calls, 2);
+  } finally {
+    setTutorialWriteLock(null);
+    globalThis.fetch = realFetch;
+  }
+});
+
+/* ---------- The fictional scene ---------- */
+
+const demoGroup = (scene) => scene.records.find((record) => record.id === PORTAL_DEMO_GROUP_ID);
+const demoItem = (scene, id) => demoGroup(scene).checklistItems.find((item) => item.id === id);
+
+test("the fictional scene has what every topic needs to show", () => {
+  const scene = buildPortalDemoScene();
+  const statuses = demoGroup(scene).checklistItems.map((item) => item.status);
+
+  assert.ok(statuses.includes("needsReview") && statuses.includes("completed") && statuses.includes("waitingOnGuest"));
+  assert.ok(demoGroup(scene).checklistItems.length <= 5, "the first rows must fit before + more");
+  assert.equal(scene.records.filter((record) => record.progress.total === 0).length, 1, "a No Checklist group");
+  assert.ok(scene.records.every((record) => record.isDemo));
+});
+
+test("demo effects are all known and show a real outcome", () => {
+  const effects = portalSteps.flatMap((step) => step.demoEffect ?? []);
+  assert.ok(effects.length >= 6);
+  effects.forEach((name) => assert.doesNotThrow(() => buildPortalDemoScene([name]), name));
+
+  const base = demoGroup(buildPortalDemoScene()).progress.percent;
+  const percentAfter = (name) => demoGroup(buildPortalDemoScene([name])).progress.percent;
+  assert.ok(percentAfter("confirmItem") > base);
+  assert.ok(percentAfter("sendBack") < base);
+  assert.ok(percentAfter("reopenItem") < base);
+  assert.ok(percentAfter("assignTask") < base);
+  assert.equal(demoItem(buildPortalDemoScene(["sendBack"]), "demo-count").status, "waitingOnGuest");
+  assert.equal(demoItem(buildPortalDemoScene(["reopenItem"]), "demo-contract").status, "needsReview");
+  assert.equal(buildPortalDemoScene(["enableEmails"]).email.history[0].status, "simulated");
+});
+
+test("the same position always gives the same scene, so Back and Restart need no undo", () => {
+  const steps = PORTAL_WALKTHROUGH.steps;
+  const last = steps.length - 1;
+  const strip = (scene) => JSON.stringify(scene.records);
+
+  assert.equal(strip(buildPortalDemoScene(getDemoEffects(steps, last))), strip(buildPortalDemoScene(getDemoEffects(steps, last))));
+  assert.deepEqual(getDemoEffects(steps, 0), []);
+  assert.ok(getDemoEffects(steps, last).length > getDemoEffects(steps, Math.floor(last / 2)).length);
+});
+
+test("the fictional scene holds no real address or token, and its email api can't write", async () => {
+  const scene = buildPortalDemoScene(getDemoEffects(PORTAL_WALKTHROUGH.steps, PORTAL_WALKTHROUGH.steps.length));
+  const text = JSON.stringify(scene);
+
+  (text.match(/[\w.+-]+@[\w-]+\.[\w.]+/g) ?? []).forEach((email) => assert.match(email, /@example\.org$/, email));
+  scene.records.forEach((record) => assert.equal(record.portalToken, "fictional-demo"));
+
+  showPortalDemo([]);
+  try {
+    assert.ok((await portalDemoEmailApi.callPortalEmail("status")).readiness);
+    assert.ok((await portalDemoEmailApi.callPortalEmail("overview")).previews.welcome);
+    for (const action of ["activate", "send", "testSend", "retry", "pause", "resume"]) {
+      await assert.rejects(portalDemoEmailApi.callPortalEmail(action), /fictional/);
+    }
+    await assert.rejects(portalDemoEmailApi.updateEmailSettings({ mode: "live" }), /fictional/);
+    await assert.rejects(portalDemoEmailApi.saveEmailRecipients(), /fictional/);
+  } finally {
+    endPortalDemo();
+  }
+  assert.equal(getPortalDemo(), null);
+});
+
+test("only Portal Admin's screen reads the fictional scene", () => {
+  const readers = readSourceFiles("src").filter((source) => source.includes("getPortalDemo"));
+  assert.equal(readers.length, 1);
+  assert.match(readers[0], /useSyncExternalStore\(subscribePortalDemo, getPortalDemo\)/);
 });

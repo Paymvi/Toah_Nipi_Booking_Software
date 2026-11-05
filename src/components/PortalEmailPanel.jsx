@@ -1,17 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FaEnvelope, FaRedo } from "react-icons/fa";
 
-import {
-  callPortalEmail,
-  isMissingEmailSetup,
-  loadBookingEmailState,
-  loadEmailHistory,
-  newEmailRequestId,
-  saveEmailRecipients,
-  saveEmailTemplate,
-  saveItemEmailOptions,
-  updateEmailSettings,
-} from "../services/portalEmailService";
+import * as portalEmailService from "../services/portalEmailService";
 import {
   EMAIL_MODE_LABELS,
   EMAIL_TIME_ZONE,
@@ -26,11 +16,16 @@ import {
 } from "../utils/portalEmail";
 import "../styles/PortalEmail.css";
 
+const { isMissingEmailSetup, newEmailRequestId } = portalEmailService;
+
 /*
   Guest portal emails in Portal Admin (see docs/portal-email/SETUP.md).
   Nothing here sends on load or re-render: email goes out only from an
   explicit Save of the enable checkbox, a confirmed manual send, a test
-  send or a retry, and the server re-checks every one of them.
+    send or a retry, and the server re-checks every one of them.
+
+  api is the service these screens talk to. The tutorial's fictional demo
+  passes its own (portalDemoEmailApi), which has no network access.
 */
 
 const STATUS_LABELS = {
@@ -118,7 +113,7 @@ export function EmailHistoryList({ rows, showBooking = false, onRetry, busy }) {
             <span>{MODE_SHORT[row.mode] || row.mode}</span>
             <time dateTime={row.created_at}>{formatWhen(row.sent_at || row.created_at)}</time>
             {onRetry && (row.status === "failed" || row.status === "uncertain") && (
-              <button className="secondary-dashboard-button" type="button" disabled={Boolean(busy)} onClick={() => onRetry(row)}>
+              <button className="secondary-dashboard-button" type="button" data-tutorial-guard disabled={Boolean(busy)} onClick={() => onRetry(row)}>
                 <FaRedo /> Retry
               </button>
             )}
@@ -134,7 +129,7 @@ export function EmailHistoryList({ rows, showBooking = false, onRetry, busy }) {
    GLOBAL SETTINGS
 ========================================================= */
 
-function TemplateEditor({ templateKey, template, onSaved }) {
+function TemplateEditor({ templateKey, template, onSaved, api }) {
   const [subject, setSubject] = useState(template?.subject || "");
   const [body, setBody] = useState(template?.body || "");
   const [saving, setSaving] = useState(false);
@@ -148,7 +143,7 @@ function TemplateEditor({ templateKey, template, onSaved }) {
   async function handleSave() {
     setSaving(true);
     try {
-      await saveEmailTemplate(templateKey, subject, body);
+      await api.saveEmailTemplate(templateKey, subject, body);
       showNotice("Template saved.", "success");
       onSaved();
     } catch (error) {
@@ -176,7 +171,7 @@ function TemplateEditor({ templateKey, template, onSaved }) {
           ))}
         </ul>
       )}
-      <button className="secondary-dashboard-button" type="button" disabled={!changed || problems.length > 0 || saving} onClick={handleSave}>
+      <button className="secondary-dashboard-button" type="button" data-tutorial-guard disabled={!changed || problems.length > 0 || saving} onClick={handleSave}>
         {saving ? "Saving..." : "Save template"}
       </button>
       <Notice notice={notice} />
@@ -184,7 +179,7 @@ function TemplateEditor({ templateKey, template, onSaved }) {
   );
 }
 
-export function PortalEmailSettingsCard({ emailAdmin, onReload }) {
+export function PortalEmailSettingsCard({ emailAdmin, onReload, api = portalEmailService }) {
   const [readiness, setReadiness] = useState(null);
   const [readinessError, setReadinessError] = useState("");
   const [history, setHistory] = useState([]);
@@ -195,12 +190,12 @@ export function PortalEmailSettingsCard({ emailAdmin, onReload }) {
 
   async function refresh() {
     try {
-      setHistory(await loadEmailHistory({ limit: 25 }));
+      setHistory(await api.loadEmailHistory({ limit: 25 }));
     } catch {
       setHistory([]);
     }
     try {
-      setReadiness((await callPortalEmail("status")).readiness);
+      setReadiness((await api.callPortalEmail("status")).readiness);
       setReadinessError("");
     } catch (error) {
       setReadinessError(error.message);
@@ -259,7 +254,7 @@ export function PortalEmailSettingsCard({ emailAdmin, onReload }) {
       return;
     }
     run("mode", async () => {
-      await updateEmailSettings({ mode: next });
+      await api.updateEmailSettings({ mode: next });
       showNotice(`Mode changed to ${EMAIL_MODE_LABELS[next]}.`, "success");
       onReload();
     });
@@ -276,7 +271,7 @@ export function PortalEmailSettingsCard({ emailAdmin, onReload }) {
       return;
     }
     run("automation", async () => {
-      await updateEmailSettings({ automation_enabled: next });
+      await api.updateEmailSettings({ automation_enabled: next });
       onReload();
     });
   }
@@ -286,15 +281,15 @@ export function PortalEmailSettingsCard({ emailAdmin, onReload }) {
       return;
     }
     await run(row.id, async () => {
-      const result = await callPortalEmail("retry", { messageId: row.id });
+      const result = await api.callPortalEmail("retry", { messageId: row.id });
       showNotice(`Retry: ${STATUS_LABELS[result.results?.[0]?.status] || "done"}.`, "success");
       await refresh();
     });
   }
 
   return (
-    <details className="dashboard-card portal-email-settings">
-      <summary>
+    <details className="dashboard-card portal-email-settings" data-tutorial-target="portal-email-card">
+      <summary data-tutorial-target="portal-email-summary">
         <span className="portal-email-settings-title">
           <FaEnvelope /> Guest portal emails
         </span>
@@ -305,7 +300,7 @@ export function PortalEmailSettingsCard({ emailAdmin, onReload }) {
       <div className="portal-email-settings-body">
         <section>
           <h4>Sending mode</h4>
-          <div className="portal-email-mode-options" role="radiogroup" aria-label="Sending mode">
+          <div className="portal-email-mode-options" role="radiogroup" aria-label="Sending mode" data-tutorial-target="portal-email-mode" data-tutorial-guard>
             {Object.entries(EMAIL_MODE_LABELS).map(([mode, label]) => (
               <label key={mode}>
                 <input type="radio" name="portal-email-mode" checked={settings.mode === mode} disabled={Boolean(busy)} onChange={() => changeMode(mode)} />
@@ -315,11 +310,11 @@ export function PortalEmailSettingsCard({ emailAdmin, onReload }) {
           </div>
           <p className="portal-email-muted">{getModeNote(settings.mode)}</p>
 
-          <label className="portal-email-check">
+          <label className="portal-email-check" data-tutorial-target="portal-email-automatic" data-tutorial-guard>
             <input type="checkbox" checked={settings.automation_enabled} disabled={Boolean(busy)} onChange={toggleAutomation} />
             Automatic emails (notices and deadline reminders for enabled bookings)
           </label>
-          <p className="portal-email-muted">
+          <p className="portal-email-muted" data-tutorial-target="portal-email-timing">
             Deadline reminders go out on the first scheduled run at or after {REMINDER_PROCESSING_HOUR}:00 New York time. New-item and
             change notices wait a few minutes so several changes go in one email.
           </p>
@@ -336,10 +331,11 @@ export function PortalEmailSettingsCard({ emailAdmin, onReload }) {
             <button
               className="secondary-dashboard-button"
               type="button"
+              data-tutorial-guard
               disabled={cap === "" || Number(cap) === settings.live_cap_per_day || Boolean(busy)}
               onClick={() =>
                 run("cap", async () => {
-                  await updateEmailSettings({ live_cap_per_day: Number(cap) });
+                  await api.updateEmailSettings({ live_cap_per_day: Number(cap) });
                   setCap("");
                   onReload();
                 })
@@ -351,7 +347,7 @@ export function PortalEmailSettingsCard({ emailAdmin, onReload }) {
           <Notice notice={notice} />
         </section>
 
-        <section>
+        <section data-tutorial-target="portal-email-readiness">
           <h4>Server readiness</h4>
           {readinessError ? (
             <p className="portal-email-notice portal-email-notice-error">{readinessError}</p>
@@ -372,7 +368,7 @@ export function PortalEmailSettingsCard({ emailAdmin, onReload }) {
           )}
         </section>
 
-        <section>
+        <section data-tutorial-target="portal-email-templates">
           <h4>Templates</h4>
           <p className="portal-email-muted">
             Placeholders: {TEMPLATE_PLACEHOLDERS.map((name) => `{{${name}}}`).join(", ")}. From: Toah Nipi &lt;contactus@toahnipi.org&gt;.
@@ -383,6 +379,7 @@ export function PortalEmailSettingsCard({ emailAdmin, onReload }) {
               templateKey={key}
               template={emailAdmin.templates[key]}
               onSaved={onReload}
+              api={api}
             />
           ))}
         </section>
@@ -437,7 +434,7 @@ function getAutomationLabel(automation, settings) {
   return "On";
 }
 
-export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
+export default function PortalEmailPanel({ record, emailAdmin, onClose, api = portalEmailService }) {
   const settings = emailAdmin?.settings;
   const [state, setState] = useState(null);
   const [loadError, setLoadError] = useState("");
@@ -460,7 +457,7 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
 
   async function load() {
     try {
-      const next = await loadBookingEmailState(record.id);
+      const next = await api.loadBookingEmailState(record.id);
       setState(next);
       setDraft(buildDraft(next, record, Boolean(next.automation?.enabled && next.automation.mode_epoch === settings?.mode_epoch)));
       setLoadError("");
@@ -472,7 +469,7 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
       );
     }
     try {
-      setOverview(await callPortalEmail("overview", { bookingId: record.id }));
+      setOverview(await api.callPortalEmail("overview", { bookingId: record.id }));
       setOverviewError("");
     } catch (error) {
       setOverviewError(error.message);
@@ -583,13 +580,13 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
     }
 
     run("save", async () => {
-      await saveEmailRecipients(record.id, state.recipients, draft.recipients);
-      await saveItemEmailOptions(state.items, state.documents, draft.options);
+      await api.saveEmailRecipients(record.id, state.recipients, draft.recipients);
+      await api.saveItemEmailOptions(state.items, state.documents, draft.options);
       if (draft.enable && !active) {
-        const result = await callPortalEmail("activate", { bookingId: record.id });
+        const result = await api.callPortalEmail("activate", { bookingId: record.id });
         showNotice(`Portal emails enabled. Welcome email: ${describeResults(result.welcome)}`, "success");
       } else if (!draft.enable && active) {
-        await callPortalEmail("deactivate", { bookingId: record.id });
+        await api.callPortalEmail("deactivate", { bookingId: record.id });
         showNotice("Portal emails turned off for this booking. Turning them on again later does not resend the welcome email.", "success");
       } else {
         showNotice("Saved.", "success");
@@ -604,7 +601,7 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
         : `Pause automatic emails for ${record.organizationName}?`;
     if (!window.confirm(text)) return;
     run(action, async () => {
-      await callPortalEmail(action, { bookingId: record.id });
+      await api.callPortalEmail(action, { bookingId: record.id });
       showNotice(action === "resume" ? "Automatic emails resumed." : "Automatic emails paused.", "success");
     });
   }
@@ -629,7 +626,7 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
       pendingRequests.current[kind] = { key: requestKey, id: newEmailRequestId() };
     }
     run(kind, async () => {
-      const result = await callPortalEmail("send", {
+      const result = await api.callPortalEmail("send", {
         bookingId: record.id,
         kind,
         requestId: pendingRequests.current[kind].id,
@@ -647,7 +644,7 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
     }
     if (!pendingRequests.current.test) pendingRequests.current.test = { id: newEmailRequestId() };
     run("test", async () => {
-      const result = await callPortalEmail("testSend", {
+      const result = await api.callPortalEmail("testSend", {
         to: testTo,
         templateKey: testTemplate,
         bookingId: record.id,
@@ -662,18 +659,26 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
   function handleRetry(row) {
     if (!window.confirm(`Retry the email to ${row.recipient}?`)) return;
     run(row.id, async () => {
-      const result = await callPortalEmail("retry", { messageId: row.id });
+      const result = await api.callPortalEmail("retry", { messageId: row.id });
       showNotice(`Retry: ${describeResults(result.results)}`, "success");
     });
   }
 
   const preview = overview?.previews?.[previewKind];
+  const hasUnsavedChoices = Boolean(
+    draft && state && (newEmail.trim() || JSON.stringify(draft) !== JSON.stringify(buildDraft(state, record, active)))
+  );
   const testInboxes = overview?.readiness?.testAllowlist || [];
 
   return (
-    <section className="portal-email-panel" aria-label={`Portal emails for ${record.organizationName}`}>
+    <section
+      className="portal-email-panel"
+      aria-label={`Portal emails for ${record.organizationName}`}
+      data-tutorial-target="portal-email-panel"
+      data-tutorial-unsaved={hasUnsavedChoices ? "email choices in Portal Admin" : undefined}
+    >
       <header className="portal-email-panel-header">
-        <div>
+        <div data-tutorial-target="portal-email-state">
           <h4>
             <FaEnvelope /> Portal emails
           </h4>
@@ -696,7 +701,7 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
 
       {draft && state && (
         <>
-          <fieldset className="portal-email-section">
+          <fieldset className="portal-email-section" data-tutorial-target="portal-email-recipients">
             <legend>Recipients</legend>
             <p className="portal-email-muted">
               Anyone selected receives this group&apos;s private portal link and can view and submit everything in this group&apos;s portal. Select only
@@ -731,7 +736,7 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
             <Notice notice={addNotice} />
           </fieldset>
 
-          <fieldset className="portal-email-section">
+          <fieldset className="portal-email-section" data-tutorial-target="portal-email-items">
             <legend>Which items send emails</legend>
             <p className="portal-email-muted">
               Everything starts off. Reminders need a due date and stop when the retreat starts or the task no longer needs the guest (submitted,
@@ -795,7 +800,7 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
             </ul>
           </fieldset>
 
-          <fieldset className="portal-email-section portal-email-activate">
+          <fieldset className="portal-email-section portal-email-activate" data-tutorial-target="portal-email-enable">
             <legend>Enable</legend>
             <label className="portal-email-check">
               <input
@@ -812,16 +817,16 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
               does not resend it.
             </p>
             <div className="portal-email-actions">
-              <button className="primary-dashboard-button" type="button" disabled={Boolean(busy)} onClick={handleSave}>
+              <button className="primary-dashboard-button" type="button" data-tutorial-guard disabled={Boolean(busy)} onClick={handleSave}>
                 {busy === "save" ? "Saving..." : "Save"}
               </button>
               {active && !automation.paused && !automation.stopped_reason && (
-                <button className="secondary-dashboard-button" type="button" disabled={Boolean(busy)} onClick={() => handleAutomation("pause")}>
+                <button className="secondary-dashboard-button" type="button" data-tutorial-guard disabled={Boolean(busy)} onClick={() => handleAutomation("pause")}>
                   Pause
                 </button>
               )}
               {active && (automation.paused || automation.stopped_reason) && (
-                <button className="secondary-dashboard-button" type="button" disabled={Boolean(busy)} onClick={() => handleAutomation("resume")}>
+                <button className="secondary-dashboard-button" type="button" data-tutorial-guard disabled={Boolean(busy)} onClick={() => handleAutomation("resume")}>
                   Resume
                 </button>
               )}
@@ -829,20 +834,20 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
             <Notice notice={notice} />
           </fieldset>
 
-          <fieldset className="portal-email-section">
+          <fieldset className="portal-email-section" data-tutorial-target="portal-email-send-now">
             <legend>Send now</legend>
             <p className="portal-email-muted">Goes to the saved, selected recipients and follows the current mode. Marked as manual in the history.</p>
             <div className="portal-email-actions">
-              <button className="secondary-dashboard-button" type="button" disabled={Boolean(busy) || Boolean(overview?.ineligibleReason)} onClick={() => handleManualSend("welcome")}>
+              <button className="secondary-dashboard-button" type="button" data-tutorial-guard disabled={Boolean(busy) || Boolean(overview?.ineligibleReason)} onClick={() => handleManualSend("welcome")}>
                 {busy === "welcome" ? "Sending..." : "Resend welcome..."}
               </button>
-              <button className="secondary-dashboard-button" type="button" disabled={Boolean(busy) || Boolean(overview?.ineligibleReason)} onClick={() => handleManualSend("reminder")}>
+              <button className="secondary-dashboard-button" type="button" data-tutorial-guard disabled={Boolean(busy) || Boolean(overview?.ineligibleReason)} onClick={() => handleManualSend("reminder")}>
                 {busy === "reminder" ? "Sending..." : "Send reminder now..."}
               </button>
             </div>
           </fieldset>
 
-          <fieldset className="portal-email-section">
+          <fieldset className="portal-email-section" data-tutorial-target="portal-email-preview">
             <legend>Preview (nothing is sent)</legend>
             <div className="portal-email-actions" role="tablist" aria-label="Email preview">
               {[
@@ -916,7 +921,7 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
                   <input type="checkbox" checked={testUseRealData} onChange={(event) => setTestUseRealData(event.target.checked)} />
                   Use this booking&apos;s real data and private link (otherwise a synthetic sample)
                 </label>
-                <button className="secondary-dashboard-button" type="button" disabled={!testTo || Boolean(busy)} onClick={handleTestSend}>
+                <button className="secondary-dashboard-button" type="button" data-tutorial-guard disabled={!testTo || Boolean(busy)} onClick={handleTestSend}>
                   {busy === "test" ? "Sending..." : "Send test"}
                 </button>
                 {testTo && <p className="portal-email-muted">Test delivery goes only to {testTo}{settings.mode === "disabled" ? " (dry run: simulated, not sent)" : ""}.</p>}
@@ -924,7 +929,7 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose }) {
             )}
           </fieldset>
 
-          <fieldset className="portal-email-section">
+          <fieldset className="portal-email-section" data-tutorial-target="portal-email-history">
             <legend>History</legend>
             <EmailHistoryList rows={state.history} onRetry={handleRetry} busy={busy} />
           </fieldset>

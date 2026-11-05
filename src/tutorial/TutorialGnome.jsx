@@ -1,8 +1,9 @@
 /*
   The tutorial gnome: floating launcher (bottom-right of the staff app), the
-  help panel that opens above it, and the hand-off to TutorialRunner. A
+    help panel that opens above it, and the hand-off to TutorialRunner. A
   demonstration puts the screen back afterwards, unless the person paused it
-  and took over.
+  and took over. Starting anything that would leave unsaved work behind asks
+  first, however it was started.
 
   Mounted once in App.jsx inside StaffAuthGate, so it is on every staff
   view and never on the login screen. (The guest portal is a separate app.)
@@ -19,7 +20,8 @@ import {
   FaChevronRight,
   FaClipboardList,
   FaEye,
-  FaHandPointer,
+    FaHandPointer,
+  FaKey,
   FaSearch,
   FaTimes,
   FaUsers,
@@ -27,10 +29,15 @@ import {
 
 import GnomeMascot from "./GnomeMascot";
 import TutorialRunner from "./TutorialRunner";
-import { TUTORIALS } from "./tutorials";
+import { ALL_TUTORIALS, TUTORIALS } from "./tutorials";
 import {
-  findTarget,
+    findTarget,
+  getContinueStep,
+  getResumeStep,
+  getStepPosition,
+  getUnsavedWork,
   groupTutorialsByCategory,
+  isShown,
   loadTutorialProgress,
   saveTutorialProgress,
   searchTutorials,
@@ -41,10 +48,12 @@ import {
 const CATEGORY_ICONS = {
   Bookings: FaClipboardList,
   Calendar: FaCalendarAlt,
-  Contacts: FaUsers,
+    Contacts: FaUsers,
+  Portals: FaKey,
 };
 
 const EXIT_MESSAGE_MS = 4500;
+const FICTIONAL_GONE = "The fictional group is gone. Everything on screen now is real.";
 
 function getStorage() {
   try {
@@ -77,6 +86,20 @@ function captureScreen() {
   };
 }
 
+// The group someone is already working on, so a portal tutorial needn't ask: an open booking, an open card, or a list searched down to one.
+function getCurrentGroup() {
+  const booking = document.querySelector("[data-tutorial-booking-id]");
+  if (booking && isShown(booking)) return booking.dataset.tutorialBookingId;
+
+  const cards = Array.from(document.querySelectorAll("[data-tutorial-scope]")).filter(isShown);
+  const card = cards.find((entry) => "tutorialActive" in entry.dataset) ?? (cards.length === 1 ? cards[0] : null);
+  return card?.dataset.tutorialScope ?? null;
+}
+
+function getStepCount(tutorial) {
+  return getStepPosition(tutorial.steps, 0, false).total;
+}
+
 export default function TutorialGnome() {
   const navigate = useNavigate();
   // closed | panel | running | complete
@@ -87,14 +110,20 @@ export default function TutorialGnome() {
   const [progress, setProgress] = useState(readProgress);
   const [isLauncherHovered, setIsLauncherHovered] = useState(false);
   const [hopCount, setHopCount] = useState(0);
-  const [launcherMessage, setLauncherMessage] = useState("");
+    const [launcherMessage, setLauncherMessage] = useState("");
+  const [pendingStart, setPendingStart] = useState(null);
+
 
   const launcherRef = useRef(null);
   const messageTimerRef = useRef(0);
   const screenToRestoreRef = useRef(null);
 
-  const tutorialsById = Object.fromEntries(TUTORIALS.map((tutorial) => [tutorial.id, tutorial]));
-  const visibleGroups = groupTutorialsByCategory(searchTutorials(TUTORIALS, query));
+    const tutorialsById = Object.fromEntries(ALL_TUTORIALS.map((tutorial) => [tutorial.id, tutorial]));
+  const matchedIds = new Set(searchTutorials(ALL_TUTORIALS, query).map((tutorial) => tutorial.id));
+  const getShownTopics = (tutorial) => (tutorial.topics ?? []).filter((topic) => matchedIds.has(topic.id));
+  const visibleGroups = groupTutorialsByCategory(
+    TUTORIALS.filter((tutorial) => matchedIds.has(tutorial.id) || getShownTopics(tutorial).length > 0)
+  );
   const unfinished = progress.unfinished && tutorialsById[progress.unfinished.id] ? progress.unfinished : null;
 
   function updateProgress(next) {
@@ -110,8 +139,9 @@ export default function TutorialGnome() {
 
   function openPanel() {
     setHopCount((count) => count + 1);
-    setLauncherMessage("");
+        setLauncherMessage("");
     setDetail(null);
+    setPendingStart(null);
     setView("panel");
   }
 
@@ -121,44 +151,80 @@ export default function TutorialGnome() {
   }
 
   function openDetail(tutorial) {
-    setDetail({
-      id: tutorial.id,
-      // Leaving the Form or the Edit tab clears what was typed there (existing app behaviour).
-      hasOpenForm: Boolean(findTarget(["booking-form-save", "booking-edit-ready"])),
-    });
+        setDetail({ id: tutorial.id });
   }
 
-  function startTutorial(tutorial, mode, startStep = 0) {
+  function beginRun(tutorial, mode, startStep, scope, screen) {
+    screenToRestoreRef.current = null;
     updateProgress(withUnfinished(progress, tutorial.id, startStep, mode));
-    setRun({ tutorial, mode, startStep, key: Date.now(), screen: captureScreen() });
+    setRun({ tutorial, mode, startStep, scope, key: Date.now(), screen });
+    setPendingStart(null);
     setView("running");
   }
 
-  // Never after a pause: anything on screen by then is the person's own work.
-  function queueRestore(hasPaused) {
-    if (run?.mode === "demo" && !hasPaused) screenToRestoreRef.current = run?.screen;
+  function startTutorial(tutorial, mode, startStep = 0) {
+    const scope = tutorial.scenario ? getCurrentGroup() : null;
+    const screen = screenToRestoreRef.current ?? captureScreen();
+    const begin = () => beginRun(tutorial, mode, startStep, scope, screen);
+
+    // A fictional demo on its own page leaves the real screen, drafts included, hidden underneath.
+    const staysOnScreen = mode === "demo" && window.location.pathname === tutorial.scenario?.home;
+    const unsaved = staysOnScreen ? [] : getUnsavedWork();
+
+    if (unsaved.length > 0) {
+      setPendingStart({ title: tutorial.title, unsaved, begin });
+      setView("panel");
+      return;
+    }
+
+    begin();
   }
 
+  function continueWalkthrough() {
+    const walkthrough = tutorialsById[run?.tutorial.parentId];
+    beginRun(
+      walkthrough,
+      run?.mode,
+      getContinueStep(walkthrough, run?.tutorial.sectionId),
+      run?.scope,
+      screenToRestoreRef.current ?? run?.screen
+    );
+  }
+
+  // Never after a pause: anything on screen by then is the person's own work.
+  function queueRestore(leaveAsIs) {
+    if (run?.mode === "demo" && !leaveAsIs) screenToRestoreRef.current = run?.screen;
+  }
+
+
   // run?. throughout: the React Compiler reads these closures' dependencies during render, while run can be null.
-  function handleExit(stepIndex, hasPaused) {
+    function handleExit(stepIndex, leaveAsIs) {
     updateProgress(withUnfinished(progress, run?.tutorial.id, stepIndex, run?.mode));
-    queueRestore(hasPaused);
-    const note = run?.mode === "guided" ? run?.tutorial.finished : "";
+    queueRestore(leaveAsIs);
+    const note = run?.mode === "guided" ? run?.tutorial.finished : run?.tutorial.scenario ? FICTIONAL_GONE : "";
     setRun(null);
     setView("closed");
     showLauncherMessage(note || "No problem! Click me anytime to pick up where you left off.");
   }
 
-  function handleComplete(hasPaused) {
+    function handleComplete(leaveAsIs, scope) {
     updateProgress(withCompleted(progress, run?.tutorial.id));
-    queueRestore(hasPaused);
+    queueRestore(leaveAsIs);
+    setRun({ ...run, scope });
     setView("complete");
+  }
+
+  // Back in the running tutorial, on a fictional screen, with the same restore point.
+  function watchDemo(stepIndex) {
+    const start = getResumeStep(run?.tutorial, stepIndex);
+    beginRun(run?.tutorial, "demo", start, null, run?.screen);
   }
 
   // After the runner has gone, so its click guard can't stop these. Uses the app's own controls, so views reset as they do for a person.
   useEffect(() => {
-    const screen = screenToRestoreRef.current;
-    if (!screen || view === "running") return;
+        const screen = screenToRestoreRef.current;
+    // A finished topic may continue into the walkthrough, so it waits for the person's answer.
+    if (!screen || view === "running" || (view === "complete" && run?.tutorial.parentId)) return;
     screenToRestoreRef.current = null;
 
     const openBookingName = getOpenBookingName();
@@ -171,7 +237,7 @@ export default function TutorialGnome() {
 
     if (openBookingName) findTarget("booking-back")?.click();
     navigate(screen.path);
-  }, [view, navigate]);
+    }, [view, navigate, run]);
 
   // Close the panel on Escape or a click elsewhere on the page.
   useEffect(() => {
@@ -203,7 +269,9 @@ export default function TutorialGnome() {
         key={run.key}
         tutorial={run.tutorial}
         mode={run.mode}
-        startStep={run.startStep}
+                startStep={run.startStep}
+        startScope={run.scope}
+        onWatchDemo={watchDemo}
         onStepChange={(stepIndex) =>
           updateProgress(withUnfinished(progress, run?.tutorial.id, stepIndex, run?.mode))
         }
@@ -232,16 +300,22 @@ export default function TutorialGnome() {
             You finished <strong>{run.tutorial.title}</strong>. Replay it anytime from my help station.
           </p>
 
-          {run.mode === "guided" && run.tutorial.finished && (
+                    {(run.mode === "guided" ? run.tutorial.finished : run.tutorial.scenario && FICTIONAL_GONE) && (
             <p className="tg-warning" role="note">
-              {run.tutorial.finished}
+              {run.mode === "guided" ? run.tutorial.finished : FICTIONAL_GONE}
             </p>
           )}
 
           <div className="tg-complete-actions">
-            <button className="tg-button" type="button" onClick={() => startTutorial(run?.tutorial, run?.mode)}>
-              Replay
-            </button>
+            {run.tutorial.parentId ? (
+              <button className="tg-button" type="button" onClick={continueWalkthrough}>
+                Continue the full walkthrough
+              </button>
+            ) : (
+              <button className="tg-button" type="button" onClick={() => startTutorial(run?.tutorial, run?.mode)}>
+                Replay
+              </button>
+            )}
             <button className="tg-button" type="button" onClick={openPanel}>
               More tutorials
             </button>
@@ -278,17 +352,33 @@ export default function TutorialGnome() {
             </button>
           </header>
 
-          {detailTutorial ? (
+                    {pendingStart ? (
+            <div className="tg-detail">
+              <h3>Before we start</h3>
+              <p className="tg-warning" role="alert">
+                You have unsaved work: {pendingStart.unsaved.join(", ")}. "{pendingStart.title}" may leave this screen, and
+                anything not saved would be lost.
+              </p>
+              <div className="tg-complete-actions">
+                <button className="tg-button tg-button-primary" type="button" onClick={closePanel} autoFocus>
+                  Go back and save it
+                </button>
+                <button className="tg-button" type="button" onClick={() => pendingStart?.begin()}>
+                  Start anyway
+                </button>
+              </div>
+            </div>
+          ) : detailTutorial ? (
             <div className="tg-detail">
               <button className="tg-back-link" type="button" onClick={() => setDetail(null)}>
                 <FaArrowLeft aria-hidden="true" /> All tutorials
               </button>
 
               <h3>{detailTutorial.title}</h3>
-              <p>{detailTutorial.description}</p>
+                            <p>{detailTutorial.description}</p>
 
               <p className="tg-meta">
-                {detailTutorial.category} · {detailTutorial.difficulty} · {detailTutorial.steps.length} steps
+                {detailTutorial.category} · {detailTutorial.difficulty} · {getStepCount(detailTutorial)} steps
                 {progress.completed[detailTutorial.id] && (
                   <span className="tg-done-badge">
                     <FaCheckCircle aria-hidden="true" /> Completed
@@ -296,12 +386,7 @@ export default function TutorialGnome() {
                 )}
               </p>
 
-              {detail.hasOpenForm && (
-                <p className="tg-warning" role="note">
-                  You have a form open. This tutorial may move to another screen, and anything typed there but not
-                  saved would be cleared.
-                </p>
-              )}
+              
 
               <div className="tg-mode-options">
                 <button
@@ -313,7 +398,11 @@ export default function TutorialGnome() {
                   <FaHandPointer aria-hidden="true" />
                   <span>
                     <strong>Walk me through it</strong>
-                    <small>You do each step and I'll guide you. Saving is switched off.</small>
+                    <small>
+                      {detailTutorial.scenario
+                        ? "You use the real screens and I guide you. Saving and sending are switched off."
+                        : "You do each step and I'll guide you. Saving is switched off."}
+                    </small>
                   </span>
                 </button>
 
@@ -325,7 +414,11 @@ export default function TutorialGnome() {
                   <FaEye aria-hidden="true" />
                   <span>
                     <strong>Show me how</strong>
-                    <small>Sit back and watch. Nothing is typed or saved, and I'll bring you back here after.</small>
+                    <small>
+                      {detailTutorial.scenario
+                        ? "Watch it on a fictional group. Nothing real is touched, and I'll bring you back here after."
+                        : "Sit back and watch. Nothing is typed or saved, and I'll bring you back here after."}
+                    </small>
                   </span>
                 </button>
               </div>
@@ -338,15 +431,21 @@ export default function TutorialGnome() {
                   <div>
                     <strong>Pick up where you left off?</strong>
                     <span>
-                      {tutorialsById[unfinished.id].title}, step{" "}
-                      {Math.min(unfinished.step + 1, tutorialsById[unfinished.id].steps.length)} of{" "}
-                      {tutorialsById[unfinished.id].steps.length}
+                                            {tutorialsById[unfinished.id].title}, step{" "}
+                      {getStepPosition(tutorialsById[unfinished.id].steps, unfinished.step, unfinished.mode === "demo").current} of{" "}
+                      {getStepCount(tutorialsById[unfinished.id])}
                     </span>
                   </div>
                   <button
                     className="tg-button tg-button-primary"
                     type="button"
-                    onClick={() => startTutorial(tutorialsById[unfinished.id], unfinished.mode, unfinished.step)}
+                    onClick={() =>
+                      startTutorial(
+                        tutorialsById[unfinished.id],
+                        unfinished.mode,
+                        getResumeStep(tutorialsById[unfinished.id], unfinished.step)
+                      )
+                    }
                   >
                     Resume
                   </button>
@@ -390,8 +489,8 @@ export default function TutorialGnome() {
                             <button className="tg-tutorial-item" type="button" onClick={() => openDetail(tutorial)}>
                               <span>
                                 <strong>{tutorial.title}</strong>
-                                <small>
-                                  {tutorial.difficulty} · {tutorial.steps.length} steps
+                                                                <small>
+                                  {tutorial.topics ? "Full walkthrough" : tutorial.difficulty} · {getStepCount(tutorial)} steps
                                 </small>
                               </span>
 
@@ -400,7 +499,45 @@ export default function TutorialGnome() {
                               ) : (
                                 <FaChevronRight aria-hidden="true" />
                               )}
-                            </button>
+                                                        </button>
+
+                            {getShownTopics(tutorial).length > 0 && (
+                              <details className="tg-topics" open={Boolean(query)}>
+                                <summary>
+                                  Or learn just one topic
+                                  <small>
+                                    {tutorial.topics.filter((topic) => progress.completed[topic.id]).length} of{" "}
+                                    {tutorial.topics.length} done
+                                  </small>
+                                </summary>
+
+                                {[...new Set(getShownTopics(tutorial).map((topic) => topic.group))].map((group) => (
+                                  <div key={group}>
+                                    <h4>{group}</h4>
+                                    {getShownTopics(tutorial)
+                                      .filter((topic) => topic.group === group)
+                                      .map((topic) => (
+                                        <button
+                                          className="tg-tutorial-item"
+                                          type="button"
+                                          key={topic.id}
+                                          onClick={() => openDetail(topic)}
+                                        >
+                                          <span>
+                                            <strong>{topic.title}</strong>
+                                          </span>
+
+                                          {progress.completed[topic.id] ? (
+                                            <FaCheckCircle className="tg-item-done" aria-label="Completed" />
+                                          ) : (
+                                            <FaChevronRight aria-hidden="true" />
+                                          )}
+                                        </button>
+                                      ))}
+                                  </div>
+                                ))}
+                              </details>
+                            )}
                           </li>
                         ))}
                       </ul>

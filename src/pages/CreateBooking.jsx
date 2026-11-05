@@ -1910,6 +1910,8 @@ export default function CreateBooking({
     );
   });
 
+  const [startingFormState] = useState(() => JSON.stringify(formData));
+
   const [wasSubmitted, setWasSubmitted] =
     useState(false);
 
@@ -2788,6 +2790,7 @@ export default function CreateBooking({
         <form
           className="rental-form"
           onSubmit={handleSubmit}
+          data-tutorial-unsaved={JSON.stringify(formData) !== startingFormState ? "the booking form" : undefined}
         >
 
           {/* ===================================================

@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
+import { guardedFetch } from "../tutorial/tutorialSafety";
+
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
@@ -8,6 +10,7 @@ if (!supabaseUrl || !supabasePublishableKey) {
 }
 
 export const supabase = createClient(
-  supabaseUrl,
-  supabasePublishableKey
+    supabaseUrl,
+  supabasePublishableKey,
+  { global: { fetch: guardedFetch } }
 );

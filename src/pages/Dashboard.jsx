@@ -3155,7 +3155,11 @@ function BookingDetailsEditForm({ booking, onSaveBooking }) {
   };
 
   return (
-    <form className="booking-details-edit-card" onSubmit={handleSubmit}>
+    <form
+      className="booking-details-edit-card"
+      onSubmit={handleSubmit}
+      data-tutorial-unsaved={isEditing ? "changes on the Edit tab" : undefined}
+    >
       <div className="booking-details-edit-header">
         <div>
           <p className="dashboard-eyebrow">Details</p>
@@ -6856,7 +6860,8 @@ function BookingDetailView({
       ]
         .filter(Boolean)
         .join(" ")}
-      data-tutorial-target="booking-profile"
+            data-tutorial-target="booking-profile"
+      data-tutorial-booking-id={booking.id}
     >
       <header className="booking-profile-header">
         <button
@@ -9836,6 +9841,7 @@ export default function Dashboard() {
             }`}
             type="button"
             title="Portals"
+            data-tutorial-target="nav-portals"
             onClick={() => {
               setSelectedBooking(null);
               setBookingDetailTab("Overview");
@@ -10181,6 +10187,7 @@ export default function Dashboard() {
           <PortalAdminView
             inquiryBookings={inquiryBookings}
             openBookingDetail={openBookingDetail}
+            staffRole={staffRole}
           />
         ) : activeView === "User Admin" ? (
                     <UserAdminView

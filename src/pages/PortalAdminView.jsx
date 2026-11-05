@@ -1,8 +1,9 @@
 import {
   useEffect,
   useMemo,
-  useRef,
+    useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 
 import {
@@ -23,6 +24,11 @@ import {
 } from "react-icons/fa";
 
 import { supabase } from "../lib/supabaseClient";
+import {
+  getPortalDemo,
+  portalDemoEmailApi,
+  subscribePortalDemo,
+} from "../tutorial/portalDemo";
 import PortalEmailPanel, {
   PortalEmailSettingsCard,
 } from "../components/PortalEmailPanel";
@@ -1104,13 +1110,19 @@ function PortalAdminProgressBar({
    CHECKLIST PREVIEW
 ========================================================= */
 
+const CORRECT_TARGETS = {
+  needsReview: "portal-correct portal-correct-needsReview",
+  completed: "portal-correct portal-correct-completed",
+};
+
+
 function PortalItemCorrections({ item, onCorrectItem }) {
   const [dueDate, setDueDate] = useState(item.dueDate || "");
   const [note, setNote] = useState("");
 
   return (
     <details className="portal-item-corrections">
-      <summary>Correct…</summary>
+      <summary data-tutorial-target={CORRECT_TARGETS[item.status] || "portal-correct"}>Correct…</summary>
 
       <div className="portal-item-corrections-body">
         <label>
@@ -1118,6 +1130,7 @@ function PortalItemCorrections({ item, onCorrectItem }) {
           <input
             type="date"
             value={dueDate}
+            data-tutorial-target="portal-due-input"
             onChange={(event) => setDueDate(event.target.value)}
           />
         </label>
@@ -1125,6 +1138,8 @@ function PortalItemCorrections({ item, onCorrectItem }) {
           className="secondary-dashboard-button"
           type="button"
           disabled={dueDate === (item.dueDate || "")}
+          data-tutorial-target="portal-save-due"
+          data-tutorial-guard
           onClick={() => onCorrectItem(item, "dueDate", { dueDate })}
         >
           Save due date
@@ -1137,12 +1152,15 @@ function PortalItemCorrections({ item, onCorrectItem }) {
               <textarea
                 rows={2}
                 value={note}
+                data-tutorial-target="portal-note"
                 onChange={(event) => setNote(event.target.value)}
               />
             </label>
             <button
               className="secondary-dashboard-button"
               type="button"
+              data-tutorial-target="portal-send-back"
+              data-tutorial-guard
               onClick={() => onCorrectItem(item, "requestChanges", { note })}
             >
               Send back for changes
@@ -1154,6 +1172,8 @@ function PortalItemCorrections({ item, onCorrectItem }) {
           <button
             className="secondary-dashboard-button"
             type="button"
+            data-tutorial-target="portal-reopen"
+            data-tutorial-guard
             onClick={() => onCorrectItem(item, "reopen")}
           >
             Reopen task
@@ -1163,6 +1183,8 @@ function PortalItemCorrections({ item, onCorrectItem }) {
         <button
           className="portal-item-remove-button"
           type="button"
+          data-tutorial-target="portal-remove-task"
+          data-tutorial-guard
           onClick={() => onCorrectItem(item, "remove")}
         >
           {portalItemHasGuestSubmission(item)
@@ -1177,6 +1199,7 @@ function PortalItemCorrections({ item, onCorrectItem }) {
 
 function PortalChecklistPreview({
   items,
+  isDemo,
   confirmingItemId,
   onConfirmItem,
   onCorrectItem,
@@ -1214,7 +1237,7 @@ function PortalChecklistPreview({
     items.length === 0
   ) {
     return (
-      <div className="portal-checklist-preview-empty">
+      <div className="portal-checklist-preview-empty" data-tutorial-target="portal-checklist-empty">
         No portal checklist items yet.
       </div>
     );
@@ -1237,7 +1260,7 @@ function PortalChecklistPreview({
 
 
   return (
-    <div className="portal-checklist-preview">
+    <div className="portal-checklist-preview" data-tutorial-target="portal-checklist">
       {visibleItems.map(
         (item) => {
           const hasResponse =
@@ -1284,6 +1307,7 @@ function PortalChecklistPreview({
           return (
             <div
               className={`portal-checklist-preview-entry portal-item-${item.status}`}
+              data-tutorial-target={item.status === "needsReview" ? "portal-item-review" : undefined}
               key={
                 item.id
               }
@@ -1331,6 +1355,8 @@ function PortalChecklistPreview({
                     <button
                       className="portal-checklist-file-button"
                       type="button"
+                      data-tutorial-target="portal-item-inspect"
+                      data-tutorial-guard={isDemo ? "" : undefined}
                       onClick={() =>
                         openPortalChecklistUpload(
                           item
@@ -1345,6 +1371,7 @@ function PortalChecklistPreview({
                     <button
                       className="portal-checklist-info-button"
                       type="button"
+                      data-tutorial-target="portal-item-inspect"
                       aria-expanded={
                         isItemExpanded
                       }
@@ -1368,6 +1395,8 @@ function PortalChecklistPreview({
                     <button
                       className="portal-checklist-confirm-button"
                       type="button"
+                      data-tutorial-target="portal-confirm"
+                      data-tutorial-guard
                       disabled={
                         confirmingItemId ===
                         item.id
@@ -1419,9 +1448,13 @@ function PortalChecklistPreview({
               </div>
               {item.staffReviewNote &&
                 item.status === "waitingOnGuest" && (
-                <p className="portal-item-review-note">
+                <p className="portal-item-review-note" data-tutorial-target="portal-item-sent-back">
                   Sent back: {item.staffReviewNote}
                 </p>
+              )}
+
+              {item.demoPreview && (
+                <p className="portal-demo-preview">{item.demoPreview}</p>
               )}
 
               {hasResponse &&
@@ -1467,6 +1500,7 @@ function PortalChecklistPreview({
         <button
           className="portal-checklist-preview-toggle"
           type="button"
+          data-tutorial-target="portal-checklist-more"
           aria-expanded={
             isExpanded
           }
@@ -1768,7 +1802,11 @@ function PortalTaskAssignmentPanel({
 
 
   return (
-    <section className="portal-task-assignment-panel">
+    <section
+      className="portal-task-assignment-panel"
+      data-tutorial-target="portal-task-panel"
+      data-tutorial-unsaved={selectedCount > 0 ? "task choices in Portal Admin" : undefined}
+    >
       <div className="portal-task-assignment-header">
         <div>
           <p>
@@ -1822,7 +1860,7 @@ function PortalTaskAssignmentPanel({
         </div>
       ) : (
         <>
-          <div className="portal-task-assignment-table">
+          <div className="portal-task-assignment-table" data-tutorial-target="portal-task-table">
             <div className="portal-task-assignment-table-header">
               <span>
                 Task
@@ -1865,11 +1903,12 @@ function PortalTaskAssignmentPanel({
                         ?.selected
                         ? "selected"
                         : ""
-                                        } ${
+                    } ${
                       alreadyAssigned
                         ? "assigned"
                         : ""
                     }`}
+                    data-tutorial-target={draft?.selected ? "portal-task-selected" : undefined}
                     key={
                       task.id
                     }
@@ -2027,7 +2066,7 @@ function PortalTaskAssignmentPanel({
 
 
           <div className="portal-task-assignment-footer">
-            <span>
+            <span data-tutorial-target="portal-task-count">
               {selectedCount ===
               0
                 ? "Select one or more tasks."
@@ -2047,12 +2086,13 @@ function PortalTaskAssignmentPanel({
                   0 ||
                 isAssigning
               }
+              data-tutorial-target="portal-task-assign"
+              data-tutorial-guard
               onClick={
                 handleAssignSelected
               }
             >
               <FaPlus />
-
               {isAssigning
                 ? "Assigning..."
                 : `Assign ${
@@ -2497,7 +2537,15 @@ function PortalDocumentAssignmentPanel({
 
 
   return (
-    <section className="portal-document-assignment-panel">
+    <section
+      className="portal-document-assignment-panel"
+      data-tutorial-target="portal-doc-panel"
+      data-tutorial-unsaved={
+        selectedCount > 0 || customTitle.trim() || customNote.trim() || customFile
+          ? "document choices in Portal Admin"
+          : undefined
+      }
+    >
       <div className="portal-document-assignment-header">
         <div>
           <p>
@@ -2546,9 +2594,11 @@ function PortalDocumentAssignmentPanel({
                 </span>
                 {!document.uploadedByGuest && (
                   <button
-                    className="secondary-dashboard-button"
-                    type="button"
-                    onClick={() => onRemoveDocument(record, document)}
+                  className="secondary-dashboard-button"
+                  type="button"
+                  data-tutorial-target="portal-doc-remove"
+                  data-tutorial-guard
+                  onClick={() => onRemoveDocument(record, document)}
                   >
                     Remove
                   </button>
@@ -2559,7 +2609,7 @@ function PortalDocumentAssignmentPanel({
         </section>
       )}
 
-      <section className="portal-custom-document-upload">
+      <section className="portal-custom-document-upload" data-tutorial-target="portal-custom-upload">
         <div className="portal-custom-document-upload-heading">
           <span className="portal-custom-document-upload-icon">
             <FaUpload />
@@ -2639,9 +2689,10 @@ function PortalDocumentAssignmentPanel({
 
           <input
             key={
-              fileInputKey
-            }
-            type="file"
+            fileInputKey
+          }
+          data-tutorial-guard
+          type="file"
             accept={
               PORTAL_STAFF_DOCUMENT_ACCEPT
             }
@@ -2746,6 +2797,7 @@ function PortalDocumentAssignmentPanel({
             disabled={
               isUploadingCustomDocument
             }
+            data-tutorial-guard
             onClick={
               handleUploadCustom
             }
@@ -2785,7 +2837,7 @@ function PortalDocumentAssignmentPanel({
         </div>
       ) : (
         <>
-          <div className="portal-document-group-list">
+          <div className="portal-document-group-list" data-tutorial-target="portal-doc-standard">
             {documentGroups.map(
               (group) => (
                 <section
@@ -2970,7 +3022,7 @@ function PortalDocumentAssignmentPanel({
 
 
           <div className="portal-document-assignment-footer">
-            <span>
+            <span data-tutorial-target="portal-doc-count">
               {selectedCount ===
               0
                 ? "Select one or more standard documents."
@@ -2990,12 +3042,13 @@ function PortalDocumentAssignmentPanel({
                   0 ||
                 isAssigning
               }
+              data-tutorial-target="portal-doc-assign"
+              data-tutorial-guard
               onClick={
                 handleAssignSelected
               }
             >
               <FaPlus />
-
               {isAssigning
                 ? "Assigning..."
                 : `Assign ${
@@ -3033,8 +3086,9 @@ function PortalRecordCard({
   onOpenBooking,
   onAssignTasks,
   onAssignDocuments,
-  onUploadCustomDocument,
+    onUploadCustomDocument,
   emailAdmin,
+  emailApi,
 }) {
   const [
     openManager,
@@ -3052,10 +3106,13 @@ function PortalRecordCard({
       record
     );
 
+  // A demo group has no real link, and the guard stops this one being followed.
   const portalUrl =
-    buildPortalUrl(
-      record.portalToken
-    );
+    record.isDemo
+      ? "#fictional-demo"
+      : buildPortalUrl(
+          record.portalToken
+        );
 
   const guestLabel =
     record.attendeeCount
@@ -3072,12 +3129,16 @@ function PortalRecordCard({
   return (
     <article
       className={`portal-record-card portal-record-card-${portalStatusClass}`}
+      data-tutorial-target="portal-card"
+      data-tutorial-scope={record.id}
+      data-tutorial-active={openManager ? "" : undefined}
     >
       <div className="portal-record-main">
-        <div className="portal-record-title-row">
+        <div className="portal-record-title-row" data-tutorial-target="portal-progress">
           <div>
             <span
               className={`portal-record-status-pill ${portalStatusClass}`}
+              data-tutorial-target="portal-status-pill"
             >
               {
                 portalStatusLabel
@@ -3115,7 +3176,7 @@ function PortalRecordCard({
         />
 
 
-        <div className="portal-record-metrics">
+        <div className="portal-record-metrics" data-tutorial-target="portal-metrics">
           <span>
             <strong>
               {
@@ -3165,6 +3226,7 @@ function PortalRecordCard({
           items={
             record.checklistItems
           }
+          isDemo={record.isDemo}
           confirmingItemId={
             confirmingItemId
           }
@@ -3207,7 +3269,7 @@ function PortalRecordCard({
         </div>
 
 
-        <div className="portal-record-token">
+        <div className="portal-record-token" data-tutorial-target="portal-link">
           <small>
             Portal Link
           </small>
@@ -3237,6 +3299,7 @@ function PortalRecordCard({
           <button
             className="portal-assign-task-button"
             type="button"
+            data-tutorial-target="portal-assign-tasks"
             onClick={() =>
               setOpenManager(
                 (current) =>
@@ -3267,6 +3330,7 @@ function PortalRecordCard({
           <button
             className="portal-assign-document-button"
             type="button"
+            data-tutorial-target="portal-assign-documents"
             onClick={() =>
               setOpenManager(
                 (current) =>
@@ -3297,6 +3361,7 @@ function PortalRecordCard({
           <button
             className="portal-assign-document-button"
             type="button"
+            data-tutorial-target="portal-emails"
             aria-expanded={openManager === "emails"}
             onClick={() =>
               setOpenManager(
@@ -3321,6 +3386,8 @@ function PortalRecordCard({
           <button
             className="secondary-dashboard-button"
             type="button"
+            data-tutorial-target="portal-open-booking"
+            data-tutorial-guard={record.isDemo ? "" : undefined}
             onClick={() =>
               onOpenBooking(
                 record.id
@@ -3333,7 +3400,9 @@ function PortalRecordCard({
           <button
             className="secondary-dashboard-button"
             type="button"
-                        onClick={() =>
+            data-tutorial-target="portal-copy-link"
+            data-tutorial-guard
+            onClick={() =>
               onCopyPortalLink(
                 record
               )
@@ -3362,9 +3431,10 @@ function PortalRecordCard({
             aria-disabled={
               !portalUrl
             }
+            data-tutorial-target="portal-open-portal"
+            data-tutorial-guard
           >
             <FaExternalLinkAlt />
-
             Open Portal
           </a>
         </div>
@@ -3426,6 +3496,7 @@ function PortalRecordCard({
         <PortalEmailPanel
           record={record}
           emailAdmin={emailAdmin}
+          api={emailApi}
           onClose={() => setOpenManager("")}
         />
       )}
@@ -3438,21 +3509,48 @@ function PortalRecordCard({
    PORTAL ADMIN VIEW
 ========================================================= */
 
-export default function PortalAdminView({
+/*
+  The tutorial's fictional demo runs through a second copy of the same
+  screen. The real one stays mounted but hidden, so its search, filter, open
+  panels and any unsaved choices are all still there when the demo ends.
+*/
+export default function PortalAdminView(props) {
+  const demo = useSyncExternalStore(subscribePortalDemo, getPortalDemo);
+
+  return (
+    <>
+      <div style={{ display: demo ? "none" : "contents" }}>
+        <PortalAdminScreen {...props} />
+      </div>
+
+      {demo && <PortalAdminScreen {...props} demo={demo} />}
+    </>
+  );
+}
+
+
+function ignoreInDemo() {}
+
+
+function PortalAdminScreen({
   inquiryBookings,
   openBookingDetail,
+  staffRole = "",
+  demo = null,
 }) {
   const [
-    portalRecords,
+    loadedRecords,
     setPortalRecords,
   ] =
     useState([]);
+
+  const portalRecords = demo?.records ?? loadedRecords;
 
   const [
     isLoading,
     setIsLoading,
   ] =
-    useState(true);
+    useState(!demo);
 
   const [
     portalError,
@@ -3508,7 +3606,8 @@ export default function PortalAdminView({
     useRef(0);
 
   // Portal email settings; { missing: true } until the migration is run.
-  const [emailAdmin, setEmailAdmin] = useState(null);
+  const [loadedEmailAdmin, setEmailAdmin] = useState(null);
+  const emailAdmin = demo?.emailAdmin ?? loadedEmailAdmin;
 
   async function loadEmailSettings() {
     try {
@@ -3581,10 +3680,11 @@ export default function PortalAdminView({
 
   useEffect(
     () => {
+      if (demo) return;
       loadPortalRecords();
       loadEmailSettings();
     },
-    []
+        []
   );
 
 
@@ -4288,7 +4388,17 @@ export default function PortalAdminView({
 
 
   return (
-    <section className="portal-admin-page">
+    <section
+      className="portal-admin-page"
+      data-tutorial-target="portal-page"
+      data-staff-role={staffRole}
+    >
+      {demo && (
+        <p className="portal-demo-banner" role="status">
+          <strong>Tutorial demo.</strong> These groups are fictional. Nothing here is real, saved or sent.
+        </p>
+      )}
+
       <article className="dashboard-card portal-admin-hero-card">
         <div className="portal-admin-hero-header">
           <div className="dashboard-heading-with-icon">
@@ -4318,7 +4428,7 @@ export default function PortalAdminView({
             className="secondary-dashboard-button"
             type="button"
             onClick={
-              loadPortalRecords
+              demo ? ignoreInDemo : loadPortalRecords
             }
             disabled={
               isLoading
@@ -4333,7 +4443,7 @@ export default function PortalAdminView({
         </div>
 
 
-        <div className="portal-summary-grid-admin">
+        <div className="portal-summary-grid-admin" data-tutorial-target="portal-summary">
           <PortalAdminSummaryCard
             icon={
               FaKey
@@ -4386,12 +4496,13 @@ export default function PortalAdminView({
 
       <PortalEmailSettingsCard
         emailAdmin={emailAdmin}
-        onReload={loadEmailSettings}
+        onReload={demo ? ignoreInDemo : loadEmailSettings}
+        api={demo ? portalDemoEmailApi : undefined}
       />
 
 
-      <article className="dashboard-card portal-admin-toolbar">
-        <label>
+      <article className="dashboard-card portal-admin-toolbar" data-tutorial-target="portal-toolbar">
+        <label data-tutorial-target="portal-search">
           <span>
             Search
           </span>
@@ -4413,7 +4524,7 @@ export default function PortalAdminView({
           />
         </label>
 
-        <label>
+        <label data-tutorial-target="portal-status">
           <span>
             Status
           </span>
@@ -4472,7 +4583,7 @@ export default function PortalAdminView({
       {isLoading &&
       portalRecords.length ===
         0 ? (
-        <section className="dashboard-card portal-admin-loading">
+        <section className="dashboard-card portal-admin-loading" data-tutorial-target="portal-loading">
           <FaClock />
 
           <strong>
@@ -4481,7 +4592,7 @@ export default function PortalAdminView({
         </section>
       ) : filteredRecords.length >
         0 ? (
-        <div className="portal-record-list">
+        <div className="portal-record-list" data-tutorial-target="portal-list">
           {filteredRecords.map(
             (record) => (
               <PortalRecordCard
@@ -4510,30 +4621,31 @@ export default function PortalAdminView({
                   confirmingChecklistItemId
                 }
                                 onConfirmChecklistItem={
-                  handleConfirmChecklistItem
-                }
-                onCorrectChecklistItem={
-                  handleCorrectChecklistItem
-                }
-                onRemoveDocument={
-                  handleRemoveDocument
-                }
-                onCopyPortalLink={
-                  handleCopyPortalLink
-                }
-                onOpenBooking={
-                  handleOpenBooking
-                }
-                onAssignTasks={
-                  handleAssignTasks
-                }
-                onAssignDocuments={
-                  handleAssignDocuments
-                }
-                onUploadCustomDocument={
-                  handleUploadCustomDocument
-                }
-                emailAdmin={emailAdmin}
+                demo ? ignoreInDemo : handleConfirmChecklistItem
+              }
+              onCorrectChecklistItem={
+                demo ? ignoreInDemo : handleCorrectChecklistItem
+              }
+              onRemoveDocument={
+                demo ? ignoreInDemo : handleRemoveDocument
+              }
+              onCopyPortalLink={
+                demo ? ignoreInDemo : handleCopyPortalLink
+              }
+              onOpenBooking={
+                demo ? ignoreInDemo : handleOpenBooking
+              }
+              onAssignTasks={
+                demo ? ignoreInDemo : handleAssignTasks
+              }
+              onAssignDocuments={
+                demo ? ignoreInDemo : handleAssignDocuments
+              }
+              onUploadCustomDocument={
+                demo ? ignoreInDemo : handleUploadCustomDocument
+              }
+              emailAdmin={emailAdmin}
+              emailApi={demo ? portalDemoEmailApi : undefined}
               />
             )
           )}

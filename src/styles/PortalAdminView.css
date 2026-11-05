@@ -1980,3 +1980,21 @@
   color: #6b7280;
   overflow-wrap: anywhere;
 }
+
+/* Tutorial demo: only ever shown over fictional groups. */
+.portal-demo-banner {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border: 1px solid #e0b252;
+  border-radius: 10px;
+  background: #fdf3dc;
+  color: #5c4310;
+}
+
+.portal-demo-preview {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border: 1px dashed #c9b98f;
+  border-radius: 8px;
+  font-size: 0.9em;
+}

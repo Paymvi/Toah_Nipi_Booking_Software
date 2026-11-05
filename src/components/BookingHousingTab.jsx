@@ -898,7 +898,7 @@ export default function BookingHousingTab({
         ""
       ).trim();
   return (
-    <div className="booking-housing-tab">
+    <div className="booking-housing-tab" data-tutorial-unsaved={isEditing ? "Housing edits" : undefined}>
       {/* ===================================================
 
           HEADER / SUMMARY

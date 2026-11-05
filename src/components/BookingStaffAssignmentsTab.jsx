@@ -522,7 +522,7 @@ export default function BookingStaffAssignmentsTab({
   };
 
   return (
-    <section className="staff-assignments-tab">
+    <section className="staff-assignments-tab" data-tutorial-unsaved={draft ? "a staff assignment" : undefined}>
       <article className="staff-assignments-card">
         <header className="staff-assignments-header">
           <div className="dashboard-heading-with-icon">

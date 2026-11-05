@@ -15,8 +15,11 @@
   While running (not paused), clicks are stopped and answered with a hint
   unless the step asks for them (its highlighted element, on a step with
   done or explore), and anything marked data-tutorial-guard (the save
-  buttons) cannot be clicked or submitted, so practice never saves real
-  data. Pausing gives full control back.
+    buttons) cannot be clicked or submitted, so practice never saves real
+  data. Pausing gives full control back, except in a fictional demo: that
+  stays locked while paused and ends if the person leaves its page.
+
+  Tutorials with writeLock also refuse writes at the network (tutorialSafety.js).
 */
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
@@ -33,19 +36,28 @@ import {
 import GnomeMascot from "./GnomeMascot";
 import { TUTORIAL_TARGETS } from "./tutorials";
 import {
-  checkStep,
+    checkStep,
   clipRect,
   createStepContext,
   findTarget,
+  getDemoEffects,
   getDemoStepDuration,
   getNextAction,
+  getSectionAt,
+  getStepPosition,
+  getTargetScope,
+  getUnsavedWork,
+  isShown,
+  isStepInMode,
   isWayBack,
   matchesTarget,
   MOBILE_BREAKPOINT,
   placeDialogue,
   placePointer,
   runDemoAction,
+  setTargetScope,
 } from "./tutorialCore";
+import { setTutorialWriteLock } from "./tutorialSafety";
 
 const SETTLE_MS = 80;
 const SEEK_POLL_MS = 150;
@@ -54,6 +66,9 @@ const DONE_POLL_MS = 200;
 const SUCCESS_PAUSE_MS = 950;
 const POINTER_TRAVEL_MS = 800;
 const RESUME_WAIT_MS = 1500;
+const OPEN_WAIT_MS = 3000;
+const NEEDS_GRACE_MS = 1200;
+const PICK_LIST_SIZE = 6;
 const SPOTLIGHT_PADDING = 6;
 
 const PRAISE = ["Perfect!", "Nice work!", "That's it!", "Great job!", "Lovely!"];
@@ -62,6 +77,9 @@ const SAVE_BLOCKED_NUDGE =
 const DEMO_NUDGE = "I'm showing you this one. Sit back, or press Pause to take over.";
 const LOOK_ONLY_NUDGE = "This one's just to look at. Press Next when you're ready, or Pause to try it yourself.";
 const RESUME_NUDGE = "That screen isn't open any more, so let's take it from the top.";
+const DEMO_LOCKED_NUDGE = "This group is fictional, so nothing here can be saved or sent. End the demo to get back to your real work.";
+const VIEWER_NOTE = "Your account is view-only, so this would be refused outside practice too.";
+const ADMIN_NOTE = "Only admins can change this.";
 
 function prefersReducedMotion() {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -91,7 +109,7 @@ function scrollTargetIntoView(element) {
 
 function canDemoClick(element) {
   return (
-    element.matches("button, a, [role='button'], [role='tab']") &&
+    element.matches("button, a, summary, [role='button'], [role='tab']") &&
     element.getAttribute("type") !== "submit" &&
     !element.closest("[data-tutorial-guard]")
   );
@@ -107,6 +125,24 @@ function getFocusable(element) {
   return element.matches(controls) ? element : element.querySelector(controls);
 }
 
+function getStaffRole() {
+  return document.querySelector("[data-staff-role]")?.dataset.staffRole ?? "";
+}
+
+// The groups on screen right now, for the dialogue to offer when a step asks for one.
+function getPickOptions() {
+  const cards = Array.from(document.querySelectorAll("[data-tutorial-scope]")).filter(isShown);
+
+  return {
+    extra: Math.max(cards.length - PICK_LIST_SIZE, 0),
+    options: cards.slice(0, PICK_LIST_SIZE).map((card) => ({
+      key: card.dataset.tutorialScope,
+      name: card.querySelector("h3")?.textContent ?? "",
+      status: card.querySelector("[data-tutorial-target~='portal-status-pill']")?.textContent ?? "",
+    })),
+  };
+}
+
 function stopEvent(event) {
   event.preventDefault();
   event.stopPropagation();
@@ -115,18 +151,22 @@ function stopEvent(event) {
 export default function TutorialRunner({
   tutorial,
   mode,
-  startStep = 0,
+    startStep = 0,
+  startScope = null,
   onStepChange,
   onExit,
   onComplete,
+  onWatchDemo,
 }) {
   const steps = tutorial.steps;
   const isDemo = mode === "demo";
+  // The screen shows made-up data (portalDemo.js), not real records.
+  const isFictional = isDemo && Boolean(tutorial.scenario);
 
   const [stepIndex, setStepIndex] = useState(() =>
     Math.min(Math.max(startStep, 0), steps.length - 1)
   );
-  // seeking → (missing) → active → (working → failed) → (success); "attempt" re-runs a step.
+  // seeking → (missing | unmet) → active → (working → failed) → (success); "attempt" re-runs a step.
   const [phase, setPhase] = useState("seeking");
   const phaseRef = useRef("seeking");
   const runRef = useRef(null);
@@ -135,7 +175,8 @@ export default function TutorialRunner({
   const [isPaused, setIsPaused] = useState(false);
   const [nudge, setNudge] = useState("");
   const [layout, setLayout] = useState(null);
-  const [demoClickCount, setDemoClickCount] = useState(0);
+    const [demoClickCount, setDemoClickCount] = useState(0);
+  const [pauseNote, setPauseNote] = useState("");
 
   const dialogRef = useRef(null);
   const lastInputAtRef = useRef(0);
@@ -145,7 +186,10 @@ export default function TutorialRunner({
   const isResumingRef = useRef(startStep > 0);
   const hasPausedRef = useRef(false);
   const isKeyboardRef = useRef(false);
-  const skippedStepsRef = useRef(new Set());
+    const skippedStepsRef = useRef(new Set());
+  const unsavedAtPauseRef = useRef([]);
+  const hasReachedHomeRef = useRef(false);
+  const hasUsedStartScopeRef = useRef(!startScope);
   const { pathname } = useLocation();
   const routerPathRef = useRef(pathname);
 
@@ -156,7 +200,9 @@ export default function TutorialRunner({
   const step = steps[stepIndex];
   const isBusy = phase === "seeking" || phase === "working";
   // A demoClick step opens the screen later steps are on: until it has happened, there is nothing to skip to.
-  const needsAction = Boolean(step.demoClick) && (isWaitingForAction || phase === "missing");
+    const needsAction = Boolean(step.demoClick || step.pickScope) && (isWaitingForAction || phase === "missing");
+  const section = getSectionAt(tutorial, stepIndex);
+  const position = getStepPosition(steps, stepIndex, isDemo);
 
   function changePhase(next) {
     phaseRef.current = next;
@@ -165,7 +211,7 @@ export default function TutorialRunner({
 
   function goTo(nextIndex, direction = "forward") {
     if (nextIndex >= steps.length) {
-      onComplete(hasPausedRef.current);
+            onComplete(hasPausedRef.current && !isFictional, getTargetScope());
       return;
     }
 
@@ -200,8 +246,8 @@ export default function TutorialRunner({
 
   // Steps skipped on the way here (already done, e.g. Edit Entry on a Form booking) are skipped on the way back too.
   function getPreviousIndex() {
-    let index = stepIndex - 1;
-    while (skippedStepsRef.current.has(index)) index -= 1;
+        let index = stepIndex - 1;
+    while (index >= 0 && (skippedStepsRef.current.has(index) || steps[index].prep || !isStepInMode(steps[index], isDemo))) index -= 1;
     return index;
   }
 
@@ -210,18 +256,29 @@ export default function TutorialRunner({
     goTo(getPreviousIndex(), "back");
   }
 
-  function restart() {
+    function restart() {
     skippedStepsRef.current.clear();
+    if (!isFictional) setTargetScope(null);
     goTo(0);
   }
 
   function pause() {
     hasPausedRef.current = true;
+    unsavedAtPauseRef.current = getUnsavedWork();
+    setPauseNote("");
     setIsPaused(true);
     setNudge("");
   }
 
   function resume() {
+    // Started while paused, so it's the person's own work, and the next step may leave this screen.
+    const newWork = getUnsavedWork().filter((work) => !unsavedAtPauseRef.current.includes(work));
+    if (newWork.length > 0) {
+      setPauseNote(`Save or cancel your ${newWork.join(" and ")} first, then press Resume.`);
+      return;
+    }
+
+    setPauseNote("");
     directionRef.current = "forward";
     changePhase("seeking");
     setIsPaused(false);
@@ -240,17 +297,56 @@ export default function TutorialRunner({
     const isAlreadyDone = () => !step.capture && step.done && checkStep(step.done, ctx);
     // Only navigation is skipped: a field that already has a value is still taught, or Restart would pass it by.
     const skipIfDone = () => {
-      if (!enteredForward || !step.demoClick || !isAlreadyDone()) return false;
+            if (!enteredForward || !(step.demoClick || step.pickScope) || !isAlreadyDone()) return false;
       skippedStepsRef.current.add(stepIndex);
       goTo(stepIndex + 1);
       return true;
     };
 
+        // A step for the other mode, e.g. an outcome only the fictional demo can show.
+    if (!isStepInMode(step, isDemo)) {
+      skippedStepsRef.current.add(stepIndex);
+      goTo(stepIndex + 1);
+      return;
+    }
+
     if (skipIfDone()) return;
+
+    // Puts the screen the way this step needs it, however it was reached. Panels only, never saves.
+    for (const opener of step.opens ?? []) {
+      const openStartedAt = Date.now();
+      let hasClicked = false;
+
+      while (!checkStep(opener.until, ctx) && Date.now() - openStartedAt < OPEN_WAIT_MS) {
+        const control = hasClicked ? null : findTarget(opener.click);
+        if (control && canDemoClick(control)) {
+          hasClicked = true;
+          isDemoClickingRef.current = true;
+          control.click();
+          isDemoClickingRef.current = false;
+        }
+        await wait(SEEK_POLL_MS);
+        if (run.cancelled) return;
+      }
+    }
+
+    // The real record isn't in the state this step teaches: say so rather than wait for a target that won't come.
+    if (!isDemo && step.needs) {
+      const needsStartedAt = Date.now();
+      while (!checkStep(step.needs.check, ctx)) {
+        if (Date.now() - needsStartedAt > NEEDS_GRACE_MS && phaseRef.current !== "unmet") changePhase("unmet");
+        await wait(SEEK_POLL_MS);
+        if (run.cancelled) return;
+      }
+      if (phaseRef.current === "unmet") changePhase("seeking");
+    }
 
     // The router commits navigations in a transition, so the URL can change before the app does; a navigation
     // still pending when this step acts would undo it (e.g. close the booking just opened) once it lands.
-    const findReadyTarget = () => (routerPathRef.current === window.location.pathname ? findTarget(step.target) : null);
+        const findReadyTarget = () =>
+      routerPathRef.current === window.location.pathname && (!step.waitFor || checkStep(step.waitFor, ctx))
+        ? findTarget(step.target)
+        : null;
     const seekStartedAt = Date.now();
     let element = findReadyTarget();
 
@@ -270,8 +366,19 @@ export default function TutorialRunner({
     }
 
     isResumingRef.current = false;
-    if (phaseRef.current === "missing") setNudge("");
-    if (skipIfDone()) return;
+        if (phaseRef.current === "missing") setNudge("");
+
+    // A group chosen earlier is reused unless a filter or a refresh has taken it off the list.
+    if (step.pickScope && getTargetScope() && !findTarget(step.pickScope)) setTargetScope(null);
+
+    const reusedName = !isDemo && !hasUsedStartScopeRef.current && step.pickScope ? findTarget(step.pickScope)?.querySelector("h3")?.textContent : "";
+    if (skipIfDone()) {
+      if (reusedName) {
+        hasUsedStartScopeRef.current = true;
+        setNudge(`I'll use ${reusedName}, the group you already had open.`);
+      }
+      return;
+    }
 
     scrollTargetIntoView(element);
     stepEnteredAtRef.current = Date.now();
@@ -354,6 +461,39 @@ export default function TutorialRunner({
     goTo(stepIndex + 1);
   });
 
+    /* ---------------------------------------------------------
+     Chosen group, write lock and the fictional scene
+  --------------------------------------------------------- */
+
+  useEffect(() => {
+    setTargetScope(isFictional ? tutorial.scenario.scope : startScope);
+    return () => setTargetScope(null);
+  }, [isFictional, startScope, tutorial]);
+
+  useEffect(() => {
+    if (!tutorial.writeLock) return undefined;
+    setTutorialWriteLock(isFictional ? "demo" : isPaused ? null : "practice");
+    return () => setTutorialWriteLock(null);
+  }, [isFictional, isPaused, tutorial]);
+
+  useEffect(() => {
+    if (isFictional) tutorial.scenario.show(getDemoEffects(steps, stepIndex));
+  }, [isFictional, stepIndex, steps, tutorial]);
+
+  useEffect(() => {
+    if (!isFictional) return undefined;
+    return () => tutorial.scenario.end();
+  }, [isFictional, tutorial]);
+
+  const leaveFictionalPage = useEffectEvent(() => onExit(stepIndex, true));
+
+  // Leaving the page (sidebar while paused, browser Back) ends a fictional demo: it never follows anyone elsewhere.
+  useEffect(() => {
+    if (!isFictional) return;
+    if (pathname === tutorial.scenario.home) hasReachedHomeRef.current = true;
+    else if (hasReachedHomeRef.current) leaveFictionalPage();
+  }, [isFictional, pathname, tutorial]);
+
   useEffect(() => {
     if (isPaused) return undefined;
 
@@ -402,8 +542,9 @@ export default function TutorialRunner({
       dialog: dialog.dock ? dialog : { ...dialog, top: Math.round(dialog.top), left: Math.round(dialog.left) },
       pointer: pointer && { ...pointer, x: Math.round(pointer.x), y: Math.round(pointer.y) },
       isMoving: Date.now() - stepEnteredAtRef.current < 700,
-      // The previous step's control is on an earlier screen (e.g. the spreadsheet behind an open booking).
-      canGoBack: getPreviousIndex() >= 0 && Boolean(findTarget(steps[getPreviousIndex()].target)),
+            // The previous step's control is on an earlier screen (e.g. the spreadsheet behind an open booking), unless it can reopen it.
+      canGoBack: getPreviousIndex() >= 0 && Boolean(steps[getPreviousIndex()].opens || findTarget(steps[getPreviousIndex()].target)),
+      pick: step.pickScope && !isDemo ? getPickOptions() : null,
     };
   });
 
@@ -445,11 +586,20 @@ export default function TutorialRunner({
       return;
     }
 
-    if (event.type === "pointerdown") isKeyboardRef.current = false;
-    if (isPaused || isDemoClickingRef.current) return;
+        if (event.type === "pointerdown") isKeyboardRef.current = false;
+    if (isDemoClickingRef.current) return;
 
     const node = event.target;
     if (node?.closest?.("[data-tutorial-ui]")) return;
+
+    if (isPaused) {
+      // A paused fictional demo can be looked around, but its actions never become real.
+      if (isFictional && node?.closest?.("[data-tutorial-guard]")) {
+        stopEvent(event);
+        if (event.type === "click") setPauseNote(DEMO_LOCKED_NUDGE);
+      }
+      return;
+    }
 
     const isGuarded =
       event.type === "submit"
@@ -458,12 +608,12 @@ export default function TutorialRunner({
 
     if (isGuarded) {
       stopEvent(event);
-      if (event.type !== "mousedown") setNudge(SAVE_BLOCKED_NUDGE);
+            if (event.type !== "mousedown") setNudge(isFictional ? DEMO_LOCKED_NUDGE : SAVE_BLOCKED_NUDGE);
       return;
     }
 
     // While a target is missing, let people find their own way back, but not reach controls that save.
-    if (phase === "missing" && isWayBack(node)) return;
+        if ((phase === "missing" || phase === "unmet") && isWayBack(node)) return;
 
     const isOnTarget = matchesTarget(node, step.target);
     // Highlighted areas can hold real actions (Incident Notes saves from the Overview), so only steps that ask for a click allow one.
@@ -486,7 +636,7 @@ export default function TutorialRunner({
   });
 
   useEffect(() => {
-    const types = ["pointerdown", "mousedown", "click", "submit", "keydown", "input"];
+        const types = ["pointerdown", "mousedown", "click", "auxclick", "submit", "keydown", "input"];
     const listener = (event) => handleDocumentEvent(event);
 
     types.forEach((type) => document.addEventListener(type, listener, true));
@@ -508,7 +658,12 @@ export default function TutorialRunner({
 
         <div className="tg-paused-copy">
           <strong>Paused: {tutorial.title}</strong>
-          <span>You're in full control. Anything you save now is real.</span>
+                    <span>
+            {pauseNote ||
+              (isFictional
+                ? "This is still the fictional demo, so nothing here can be saved or sent. Leaving this page ends it."
+                : "You're in full control. Anything you save now is real.")}
+          </span>
         </div>
 
         <button className="tg-button tg-button-primary" type="button" onClick={resume} autoFocus>
@@ -518,7 +673,7 @@ export default function TutorialRunner({
         <button
           className="tg-icon-button"
           type="button"
-          onClick={() => onExit(stepIndex, hasPausedRef.current)}
+          onClick={() => onExit(stepIndex, hasPausedRef.current && !isFictional)}
           aria-label="End tutorial"
         >
           <FaTimes aria-hidden="true" />
@@ -527,8 +682,14 @@ export default function TutorialRunner({
     );
   }
 
-  const spot = phase !== "missing" ? layout?.spot : null;
-  const pointer = phase !== "seeking" && phase !== "missing" ? layout?.pointer : null;
+    const isLost = phase === "missing" || phase === "unmet";
+  const spot = !isLost ? layout?.spot : null;
+  const pointer = phase !== "seeking" && !isLost ? layout?.pointer : null;
+  const roleNote =
+    (step.writes && getStaffRole() === "viewer" && VIEWER_NOTE) ||
+    (step.adminOnly && getStaffRole() !== "admin" && ADMIN_NOTE) ||
+    "";
+  const pickStep = steps.slice(0, stepIndex + 1).findLastIndex((entry) => entry.pickScope);
   const dialog = layout?.dialog || { dock: window.innerWidth < MOBILE_BREAKPOINT ? "bottom" : null };
   const isDocked = dialog.dock === "bottom";
   const isLastStep = stepIndex === steps.length - 1;
@@ -536,7 +697,7 @@ export default function TutorialRunner({
   const gnomeMood =
     phase === "success"
       ? "excited"
-      : phase === "missing" || phase === "failed"
+            : isLost || phase === "failed"
         ? "surprised"
         : isBusy || nudge
           ? "thinking"
@@ -582,7 +743,8 @@ export default function TutorialRunner({
         style={isDocked ? undefined : { top: dialog.top, left: dialog.left }}
         role="dialog"
         aria-modal="false"
-        aria-labelledby="tg-dialog-title"
+                aria-labelledby="tg-dialog-title"
+        data-tutorial-step={step.id}
         tabIndex={-1}
       >
         <header className="tg-dialog-header">
@@ -590,18 +752,29 @@ export default function TutorialRunner({
 
           <div className="tg-dialog-heading">
             <span className={`tg-mode-chip ${isDemo ? "tg-mode-chip-demo" : ""}`}>
-              {isDemo ? "Demo · just watch" : "Practice · saving is off"}
+              {isFictional
+                ? "Demo · fictional data"
+                : isDemo
+                  ? "Demo · just watch"
+                  : tutorial.writeLock
+                    ? "Practice · saving and sending off"
+                    : "Practice · saving is off"}
             </span>
             <h2 id="tg-dialog-title">{tutorial.title}</h2>
+                        {section && (
+              <span className="tg-section-label">
+                Topic {tutorial.sections.indexOf(section) + 1} of {tutorial.sections.length}: {section.title}
+              </span>
+            )}
             <span className="tg-step-count">
-              Step {stepIndex + 1} of {steps.length}
+              Step {position.current} of {position.total}
             </span>
           </div>
 
           <button
             className="tg-icon-button"
             type="button"
-            onClick={() => onExit(stepIndex, hasPausedRef.current)}
+            onClick={() => onExit(stepIndex, hasPausedRef.current && !isFictional)}
             aria-label="End tutorial"
           >
             <FaTimes aria-hidden="true" />
@@ -609,11 +782,41 @@ export default function TutorialRunner({
         </header>
 
         <div className="tg-progress" aria-hidden="true">
-          <span style={{ width: `${((stepIndex + (phase === "success" ? 1 : 0)) / steps.length) * 100}%` }} />
+          <span style={{ width: `${((position.current - 1 + (phase === "success" ? 1 : 0)) / position.total) * 100}%` }} />
         </div>
 
         <div className="tg-dialog-body" aria-live="polite">
-          {phase === "missing" ? (
+                    {phase === "unmet" ? (
+            <div className="tg-missing">
+              <p>
+                <strong>{step.needs.why}</strong>
+              </p>
+              <div className="tg-choices">
+                {pickStep >= 0 && pickStep !== stepIndex && (
+                  <button
+                    className="tg-button"
+                    type="button"
+                    onClick={() => {
+                      setTargetScope(null);
+                      goTo(pickStep);
+                    }}
+                  >
+                    Choose another group
+                  </button>
+                )}
+                {tutorial.scenario && (
+                  <button className="tg-button tg-button-primary" type="button" onClick={() => onWatchDemo(stepIndex)}>
+                    Watch the demo instead
+                  </button>
+                )}
+                {section && (
+                  <button className="tg-button" type="button" onClick={() => goTo(section.end + 1)}>
+                    Skip this topic
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : phase === "missing" ? (
             <div className="tg-missing">
               <p>
                 <strong>Hmm, I can't find the {getTargetLabel(step.target)} on this screen.</strong>
@@ -637,7 +840,21 @@ export default function TutorialRunner({
             <p className="tg-success">{PRAISE[stepIndex % PRAISE.length]}</p>
           ) : (
             <>
-              <p>{isDemo ? step.show : step.say}</p>
+                            <p>{isDemo ? step.show : step.say}</p>
+
+              {roleNote && <p className="tg-muted">{roleNote}</p>}
+
+              {layout?.pick && (
+                <div className="tg-choices tg-choices-list">
+                  {layout.pick.options.map((option) => (
+                    <button className="tg-button" type="button" key={option.key} onClick={() => setTargetScope(option.key)}>
+                      <span>{option.name}</span>
+                      <small>{option.status}</small>
+                    </button>
+                  ))}
+                  {layout.pick.extra > 0 && <p className="tg-muted">And {layout.pick.extra} more. Search to find them.</p>}
+                </div>
+              )}
 
               {isDemo && step.example && (
                 <p className="tg-example">
@@ -690,7 +907,7 @@ export default function TutorialRunner({
 
           {/* aria-disabled, not disabled: keeps keyboard focus on the button while a step gets ready. */}
           <button
-            className={`tg-button ${isWaitingForAction || phase === "missing" ? "" : "tg-button-primary"}`}
+            className={`tg-button ${isWaitingForAction || isLost ? "" : "tg-button-primary"}`}
             type="button"
             onClick={handleNext}
             aria-disabled={["ignore", "wait"].includes(getNextAction(phase, isDemo, needsAction)) || undefined}

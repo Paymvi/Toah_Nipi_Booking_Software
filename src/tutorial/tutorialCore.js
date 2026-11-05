@@ -24,7 +24,28 @@ export function targetSelector(id) {
   return `[data-tutorial-target~="${id}"]`;
 }
 
-function isShown(element) {
+/*
+  Portal Admin lists every group at once, so "the Assign Tasks button" is
+  ambiguous. Once a group is chosen, elements inside any other group's
+  data-tutorial-scope card don't count as targets. Everything outside the
+  cards is unaffected.
+*/
+let targetScope = null;
+
+export function setTargetScope(key) {
+  targetScope = key;
+}
+
+export function getTargetScope() {
+  return targetScope;
+}
+
+function isInScope(element) {
+  const card = targetScope && element.closest("[data-tutorial-scope]");
+  return !card || card.dataset.tutorialScope === targetScope;
+}
+
+export function isShown(element) {
   // The Master Spreadsheet stays mounted but aria-hidden when another view is open.
   if (element.getClientRects().length === 0) return false;
   if (element.closest('[aria-hidden="true"]')) return false;
@@ -37,7 +58,7 @@ export function findTarget(target) {
 
   for (const id of ids) {
     for (const element of document.querySelectorAll(targetSelector(id))) {
-      if (isShown(element)) return element;
+      if (isShown(element) && isInScope(element)) return element;
     }
   }
 
@@ -46,15 +67,24 @@ export function findTarget(target) {
 
 export function matchesTarget(node, target) {
   const ids = Array.isArray(target) ? target : [target];
-  return ids.some((id) => node?.closest?.(targetSelector(id)));
+  return ids.some((id) => {
+    const element = node?.closest?.(targetSelector(id));
+    return Boolean(element) && isInScope(element);
+  });
 }
 
 // What a person may use to find their way back when a step's target is missing. Nothing here saves.
 export function isWayBack(node) {
   return (
     Boolean(node?.closest?.(".sidebar-link")) ||
-    matchesTarget(node, ["booking-back", "booking-tabs", "spreadsheet-search", "contacts-search"])
+    matchesTarget(node, ["booking-back", "booking-tabs", "spreadsheet-search", "contacts-search", "portal-toolbar"])
   );
+}
+
+// What the screen says isn't saved yet: components mark themselves with data-tutorial-unsaved="<what>".
+export function getUnsavedWork() {
+  const marked = document.querySelectorAll("[data-tutorial-unsaved]");
+  return [...new Set(Array.from(marked, (element) => element.dataset.tutorialUnsaved))];
 }
 
 function getFields(element) {
@@ -90,7 +120,8 @@ export function createStepContext(lastInputAtRef) {
       return !isFocused || Date.now() - lastInputAtRef.current > TEXT_FIELD_IDLE_MS;
     },
     // A signature of every field under the target, to detect "changed since the step began".
-    fields: (id) => fieldValues(id).join("\u0001"),
+        fields: (id) => fieldValues(id).join("\u0001"),
+    hasScope: () => Boolean(targetScope),
   };
 }
 
@@ -117,7 +148,7 @@ export const DEMO_ACTION_TIMEOUT_MS = 8000;
   happened yet, so skipping it would strand them ("wait").
 */
 export function getNextAction(phase, isDemo, needsAction = false) {
-  if (phase === "seeking" || phase === "working" || phase === "success") return "ignore";
+  if (phase === "seeking" || phase === "working" || phase === "success" || phase === "unmet") return "ignore";
   if (phase === "failed") return "retry";
   if (isDemo && phase === "active") return "hurry";
   return needsAction ? "wait" : "advance";
@@ -253,6 +284,82 @@ export function searchTutorials(tutorials, query) {
 export function getDemoStepDuration(text) {
   const words = String(text || "").split(/\s+/).filter(Boolean).length;
   return Math.min(9000, Math.max(3800, words * 290));
+}
+
+/* =========================================================
+   WALKTHROUGHS AND TOPICS (pure)
+========================================================= */
+
+/*
+  Builds one walkthrough and one standalone topic per section from the same
+  step objects. Step ids get the section's id in front, because the setup
+  steps appear once per section. See portalTutorial.js.
+*/
+export function composeWalkthrough({ sections, intro, recap, ...shared }) {
+  const stepsOf = (section) =>
+    section.steps.map((step) => ({ ...step, id: `${section.id}.${step.id}`, sectionId: section.id }));
+
+  const steps = [...intro];
+  const marks = sections.map((section) => {
+    const start = steps.length;
+    steps.push(...stepsOf(section));
+    return { id: section.id, title: section.title, start, end: steps.length - 1 };
+  });
+  const recapStart = steps.length;
+  steps.push(...recap);
+
+  const topics = sections.map((section) => ({
+    ...shared,
+    id: `${shared.id}/${section.id}`,
+    title: section.title,
+    description: section.description,
+    group: section.group,
+    keywords: [...shared.keywords, ...section.keywords],
+    parentId: shared.id,
+    sectionId: section.id,
+    steps: stepsOf(section),
+  }));
+
+  return { walkthrough: { ...shared, steps, sections: marks, recapStart, topics }, topics };
+}
+
+export function getSectionAt(tutorial, index) {
+  return tutorial.sections?.find((section) => index >= section.start && index <= section.end) ?? null;
+}
+
+/*
+  Where Resume really starts. A topic or section depends on screens and a
+  chosen group that are gone by then, so it restarts from its own beginning,
+  which also keeps a saved step from an older version of the steps harmless.
+*/
+export function getResumeStep(tutorial, step) {
+  if (tutorial.parentId) return 0;
+  if (!tutorial.sections) return step;
+  if (step >= tutorial.recapStart) return tutorial.recapStart;
+  return getSectionAt(tutorial, step)?.start ?? 0;
+}
+
+// First step after a finished topic in the full walkthrough: the next topic, or the recap.
+export function getContinueStep(walkthrough, sectionId) {
+  return walkthrough.sections.find((section) => section.id === sectionId).end + 1;
+}
+
+export function isStepInMode(step, isDemo) {
+  return isDemo || !step.demoOnly;
+}
+
+// "Step 3 of 7" without setup steps, or steps for the other mode, so the numbers only count teaching.
+export function getStepPosition(steps, index, isDemo) {
+  const counts = (step) => isStepInMode(step, isDemo) && !step.prep;
+  return {
+    current: Math.max(steps.slice(0, index + 1).filter(counts).length, 1),
+    total: steps.filter(counts).length,
+  };
+}
+
+// What the fictional scene shows at a step: the outcome of every step already passed.
+export function getDemoEffects(steps, index) {
+  return steps.slice(0, index).flatMap((step) => step.demoEffect ?? []);
 }
 
 /* =========================================================
