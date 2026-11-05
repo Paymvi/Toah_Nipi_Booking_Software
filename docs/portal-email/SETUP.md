@@ -94,7 +94,7 @@ Current pricing (checked 2026-11-04 at resend.com/pricing; re-check before signi
 
 Alternatives considered: Postmark (strong transactional deliverability, no permanent free tier) and Amazon SES (cheapest at volume, more AWS setup). Either fits behind the adapter.
 
-### Sender-domain verification (not done; needs DNS access and approval)
+### Sender-domain verification (done 2026-11-04)
 
 From: `Toah Nipi <contactus@toahnipi.org>` and Reply-To: `contactus@toahnipi.org` are fixed in `src/utils/portalEmail.js`.
 
@@ -132,11 +132,11 @@ Each stage is a separate, approved step. No stage enables existing bookings; boo
    npm install --no-save @electric-sql/pglite
    node supabase/tests/portal-email.pglite.mjs
    ```
-2. **Database (approval needed).** Review, then apply `supabase/migrations/20261104000100_portal_email.sql`. Afterwards the mode is dry run, automatic emails are off, and nothing is enrolled. Check in the SQL editor: `select mode, automation_enabled from portal_email_settings;` should return `disabled`, `false`.
-3. **Edge Function (approval needed).** `supabase functions deploy portal-email --use-api` (`--use-api` bundles the shared `src/utils` files). Set `PORTAL_EMAIL_PORTAL_BASE_URL` and `PORTAL_EMAIL_CRON_SECRET`; leave the provider unset. Previews and dry-run history now work in Portal Admin with zero provider calls.
-4. **Synthetic test (approval needed).** Create the Resend account, verify the domain (above), and set `PORTAL_EMAIL_PROVIDER`, `RESEND_API_KEY`, `PORTAL_EMAIL_WEBHOOK_SECRET` and `PORTAL_EMAIL_TEST_ALLOWLIST=<one staff inbox>`. Switch the mode to **Test**. Use **Test send** with the synthetic sample to that inbox. Check the From and Reply-To headers, the [TEST] label, mobile rendering, the plain-text part, and SPF/DKIM/DMARC pass in the message headers.
+2. **Database (done 2026-11-04).** Review, then apply `supabase/migrations/20261104000100_portal_email.sql`. Afterwards the mode is dry run, automatic emails are off, and nothing is enrolled. Check in the SQL editor: `select mode, automation_enabled from portal_email_settings;` should return `disabled`, `false`.
+3. **Edge Function (done 2026-11-04).** `supabase functions deploy portal-email --use-api` (`--use-api` bundles the shared `src/utils` files). Set `PORTAL_EMAIL_PORTAL_BASE_URL` and `PORTAL_EMAIL_CRON_SECRET`; leave the provider unset. Previews and dry-run history now work in Portal Admin with zero provider calls.
+4. **Synthetic test (done 2026-11-05).** Create the Resend account, verify the domain (above), and set `PORTAL_EMAIL_PROVIDER`, `RESEND_API_KEY`, `PORTAL_EMAIL_WEBHOOK_SECRET` and `PORTAL_EMAIL_TEST_ALLOWLIST=<one staff inbox>`. Switch the mode to **Test**. Use **Test send** with the synthetic sample to that inbox. Check the From and Reply-To headers, the [TEST] label, mobile rendering, the plain-text part, and SPF/DKIM/DMARC pass in the message headers.
 5. **Review.** Look at the history, templates, the guest-facing wording, and this document.
-6. **Scheduler (approval needed).** Create the Vault secrets and run `supabase/optional/20261104000110_portal_email_scheduler.sql`, still in Test mode. Watch history for a few days using a **synthetic test booking** whose only selected recipient is the allowlisted inbox.
+6. **Scheduler (installed and one reminder verified 2026-11-05; multi-day watch not done).** Create the Vault secrets and run `supabase/optional/20261104000110_portal_email_scheduler.sql`, still in Test mode. Watch history for a few days using a **synthetic test booking** whose only selected recipient is the allowlisted inbox.
 7. **Production pilot (approval needed).** Set `PORTAL_EMAIL_LIVE_ENABLED=true`, check the readiness list, and switch the mode to **Live** (typed confirmation). This enrolls no booking. Enable **one** pilot booking with one confirmed contact. Turn on automatic emails only after the welcome has been reviewed.
 8. Widen gradually: enable more bookings one at a time. Raise the cap only if needed.
 
@@ -148,6 +148,44 @@ Each stage is a separate, approved step. No stage enables existing bookings; boo
 - **Stop the worker:** `select cron.unschedule('portal-email-worker');`
 - Rolling back code leaves the tables in place, and they do nothing without the function. Revoke the Resend API key if it may have leaked.
 
-## Remaining external steps
+## Current state (2026-11-05)
 
-Resend account and API key; domain verification DNS records; webhook endpoint; secrets; migration; function deploy; Vault secrets and scheduler. **No real email has been sent or delivery tested.** The provider adapter was tested with a fake transport only.
+**Safety state after testing:** mode Test (epoch 2), automatic emails off, `PORTAL_EMAIL_LIVE_ENABLED` unset, test allowlist is only `toahnipistorage@gmail.com`, 0 bookings enabled, 0 queued messages. No real guest booking has been enrolled and no real guest has been emailed.
+
+**The scheduler is still installed and running** (`portal-email-worker`, every 15 minutes). With automatic emails off it plans nothing; each run still dispatches anything already queued. Stop it with `select cron.unschedule('portal-email-worker');`.
+
+### What was set up
+
+- Migration `20261104000100_portal_email.sql` was applied on its own, by hand. The project's migration history table is empty because earlier scripts were also applied by hand, so **never use `supabase db push`** here.
+- `portal-email` function deployed. All secrets in the table above are set, except `PORTAL_EMAIL_LIVE_ENABLED`. `PORTAL_EMAIL_PORTAL_BASE_URL` is `https://toah-nipi-portal.vercel.app`.
+- Extensions `pg_cron` (schema `pg_catalog`) and `pg_net` (schema `extensions`) installed, and the optional scheduler script run. Vault holds `portal_email_project_url` and `portal_email_cron_secret`.
+- `PORTAL_EMAIL_CRON_SECRET` was regenerated on 2026-11-05 and stored in both the server secrets and Vault, with matching SHA-256 fingerprints. No copy is kept anywhere else. To rotate it, generate a new value and change **both** places: `vault.update_secret` for Vault.
+
+### Results
+
+All three messages went only to `toahnipistorage@gmail.com`, in Test mode. Times are New York.
+
+| Message | Started by | Resend | Signed webhook |
+|---|---|---|---|
+| Synthetic test (`7a99796d`), 2026-11-04 7:26 PM | Staff Test send | Accepted | Delivered, about 3 s later |
+| Welcome (`cfa6eff0`), 2026-11-05 10:15 AM | Staff activation of the test booking | Accepted | Delivered, about 3 s later |
+| Reminder (`8137f44d`), 2026-11-05 10:30 AM | Scheduled run 4 (`planned 1, dispatched 1`), with both apps closed | Accepted | Delivered, about 12 s later |
+
+- Scheduler authentication: the real runs returned 200. A wrong secret, an empty secret and no credentials each returned 401.
+- Duplicates: the 10:45 AM run, inside the same reminder window, returned `planned 0`. The item event table holds exactly one key for the reminder.
+
+### Test record for cleanup
+
+Booking `EMAIL AUTOMATION TEST — NOT A REAL RETREAT`, id `0cc9a418-e888-437b-b34b-ab52266e2269`, 2026-12-01 to 2026-12-02, Confirmed, 1 guest, no lodging, no contact email or phone. It has two tasks: "Confirm final guest counts…" (due 2026-11-07, "2 days before" on) and "Sign and return contract" (no due date, no email options). Its emails are disabled and paused. Its recipient and reminder option are still saved.
+
+It shows as a confirmed group in the Calendar, Spreadsheet and Reports until removed.
+
+- **Keep it:** the panel history stays viewable, but it keeps showing in operational views.
+- **Cancel it:** guest emails are refused, and history stays viewable from the booking.
+- **Delete it (administrators):** also removes its tasks, documents, email enrollment and recipient. Rows in `portal_email_messages` and `portal_email_item_events` have no link to `bookings`, so they survive, but they can then be read only in SQL, not from the booking's panel.
+
+### Remaining tests
+
+- Gmail check of the welcome and reminder: wording, link, headers and SPF/DKIM/DMARC.
+- Not run on a live schedule: the 7-day and overdue reminders, new-task and change-request notices, bounce handling, and the pause, resume and complete stops.
+- Several days of scheduler watching, then stage 7 (production pilot, approval needed).

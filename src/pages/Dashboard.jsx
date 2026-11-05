@@ -27,6 +27,8 @@ import {
   FaInfoCircle,
   FaUtensils,
   FaHiking,
+  FaCheck,
+  FaChevronDown,
   FaChevronLeft,
   FaChevronRight,
   FaCog,
@@ -35,15 +37,9 @@ import {
   FaRegStar,
   FaStar,
   FaExternalLinkAlt,
-  FaChild,
-  FaUserMinus,
   FaUserPlus,
-  FaGlobeAmericas,
-  FaMoon,
   FaPen,
-  FaConciergeBell,
   FaShieldAlt,
-  FaStickyNote,
 } from "react-icons/fa";
 
 import {
@@ -127,6 +123,10 @@ import {
   BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY,
   DEFAULT_BOOKING_DETAIL_DATE_SETTINGS,
   bookingDetailDateFormatOptions,
+
+  BOOKING_OVERVIEW_DENSITY_STORAGE_KEY,
+  DEFAULT_BOOKING_OVERVIEW_DENSITY,
+  bookingOverviewDensityOptions,
 
 
   
@@ -322,7 +322,7 @@ function parseBookingDietarySummary(summary = "") {
   };
 }
 
-function BookingMealsProgramOverview({ booking, details }) {
+function BookingMealsProgramOverview({ booking, details, setActiveTab }) {
   const mealPlanText = getOverviewDisplayValue(
     booking.meals
   );
@@ -354,316 +354,189 @@ function BookingMealsProgramOverview({ booking, details }) {
       details?.numberOfMeals,
       parsedMealSummary.totalMeals,
       booking.mealCount
-    ) || "—";
+    );
 
   const firstMeal =
     getOverviewDisplayValue(
       details?.firstMeal,
       parsedMealSummary.firstMeal
-    ) || "—";
+    );
 
   const lastMeal =
     getOverviewDisplayValue(
       details?.lastMeal,
       parsedMealSummary.lastMeal
-    ) || "—";
+    );
 
-  const breakfastTime =
-    formatBookingOverviewTime(
-      getOverviewDisplayValue(
-        details?.breakfastTime,
-        parsedMealSummary.breakfastTime
-      )
-    ) || "—";
-
-  const lunchTime =
-    formatBookingOverviewTime(
-      getOverviewDisplayValue(
-        details?.lunchTime,
-        parsedMealSummary.lunchTime
-      )
-    ) || "—";
-
-  const dinnerTime =
-    formatBookingOverviewTime(
-      getOverviewDisplayValue(
-        details?.dinnerTime,
-        parsedMealSummary.dinnerTime
-      )
-    ) || "—";
-
-  const breakfastCount =
+  const serviceTimes = [
     getOverviewDisplayValue(
-      parsedMealSummary.breakfastCount
-    ) || "0";
-
-  const lunchCount =
+      details?.breakfastTime,
+      parsedMealSummary.breakfastTime
+    ),
     getOverviewDisplayValue(
-      parsedMealSummary.lunchCount
-    ) || "0";
-
-  const dinnerCount =
+      details?.lunchTime,
+      parsedMealSummary.lunchTime
+    ),
     getOverviewDisplayValue(
-      parsedMealSummary.dinnerCount
-    ) || "0";
+      details?.dinnerTime,
+      parsedMealSummary.dinnerTime
+    ),
+  ];
+
+  const hasServiceTimes = serviceTimes.some(Boolean);
+
+  // The parser defaults per-meal counts to "0", so only trust them when the plan recorded totals.
+  const mealCounts = parsedMealSummary.totalMeals
+    ? [
+        parsedMealSummary.breakfastCount,
+        parsedMealSummary.lunchCount,
+        parsedMealSummary.dinnerCount,
+      ]
+    : ["—", "—", "—"];
+
+  const hasMealTable =
+    parsedMealSummary.dateRows.length > 0 ||
+    hasServiceTimes ||
+    hasOverviewDisplayValue(totalMeals);
+
+  const hasDietaryAlerts =
+    parsedDietarySummary.items.length > 0 ||
+    Boolean(parsedDietarySummary.additionalNotes);
 
   const hasAnyContent =
     hasOverviewDisplayValue(mealPlanText) ||
-    hasOverviewDisplayValue(dietaryText) ||
+    hasDietaryAlerts ||
     hasOverviewDisplayValue(mealNotesText) ||
     hasOverviewDisplayValue(needToKnowText) ||
-    hasOverviewDisplayValue(details?.numberOfMeals) ||
-    hasOverviewDisplayValue(booking.mealCount);
+    hasMealTable;
 
   if (!hasAnyContent) {
-    return null;
+    return (
+      <BookingOverviewEmptyRow
+        icon={FaUtensils}
+        title="Meals"
+        explanation="Meal schedule, service times, dietary alerts and food-service notes added in Create Booking will appear here."
+        action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
+      />
+    );
   }
 
   return (
-    <section className="booking-overview-card booking-overview-card-wide booking-overview-program-showcase">
-      <div className="booking-overview-program-header">
-        <div className="booking-overview-program-title">
-          <span className="booking-overview-program-title-icon">
-            <FaUtensils />
-          </span>
+    <BookingOverviewSection icon={FaUtensils} title="Meals">
+      <div className="booking-overview-meals">
+        <div className="booking-overview-meals-plan">
+          <BookingOverviewFields
+            fields={[
+              { label: "First Meal", value: firstMeal },
+              { label: "Last Meal", value: lastMeal },
+            ]}
+          />
 
-          <div>
-            <p>Food Service</p>
-            <h3>Meals</h3>
-            <span>
-              Meal schedule, service times, dietary requirements,
-              and food-service notes.
-            </span>
-          </div>
-        </div>
-      </div>
+          {hasMealTable ? (
+            <table className="booking-overview-sheet booking-overview-sheet-numeric booking-overview-meal-table">
+              <thead>
+                <tr>
+                  <th scope="col">Meal Service Plan</th>
+                  <th scope="col">Breakfast</th>
+                  <th scope="col">Lunch</th>
+                  <th scope="col">Dinner</th>
+                </tr>
+              </thead>
 
-      <div className="booking-overview-program-summary">
-        <div className="booking-overview-program-summary-block">
-          <span className="booking-overview-program-summary-icon">
-            <FaUtensils />
-          </span>
-
-          <div className="booking-overview-program-summary-copy">
-            <small>Total Meals</small>
-            <strong>{totalMeals}</strong>
-            <span>
-              (Breakfast: {breakfastCount}, Lunch: {lunchCount}, Dinner:{" "}
-              {dinnerCount})
-            </span>
-          </div>
-        </div>
-
-        <div className="booking-overview-program-summary-block">
-          <span className="booking-overview-program-summary-icon">
-            <FaConciergeBell />
-          </span>
-
-          <div className="booking-overview-program-summary-copy">
-            <small>First Meal</small>
-            <strong>{firstMeal}</strong>
-          </div>
-        </div>
-
-        <div className="booking-overview-program-summary-block">
-          <span className="booking-overview-program-summary-icon">
-            <FaClipboardList />
-          </span>
-
-          <div className="booking-overview-program-summary-copy">
-            <small>Last Meal</small>
-            <strong>{lastMeal}</strong>
-          </div>
-        </div>
-
-        <div className="booking-overview-program-summary-block">
-          <span className="booking-overview-program-summary-icon">
-            <FaClock />
-          </span>
-
-          <div className="booking-overview-program-summary-copy">
-            <small>Service Times</small>
-
-            <div className="booking-overview-program-service-times">
-              <div>
-                <strong>{breakfastTime}</strong>
-                <span>Breakfast</span>
-              </div>
-
-              <div>
-                <strong>{lunchTime}</strong>
-                <span>Lunch</span>
-              </div>
-
-              <div>
-                <strong>{dinnerTime}</strong>
-                <span>Dinner</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="booking-overview-program-cards-row">
-        <div className="booking-overview-program-panel booking-overview-program-panel-meals">
-          <div className="booking-overview-program-panel-header">
-            <span className="booking-overview-program-panel-icon">
-              <FaCalendarAlt />
-            </span>
-
-            <div>
-              <h4>Meal Service Plan</h4>
-              <p>Detailed meal plan for this retreat.</p>
-            </div>
-          </div>
-
-          {parsedMealSummary.dateRows.length > 0 ? (
-            <div className="booking-overview-program-table-wrap">
-              <table className="booking-overview-program-table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Breakfast</th>
-                    <th>Lunch</th>
-                    <th>Dinner</th>
+              <tbody>
+                {hasServiceTimes && (
+                  <tr className="booking-overview-sheet-subhead">
+                    <th scope="row">Service time</th>
+                    {serviceTimes.map((time, index) => (
+                      <td key={index}>{formatBookingOverviewTime(time)}</td>
+                    ))}
                   </tr>
-                </thead>
+                )}
 
-                <tbody>
-                  {parsedMealSummary.dateRows.map((row) => (
-                    <tr key={row.dateLabel}>
-                      <td className="booking-overview-program-date-cell">
-                        {row.dateLabel}
-                      </td>
-
-                      <td>
-                        {row.breakfast ? (
-                          <span className="booking-overview-meal-chip">
-                            Breakfast
-                          </span>
+                {parsedMealSummary.dateRows.map((row) => (
+                  <tr key={row.dateLabel}>
+                    <th scope="row">{row.dateLabel}</th>
+                    {[row.breakfast, row.lunch, row.dinner].map((isServed, index) => (
+                      <td key={index}>
+                        {isServed ? (
+                          <FaCheck className="booking-overview-meal-check" title="Served" />
                         ) : (
-                          <span className="booking-overview-program-dash">—</span>
+                          <span className="booking-overview-muted">—</span>
                         )}
                       </td>
+                    ))}
+                  </tr>
+                ))}
 
-                      <td>
-                        {row.lunch ? (
-                          <span className="booking-overview-meal-chip">
-                            Lunch
-                          </span>
-                        ) : (
-                          <span className="booking-overview-program-dash">—</span>
-                        )}
-                      </td>
+                {parsedMealSummary.dateRows.length === 0 && (
+                  <tr>
+                    <td className="booking-overview-muted" colSpan={4}>
+                      No detailed meal schedule added
+                    </td>
+                  </tr>
+                )}
+              </tbody>
 
-                      <td>
-                        {row.dinner ? (
-                          <span className="booking-overview-meal-chip booking-overview-meal-chip-dinner">
-                            Dinner
-                          </span>
-                        ) : (
-                          <span className="booking-overview-program-dash">—</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+              {hasOverviewDisplayValue(totalMeals) && (
+                <tfoot>
+                  <tr>
+                    <th scope="row">Total meals: {totalMeals}</th>
+                    {mealCounts.map((count, index) => (
+                      <td key={index}>{count}</td>
+                    ))}
+                  </tr>
+                </tfoot>
+              )}
+            </table>
           ) : (
-            <div className="booking-overview-program-empty">
-              No detailed meal schedule has been added yet.
-            </div>
+            <BookingOverviewEmptyRow
+              title="Meal Service Plan"
+              explanation="A detailed meal schedule added in Create Booking will appear here."
+              action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
+            />
           )}
         </div>
 
-        <div className="booking-overview-program-panel booking-overview-program-panel-diet">
-          <div className="booking-overview-program-panel-header">
-            <span className="booking-overview-program-panel-icon">
-              <FaShieldAlt />
-            </span>
+        <div className="booking-overview-meals-notes">
+          {hasDietaryAlerts ? (
+            <div className="booking-overview-dietary">
+              <h4>
+                <FaExclamationTriangle aria-hidden="true" />
+                Dietary Alerts
+              </h4>
 
-            <div>
-              <h4>Dietary Alerts</h4>
-              <p>Allergen and dietary information for this group.</p>
-            </div>
-          </div>
-
-          {parsedDietarySummary.items.length > 0 ? (
-            <div className="booking-overview-dietary-table">
-              <div className="booking-overview-dietary-table-head">
-                <span>Dietary Item</span>
-                <span>Quantity</span>
-              </div>
-
-              {parsedDietarySummary.items.map((item, index) => (
-                <div
-                  className="booking-overview-dietary-row"
-                  key={`${item.label}-${index}`}
-                >
-                  <span>{item.label}</span>
-                  <strong>{item.quantity}</strong>
-                </div>
-              ))}
+              {parsedDietarySummary.items.length > 0 && (
+                <ul>
+                  {parsedDietarySummary.items.map((item, index) => (
+                    <li key={`${item.label}-${index}`}>
+                      <strong>{item.quantity}</strong>
+                      <span>{item.label}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {parsedDietarySummary.additionalNotes && (
-                <div className="booking-overview-dietary-alert-note">
-                  <strong>Additional Dietary Note</strong>
-                  <p>{parsedDietarySummary.additionalNotes}</p>
-                </div>
+                <p>{parsedDietarySummary.additionalNotes}</p>
               )}
             </div>
           ) : (
-            <div className="booking-overview-program-empty">
-              No dietary alerts were added for this booking.
-            </div>
+            <BookingOverviewEmptyRow
+              title="Dietary Alerts"
+              explanation="Allergen and dietary information added in Create Booking will appear here."
+              action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
+            />
           )}
+
+          <BookingOverviewFields
+            fields={[
+              { label: "Meal Notes", value: mealNotesText, multiline: true },
+              { label: "Need To Know", value: needToKnowText, multiline: true },
+            ]}
+          />
         </div>
       </div>
-
-      {(mealNotesText || needToKnowText) && (
-        <div className="booking-overview-program-panel booking-overview-program-panel-notes">
-          <div className="booking-overview-program-panel-header">
-            <span className="booking-overview-program-panel-icon">
-              <FaStickyNote />
-            </span>
-
-            <div>
-              <h4>Meal Notes</h4>
-              <p>Important details for food-service coordination.</p>
-            </div>
-          </div>
-
-          <div className="booking-overview-program-notes-grid">
-            {mealNotesText && (
-              <div className="booking-overview-program-note-block">
-                <div className="booking-overview-program-note-heading">
-                  <FaStickyNote />
-                  <span>Meal Notes</span>
-                </div>
-
-                <p className="booking-overview-program-note-value">
-                  {mealNotesText}
-                </p>
-              </div>
-            )}
-
-            {needToKnowText && (
-              <div className="booking-overview-program-note-block">
-                <div className="booking-overview-program-note-heading">
-                  <FaInfoCircle />
-                  <span>Need To Know</span>
-                </div>
-
-                <p className="booking-overview-program-note-value">
-                  {needToKnowText}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </section>
+    </BookingOverviewSection>
   );
 }
 
@@ -683,10 +556,38 @@ function getBookingOverviewScheduleRows(value) {
 }
 
 
+function BookingOverviewScheduleTable({ columns, rows }) {
+  return (
+    <table className="booking-overview-sheet booking-overview-schedule">
+      <thead>
+        <tr>
+          {columns.map((column) => (
+            <th scope="col" key={column}>{column}</th>
+          ))}
+        </tr>
+      </thead>
+
+      <tbody>
+        {rows.map((row, rowIndex) => (
+          <tr key={rowIndex}>
+            {row.map((cell, cellIndex) => (
+              <td data-label={columns[cellIndex]} key={columns[cellIndex]}>
+                {cell}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+
 function BookingActivitiesOverview({
   booking,
   details,
   dateSettings,
+  setActiveTab,
 }) {
   const activities =
     getBookingOverviewScheduleRows(
@@ -707,88 +608,54 @@ function BookingActivitiesOverview({
   const activityNotes =
     details?.activityNotes || "";
 
+  const hasLegacyActivities =
+    activities.length === 0 &&
+    hasBookingOverviewValue(legacyActivities);
+
+  if (
+    activities.length === 0 &&
+    !hasLegacyActivities &&
+    !activityNotes
+  ) {
+    return (
+      <BookingOverviewEmptyRow
+        icon={FaHiking}
+        title="Activities"
+        explanation="Activities added in Create Booking will appear here with their date and time."
+        action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
+      />
+    );
+  }
+
   return (
-    <section className="booking-overview-card booking-overview-card-wide booking-overview-schedule-showcase">
-      <div className="booking-overview-schedule-header">
-        <span className="booking-overview-schedule-header-icon">
-          <FaHiking />
-        </span>
-
-        <div>
-          <p>Program</p>
-          <h3>Activities</h3>
-          <span>
-            Scheduled activities, locations, and program notes.
-          </span>
-        </div>
-      </div>
-
-      {activities.length > 0 ? (
-        <div className="booking-overview-schedule-table-wrap">
-          <div className="booking-overview-schedule-table booking-overview-activity-table">
-            <div className="booking-overview-schedule-table-head">
-              <span>Date</span>
-              <span>Time</span>
-              <span>Activity</span>
-            </div>
-
-            {activities.map((activity, index) => (
-              <div
-                className="booking-overview-schedule-row"
-                key={`${activity.date || "activity"}-${activity.time || "time"}-${index}`}
-              >
-                <strong>
-                  {activity.date
-                    ? formatBookingDetailDate(
-                        activity.date,
-                        dateSettings
-                      )
-                    : "—"}
-                </strong>
-
-                <span>
-                  {activity.time
-                    ? formatBookingOverviewTime(
-                        activity.time
-                      )
-                    : "—"}
-                </span>
-
-                <span className="booking-overview-schedule-primary">
-                  {activity.activity || "—"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : hasBookingOverviewValue(
-          legacyActivities
-        ) ? (
-        <div className="booking-overview-schedule-legacy">
-          {formatBookingOverviewValue(
-            legacyActivities
-          )}
-        </div>
-      ) : (
-        <div className="booking-overview-schedule-empty">
-          <FaHiking />
-
-          <div>
-            <strong>No activities scheduled yet</strong>
-            <span>
-              Activities added in Create Booking will appear here with their date and time.
-            </span>
-          </div>
-        </div>
+    <BookingOverviewSection icon={FaHiking} title="Activities">
+      {activities.length > 0 && (
+        <BookingOverviewScheduleTable
+          columns={["Date", "Time", "Activity"]}
+          rows={activities.map((activity) => [
+            activity.date
+              ? formatBookingDetailDate(activity.date, dateSettings)
+              : "—",
+            activity.time
+              ? formatBookingOverviewTime(activity.time)
+              : "—",
+            activity.activity || "—",
+          ])}
+        />
       )}
 
-      {activityNotes && (
-        <div className="booking-overview-schedule-notes">
-          <strong>Activity Notes</strong>
-          <p>{activityNotes}</p>
-        </div>
+      {hasLegacyActivities && (
+        <p className="booking-overview-text">
+          {formatBookingOverviewValue(legacyActivities)}
+        </p>
       )}
-    </section>
+
+      <BookingOverviewFields
+        fields={[
+          { label: "Activity Notes", value: activityNotes, multiline: true },
+        ]}
+      />
+    </BookingOverviewSection>
   );
 }
 
@@ -797,6 +664,7 @@ function BookingFacilitiesOverview({
   booking,
   details,
   dateSettings,
+  setActiveTab,
 }) {
   const facilities =
     getBookingOverviewScheduleRows(
@@ -812,90 +680,42 @@ function BookingFacilitiesOverview({
   const facilityNotes =
     details?.facilityNotes || "";
 
+  if (facilities.length === 0 && !facilityNotes) {
+    return (
+      <BookingOverviewEmptyRow
+        icon={FaBuilding}
+        title="Facilities"
+        explanation="Facility tasks added in Create Booking will appear here with their assignments and notes."
+        action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
+      />
+    );
+  }
+
   return (
-    <section className="booking-overview-card booking-overview-card-wide booking-overview-schedule-showcase">
-      <div className="booking-overview-schedule-header">
-        <span className="booking-overview-schedule-header-icon booking-overview-schedule-header-icon-facilities">
-          <FaBuilding />
-        </span>
-
-        <div>
-          <p>Operations</p>
-          <h3>Facilities</h3>
-          <span>
-            Facility preparation tasks, assignments, and setup notes.
-          </span>
-        </div>
-      </div>
-
-      {facilities.length > 0 ? (
-        <div className="booking-overview-schedule-table-wrap">
-          <div className="booking-overview-schedule-table booking-overview-facility-table">
-            <div className="booking-overview-schedule-table-head">
-              <span>Date</span>
-              <span>Time</span>
-              <span>Task</span>
-              <span>Assigned To</span>
-              <span>Notes</span>
-            </div>
-
-            {facilities.map((facility, index) => (
-              <div
-                className="booking-overview-schedule-row"
-                key={`${facility.date || "facility"}-${facility.time || "time"}-${index}`}
-              >
-                <strong>
-                  {facility.date
-                    ? formatBookingDetailDate(
-                        facility.date,
-                        dateSettings
-                      )
-                    : "—"}
-                </strong>
-
-                <span>
-                  {facility.time
-                    ? formatBookingOverviewTime(
-                        facility.time
-                      )
-                    : "—"}
-                </span>
-
-                <span className="booking-overview-schedule-primary">
-                  {facility.task || "—"}
-                </span>
-
-                <span>
-                  {facility.assignedTo || "—"}
-                </span>
-
-                <span>
-                  {facility.notes || "—"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="booking-overview-schedule-empty booking-overview-schedule-empty-facilities">
-          <FaBuilding />
-
-          <div>
-            <strong>No facility tasks scheduled yet</strong>
-            <span>
-              Facility tasks added in Create Booking will appear here with their assignments and notes.
-            </span>
-          </div>
-        </div>
+    <BookingOverviewSection icon={FaBuilding} title="Facilities">
+      {facilities.length > 0 && (
+        <BookingOverviewScheduleTable
+          columns={["Date", "Time", "Task", "Assigned To", "Notes"]}
+          rows={facilities.map((facility) => [
+            facility.date
+              ? formatBookingDetailDate(facility.date, dateSettings)
+              : "—",
+            facility.time
+              ? formatBookingOverviewTime(facility.time)
+              : "—",
+            facility.task || "—",
+            facility.assignedTo || "—",
+            facility.notes || "—",
+          ])}
+        />
       )}
 
-      {facilityNotes && (
-        <div className="booking-overview-schedule-notes">
-          <strong>Facility Notes</strong>
-          <p>{facilityNotes}</p>
-        </div>
-      )}
-    </section>
+      <BookingOverviewFields
+        fields={[
+          { label: "Facility Notes", value: facilityNotes, multiline: true },
+        ]}
+      />
+    </BookingOverviewSection>
   );
 }
 
@@ -940,6 +760,31 @@ function saveBookingDetailDateSettings(settings) {
     );
   } catch (error) {
     console.error("Could not save booking detail date settings:", error);
+  }
+}
+
+function getSavedBookingOverviewDensity() {
+  try {
+    const savedDensity = localStorage.getItem(
+      BOOKING_OVERVIEW_DENSITY_STORAGE_KEY
+    );
+
+    return bookingOverviewDensityOptions.some(
+      (option) => option.value === savedDensity
+    )
+      ? savedDensity
+      : DEFAULT_BOOKING_OVERVIEW_DENSITY;
+  } catch (error) {
+    console.error("Could not read booking overview density:", error);
+    return DEFAULT_BOOKING_OVERVIEW_DENSITY;
+  }
+}
+
+function saveBookingOverviewDensity(density) {
+  try {
+    localStorage.setItem(BOOKING_OVERVIEW_DENSITY_STORAGE_KEY, density);
+  } catch (error) {
+    console.error("Could not save booking overview density:", error);
   }
 }
 
@@ -2630,16 +2475,6 @@ function formatSecondaryContactPhone(value) {
   return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
 }
 
-function getBookingInitials(name) {
-  return String(name || "TN")
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase();
-}
-
 /* =========================================================
    BOOKING INCIDENT NOTES
    Stored inside rentalFormDetails.incidentNotes
@@ -2695,67 +2530,68 @@ function BookingIncidentNotesCard({ booking, onSaveBooking }) {
       ).trim()
     );
 
+  if (!isEditingIncidentNotes && !hasIncidentNotes) {
+    return (
+      <BookingOverviewEmptyRow
+        icon={FaExclamationTriangle}
+        title="Incident Notes"
+        explanation="Document incidents, concerns, actions taken, and any staff follow-up."
+        action={
+          <button
+            className="secondary-dashboard-button booking-overview-action"
+            type="button"
+            onClick={() =>
+              setIsEditingIncidentNotes(true)
+            }
+          >
+            Add Incident Notes
+          </button>
+        }
+      />
+    );
+  }
+
   return (
-    <section className="dashboard-card booking-incident-notes-card">
-      <div className="booking-incident-notes-header">
-        <div className="booking-incident-notes-title">
-          <span className="booking-incident-notes-icon">
-            <FaExclamationTriangle />
-          </span>
-
-          <div>
-            <p className="dashboard-eyebrow">
-              Internal Record
-            </p>
-
-            <h3>Incident Notes</h3>
-
-            <span>
-              Document incidents, concerns, actions taken,
-              and any staff follow-up.
-            </span>
-          </div>
-        </div>
-
-        <div className="booking-incident-notes-actions">
-          {isEditingIncidentNotes ? (
-            <>
-              <button
-                className="secondary-dashboard-button"
-                type="button"
-                onClick={
-                  handleCancelIncidentNotes
-                }
-              >
-                Cancel
-              </button>
-
-              <button
-                className="primary-dashboard-button"
-                type="button"
-                onClick={
-                  handleSaveIncidentNotes
-                }
-              >
-                Save Incident Notes
-              </button>
-            </>
-          ) : (
+    <BookingOverviewSection
+      icon={FaExclamationTriangle}
+      title="Incident Notes"
+      className="booking-overview-incident"
+      actions={
+        isEditingIncidentNotes ? (
+          <>
             <button
-              className="secondary-dashboard-button"
+              className="secondary-dashboard-button booking-overview-action"
               type="button"
-              onClick={() =>
-                setIsEditingIncidentNotes(true)
+              onClick={
+                handleCancelIncidentNotes
               }
             >
-              {hasIncidentNotes
-                ? "Edit Incident Notes"
-                : "Add Incident Notes"}
+              Cancel
             </button>
-          )}
-        </div>
-      </div>
 
+            <button
+              className="primary-dashboard-button booking-overview-action"
+              type="button"
+              onClick={
+                handleSaveIncidentNotes
+              }
+            >
+              Save Incident Notes
+            </button>
+          </>
+        ) : (
+          <button
+            className="secondary-dashboard-button booking-overview-action"
+            type="button"
+            onClick={() =>
+              setIsEditingIncidentNotes(true)
+            }
+          >
+            Edit Incident Notes
+          </button>
+        )
+      }
+    >
       {isEditingIncidentNotes ? (
         <label className="booking-incident-notes-field">
           <span>Incident Record</span>
@@ -2771,27 +2607,15 @@ function BookingIncidentNotesCard({ booking, onSaveBooking }) {
             placeholder="Example: 9/8/2026 - Guest reported an injury near the dining hall. First aid was provided. Staff followed up with the group leader."
           />
         </label>
-      ) : hasIncidentNotes ? (
-        <div className="booking-incident-notes-display">
-          <p>
-            {
-              booking.rentalFormDetails
-                .incidentNotes
-            }
-          </p>
-        </div>
       ) : (
-        <div className="booking-incident-notes-empty">
-          <FaExclamationTriangle />
-
-          <div>
-            <strong>
-              No incidents recorded
-            </strong>
-          </div>
-        </div>
+        <p className="booking-overview-text">
+          {
+            booking.rentalFormDetails
+              .incidentNotes
+          }
+        </p>
       )}
-    </section>
+    </BookingOverviewSection>
   );
 }
 
@@ -3729,300 +3553,136 @@ function parseBookingOverviewNumber(value) {
 }
 
 
-function BookingOverviewField({
-  label,
-  value,
-  icon: Icon,
-  multiline = false,
-  tone = "default",
-  showEmpty = false,
-}) {
-  if (
-    !showEmpty &&
-    !hasBookingOverviewValue(value)
-  ) {
-    return null;
-  }
-
-  return (
-    <div
-      className={[
-        "booking-overview-field",
-
-        multiline
-          ? "booking-overview-field-multiline"
-          : "",
-
-        tone !== "default"
-          ? `booking-overview-field-${tone}`
-          : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <small>
-        {Icon && (
-          <Icon className="booking-overview-field-label-icon" />
-        )}
-
-        <span>{label}</span>
-      </small>
-
-      <strong>
-        {formatBookingOverviewValue(value)}
-      </strong>
-    </div>
-  );
-}
-
-
-function BookingOverviewFieldGrid({
-  fields = [],
-  columns = 2,
-}) {
-  const visibleFields = fields.filter(
+function hasVisibleOverviewFields(fields = []) {
+  return fields.some(
     (field) =>
       field.showEmpty ||
       hasBookingOverviewValue(field.value)
   );
+}
 
-  if (visibleFields.length === 0) {
+
+function BookingOverviewFields({ fields = [] }) {
+  if (!hasVisibleOverviewFields(fields)) {
     return null;
   }
 
   return (
-    <div
-      className={`booking-overview-field-grid booking-overview-field-grid-${columns}`}
-    >
-      {visibleFields.map((field) => (
-        <BookingOverviewField
-          key={field.label}
-          {...field}
-        />
-      ))}
+    <dl className="booking-overview-fields">
+      {fields
+        .filter((field) => hasVisibleOverviewFields([field]))
+        .map((field) => (
+          <div
+            className={
+              field.multiline
+                ? "booking-overview-field booking-overview-field-multiline"
+                : "booking-overview-field"
+            }
+            key={field.label}
+          >
+            <dt>{field.label}</dt>
+            <dd>{formatBookingOverviewValue(field.value)}</dd>
+          </div>
+        ))}
+    </dl>
+  );
+}
+
+
+function BookingOverviewFieldGroup({ title, fields, className = "" }) {
+  if (!hasVisibleOverviewFields(fields)) {
+    return null;
+  }
+
+  return (
+    <div className={`booking-overview-group ${className}`.trim()}>
+      <h4>{title}</h4>
+      <BookingOverviewFields fields={fields} />
     </div>
   );
 }
+
 
 function BookingOverviewSection({
   icon: Icon,
-  eyebrow,
   title,
-  fields = [],
-  groups = [],
-  columns = 2,
-  wide = false,
+  actions,
   className = "",
   children,
 }) {
-  const hasVisibleFields = fields.some(
-    (field) =>
-      field.showEmpty ||
-      hasBookingOverviewValue(field.value)
-  );
-
-  const visibleGroups = groups.filter(
-    (group) =>
-      (group.fields || []).some(
-        (field) =>
-          field.showEmpty ||
-          hasBookingOverviewValue(field.value)
-      )
-  );
-
-  if (
-    !hasVisibleFields &&
-    visibleGroups.length === 0 &&
-    !children
-  ) {
-    return null;
-  }
-
   return (
-    <article
-      className={[
-        "booking-overview-card",
-
-        wide
-          ? "booking-overview-card-wide"
-          : "",
-
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
-      <header className="booking-overview-card-header">
-        <span className="booking-overview-card-icon">
-          <Icon />
-        </span>
-
-        <div>
-          {eyebrow && <p>{eyebrow}</p>}
-          <h3>{title}</h3>
-        </div>
+    <section className={`booking-overview-section ${className}`.trim()}>
+      <header className="booking-overview-section-header">
+        <Icon aria-hidden="true" />
+        <h3>{title}</h3>
+        {actions}
       </header>
 
-      {hasVisibleFields && (
-        <BookingOverviewFieldGrid
-          fields={fields}
-          columns={columns}
-        />
-      )}
-
-      {visibleGroups.length > 0 && (
-        <div className="booking-overview-subsections">
-          {visibleGroups.map(
-            (group, index) => (
-              <section
-                className="booking-overview-subsection"
-                key={`${title}-${group.title}-${index}`}
-              >
-                {group.title && (
-                  <h4>{group.title}</h4>
-                )}
-
-                <BookingOverviewFieldGrid
-                  fields={group.fields}
-                  columns={
-                    group.columns || 2
-                  }
-                />
-              </section>
-            )
-          )}
-        </div>
-      )}
-
       {children}
-    </article>
-  );
-}
-
-function BookingOverviewGuestCard({
-  icon: Icon,
-  title,
-  subtitle,
-  fields = [],
-  tone = "default",
-}) {
-  const visibleFields = fields.filter(
-    (field) =>
-      field.showEmpty ||
-      hasBookingOverviewValue(field.value)
-  );
-
-  if (visibleFields.length === 0) {
-    return null;
-  }
-
-  const rowFields = visibleFields.filter(
-    (field) => !field.multiline
-  );
-
-  const noteFields = visibleFields.filter(
-    (field) => field.multiline
-  );
-
-  return (
-    <section
-      className={[
-        "booking-overview-guest-card",
-        `booking-overview-guest-card-${tone}`,
-      ].join(" ")}
-    >
-      <div className="booking-overview-guest-card-header">
-        <span className="booking-overview-guest-card-icon">
-          <Icon />
-        </span>
-
-        <div>
-          <h3>{title}</h3>
-          {/* <p>{subtitle}</p> */}
-        </div>
-      </div>
-
-      <div className="booking-overview-guest-card-list">
-        {rowFields.map((field) => {
-          const FieldIcon = field.icon;
-
-          return (
-            <div
-              className="booking-overview-guest-row"
-              key={field.label}
-            >
-              <div className="booking-overview-guest-row-label">
-                {FieldIcon && (
-                  <FieldIcon className="booking-overview-guest-row-label-icon" />
-                )}
-
-                <span>{field.label}</span>
-              </div>
-
-              <strong>
-                {formatBookingOverviewValue(
-                  field.value
-                )}
-              </strong>
-            </div>
-          );
-        })}
-      </div>
-
-      {noteFields.length > 0 && (
-        <div className="booking-overview-guest-notes">
-          {noteFields.map((field) => {
-            const FieldIcon = field.icon;
-
-            return (
-              <div
-                className="booking-overview-guest-note"
-                key={field.label}
-              >
-                <div className="booking-overview-guest-note-label">
-                  {FieldIcon && (
-                    <FieldIcon className="booking-overview-guest-row-label-icon" />
-                  )}
-
-                  <span>{field.label}</span>
-                </div>
-
-                <div className="booking-overview-guest-note-value">
-                  {formatBookingOverviewValue(
-                    field.value
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
     </section>
   );
 }
 
 
-function BookingOverviewGuestShowcase({
-  estimatedGuests,
-  actualGuests,
+function BookingOverviewEmptyRow({
+  icon: Icon,
+  title,
+  label = "None added",
+  explanation,
+  action,
+  children,
+}) {
+  return (
+    <details className="booking-overview-empty">
+      <summary>
+        {Icon && <Icon aria-hidden="true" />}
+        <strong>{title}</strong>
+        <span>{label}</span>
+        <FaChevronDown className="booking-overview-empty-chevron" aria-hidden="true" />
+      </summary>
+
+      <div className="booking-overview-empty-body">
+        <p>{explanation}</p>
+        {action}
+        {children}
+      </div>
+    </details>
+  );
+}
+
+
+function BookingOverviewEditButton({ setActiveTab }) {
+  return (
+    <button
+      className="secondary-dashboard-button booking-overview-action"
+      type="button"
+      onClick={() => setActiveTab("Details")}
+    >
+      Open Edit Tab
+    </button>
+  );
+}
+
+
+function BookingOverviewGuests({
+  estimatedCounts,
+  actualCounts,
   minimumGuarantee,
   maximumGuarantee,
-  numberOfNights,
-  numberOfMeals,
-  approximateGuestFields,
-  actualGuestFields,
+  persons,
+  camperDays,
+  ethnicBreakdown,
+  importedGuestCountText,
   dayCamperFields,
-  ratesAndStayFields,
-  setActiveTab,
 }) {
   const estimatedNumber =
     parseBookingOverviewNumber(
-      estimatedGuests
+      estimatedCounts.total
     );
 
   const actualNumber =
     parseBookingOverviewNumber(
-      actualGuests
+      actualCounts.total
     );
 
   const difference =
@@ -4031,213 +3691,256 @@ function BookingOverviewGuestShowcase({
       ? actualNumber - estimatedNumber
       : null;
 
-  const guaranteeMinimumText =
-    hasBookingOverviewValue(
-      minimumGuarantee
-    )
-      ? formatBookingOverviewValue(
-          minimumGuarantee
-        )
-      : "";
-
-  const guaranteeMaximumText =
-    hasBookingOverviewValue(
-      maximumGuarantee
-    )
-      ? formatBookingOverviewValue(
-          maximumGuarantee
-        )
-      : "";
-
-  const guaranteeRangeText =
-    guaranteeMinimumText &&
-    guaranteeMaximumText
-      ? `${guaranteeMinimumText} – ${guaranteeMaximumText}`
-      : guaranteeMinimumText ||
-        guaranteeMaximumText ||
-        "—";
-
   let differenceText = "";
-  let differenceClass =
-    "booking-overview-guest-summary-meta-neutral";
 
   if (difference !== null) {
     if (difference < 0) {
-      differenceText = `${Math.abs(
-        difference
-      )} fewer than estimated ↓`;
-      differenceClass =
-        "booking-overview-guest-summary-meta-down";
+      differenceText = `${Math.abs(difference)} fewer than estimated ↓`;
     } else if (difference > 0) {
       differenceText = `${difference} more than estimated ↑`;
-      differenceClass =
-        "booking-overview-guest-summary-meta-up";
     } else {
-      differenceText =
-        "Matches estimated total";
+      differenceText = "Matches estimated total";
     }
   }
 
+  const hasMinimumGuarantee = hasBookingOverviewValue(minimumGuarantee);
+  const hasMaximumGuarantee = hasBookingOverviewValue(maximumGuarantee);
+
+  let guaranteeText = "";
+
+  if (hasMinimumGuarantee && hasMaximumGuarantee) {
+    guaranteeText = `${minimumGuarantee} – ${maximumGuarantee}`;
+  } else if (hasMinimumGuarantee) {
+    guaranteeText = `Minimum ${minimumGuarantee}`;
+  } else if (hasMaximumGuarantee) {
+    guaranteeText = `Maximum ${maximumGuarantee}`;
+  }
+
+  const guestRows = [
+    { label: "Estimated", counts: estimatedCounts },
+    { label: "Actual / Recorded", counts: actualCounts },
+  ];
+
   return (
-    <section className="booking-overview-card booking-overview-card-wide booking-overview-guest-showcase">
+    <BookingOverviewSection icon={FaUsers} title="Guests">
+      <table
+        className="booking-overview-sheet booking-overview-sheet-numeric"
+        data-tutorial-target="booking-overview-stats"
+      >
+        <thead>
+          <tr>
+            <th scope="col">Overnight Guests</th>
+            <th scope="col">Total</th>
+            <th scope="col">Adults</th>
+            <th scope="col">Under 3</th>
+            <th scope="col">Ages 3–17</th>
+          </tr>
+        </thead>
 
-      <div className="booking-overview-guest-showcase-header">
-        <div className="booking-overview-guest-showcase-title">
-          <span className="booking-overview-guest-showcase-title-icon">
-            <FaUsers />
+        <tbody>
+          {guestRows.map(({ label, counts }) => (
+            <tr key={label}>
+              <th scope="row">{label}</th>
+              <td className="booking-overview-sheet-strong">
+                {formatBookingOverviewValue(counts.total)}
+              </td>
+              <td>{formatBookingOverviewValue(counts.adults)}</td>
+              <td>{formatBookingOverviewValue(counts.under3)}</td>
+              <td>{formatBookingOverviewValue(counts.ages3to17)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <BookingOverviewFields
+        fields={[
+          { label: "Guarantee Range", value: guaranteeText },
+          { label: "Actual vs. Estimated", value: differenceText },
+          { label: "# Persons", value: persons },
+          { label: "Camper Days", value: camperDays },
+          { label: "Ethnic Breakdown", value: ethnicBreakdown, multiline: true },
+          { label: "Spreadsheet Guest Description", value: importedGuestCountText, multiline: true },
+        ]}
+      />
+
+      <BookingOverviewFieldGroup title="Day Campers" fields={dayCamperFields} />
+    </BookingOverviewSection>
+  );
+}
+
+
+function getBookingOverviewSourceType(booking) {
+  return (
+    booking.detectedImportType ||
+    booking.sourceType ||
+    "Booking"
+  );
+}
+
+
+function BookingOverviewSummary({ booking, dateSettings }) {
+  const details =
+    booking.rentalFormDetails || {};
+
+  const secondaryContact = getSecondaryContact(booking);
+
+  const numberOfNights =
+    firstBookingOverviewValue(
+      details.numberOfNights,
+      booking.nights
+    );
+
+  const mailingAddress =
+    firstBookingOverviewValue(
+      details.mailingAddress,
+      booking.inquiryAddress,
+
+      [
+        booking.archiveAddress,
+        booking.archiveCity,
+        booking.archiveState,
+        booking.archiveZip,
+      ]
+        .filter(Boolean)
+        .join(", ")
+    );
+
+  const stayTimes = [
+    details.arrivalTime &&
+      `Arrival ${formatBookingOverviewTime(details.arrivalTime)}`,
+    details.departureTime &&
+      `Departure ${formatBookingOverviewTime(details.departureTime)}`,
+  ].filter(Boolean);
+
+  const sourceText = [
+    ...new Set([
+      getBookingOverviewSourceType(booking),
+      booking.sourceSheet,
+    ]),
+    booking.sourceRowNumber && `Row ${booking.sourceRowNumber}`,
+  ].filter(Boolean);
+
+  return (
+    <div
+      className="booking-overview-summary"
+      data-tutorial-target="booking-overview-summary"
+    >
+      <div className="booking-overview-summary-item">
+        <small>
+          <FaCalendarAlt aria-hidden="true" />
+          Stay
+        </small>
+
+        <strong>
+          {formatBookingDetailDateRange(
+            booking.startDate,
+            booking.endDate,
+            dateSettings
+          )}
+
+          {hasBookingOverviewValue(numberOfNights) &&
+            ` · ${numberOfNights} ${String(numberOfNights) === "1" ? "night" : "nights"}`}
+        </strong>
+
+        {stayTimes.length > 0 && <span>{stayTimes.join(" · ")}</span>}
+      </div>
+
+      <div className="booking-overview-summary-item">
+        <small>
+          <FaClipboardList aria-hidden="true" />
+          Type
+        </small>
+
+        <strong>{booking.retreatType || "Retreat Booking"}</strong>
+        <span>{sourceText.join(" · ")}</span>
+      </div>
+
+      <div className="booking-overview-summary-item booking-overview-summary-contact">
+        <small>
+          <FaUser aria-hidden="true" />
+          Primary Contact
+        </small>
+
+        <strong>{formatBookingOverviewValue(booking.contactName)}</strong>
+
+        {(hasBookingOverviewValue(booking.email) ||
+          hasBookingOverviewValue(booking.phone)) && (
+          <span>
+            {hasBookingOverviewValue(booking.email) && (
+              <a href={`mailto:${booking.email}`}>{booking.email}</a>
+            )}
+
+            {hasBookingOverviewValue(booking.email) &&
+              hasBookingOverviewValue(booking.phone) &&
+              " · "}
+
+            {hasBookingOverviewValue(booking.phone) && booking.phone}
           </span>
+        )}
 
-          <div>
-            <p>Guests</p>
-            <h2>Guest Information</h2>
-            {/* <span>
-              Group size, attendance details, and stay preferences for this retreat.
-            </span> */}
-          </div>
+        {hasBookingOverviewValue(mailingAddress) && (
+          <span>{mailingAddress}</span>
+        )}
+      </div>
+
+      {Object.values(secondaryContact).some(Boolean) && (
+        <div className="booking-overview-summary-item booking-overview-summary-contact">
+          <small>
+            <FaUser aria-hidden="true" />
+            Secondary Contact
+          </small>
+
+          {secondaryContact.secondaryContactName && (
+            <strong>{secondaryContact.secondaryContactName}</strong>
+          )}
+
+          {(secondaryContact.secondaryContactEmail ||
+            secondaryContact.secondaryContactPhone) && (
+            <span>
+              {secondaryContact.secondaryContactEmail && (
+                <a href={`mailto:${secondaryContact.secondaryContactEmail}`}>
+                  {secondaryContact.secondaryContactEmail}
+                </a>
+              )}
+
+              {secondaryContact.secondaryContactEmail &&
+                secondaryContact.secondaryContactPhone &&
+                " · "}
+
+              {secondaryContact.secondaryContactPhone && (
+                <a href={`tel:${secondaryContact.secondaryContactPhone.replace(/[^\d+]/g, "")}`}>
+                  {secondaryContact.secondaryContactPhone}
+                </a>
+              )}
+            </span>
+          )}
         </div>
+      )}
+    </div>
+  );
+}
 
+
+function BookingOverviewDensityControl({ density, onChange }) {
+  return (
+    <div
+      className="booking-overview-density"
+      role="group"
+      aria-label="Overview density"
+    >
+      <span>Density</span>
+
+      {bookingOverviewDensityOptions.map((option) => (
         <button
           type="button"
-          className="booking-overview-guest-showcase-edit"
-          onClick={() =>
-            setActiveTab("Details")
-          }
+          key={option.value}
+          aria-pressed={density === option.value}
+          onClick={() => onChange(option.value)}
         >
-          <FaPen />
-          <span>Edit Information</span>
+          {option.label}
         </button>
-      </div>
-
-
-      <div className="booking-overview-guest-summary">
-        <div className="booking-overview-guest-summary-block">
-          <span className="booking-overview-guest-summary-icon">
-            <FaUsers />
-          </span>
-
-          <div className="booking-overview-guest-summary-copy">
-            <small>
-              Total Guests (Estimated)
-            </small>
-
-            <div className="booking-overview-guest-summary-main">
-              <strong>
-                {formatBookingOverviewValue(
-                  estimatedGuests
-                )}
-              </strong>
-
-              <div className="booking-overview-guest-summary-sidecopy">
-                <span>
-                  {guaranteeRangeText}
-                </span>
-                <em>guarantee range</em>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        <div className="booking-overview-guest-summary-block">
-          <span className="booking-overview-guest-summary-icon">
-            <FaUsers />
-          </span>
-
-          <div className="booking-overview-guest-summary-copy">
-            <small>
-              Total Guests (Actual)
-            </small>
-
-            <div className="booking-overview-guest-summary-main">
-              <strong>
-                {formatBookingOverviewValue(
-                  actualGuests
-                )}
-              </strong>
-
-              {differenceText && (
-                <div
-                  className={`booking-overview-guest-summary-meta ${differenceClass}`}
-                >
-                  {differenceText}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-
-        <div className="booking-overview-guest-summary-block">
-          <span className="booking-overview-guest-summary-icon">
-            <FaMoon />
-          </span>
-
-          <div className="booking-overview-guest-summary-copy">
-            <small>
-              Stay Details
-            </small>
-
-            <div className="booking-overview-guest-stay-values">
-              <div>
-                <FaBed />
-                <strong>
-                  {formatBookingOverviewValue(
-                    numberOfNights
-                  )}
-                </strong>
-                <span>nights</span>
-              </div>
-
-              <div>
-                <FaUtensils />
-                <strong>
-                  {formatBookingOverviewValue(
-                    numberOfMeals
-                  )}
-                </strong>
-                <span>meals</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-      <div className="booking-overview-guest-cards">
-        <BookingOverviewGuestCard
-          icon={FaUsers}
-          title="Approximate Guests"
-          subtitle="Initial expected group size and guarantees."
-          fields={approximateGuestFields}
-          tone="green"
-        />
-
-        <BookingOverviewGuestCard
-          icon={FaUser}
-          title="Actual Guests"
-          subtitle="Recorded attendance and demographic details."
-          fields={actualGuestFields}
-          tone="blue"
-        />
-
-        <BookingOverviewGuestCard
-          icon={FaDollarSign}
-          title="Rates & Stay"
-          subtitle="Pricing and duration details for this retreat."
-          fields={ratesAndStayFields}
-          tone="sand"
-        />
-
-        <BookingOverviewGuestCard
-          icon={FaUsers}
-          title="Day Campers"
-          subtitle="Day-use attendance and meal service."
-          fields={dayCamperFields}
-          tone="teal"
-        />
-      </div>
-
-    </section>
+      ))}
+    </div>
   );
 }
 
@@ -4272,42 +3975,23 @@ function BookingOverviewSourceData({
   }
 
   return (
-    <details className="booking-overview-source-data booking-overview-card booking-overview-card-wide">
+    <details className="booking-overview-empty booking-overview-source-data">
       <summary>
-        <span className="booking-overview-card-icon">
-          <FaTable />
-        </span>
-
-        <div>
-          <p>Imported record</p>
-          <h3>Original Source Data</h3>
-          <small>
-            View the original spreadsheet values
-            stored with this booking.
-          </small>
-        </div>
-
-        <strong>
+        <FaTable aria-hidden="true" />
+        <strong>Original Source Data</strong>
+        <span>
           {entries.length} field
           {entries.length === 1 ? "" : "s"}
-        </strong>
+        </span>
+        <FaChevronDown className="booking-overview-empty-chevron" aria-hidden="true" />
       </summary>
 
-      <div className="booking-overview-source-grid">
-        {entries.map(([key, value]) => (
-          <div
-            className="booking-overview-source-field"
-            key={key}
-          >
-            <small>{key}</small>
+      <div className="booking-overview-empty-body">
+        <p>The original spreadsheet values stored with this booking.</p>
 
-            <strong>
-              {formatBookingOverviewValue(
-                value
-              )}
-            </strong>
-          </div>
-        ))}
+        <BookingOverviewFields
+          fields={entries.map(([key, value]) => ({ label: key, value }))}
+        />
       </div>
     </details>
   );
@@ -4323,14 +4007,8 @@ function BookingOverview({
   const details =
     booking.rentalFormDetails || {};
 
-  const secondaryContact = getSecondaryContact(booking);
-  const hasSecondaryContact =
-    Object.values(secondaryContact).some(Boolean);
-
   const sourceType =
-    booking.detectedImportType ||
-    booking.sourceType ||
-    "Booking";
+    getBookingOverviewSourceType(booking);
 
   const normalizedSourceType =
     String(sourceType)
@@ -4481,33 +4159,6 @@ function BookingOverview({
       booking.maxPayingGuests
     );
 
-  const numberOfNights =
-    firstBookingOverviewValue(
-      details.numberOfNights,
-      booking.nights
-    );
-
-  const numberOfMeals =
-    firstBookingOverviewValue(
-      details.numberOfMeals,
-      booking.mealCount
-    );
-
-  const mailingAddress =
-    firstBookingOverviewValue(
-      details.mailingAddress,
-      booking.inquiryAddress,
-
-      [
-        booking.archiveAddress,
-        booking.archiveCity,
-        booking.archiveState,
-        booking.archiveZip,
-      ]
-        .filter(Boolean)
-        .join(", ")
-    );
-
   const adultRate =
     firstBookingOverviewValue(
       details.adultRateQuoted,
@@ -4535,13 +4186,6 @@ function BookingOverview({
   /* =====================================================
      SUMMARY
   ===================================================== */
-
-  const summaryDateRange =
-    formatBookingDetailDateRange(
-      booking.startDate,
-      booking.endDate,
-      dateSettings
-    );
 
   // Housing tab values once saved; never the stale imported label (AUDIT-007).
   const summaryHousing =
@@ -4642,90 +4286,6 @@ function BookingOverview({
     GUEST INFORMATION
   ===================================================== */
 
-  const approximateGuestFields = [
-    {
-      label: "Estimated Total Guests",
-      value: estimatedGuests,
-      icon: FaUsers,
-    },
-
-    {
-      label: "Adults",
-      value: details.approxAdultGuests,
-      icon: FaUser,
-    },
-
-    {
-      label: "Under 3",
-      value: approxChildrenUnder3,
-      icon: FaChild,
-      showEmpty: true,
-    },
-
-    {
-      label: "Ages 3–17",
-      value: approxChildren3to17,
-      icon: FaChild,
-      showEmpty: true,
-    },
-
-    {
-      label: "Minimum Guarantee",
-      value: minimumGuarantee,
-      icon: FaUserMinus,
-    },
-
-    {
-      label: "Maximum Guarantee",
-      value: maximumGuarantee,
-      icon: FaUserPlus,
-    },
-  ];
-
-
-  const actualGuestFields = [
-    {
-      label: "Total / Recorded Guests",
-      value: actualGuests,
-      showEmpty: true,
-      icon: FaUsers,
-    },
-
-    {
-      label: "Adults",
-      value: actualAdults,
-      icon: FaUser,
-    },
-
-    {
-      label: "Under 3",
-      value: actualChildrenUnder3,
-      icon: FaChild,
-      showEmpty: true,
-    },
-
-    {
-      label: "Ages 3–17",
-      value: actualChildren3to17,
-      icon: FaChild,
-      showEmpty: true,
-    },
-
-    {
-      label: "# Persons",
-      value: booking.persons,
-      icon: FaUsers,
-    },
-
-    {
-      label: "Ethnic Breakdown",
-      value: details.ethnicBreakdown,
-      icon: FaGlobeAmericas,
-      multiline: true,
-    },
-  ];
-
-
   const dayCamperFields = [
     {
       label: "# of Day Campers",
@@ -4740,13 +4300,13 @@ function BookingOverview({
     },
 
     {
-      label: "Day Camper Meal Servings",
+      label: "Meal Servings",
       value: dayCamperMealServings,
       icon: FaUtensils,
     },
 
     {
-      label: "Camper Days from Day Campers",
+      label: "Camper Days",
       value: hasBookingOverviewValue(
         dayCamperCamperDays
       )
@@ -4758,7 +4318,7 @@ function BookingOverview({
     },
   ];
 
-  const ratesAndStayFields = [
+  const rateFields = [
     {
       label: "Adult / Guest Rate",
       value: formatBookingOverviewMoney(
@@ -4783,23 +4343,6 @@ function BookingOverview({
       icon: FaDollarSign,
     },
 
-    {
-      label: "# Nights",
-      value: numberOfNights,
-      icon: FaMoon,
-    },
-
-    {
-      label: "# Meals",
-      value: numberOfMeals,
-      icon: FaUtensils,
-    },
-
-    {
-      label: "Camper Days",
-      value: booking.camperDays,
-      icon: FaCalendarAlt,
-    },
   ];
 
 
@@ -4897,7 +4440,7 @@ function BookingOverview({
 
   const guestReportedDocumentFields = [
     {
-      label: "Guest Reported Contract Returned",
+      label: "Contract Returned",
       value:
         details.guestReportedContractReturnedDate
           ? formatBookingDetailDate(
@@ -4908,7 +4451,7 @@ function BookingOverview({
     },
 
     {
-      label: "Guest Reported Deposit Sent",
+      label: "Deposit Sent",
       value:
         details.guestReportedDepositSentDate
           ? formatBookingDetailDate(
@@ -4919,7 +4462,7 @@ function BookingOverview({
     },
 
     {
-      label: "Guest Reported Insurance Sent",
+      label: "Insurance Sent",
       value:
         details.guestReportedInsuranceCertificateSentDate
           ? formatBookingDetailDate(
@@ -5000,7 +4543,6 @@ const lodgingOverviewRows = LODGING_BUILDINGS.map((building) => {
     id: building.id,
     name: building.label,
     capacity: building.capacity,
-    image: building.image,
     value: assignment
       ? assignment.count ?? "Used, count unknown"
       : "",
@@ -5101,11 +4643,6 @@ const overviewLinenPieces =
       multiline: true,
     },
     {
-      label: "Spreadsheet Guest Description",
-      value: isMasterRecord ? details.importedGuestCountText : "",
-      multiline: true,
-    },
-    {
       label: "Import Review",
       value: Array.isArray(details.importWarnings)
         ? details.importWarnings.join("\n")
@@ -5139,363 +4676,110 @@ const overviewLinenPieces =
       : [];
 
 
+  const hasAssignedLodging =
+    overviewLodgingAssignments.length > 0;
+
+  const lodgingTable = (
+    <table className="booking-overview-sheet booking-overview-sheet-numeric">
+      <thead>
+        <tr>
+          <th scope="col">Building</th>
+          <th scope="col">Capacity</th>
+          <th scope="col">Assigned</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {lodgingOverviewRows.map((lodging) => (
+          <tr
+            className={lodging.value === "" ? "booking-overview-sheet-unused" : ""}
+            key={lodging.id}
+          >
+            <th scope="row">{lodging.name}</th>
+            <td>{lodging.capacity || "—"}</td>
+            <td className="booking-overview-sheet-strong">
+              {getLodgingOverviewValue(lodging.value)}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
+  const paymentGroups = [
+    { title: "Rates", fields: rateFields },
+    { title: "Deposit & Documents", fields: paymentDocumentFields },
+    { title: "Guest-Reported Portal Dates", fields: guestReportedDocumentFields },
+    { title: "Billing & Revenue", fields: billingFields },
+  ];
+
   return (
     <div className="booking-overview-layout">
+      <div className="booking-overview-board" data-tutorial-target="booking-overview-main">
 
-      {/* =====================================================
-          LEFT PROFILE COLUMN
-      ===================================================== */}
-
-      <aside className="booking-overview-sidebar" data-tutorial-target="booking-overview-summary">
-
-        <div className="booking-overview-identity">
-
-          <div className="booking-overview-avatar">
-            {getBookingInitials(
-              booking.organizationName
-            )}
-          </div>
-
-          <p>
-            {sourceType}
-          </p>
-
-          <h3>
-            {booking.organizationName}
-          </h3>
-
-          <span>
-            {booking.retreatType ||
-              "Retreat Booking"}
-          </span>
-
-        </div>
-
-
-        <div className="booking-overview-sidebar-section">
-
-          <div className="booking-overview-sidebar-heading">
-            <FaCalendarAlt />
-
-            <span>
-              Stay Dates
-            </span>
-          </div>
-
-          <strong>
-            {summaryDateRange}
-          </strong>
-
-          {(details.arrivalTime ||
-            details.departureTime) && (
-            <div className="booking-overview-sidebar-times">
-
-              {details.arrivalTime && (
-                <span>
-                  <small>Arrival</small>
-                  <strong>
-                    {formatBookingOverviewTime(details.arrivalTime)}
-                  </strong>
-                </span>
-              )}
-
-              {details.departureTime && (
-                <span>
-                  <small>Departure</small>
-                  <strong>
-                    {formatBookingOverviewTime(details.departureTime)}
-                  </strong>
-                </span>
-              )}
-
-            </div>
-          )}
-
-        </div>
-
-
-        <div className="booking-overview-sidebar-section">
-
-          <div className="booking-overview-sidebar-heading">
-            <FaUser />
-
-            <span>
-              Primary Contact
-            </span>
-          </div>
-
-          <strong>
-            {formatBookingOverviewValue(
-              booking.contactName
-            )}
-          </strong>
-
-          {hasBookingOverviewValue(
-            booking.email
-          ) && (
-            <a
-              href={`mailto:${booking.email}`}
-            >
-              {booking.email}
-            </a>
-          )}
-
-          {hasBookingOverviewValue(
-            booking.phone
-          ) && (
-            <span className="booking-overview-sidebar-contact-line">
-              {booking.phone}
-            </span>
-          )}
-
-          {hasBookingOverviewValue(
-            mailingAddress
-          ) && (
-            <span className="booking-overview-sidebar-contact-line">
-              {mailingAddress}
-            </span>
-          )}
-
-        </div>
-
-
-        {hasSecondaryContact && (
-          <div className="booking-overview-sidebar-section">
-            <div className="booking-overview-sidebar-heading">
-              <FaUserPlus />
-              <span>Secondary Contact</span>
-            </div>
-
-            {secondaryContact.secondaryContactName && (
-              <strong>{secondaryContact.secondaryContactName}</strong>
-            )}
-
-            {secondaryContact.secondaryContactEmail && (
-              <a href={`mailto:${secondaryContact.secondaryContactEmail}`}>
-                {secondaryContact.secondaryContactEmail}
-              </a>
-            )}
-
-            {secondaryContact.secondaryContactPhone && (
-              <a
-                className="booking-overview-sidebar-contact-line"
-                href={`tel:${secondaryContact.secondaryContactPhone.replace(/[^\d+]/g, "")}`}
-              >
-                {secondaryContact.secondaryContactPhone}
-              </a>
-            )}
-          </div>
-        )}
-
-
-        <div className="booking-overview-sidebar-stats" data-tutorial-target="booking-overview-stats">
-
-          <div>
-            <small>Guests</small>
-
-            <strong>
-              {formatBookingOverviewValue(
-                actualGuests
-              )}
-            </strong>
-          </div>
-
-
-          <div>
-            <small>Nights</small>
-
-            <strong>
-              {formatBookingOverviewValue(
-                numberOfNights
-              )}
-            </strong>
-          </div>
-
-
-          <div>
-            <small>Meals</small>
-
-            <strong>
-              {formatBookingOverviewValue(
-                numberOfMeals
-              )}
-            </strong>
-          </div>
-
-        </div>
-
-
-        <div className="booking-overview-sidebar-actions">
-
-          <button
-            className="primary-dashboard-button"
-            type="button"
-            onClick={() =>
-              setActiveTab("Details")
-            }
-            data-tutorial-target="booking-overview-edit"
-          >
-            Edit Booking
-          </button>
-
-        </div>
-
-
-        {(booking.sourceSheet ||
-          booking.sourceRowNumber) && (
-          <div className="booking-overview-source-meta">
-
-            {booking.sourceSheet && (
-              <span>
-                <small>Source</small>
-                {booking.sourceSheet}
-              </span>
-            )}
-
-            {booking.sourceRowNumber && (
-              <span>
-                <small>Row</small>
-                {booking.sourceRowNumber}
-              </span>
-            )}
-
-          </div>
-        )}
-
-      </aside>
-
-
-      {/* =====================================================
-          MAIN CONTENT
-      ===================================================== */}
-
-      <main className="booking-overview-main" data-tutorial-target="booking-overview-main">
-
-        <div className="booking-overview-grid">
-
-          {/* =====================================================
-              GUEST INFORMATION
-          ===================================================== */}
-
-          <BookingOverviewGuestShowcase
-            estimatedGuests={estimatedGuests}
-            actualGuests={actualGuests}
+        <div className="booking-overview-column">
+          <BookingOverviewGuests
+            estimatedCounts={{
+              total: estimatedGuests,
+              adults: details.approxAdultGuests,
+              under3: approxChildrenUnder3,
+              ages3to17: approxChildren3to17,
+            }}
+            actualCounts={{
+              total: actualGuests,
+              adults: actualAdults,
+              under3: actualChildrenUnder3,
+              ages3to17: actualChildren3to17,
+            }}
             minimumGuarantee={minimumGuarantee}
             maximumGuarantee={maximumGuarantee}
-            numberOfNights={numberOfNights}
-            numberOfMeals={numberOfMeals}
-            approximateGuestFields={approximateGuestFields}
-            actualGuestFields={actualGuestFields}
+            persons={booking.persons}
+            camperDays={booking.camperDays}
+            ethnicBreakdown={details.ethnicBreakdown}
+            importedGuestCountText={isMasterRecord ? details.importedGuestCountText : ""}
             dayCamperFields={dayCamperFields}
-            ratesAndStayFields={ratesAndStayFields}
-            setActiveTab={setActiveTab}
           />
-
-
-          {/* =====================================================
-              TIMELINE
-          ===================================================== */}
-
-          <BookingOverviewSection
-            icon={FaCalendarAlt}
-            eyebrow="Administration"
-            title="Booking Timeline"
-            groups={[
-              {
-                title: "Contract Dates",
-                fields: timelineFields,
-                columns: 2,
-              },
-            ]}
-          />
-
-
-          {/* =====================================================
-              PAYMENTS + DOCUMENTS
-          ===================================================== */}
-
-          <BookingOverviewSection
-            icon={FaDollarSign}
-            eyebrow="Administration"
-            title="Payments & Documents"
-            groups={[
-              {
-                title: "Deposit & Documents",
-                fields: paymentDocumentFields,
-                columns: 2,
-              },
-              {
-                title: "Guest-Reported Portal Dates",
-                fields: guestReportedDocumentFields,
-                columns: 2,
-              },
-              {
-                title: "Billing & Revenue",
-                fields: billingFields,
-                columns: 2,
-              },
-            ]}
-          />
-
-
-          {/* =====================================================
-              MEALS
-          ===================================================== */}
 
           <BookingMealsProgramOverview
             booking={booking}
             details={details}
+            setActiveTab={setActiveTab}
           />
-
-
-          {/* =====================================================
-              ACTIVITIES
-          ===================================================== */}
 
           <BookingActivitiesOverview
             booking={booking}
             details={details}
             dateSettings={dateSettings}
+            setActiveTab={setActiveTab}
           />
-
-
-          {/* =====================================================
-              FACILITIES
-          ===================================================== */}
 
           <BookingFacilitiesOverview
             booking={booking}
             details={details}
             dateSettings={dateSettings}
+            setActiveTab={setActiveTab}
           />
+        </div>
 
 
-          {/* =====================================================
-              LODGING
-          ===================================================== */}
-
-          <section className="rental-form-section booking-overview-lodging-section">
-
-            <div className="rental-section-header">
-              <span className="rental-section-icon">
-                <FaBed />
-              </span>
-
-              <div>
-                <h2>Lodging & Linens</h2>
-
-                <p>
-                  Guest assignments and linen requirements.
-                </p>
-              </div>
-            </div>
-
-
-            <div className="rental-section-body">
-
+        <div className="booking-overview-side">
+          <div className="booking-overview-column">
+            <BookingOverviewSection
+              icon={FaBed}
+              title="Housing & Linens"
+              actions={
+                <button
+                  className="secondary-dashboard-button booking-overview-action"
+                  type="button"
+                  onClick={() => setActiveTab("Housing")}
+                >
+                  Go to Housing
+                  <FaChevronRight aria-hidden="true" />
+                </button>
+              }
+            >
               {isMasterRecord && (
-                <BookingOverviewFieldGrid
-                  columns={1}
+                <BookingOverviewFields
                   fields={[
                     {
                       label: isHousingAuthoritative(booking)
@@ -5513,205 +4797,127 @@ const overviewLinenPieces =
                 />
               )}
 
-              {/* ===============================
-                  LODGING
-              =============================== */}
+              {hasAssignedLodging ? (
+                lodgingTable
+              ) : (
+                <BookingOverviewEmptyRow
+                  title="Buildings"
+                  label={isMasterRecord ? "None recorded" : "None assigned"}
+                  explanation="Assignments made on the Housing tab appear here. Building capacities:"
+                >
+                  {lodgingTable}
+                </BookingOverviewEmptyRow>
+              )}
 
-              <div className="rental-lodging-grid">
-                {lodgingOverviewRows.map((lodging) => (
-                  <div
-                    className="rental-lodging-field booking-overview-lodging-card"
-                    key={lodging.id}
-                  >
-                    <div className="rental-lodging-info">
+              <BookingOverviewFieldGroup
+                title="Linens"
+                fields={[
+                  { label: "Linen Option", value: overviewLinenOption, showEmpty: true },
+                  { label: "Linen Sets", value: overviewLinenSets, showEmpty: true },
+                  { label: "Linen Pieces", value: overviewLinenPieces, showEmpty: true },
+                ]}
+              />
+            </BookingOverviewSection>
 
-                      {lodging.image && (
-                        <img
-                          className="rental-lodging-image"
-                          src={lodging.image}
-                          alt=""
-                        />
-                      )}
+            <BookingOverviewSection icon={FaFileContract} title="Booking Status">
+              <BookingOverviewFields fields={statusFields} />
 
-                      <span className="rental-lodging-text">
-                        <strong>{lodging.name}</strong>
+              <BookingOverviewFieldGroup
+                title="Cancellation"
+                fields={cancellationFields}
+                className="booking-overview-cancellation"
+              />
+            </BookingOverviewSection>
 
-                        {lodging.capacity && (
-                          <small>
-                            Capacity {lodging.capacity}
-                          </small>
-                        )}
-                      </span>
+            {hasVisibleOverviewFields(notesFields) ? (
+              <BookingOverviewSection icon={FaInfoCircle} title="Additional Notes">
+                <BookingOverviewFields fields={notesFields} />
+              </BookingOverviewSection>
+            ) : (
+              <BookingOverviewEmptyRow
+                icon={FaInfoCircle}
+                title="Additional Notes"
+                explanation="Internal booking notes and import review messages will appear here."
+                action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
+              />
+            )}
 
-                    </div>
+            <BookingIncidentNotesCard
+              booking={booking}
+              onSaveBooking={onSaveBooking}
+            />
 
+            {isArchiveRecord && (
+              <BookingOverviewSection icon={FaClock} title="Archive Information">
+                <BookingOverviewFields fields={archiveFields} />
 
-                    <div className="booking-overview-lodging-count">
-                      {getLodgingOverviewValue(
-                        lodging.value
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                {(booking.archiveSourcePdfLink ||
+                  archiveLinks.length > 0) && (
+                  <div className="booking-overview-archive-links">
+                    {booking.archiveSourcePdfLink && (
+                      <a
+                        href={booking.archiveSourcePdfLink}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <FaExternalLinkAlt aria-hidden="true" />
+                        Source PDF
+                      </a>
+                    )}
 
-
-              {/* ===============================
-                  LINENS
-              =============================== */}
-
-              <div className="booking-overview-linens">
-
-                <h3>Linens</h3>
-
-                <div className="booking-overview-linen-grid">
-
-                  <div className="booking-overview-linen-item">
-                    <span>Linen Option</span>
-
-                    <strong>
-                      {overviewLinenOption}
-                    </strong>
-                  </div>
-
-
-                  <div className="booking-overview-linen-item">
-                    <span>Linen Sets</span>
-
-                    <strong>
-                      {overviewLinenSets}
-                    </strong>
-                  </div>
-
-                  <div className="booking-overview-linen-item">
-                    <span>Linen Pieces</span>
-
-                    <strong>
-                      {overviewLinenPieces}
-                    </strong>
-                  </div>
-
-                </div>
-
-
-
-              </div>
-
-            </div>
-
-          </section>
-
-
-          {/* =====================================================
-              BOOKING STATUS
-          ===================================================== */}
-
-          <BookingOverviewSection
-            icon={FaFileContract}
-            eyebrow="Workflow"
-            title="Booking Status"
-            groups={[
-              {
-                title: "Current State",
-                fields: statusFields,
-                columns: 2,
-              },
-              {
-                title: "Cancellation",
-                fields:
-                  cancellationFields,
-                columns: 1,
-              },
-            ]}
-          />
-
-
-          {/* =====================================================
-              NOTES
-          ===================================================== */}
-
-          <BookingOverviewSection
-            icon={FaInfoCircle}
-            eyebrow="Internal"
-            title="Additional Notes"
-            fields={notesFields}
-            columns={1}
-          />
-
-
-          {/* =====================================================
-              ARCHIVE
-          ===================================================== */}
-
-          {isArchiveRecord && (
-            <BookingOverviewSection
-              icon={FaClock}
-              eyebrow="Historical Record"
-              title="Archive Information"
-              fields={archiveFields}
-              columns={2}
-              wide
-            >
-              {(booking.archiveSourcePdfLink ||
-                archiveLinks.length > 0) && (
-                <div className="booking-overview-archive-links">
-
-                  {booking.archiveSourcePdfLink && (
-                    <a
-                      href={
-                        booking.archiveSourcePdfLink
-                      }
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <FaExternalLinkAlt />
-                      Source PDF
-                    </a>
-                  )}
-
-                  {archiveLinks.map(
-                    (link, index) => (
+                    {archiveLinks.map((link, index) => (
                       <a
                         href={link}
                         target="_blank"
                         rel="noreferrer"
                         key={`${link}-${index}`}
                       >
-                        <FaExternalLinkAlt />
-                        Prior Visit{" "}
-                        {index + 1}
+                        <FaExternalLinkAlt aria-hidden="true" />
+                        Prior Visit {index + 1}
                       </a>
-                    )
-                  )}
+                    ))}
+                  </div>
+                )}
+              </BookingOverviewSection>
+            )}
+          </div>
 
-                </div>
-              )}
-            </BookingOverviewSection>
-          )}
 
+          <div className="booking-overview-column">
+            {hasVisibleOverviewFields(timelineFields) ? (
+              <BookingOverviewSection icon={FaCalendarAlt} title="Booking Timeline">
+                <BookingOverviewFields fields={timelineFields} />
+              </BookingOverviewSection>
+            ) : (
+              <BookingOverviewEmptyRow
+                icon={FaCalendarAlt}
+                title="Booking Timeline"
+                explanation="Inquiry and contract dates will appear here once they are recorded."
+                action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
+              />
+            )}
+
+            {paymentGroups.some((group) => hasVisibleOverviewFields(group.fields)) ? (
+              <BookingOverviewSection icon={FaDollarSign} title="Payments & Documents">
+                {paymentGroups.map((group) => (
+                  <BookingOverviewFieldGroup key={group.title} {...group} />
+                ))}
+              </BookingOverviewSection>
+            ) : (
+              <BookingOverviewEmptyRow
+                icon={FaDollarSign}
+                title="Payments & Documents"
+                explanation="Rates, deposits, documents and billing amounts will appear here once they are recorded."
+                action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
+              />
+            )}
+          </div>
         </div>
+      </div>
 
-
-        {/* ===================================================
-            INCIDENT NOTES
-        =================================================== */}
-
-        <BookingIncidentNotesCard
-          booking={booking}
-          onSaveBooking={onSaveBooking}
-        />
-
-
-        {/* ===================================================
-            RAW SPREADSHEET DATA
-        =================================================== */}
-
-        <BookingOverviewSourceData
-          booking={booking}
-        />
-
-      </main>
-
+      <BookingOverviewSourceData
+        booking={booking}
+      />
     </div>
   );
 }
@@ -5731,6 +4937,14 @@ function BookingDetailView({
   const [dateSettings, setDateSettings] = useState(() =>
     getSavedBookingDetailDateSettings()
   );
+  const [overviewDensity, setOverviewDensity] = useState(
+    getSavedBookingOverviewDensity
+  );
+
+  const updateOverviewDensity = (density) => {
+    setOverviewDensity(density);
+    saveBookingOverviewDensity(density);
+  };
 
   const updateDateSettings = (nextSettings) => {
     const updatedSettings = {
@@ -5764,8 +4978,20 @@ function BookingDetailView({
       getBookingDisplayState(booking).label
     );
 
+  const isOverviewTab = activeTab === "Overview";
+
   return (
-    <section className="booking-detail-page booking-profile-page" data-tutorial-target="booking-profile">
+    <section
+      className={[
+        "booking-detail-page booking-profile-page",
+        isOverviewTab
+          ? `booking-profile-page-overview booking-overview-density-${overviewDensity}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      data-tutorial-target="booking-profile"
+    >
       <header className="booking-profile-header">
         <button
           className="secondary-dashboard-button booking-profile-back-button"
@@ -5778,7 +5004,7 @@ function BookingDetailView({
         </button>
 
         <div className="booking-profile-header-title">
-          <p>Booking Profile</p>
+          {!isOverviewTab && <p>Booking Profile</p>}
           <h2>{booking.organizationName}</h2>
         </div>
 
@@ -5804,7 +5030,19 @@ function BookingDetailView({
             Date Display
           </button>
 
-                    <span className={`booking-profile-status ${statusClass}`}>
+          {isOverviewTab && (
+            <button
+              className="primary-dashboard-button booking-overview-edit-button"
+              type="button"
+              onClick={() => setActiveTab("Details")}
+              data-tutorial-target="booking-overview-edit"
+            >
+              <FaPen aria-hidden="true" />
+              Edit Booking
+            </button>
+          )}
+
+          <span className={`booking-profile-status ${statusClass}`}>
             {getBookingDisplayState(booking).label}
           </span>
         </div>
@@ -5814,6 +5052,13 @@ function BookingDetailView({
           settings={dateSettings}
           updateSettings={updateDateSettings}
           onClose={() => setIsDateSettingsOpen(false)}
+        />
+      )}
+
+      {isOverviewTab && (
+        <BookingOverviewSummary
+          booking={booking}
+          dateSettings={dateSettings}
         />
       )}
       </header>
@@ -5835,6 +5080,13 @@ function BookingDetailView({
           </button>
         ))}
       </nav>
+
+      {isOverviewTab && (
+        <BookingOverviewDensityControl
+          density={overviewDensity}
+          onChange={updateOverviewDensity}
+        />
+      )}
 
       {activeTab === "Overview" && (
         <BookingOverview

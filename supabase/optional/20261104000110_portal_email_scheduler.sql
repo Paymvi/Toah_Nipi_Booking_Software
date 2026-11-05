@@ -11,8 +11,11 @@
 --   select vault.create_secret('<same value as PORTAL_EMAIL_CRON_SECRET>', 'portal_email_cron_secret');
 -- The cron secret only lets a caller trigger a run; it is not a database key.
 
-create extension if not exists pg_cron;
-create extension if not exists pg_net;
+-- Schemas as in the Supabase Cron and pg_net docs.
+create extension if not exists pg_cron with schema pg_catalog;
+grant usage on schema cron to postgres;
+grant all privileges on all tables in schema cron to postgres;
+create extension if not exists pg_net with schema extensions;
 
 select cron.schedule(
   'portal-email-worker',

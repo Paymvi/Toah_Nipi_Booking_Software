@@ -9,7 +9,6 @@ import "./styles/CreateBookingFromInquiry.css";
 import "./styles/BookingOverview.css";
 import "./styles/BookingHousingCamping.css";
 import "./styles/LodgingAvailability.css";
-import "./styles/BookingOverviewSchedule.css";
 import "./styles/shared.css";
 import "./styles/Dashboard.css";
 import "./styles/ReportsCamperDaysExplainer.css";

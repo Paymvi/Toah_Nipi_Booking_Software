@@ -182,6 +182,17 @@ export const DEFAULT_BOOKING_DETAIL_DATE_SETTINGS = {
   includeWeekday: false,
 };
 
+// Booking Overview spacing, remembered per browser.
+export const BOOKING_OVERVIEW_DENSITY_STORAGE_KEY =
+  "toahNipiBookingOverviewDensity";
+
+export const DEFAULT_BOOKING_OVERVIEW_DENSITY = "very-compact";
+
+export const bookingOverviewDensityOptions = [
+  { value: "compact", label: "Compact" },
+  { value: "very-compact", label: "Very compact" },
+];
+
 export const bookingDetailDateFormatOptions = [
   {
     value: "numeric",
