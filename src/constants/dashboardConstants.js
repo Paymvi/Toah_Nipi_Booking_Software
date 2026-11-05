@@ -186,12 +186,21 @@ export const DEFAULT_BOOKING_DETAIL_DATE_SETTINGS = {
 export const BOOKING_OVERVIEW_DENSITY_STORAGE_KEY =
   "toahNipiBookingOverviewDensity";
 
-export const DEFAULT_BOOKING_OVERVIEW_DENSITY = "very-compact";
+export const DEFAULT_BOOKING_OVERVIEW_DENSITY = "compact";
 
 export const bookingOverviewDensityOptions = [
   { value: "compact", label: "Compact" },
-  { value: "very-compact", label: "Very compact" },
+  { value: "large", label: "Large" },
 ];
+
+// Anything else saved, including the retired "very-compact", becomes the default.
+export function resolveBookingOverviewDensity(savedDensity) {
+  return bookingOverviewDensityOptions.some(
+    (option) => option.value === savedDensity
+  )
+    ? savedDensity
+    : DEFAULT_BOOKING_OVERVIEW_DENSITY;
+}
 
 export const bookingDetailDateFormatOptions = [
   {

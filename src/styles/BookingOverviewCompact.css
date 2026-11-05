@@ -1,0 +1,657 @@
+/* =========================================================
+   BOOKING OVERVIEW, COMPACT LAYOUT
+   Dense board of aligned rows. Everything is scoped to
+   .booking-compact-*, so the Large layout and the other booking
+   tabs keep their own styling.
+========================================================= */
+
+.booking-compact-page {
+  --bo-gap: 0.625rem;
+  --bo-pad-x: 0.875rem;
+  --bo-pad-y: 0.625rem;
+  --bo-row-y: 0.312rem;
+  --bo-field-min: 17rem;
+  --bo-line: #edf0f4;
+  --bo-edge: #e1e5ec;
+  --bo-title: #252936;
+  --bo-amber: #956600;
+}
+
+/* =========================================================
+   SHARED HEADER, OVERVIEW ONLY
+========================================================= */
+
+.booking-compact-page .booking-profile-header {
+  gap: var(--bo-gap) 0.875rem;
+  padding: var(--bo-pad-y) var(--bo-pad-x);
+  border-color: var(--bo-edge);
+  box-shadow: none;
+}
+
+.booking-compact-page .booking-profile-header-title h2 {
+  overflow-wrap: anywhere;
+}
+
+.booking-compact-page .booking-profile-back-button,
+.booking-compact-page .booking-date-settings-button,
+.booking-compact-page .booking-profile-delete-button,
+.booking-compact-edit-button {
+  min-height: 2rem;
+  padding: 0 0.688rem;
+  font-size: 0.942rem;
+}
+
+.booking-compact-edit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  box-shadow: none;
+}
+
+.booking-compact-summary {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 1.5rem;
+  padding-top: var(--bo-pad-y);
+  border-top: 1px solid var(--bo-line);
+}
+
+.booking-compact-summary-item {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  min-width: 0;
+  color: #596477;
+  font-size: 0.967rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.booking-compact-summary-contact {
+  flex: 2 1 18rem;
+}
+
+.booking-compact-summary-item small {
+  display: flex;
+  align-items: center;
+  gap: 0.312rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.booking-compact-summary-item small svg {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+}
+
+.booking-compact-summary-item strong {
+  color: var(--bo-title);
+  font-size: 1.005rem;
+  font-weight: 600;
+}
+
+.booking-compact-summary-item a {
+  color: var(--button);
+  text-decoration: none;
+}
+
+.booking-compact-summary-item a:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================================================
+   BOARD
+========================================================= */
+
+.booking-compact-layout {
+  display: grid;
+  gap: var(--bo-gap);
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.booking-compact-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--bo-gap);
+}
+
+.booking-compact-column,
+.booking-compact-side {
+  display: grid;
+  align-content: start;
+  gap: var(--bo-gap);
+  min-width: 0;
+}
+
+@container (min-width: 1450px) {
+  .booking-compact-board {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.5fr);
+  }
+
+  .booking-compact-side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+@container (max-width: 780px) {
+  .booking-compact-board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+
+/* =========================================================
+   SECTIONS
+========================================================= */
+
+.booking-compact-section,
+.booking-compact-layout > .booking-compact-source-data,
+.booking-compact-column > .booking-compact-empty {
+  min-width: 0;
+  border: 1px solid var(--bo-edge);
+  border-radius: 0.5rem;
+  background: #ffffff;
+}
+
+.booking-compact-section {
+  display: grid;
+  gap: var(--bo-pad-y);
+  padding: var(--bo-pad-y) var(--bo-pad-x);
+}
+
+.booking-compact-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  min-height: 2rem;
+}
+
+.booking-compact-section-header > svg {
+  flex-shrink: 0;
+  color: var(--button);
+  font-size: 0.94rem;
+}
+
+.booking-compact-section-header h3 {
+  flex: 1 1 auto;
+  margin: 0;
+  color: var(--bo-title);
+  font-size: 1.102rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.booking-profile-page .booking-compact-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.312rem;
+  min-height: 1.875rem;
+  padding: 0 0.625rem;
+  font-size: 0.93rem;
+  box-shadow: none;
+}
+
+.booking-compact-action svg {
+  font-size: 0.72rem;
+}
+
+.booking-compact-group {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.booking-compact-group h4 {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.93rem;
+  font-weight: 650;
+}
+
+.booking-compact-cancellation h4 {
+  color: #a43b3b;
+}
+
+.booking-compact-text {
+  margin: 0;
+  color: #334155;
+  font-size: 0.992rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.booking-compact-muted {
+  color: #6b7280;
+  font-weight: 400;
+}
+
+
+/* =========================================================
+   LABEL / VALUE ROWS
+========================================================= */
+
+.booking-compact-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--bo-field-min), 100%), 1fr));
+  column-gap: 1.25rem;
+  margin: 0;
+  min-width: 0;
+}
+
+/* Wraps as a whole, so a value drops below its label instead of splitting mid-number. */
+
+.booking-compact-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 0.75rem;
+  min-width: 0;
+  padding: var(--bo-row-y) 0;
+  border-bottom: 1px solid var(--bo-line);
+  font-size: 0.992rem;
+  line-height: 1.4;
+}
+
+.booking-compact-field dt {
+  color: #596477;
+}
+
+.booking-compact-field dd {
+  margin: 0;
+  color: var(--bo-title);
+  font-weight: 600;
+  max-width: 100%;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  overflow-wrap: break-word;
+}
+
+.booking-compact-field-multiline {
+  grid-column: 1 / -1;
+  flex-direction: column;
+}
+
+.booking-compact-field-multiline dd {
+  margin-left: 0;
+  font-weight: 400;
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+
+/* =========================================================
+   TABLES
+========================================================= */
+
+.booking-compact-sheet {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.992rem;
+  line-height: 1.4;
+}
+
+.booking-compact-sheet th,
+.booking-compact-sheet td {
+  padding: var(--bo-row-y) 0.625rem;
+  border-bottom: 1px solid var(--bo-line);
+  color: var(--bo-title);
+  font-weight: 400;
+  text-align: left;
+  vertical-align: baseline;
+  overflow-wrap: break-word;
+}
+
+.booking-compact-sheet th:first-child,
+.booking-compact-sheet td:first-child {
+  padding-left: 0;
+}
+
+.booking-compact-sheet th:last-child,
+.booking-compact-sheet td:last-child {
+  padding-right: 0;
+}
+
+.booking-compact-sheet-numeric thead th:not(:first-child) {
+  white-space: nowrap;
+}
+
+.booking-compact-sheet thead th {
+  border-bottom-color: #dfe4ec;
+  color: var(--text-muted);
+  font-size: 0.93rem;
+  font-weight: 650;
+}
+
+.booking-compact-sheet tbody th {
+  color: #596477;
+}
+
+.booking-compact-sheet-numeric th:not(:first-child),
+.booking-compact-sheet-numeric td:not(:first-child) {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.booking-compact-sheet-strong,
+.booking-compact-sheet tfoot th,
+.booking-compact-sheet tfoot td {
+  font-weight: 650;
+}
+
+.booking-compact-sheet tfoot th {
+  color: var(--bo-title);
+}
+
+.booking-compact-sheet tfoot th,
+.booking-compact-sheet tfoot td {
+  border-bottom: 0;
+}
+
+.booking-compact-sheet-subhead th,
+.booking-compact-sheet-subhead td {
+  color: #596477;
+}
+
+.booking-compact-sheet-unused th,
+.booking-compact-sheet-unused td {
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.booking-compact-schedule td:first-child,
+.booking-compact-schedule td:nth-child(2) {
+  color: #596477;
+  white-space: nowrap;
+}
+
+.booking-compact-schedule td:nth-child(3),
+.booking-compact-schedule td:nth-child(5) {
+  overflow-wrap: anywhere;
+}
+
+.booking-compact-schedule td:nth-child(3) {
+  font-weight: 600;
+}
+
+.booking-compact-meal-check {
+  color: var(--button);
+  font-size: 0.8rem;
+}
+
+
+/* =========================================================
+   MEALS
+========================================================= */
+
+.booking-compact-meals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(19rem, 100%), 1fr));
+  align-items: start;
+  gap: var(--bo-pad-y) 1.25rem;
+}
+
+.booking-compact-meals-plan,
+.booking-compact-meals-notes {
+  display: grid;
+  gap: var(--bo-pad-y);
+  min-width: 0;
+}
+
+.booking-compact-dietary {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.booking-compact-dietary h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.312rem;
+  margin: 0;
+  color: var(--bo-amber);
+  font-size: 0.93rem;
+  font-weight: 650;
+}
+
+.booking-compact-dietary ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.booking-compact-dietary li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  padding: var(--bo-row-y) 0;
+  border-bottom: 1px solid var(--bo-line);
+  color: var(--bo-title);
+  font-size: 0.992rem;
+  line-height: 1.4;
+}
+
+.booking-compact-dietary li strong {
+  min-width: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  text-align: right;
+}
+
+.booking-compact-dietary p {
+  margin: 0.25rem 0 0;
+  padding: 0.25rem 0.5rem;
+  border-left: 2px solid #d9b45c;
+  background: #fffaf0;
+  color: #5f4a14;
+  font-size: 0.992rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   EMPTY ROWS
+   Native details: keyboard support and open state come free.
+========================================================= */
+
+.booking-compact-empty summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2rem;
+  padding: 0.125rem var(--bo-pad-x);
+  border-radius: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.992rem;
+  list-style: none;
+  cursor: pointer;
+}
+
+.booking-compact-empty summary::-webkit-details-marker {
+  display: none;
+}
+
+.booking-compact-empty summary:hover {
+  background: #f8f9fb;
+}
+
+.booking-compact-empty summary > svg:first-child {
+  flex-shrink: 0;
+  color: #8a94a4;
+  font-size: 0.94rem;
+}
+
+.booking-compact-empty summary strong {
+  color: var(--bo-title);
+  font-weight: 650;
+}
+
+.booking-compact-column > .booking-compact-empty summary strong,
+.booking-compact-layout > .booking-compact-empty summary strong {
+  font-size: 1.102rem;
+}
+
+.booking-compact-empty summary span {
+  margin-left: auto;
+}
+
+.booking-compact-empty-chevron {
+  flex-shrink: 0;
+  color: #8a94a4;
+  font-size: 0.72rem;
+  transition: transform 120ms ease;
+}
+
+.booking-compact-empty[open] .booking-compact-empty-chevron {
+  transform: rotate(180deg);
+}
+
+.booking-compact-empty-body {
+  display: grid;
+  justify-items: start;
+  gap: 0.375rem;
+  padding: 0.125rem var(--bo-pad-x) var(--bo-pad-y);
+}
+
+.booking-compact-empty-body p {
+  margin: 0;
+  color: #596477;
+  font-size: 0.967rem;
+  line-height: 1.4;
+}
+
+.booking-compact-empty-body > .booking-compact-sheet,
+.booking-compact-empty-body > .booking-compact-fields {
+  justify-self: stretch;
+}
+
+/* Inside a section the row sits on a line, not in its own box. */
+
+.booking-compact-section .booking-compact-empty summary,
+.booking-compact-section .booking-compact-empty-body {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+.booking-compact-section .booking-compact-empty {
+  border-bottom: 1px solid var(--bo-line);
+}
+
+.booking-compact-section .booking-compact-empty summary {
+  min-height: 1.875rem;
+}
+
+.booking-compact-empty summary:focus-visible,
+.booking-compact-archive-links a:focus-visible,
+.booking-compact-summary-item a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+
+/* =========================================================
+   INCIDENTS + ARCHIVE
+========================================================= */
+
+.booking-compact-incident {
+  border-color: #ead7a7;
+  background: #fffdf8;
+}
+
+.booking-compact-incident .booking-compact-section-header > svg {
+  color: var(--bo-amber);
+}
+
+.booking-compact-archive-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+
+.booking-compact-archive-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.312rem;
+  min-height: 1.75rem;
+  color: var(--button);
+  font-size: 0.967rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.booking-compact-archive-links a:hover {
+  text-decoration: underline;
+}
+
+.booking-compact-archive-links svg {
+  font-size: 0.72rem;
+}
+
+
+/* =========================================================
+   NARROW SCREENS
+========================================================= */
+
+@media (max-width: 720px) {
+  .booking-compact-empty summary {
+    min-height: 2.5rem;
+  }
+
+  .booking-profile-page .booking-compact-action {
+    min-height: 2.25rem;
+  }
+}
+
+/* Five columns do not fit a phone, so each schedule row becomes a small block. */
+
+@container (max-width: 560px) {
+  .booking-compact-sheet th,
+  .booking-compact-sheet td {
+    padding-right: 0.375rem;
+    padding-left: 0.375rem;
+  }
+
+  .booking-compact-schedule thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .booking-compact-schedule,
+  .booking-compact-schedule tbody {
+    display: block;
+  }
+
+  .booking-compact-schedule tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.75rem;
+    padding: var(--bo-row-y) 0;
+    border-bottom: 1px solid var(--bo-line);
+  }
+
+  .booking-compact-schedule td {
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .booking-compact-schedule td:nth-child(n + 3) {
+    flex: 1 0 100%;
+    padding: 0;
+  }
+
+  .booking-compact-schedule td:nth-child(n + 4)::before {
+    content: attr(data-label) ": ";
+    color: #596477;
+  }
+}

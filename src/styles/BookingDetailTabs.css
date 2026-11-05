@@ -1510,6 +1510,62 @@
   gap: 1.5rem;
 }
 
+.booking-incident-notes-card {
+  padding: 1.5rem;
+  border: 1px solid #ead7a7;
+  border-radius: 1.125rem;
+  background: #fffdf8;
+}
+
+.booking-incident-notes-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.booking-incident-notes-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+}
+
+.booking-incident-notes-icon {
+  width: 2.625rem;
+  height: 2.625rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 0.75rem;
+  background: #fff3cd;
+  color: #956600;
+  font-size: 1.055rem;
+}
+
+.booking-incident-notes-title h3 {
+  margin: 2px 0 0.25rem;
+  font-size: 1.102rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.booking-incident-notes-title > div > span {
+  display: block;
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.booking-incident-notes-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-shrink: 0;
+}
+
+
 /* =========================================================
    INCIDENT NOTES EDITOR
 ========================================================= */
@@ -1548,4 +1604,74 @@
   outline: none;
   border-color: #b99745;
   box-shadow: 0 0 0 0.188rem rgba(185, 151, 69, 0.12);
+}
+
+
+/* =========================================================
+   SAVED INCIDENT NOTES
+========================================================= */
+
+.booking-incident-notes-display {
+  padding: 1rem 1.125rem;
+  border: 1px solid #ece4cf;
+  border-radius: 0.75rem;
+  background: #ffffff;
+}
+
+.booking-incident-notes-display p {
+  margin: 0;
+  white-space: pre-wrap;
+  color: #334155;
+  font-size: 1.005rem;
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   EMPTY INCIDENT STATE
+========================================================= */
+
+.booking-incident-notes-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.125rem;
+  border: 1px dashed #e1d5b6;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.65);
+  color: #64748b;
+}
+
+.booking-incident-notes-empty > svg {
+  flex-shrink: 0;
+  color: #b38628;
+}
+
+.booking-incident-notes-empty strong {
+  display: block;
+  margin-bottom: 0.188rem;
+  color: #475569;
+  font-size: 0.992rem;
+}
+
+.booking-incident-notes-empty p {
+  margin: 0;
+  color: #7c8798;
+  font-size: 0.955rem;
+  line-height: 1.45;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 760px) {
+  .booking-incident-notes-header {
+    flex-direction: column;
+  }
+
+  .booking-incident-notes-actions {
+    width: 100%;
+  }
 }
