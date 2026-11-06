@@ -1,0 +1,641 @@
+<meta charset="utf-8">
+<title>Reports Redesign Preview</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: the app's own working page. One context bar, three focused views, a records drawer over them. */
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --surface-2: #f8f9fb; --surface-3: #edf0f4;
+  --text: #22242a; --text-2: #4b5563; --text-3: #636671;
+  --line: #e5e7eb; --line-2: #d1d5db;
+  --accent: #4f46c7; --accent-hover: #4338a8; --on-accent: #ffffff;
+  --accent-bg: #eeedfb; --accent-text: #4338a8;
+  --s1: #d9d6f6; --s2: #9b93e6; --s3: #4f46c7;
+  --prior: #a5abb8;
+  --amber-bg: #fbf5e4; --amber-text: #8a6207; --amber-line: #e6d19a;
+  --red-bg: #fdeeee; --red-text: #a12b2b; --red-line: #f0c4c4;
+  --green-bg: #eaf4ee; --green-text: #2a6a49;
+  --scrim: rgba(20, 22, 30, .38); --shadow: rgba(28, 35, 52, .12);
+  --paper: #ffffff; --paper-text: #22242a;
+  --font: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15171e; --surface: #1c1f28; --surface-2: #21242f; --surface-3: #2a2e3b;
+  --text: #e6e8ee; --text-2: #bcc2ce; --text-3: #9ea5b4;
+  --line: #2c303c; --line-2: #474d5d;
+  --accent: #5a4fc4; --accent-hover: #6a5fd6; --accent-bg: #262440; --accent-text: #bdb5f7;
+  --s1: #332f5c; --s2: #6a5fd6; --s3: #bdb5f7; --prior: #6a7284;
+  --amber-bg: #33290f; --amber-text: #ecc86f; --amber-line: #6e5a24;
+  --red-bg: #3a2023; --red-text: #f5a9a9; --red-line: #7a4146;
+  --green-bg: #1a2f24; --green-text: #93d6ac;
+  --scrim: rgba(7, 8, 12, .66); --shadow: rgba(0, 0, 0, .4); color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #15171e; --surface: #1c1f28; --surface-2: #21242f; --surface-3: #2a2e3b;
+  --text: #e6e8ee; --text-2: #bcc2ce; --text-3: #9ea5b4;
+  --line: #2c303c; --line-2: #474d5d;
+  --accent: #5a4fc4; --accent-hover: #6a5fd6; --accent-bg: #262440; --accent-text: #bdb5f7;
+  --s1: #332f5c; --s2: #6a5fd6; --s3: #bdb5f7; --prior: #6a7284;
+  --amber-bg: #33290f; --amber-text: #ecc86f; --amber-line: #6e5a24;
+  --red-bg: #3a2023; --red-text: #f5a9a9; --red-line: #7a4146;
+  --green-bg: #1a2f24; --green-text: #93d6ac;
+  --scrim: rgba(7, 8, 12, .66); --shadow: rgba(0, 0, 0, .4); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; }
+body { background: var(--bg); color: var(--text); font: 14px/1.45 var(--font); }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 16px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 14px; }
+.notice { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; font-size: 12.5px; color: var(--text-3); }
+.notice label { display: inline-flex; gap: 6px; align-items: center; }
+.notice select { padding: 3px 6px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--surface); }
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: none; padding: 5px 11px; color: var(--text-2); }
+.seg button[aria-pressed="true"] { background: var(--accent-bg); color: var(--accent-text); font-weight: 600; }
+.head { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; justify-content: space-between; }
+h1 { margin: 0; font-size: 27px; letter-spacing: -.02em; line-height: 1.1; }
+h2 { margin: 0; font-size: 16px; }
+h3 { margin: 0; font-size: 14px; }
+.sub { margin: 3px 0 0; color: var(--text-3); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { border: 1px solid var(--line-2); background: var(--surface); border-radius: 8px; padding: 6px 12px; font-weight: 600; color: var(--accent-text); }
+.btn:hover { background: var(--accent-bg); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { background: var(--accent-hover); }
+.link { border: 0; background: none; padding: 0; color: var(--accent-text); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.context { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; padding: 11px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 11px; }
+.field { display: grid; gap: 3px; font-size: 11.5px; font-weight: 600; letter-spacing: .03em; color: var(--text-3); text-transform: uppercase; min-width: 0; }
+.field select { text-transform: none; letter-spacing: 0; font-size: 14px; font-weight: 400; color: var(--text); padding: 6px 8px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--surface); max-width: 100%; }
+.check { display: inline-flex; gap: 7px; align-items: center; padding-bottom: 7px; }
+.basis-note { flex: 1 1 260px; padding-bottom: 7px; color: var(--text-3); font-size: 12.5px; text-align: right; min-width: 0; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line-2); overflow-x: auto; }
+.tab { border: 0; background: none; padding: 9px 14px; color: var(--text-2); font-weight: 600; border-bottom: 3px solid transparent; white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--accent-text); border-bottom-color: var(--accent); }
+.badge { display: inline-block; min-width: 20px; padding: 0 6px; border-radius: 10px; background: var(--amber-bg); color: var(--amber-text); font-size: 12px; text-align: center; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 11px; padding: 14px; min-width: 0; }
+.stack { display: grid; gap: 14px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.panel-head { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.muted { color: var(--text-3); font-size: 12.5px; }
+.obs { list-style: none; margin: 0; padding: 0; display: grid; }
+.obs li { padding: 10px 0; border-top: 1px solid var(--line); }
+.obs li:first-child { border-top: 0; padding-top: 2px; }
+.obs p { margin: 0 0 3px; font-size: 15px; max-width: 72ch; }
+.obs .row { display: flex; flex-wrap: wrap; gap: 3px 14px; font-size: 12.5px; }
+details summary { cursor: pointer; color: var(--text-3); }
+details .how { margin: 4px 0 0; color: var(--text-2); max-width: 72ch; }
+.figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 11px; background: var(--surface); overflow: hidden; }
+.fig { border: 0; border-left: 1px solid var(--line); background: none; text-align: left; padding: 11px 14px; display: grid; gap: 1px; min-width: 0; }
+.fig:first-child { border-left: 0; }
+.fig:hover { background: var(--surface-2); }
+.fig small { font-size: 12px; font-weight: 600; color: var(--text-3); }
+.fig strong { font-size: 25px; line-height: 1.2; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.fig span { font-size: 12.5px; color: var(--text-2); }
+.fig .q { color: var(--amber-text); }
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th { font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em; color: var(--text-3); font-weight: 600; text-align: right; padding: 5px 8px; border-bottom: 1px solid var(--line-2); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; padding-left: 0; }
+td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+tr.click { cursor: pointer; }
+tr.click:hover td { background: var(--surface-2); }
+td.bars { width: 44%; min-width: 130px; text-align: left; }
+.bar { display: block; height: 7px; border-radius: 0 4px 4px 0; background: var(--s3); min-width: 2px; }
+.bar.prior { background: var(--prior); margin-top: 2px; height: 5px; }
+.bar.sched { background: repeating-linear-gradient(135deg, var(--s3) 0 3px, var(--s1) 3px 6px); }
+.key { display: inline-flex; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-2); }
+.key i { display: inline-block; width: 13px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: 0; }
+.up { color: var(--text-2); }
+.tag { display: inline-block; padding: 0 6px; border-radius: 5px; font-size: 11.5px; background: var(--surface-3); color: var(--text-2); }
+.tag.warn { background: var(--amber-bg); color: var(--amber-text); }
+.tag.bad { background: var(--red-bg); color: var(--red-text); }
+.tag.good { background: var(--green-bg); color: var(--green-text); }
+.map-scroll { overflow-x: auto; }
+.map { display: grid; gap: 2px; min-width: max-content; align-items: stretch; }
+.map .rowlabel { position: sticky; left: 0; z-index: 1; background: var(--surface); padding-right: 8px; font-size: 12.5px; font-weight: 600; white-space: nowrap; display: flex; flex-direction: column; justify-content: center; line-height: 1.15; }
+.map .rowlabel small { font-weight: 400; color: var(--text-3); font-size: 11px; }
+.map .colhead { font-size: 11px; color: var(--text-3); text-align: center; white-space: nowrap; }
+.map .colhead.we { color: var(--text); font-weight: 600; }
+.cell { border: 0; padding: 0; min-height: 24px; border-radius: 3px; background: var(--surface-3); font-size: 10px; font-weight: 600; color: var(--on-accent); }
+.cell.c1 { background: var(--s1); } .cell.c2 { background: var(--s2); } .cell.c3 { background: var(--s3); }
+.cell.we { box-shadow: inset 0 -2px 0 var(--line-2); }
+.cell.booked { background: var(--s2); }
+.cell.wait { background: var(--amber-bg); color: var(--amber-text); box-shadow: inset 0 0 0 1px var(--amber-line); }
+.cell.unplaced { background: var(--amber-bg); box-shadow: inset 0 0 0 1px var(--amber-line); color: var(--amber-text); }
+.cell:hover { outline: 2px solid var(--accent-text); outline-offset: 0; }
+.cell.selected { outline: 2px solid var(--text); }
+.map-side { display: grid; gap: 8px; }
+.gap { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; padding: 8px 0; border-top: 1px solid var(--line); width: 100%; border-left: 0; border-right: 0; border-bottom: 0; background: none; text-align: left; }
+.gap:hover strong { color: var(--accent-text); }
+.gap small { grid-column: 1 / -1; color: var(--text-3); font-size: 12px; }
+.gap b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.mapcols { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 14px; align-items: start; }
+.check-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; align-items: center; }
+.meter { height: 10px; background: var(--surface-3); border-radius: 5px; overflow: hidden; grid-column: 1 / -1; }
+.meter span { display: block; height: 100%; background: var(--s3); }
+.issue { border-top: 1px solid var(--line); }
+.issue:first-child { border-top: 0; }
+.issue summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1px 12px; padding: 10px 0; color: var(--text); list-style: none; }
+.issue summary::-webkit-details-marker { display: none; }
+.issue summary strong { font-size: 14.5px; }
+.issue summary em { grid-row: 1 / 3; grid-column: 2; font-style: normal; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; align-self: center; }
+.issue summary span { color: var(--text-3); font-size: 12.5px; }
+.rec { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1px 10px; padding: 7px 0; border-top: 1px solid var(--line); align-items: center; }
+.rec strong { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+.rec small { color: var(--text-3); grid-column: 1; }
+.rec .link { grid-column: 2; grid-row: 1 / 3; }
+.issue .rec:last-child { margin-bottom: 8px; }
+.scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 20; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 21; width: min(440px, 100%); background: var(--surface); border-left: 1px solid var(--line-2); box-shadow: -8px 0 24px var(--shadow); padding: max(14px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 14px 16px; display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 8px; }
+.drawer-head { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+.drawer-list { overflow-y: auto; min-height: 0; }
+.drawer-foot { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--text-3); border-top: 1px solid var(--line); padding-top: 8px; }
+.page-over { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow-y: auto; }
+.page-over .inner { max-width: 760px; margin: 0 auto; padding: 18px max(16px, env(safe-area-inset-right, 0px)) 18px max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 12px; }
+.sheet { background: var(--paper); color: var(--paper-text); border: 1px solid var(--line-2); padding: 24px 26px; display: grid; gap: 10px; box-shadow: 0 6px 18px var(--shadow); }
+.sheet h2 { font-size: 20px; }
+.sheet h3 { margin-top: 4px; border-bottom: 1px solid #c9ccd4; padding-bottom: 2px; }
+.sheet ul { margin: 0; padding-left: 18px; }
+.sheet table th, .sheet table td { border-color: #d9dbe1; color: #22242a; }
+.state { padding: 34px 18px; text-align: center; display: grid; gap: 8px; justify-items: center; }
+.state p { margin: 0; color: var(--text-2); max-width: 56ch; }
+.skeleton { height: 86px; border-radius: 11px; background: var(--surface-3); animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+.banner { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 9px 12px; border: 1px solid var(--amber-line); background: var(--amber-bg); color: var(--amber-text); border-radius: 9px; }
+.banner .link { color: inherit; }
+.tip { position: fixed; z-index: 40; pointer-events: none; background: var(--surface); border: 1px solid var(--line-2); box-shadow: 0 4px 12px var(--shadow); border-radius: 7px; padding: 5px 8px; font-size: 12.5px; max-width: 260px; }
+@media (max-width: 900px) {
+  .cols, .mapcols { grid-template-columns: minmax(0, 1fr); }
+  .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fig:nth-child(3) { border-left: 0; }
+  .fig:nth-child(n+3) { border-top: 1px solid var(--line); }
+  .basis-note { text-align: left; flex-basis: 100%; padding-bottom: 0; }
+}
+</style>
+
+<div class="wrap">
+  <div class="notice">
+    <span>Design preview with invented groups and figures. It is not connected to the booking system.</span>
+    <span style="display:inline-flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <label for="demoState">Show state
+        <select id="demoState">
+          <option value="normal">Normal</option>
+          <option value="incomplete">Incomplete data</option>
+          <option value="empty">Nothing matches filter</option>
+          <option value="loading">Loading</option>
+          <option value="failed">Could not load</option>
+        </select>
+      </label>
+      <span class="seg" role="group" aria-label="Theme">
+        <button type="button" id="themeLight" aria-pressed="false">Light</button>
+        <button type="button" id="themeNight" aria-pressed="false">Night</button>
+      </span>
+    </span>
+  </div>
+
+  <header class="head">
+    <div>
+      <h1>Reports</h1>
+      <p class="sub" id="headSub"></p>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" id="briefBtn">Meeting brief</button>
+      <button type="button" class="btn primary" id="csvBtn">Export CSV</button>
+    </div>
+  </header>
+
+  <section class="context" aria-label="Report settings">
+    <label class="field" for="period">Period
+      <select id="period">
+        <option value="year">2026</option>
+        <option value="summer">Summer 2026 (Jun to Aug)</option>
+        <option value="fall">Fall 2026 (Sep to Nov)</option>
+      </select>
+    </label>
+    <label class="field" for="basis">Counting
+      <select id="basis">
+        <option value="stays">Stays only</option>
+        <option value="all">All records</option>
+      </select>
+    </label>
+    <label class="field" for="rtype">Retreat type
+      <select id="rtype"></select>
+    </label>
+    <label class="check"><input type="checkbox" id="compare" checked> Compare with last year, same dates</label>
+    <span class="basis-note" id="basisNote"></span>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Report views">
+    <button type="button" class="tab" role="tab" data-tab="brief">Season Brief</button>
+    <button type="button" class="tab" role="tab" data-tab="map">Season Map</button>
+    <button type="button" class="tab" role="tab" data-tab="check">Data Check <span class="badge" id="checkBadge"></span></button>
+  </nav>
+
+  <main id="view"></main>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" aria-label="Records behind this number" hidden></aside>
+<div class="page-over" id="over" hidden></div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+/* ---------- Fictional data, generated from a fixed seed ---------- */
+const TODAY = "2026-11-05";
+const BUILDINGS = [
+  { id: "bethel", label: "Bethel", cap: 70 }, { id: "hebron", label: "Hebron", cap: 66 },
+  { id: "dothan", label: "Dothan", cap: 21 }, { id: "ajalon", label: "Ajalon", cap: 8 },
+  { id: "capernaum", label: "Capernaum", cap: 5 }, { id: "guest", label: "Guest House", cap: 12 },
+  { id: "camping", label: "Camping", cap: null },
+];
+const GROUPS = [
+  ["Cedar Hollow Church", "Church", 62, ["bethel"]], ["Northgate Fellowship", "Church", 48, ["bethel"]],
+  ["Harbor Light Youth", "Church - Youth", 58, ["hebron"]], ["Maple Street Women", "Church - Women", 34, ["hebron"]],
+  ["Stonebridge Men", "Church - Men", 26, ["dothan", "guest"]], ["Riverbend Campus Ministry", "College Students", 44, ["hebron"]],
+  ["Lakeview Alumni", "Christian Organization", 18, ["dothan"]], ["Willow Family Reunion", "Family Reunion", 24, ["dothan", "ajalon"]],
+  ["Summit Ministry Team", "Ministry", 14, ["guest"]], ["Quiet Pines Retreatants", "Personal Retreat", 4, ["capernaum"]],
+  ["Elm Valley High School", "High School Students", 52, ["bethel"]], ["Fairview Family Camp", "Family Camp", 90, ["bethel", "dothan", "camping"]],
+  ["Oak Ridge Local Club", "Local Organization", 16, ["guest"]], ["Trinity Hills Church", "Church", 38, ["hebron", "ajalon"]],
+  ["Blue Spruce Graduate Group", "Christian Organization", 22, ["dothan"]], ["Morning Star Personal", "Personal Retreat", 3, ["ajalon"]],
+];
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const key = (d) => d.toISOString().slice(0, 10);
+const addDays = (k, n) => key(new Date(Date.parse(k + "T00:00:00Z") + n * 864e5));
+const dow = (k) => new Date(k + "T00:00:00Z").getUTCDay();
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const fmtDay = (k) => k ? `${MONTHS[+k.slice(5, 7) - 1]} ${+k.slice(8)}` : "No date";
+const num = (n, d = 0) => n == null ? "unknown" : n.toLocaleString("en-US", { maximumFractionDigits: d });
+const signed = (n) => (n > 0 ? "+" : n < 0 ? "−" : "±") + num(Math.abs(n));
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const plural = (n, w) => `${num(n)} ${w}${n === 1 ? "" : "s"}`;
+
+function buildYear(year, seed, density) {
+  const r = rng(seed), list = [];
+  const weight = [.3, .35, .5, .65, .75, .85, .95, .95, .85, .8, .55, .3];
+  let id = 0;
+  const taken = new Map();
+  const free = (b, nights) => nights.every((n) => !taken.get(b + n));
+  const take = (b, nights) => nights.forEach((n) => taken.set(b + n, 1));
+  const add = (g, start, nightCount) => {
+    const nights = Array.from({ length: nightCount }, (_, i) => addDays(start, i));
+    if (!g[3].every((b) => free(b, nights))) return;
+    g[3].forEach((b) => take(b, nights));
+    const past = addDays(start, nightCount) <= TODAY;
+    const roll = r();
+    const state = roll < .06 ? "cancelled" : roll < .09 ? "waitlist" : "booked";
+    const guests = Math.max(2, Math.round(g[2] * (.82 + r() * .3)));
+    const src = r(), meals = nightCount * 3 - 1;
+    const guestSource = past ? (src < .68 ? "Actual" : src < .94 ? "Estimated" : "Missing") : (src < .9 ? "Estimated" : "Missing");
+    const known = guestSource !== "Missing";
+    list.push({ id: `${year}-${id++}`, group: g[0], type: g[1], start, end: addDays(start, nightCount), nights: nightCount, meals,
+      guests: known ? guests : null, guestSource, state, buildings: r() < .07 && !past ? [] : g[3],
+      camper: known ? guests * (nightCount * .4 + meals * .2) : null, kind: "booking" });
+  };
+  for (let d = `${year}-01-01`; d <= `${year}-12-31`; d = addDays(d, 1)) {
+    const month = +d.slice(5, 7) - 1;
+    const horizon = d > TODAY ? (d > "2026-12-10" ? .3 : .75) : 1;
+    if (dow(d) === 5) {
+      const count = 1 + Math.floor(r() * 3);
+      for (let i = 0; i < count; i++) if (r() < weight[month] * density * horizon) add(GROUPS[Math.floor(r() * GROUPS.length)], d, 2);
+    }
+    if (dow(d) === 1 && month >= 5 && month <= 7 && r() < .75 * density) add(GROUPS[Math.floor(r() * GROUPS.length)], d, 4);
+  }
+  return list.sort((a, b) => a.start.localeCompare(b.start));
+}
+const Y26 = buildYear(2026, 4101, 1), Y25 = buildYear(2025, 7719, .93);
+const UNDATED = ["Hilltop Prayer Group", "Sunrise Church Plant", "Bright Path Youth", "Evergreen Chapel", "Valley Outreach", "Three Rivers Group", "Prairie Chapel"].map((group, i) => ({ id: `inq-${i}`, group, type: "No Retreat Type", start: "", end: "", nights: 0, meals: 0, guests: 20 + i * 7, guestSource: "Estimated", state: "inquiry", buildings: [], camper: null, kind: "inquiry", wanted: ["Spring 2027", "June 2027", "A weekend in May", "Next fall"][i % 4] }));
+// Two records that show why a Data Check exists.
+Y26.find((s) => s.start < "2026-08-01" && s.start > "2026-06-01" && s.state === "booked").nights = 0;
+Y26.filter((s) => s.start > "2026-11-10" && s.state === "booked").slice(0, 2).forEach((s) => { s.buildings = []; });
+
+/* ---------- Report logic: the same rules the proposal specifies ---------- */
+const S = { tab: "brief", period: "year", basis: "stays", rtype: "all", compare: true, demo: "normal", zoom: "year", month: 11, fit: 40, drawer: null };
+const PERIODS = { year: ["01-01", "12-31", "2026"], summer: ["06-01", "08-31", "Summer 2026"], fall: ["09-01", "11-30", "Fall 2026"] };
+const range = (y) => { const p = PERIODS[S.period]; return [`${y}-${p[0]}`, `${y}-${p[1]}`]; };
+const inBasis = (s) => S.basis === "all" || s.state === "booked";
+const inType = (s) => S.rtype === "all" || s.type === S.rtype;
+function pick(list, year, to) {
+  const [a, b] = range(year), end = to && to < b ? to : b;
+  return list.filter((s) => s.start && s.start >= a && s.start <= end && inBasis(s) && inType(s));
+}
+const bNights = (list) => list.reduce((t, s) => t + s.nights * s.buildings.length, 0);
+function totals(list) {
+  const withGuests = list.filter((s) => s.guests != null);
+  return { stays: list.length, guests: withGuests.reduce((t, s) => t + s.guests, 0), guestUnknown: list.length - withGuests.length,
+    actual: list.filter((s) => s.guestSource === "Actual").length, camper: list.reduce((t, s) => t + (s.camper || 0), 0),
+    camperUnknown: list.filter((s) => s.camper == null).length, bn: bNights(list) };
+}
+const lastYear = (k) => "2025" + k.slice(4);
+
+function monthRows() {
+  return MONTHS.map((label, m) => {
+    const mm = String(m + 1).padStart(2, "0");
+    const of = (list, y) => pick(list, y).filter((s) => s.start.slice(5, 7) === mm);
+    const now = of(Y26, 2026), prior = of(Y25, 2025);
+    return { label, m, now, prior, a: totals(now), b: totals(prior), future: `2026-${mm}-01` > TODAY, partial: TODAY.slice(5, 7) === mm };
+  }).filter((r) => r.now.length || r.prior.length);
+}
+function typeRows() {
+  const map = new Map();
+  pick(Y26, 2026).forEach((s) => { const r = map.get(s.type) || { type: s.type, now: [], prior: [] }; r.now.push(s); map.set(s.type, r); });
+  pick(Y25, 2025).forEach((s) => { const r = map.get(s.type) || { type: s.type, now: [], prior: [] }; r.prior.push(s); map.set(s.type, r); });
+  return [...map.values()].map((r) => ({ ...r, a: totals(r.now), b: totals(r.prior) })).sort((x, y) => y.a.camper - x.a.camper);
+}
+// The map follows the Lodging Calendar rule: inquiries and cancelled stays hold no building.
+const holds = (s) => s.state !== "cancelled" && s.kind !== "inquiry";
+function nightIndex() {
+  const idx = new Map(), unplaced = new Map();
+  Y26.filter((s) => holds(s) && inType(s)).forEach((s) => {
+    for (let i = 0; i < s.nights; i++) {
+      const night = addDays(s.start, i);
+      if (!s.buildings.length) (unplaced.get(night) || unplaced.set(night, []).get(night)).push(s);
+      s.buildings.forEach((b) => { const k = b + night; (idx.get(k) || idx.set(k, []).get(k)).push(s); });
+    }
+  });
+  return { idx, unplaced };
+}
+function openWeekends() {
+  const { idx, unplaced } = nightIndex(), out = [];
+  for (let d = "2026-11-06"; d <= "2027-03-01" && d <= "2026-12-31"; d = addDays(d, 1)) {
+    if (dow(d) !== 5) continue;
+    const sat = addDays(d, 1);
+    const open = BUILDINGS.filter((b) => b.cap && !idx.has(b.id + d) && !idx.has(b.id + sat));
+    const beds = open.reduce((t, b) => t + b.cap, 0);
+    out.push({ d, open, beds, unplaced: (unplaced.get(d) || []).length + (unplaced.get(sat) || []).length });
+  }
+  return out;
+}
+function issues() {
+  const live = Y26.filter((s) => s.state === "booked");
+  const up = live.filter((s) => s.start > TODAY), past = live.filter((s) => s.start <= TODAY);
+  return [
+    { id: "nohouse", title: "Upcoming stays with no building", why: "Season Map cannot place them, so an open cell on those dates may not be free.", list: up.filter((s) => !s.buildings.length) },
+    { id: "noguest", title: "Upcoming stays with no guest count", why: "Guests and camper days leave them out. Meal planning has no number for them.", list: up.filter((s) => s.guests == null) },
+    { id: "noactual", title: "Finished stays still using an estimate", why: "Season comparisons are firmer once the actual attendance is entered.", list: past.filter((s) => s.guestSource === "Estimated") },
+    { id: "pastguest", title: "Finished stays with no guest count", why: "Unknown counts are left out of totals, never counted as zero.", list: past.filter((s) => s.guests == null) },
+    { id: "nights", title: "Stays with dates but no nights recorded", why: "Camper days cannot be calculated until nights are filled in.", list: live.filter((s) => s.nights === 0) },
+    { id: "undated", title: "Inquiries with no stay date", why: "These appear in no dated period. Their wanted dates are text only.", list: UNDATED },
+  ].filter((i) => i.list.length);
+}
+function observations(t, p) {
+  const out = [];
+  const months = monthRows().filter((r) => !r.future);
+  if (months.length) {
+    const top = months.reduce((x, y) => (y.a.camper > x.a.camper ? y : x));
+    const d = top.a.camper - top.b.camper;
+    out.push({ text: `${top.label} was the busiest month, with ${num(top.a.camper)} camper days${S.compare && top.prior.length ? `, ${d >= 0 ? "up" : "down"} ${num(Math.abs(d))} on ${top.label} 2025` : ""}.`,
+      list: top.now, title: `${top.label} 2026 stays`, how: "Highest camper days among finished months, counted by arrival month. Stays without a guest count add nothing." });
+  }
+  const rows = typeRows().filter((r) => r.a.stays + r.b.stays >= 4);
+  if (S.compare && rows.length) {
+    const shift = rows.reduce((x, y) => (Math.abs(y.a.stays - y.b.stays) > Math.abs(x.a.stays - x.b.stays) ? y : x));
+    if (shift.a.stays !== shift.b.stays) out.push({ text: `${shift.type} moved the most: ${plural(shift.a.stays, "stay")} this period against ${num(shift.b.stays)} in 2025.`,
+      list: shift.now, title: `${shift.type} stays`, how: "Largest change in stays among retreat types with at least 4 stays across both years. Full selected period for both years." });
+  }
+  const open = openWeekends().filter((w) => w.beds >= S.fit);
+  if (open.length) out.push({ text: `${plural(open.length, "weekend")} before the end of December still have room for ${S.fit} guests. The next is ${fmtDay(open[0].d)}.`,
+    go: "map", how: "Friday and Saturday nights where the buildings with no stay add up to the group size, using each building's recorded capacity. Closed dates are not recorded yet." });
+  const iss = issues(), first = iss[0];
+  if (first) { const n = first.list.length, label = first.title.toLowerCase(); out.push({ text: `${num(n)} ${n === 1 ? label.replace("stays", "stay") : label}.`, go: "check", how: "The first item in Data Check. Upcoming stays come first because they can still be fixed before arrival." }); }
+  return out;
+}
+
+/* ---------- Rendering ---------- */
+const $ = (id) => document.getElementById(id);
+const view = $("view");
+
+function figureHtml(label, value, line2, line3, drill, warn) {
+  return `<button type="button" class="fig" data-drill="${drill}"><small>${label}</small><strong>${value}</strong><span>${line2}</span>${line3 ? `<span class="${warn ? "q" : ""}">${line3}</span>` : ""}</button>`;
+}
+function renderBrief(limited) {
+  const soFar = pick(Y26, 2026, TODAY), ahead = pick(Y26, 2026).filter((s) => s.start > TODAY);
+  const prior = pick(Y25, 2025, lastYear(TODAY)), priorAll = pick(Y25, 2025);
+  const t = totals(soFar), p = totals(prior), a = totals(ahead), pa = totals(priorAll);
+  if (!soFar.length && !ahead.length) return emptyFilter();
+  const vs = (x, y, unit = "") => S.compare ? `${signed(x - y)} vs ${num(y)} last year${unit}` : "To Nov 5";
+  const obs = observations(t, p);
+  const figures = `<section class="figures" aria-label="Key figures to date">
+    ${figureHtml("Stays so far", num(t.stays), vs(t.stays, p.stays), a.stays ? `${num(a.stays)} more scheduled` : "", "sofar")}
+    ${figureHtml(limited ? "Guests, at least" : "Guests so far", num(t.guests), vs(t.guests, p.guests), t.guestUnknown ? `${plural(t.guestUnknown, "stay")} with no count` : `${num(t.actual)} of ${num(t.stays)} are actuals`, "guests", t.guestUnknown > 0)}
+    ${figureHtml("Camper days so far", num(t.camper), vs(t.camper, p.camper), t.camperUnknown ? `${plural(t.camperUnknown, "stay")} not measurable` : "", "camper", t.camperUnknown > 0)}
+    ${figureHtml("Building-nights used", num(t.bn), vs(t.bn, p.bn), "One building, one night", "bn")}
+  </section>`;
+  const banner = limited ? `<div class="banner" role="status"><span>Guest counts are known for only 61% of these stays, so the guest and camper day figures are minimums.</span><button type="button" class="link" data-go="check">Review in Data Check</button></div>` : "";
+  const measure = S.measure || "camper";
+  const rows = monthRows();
+  const get = (x) => (measure === "stays" ? x.stays : measure === "guests" ? x.guests : x.camper);
+  const max = Math.max(1, ...rows.map((r) => Math.max(get(r.a), S.compare ? get(r.b) : 0)));
+  const monthsHtml = rows.map((r) => `<tr class="click" tabindex="0" data-month="${r.m}">
+    <td>${r.label}${r.future ? ' <span class="tag">scheduled</span>' : r.partial ? ' <span class="tag">partial</span>' : ""}</td>
+    <td class="bars"><span class="bar ${r.future || r.partial ? "sched" : ""}" style="width:${get(r.a) / max * 100}%"></span>${S.compare ? `<span class="bar prior" style="width:${get(r.b) / max * 100}%"></span>` : ""}</td>
+    <td>${num(get(r.a))}</td>${S.compare ? `<td>${num(get(r.b))}</td>` : ""}</tr>`).join("");
+  const types = typeRows();
+  const tMax = Math.max(1, ...types.map((r) => r.a.camper));
+  const typeHtml = types.slice(0, 8).map((r) => `<tr class="click" tabindex="0" data-type="${esc(r.type)}"><td>${esc(r.type)}</td>
+    <td class="bars"><span class="bar" style="width:${r.a.camper / tMax * 100}%"></span></td><td>${num(r.a.stays)}</td><td>${num(r.a.camper)}</td>${S.compare ? `<td>${signed(r.a.stays - r.b.stays)}</td>` : ""}</tr>`).join("");
+  return `<div class="stack">${banner}
+    <section class="panel"><div class="panel-head"><h2>What stands out</h2><span class="muted">Worked out from the records below. No AI or forecast.</span></div>
+      <ul class="obs">${obs.map((o, i) => `<li><p>${esc(o.text)}</p><div class="row">
+        ${o.list ? `<button type="button" class="link" data-obs="${i}">See ${plural(o.list.length, "stay")}</button>` : `<button type="button" class="link" data-go="${o.go}">${o.go === "map" ? "Open Season Map" : "Open Data Check"}</button>`}
+        <details><summary>How this is worked out</summary><p class="how">${esc(o.how)}</p></details></div></li>`).join("")}</ul>
+    </section>
+    ${figures}
+    <div class="cols">
+      <section class="panel"><div class="panel-head"><h2>Month by month</h2>
+        <span class="seg" role="group" aria-label="Measure">${[["camper", "Camper days"], ["guests", "Guests"], ["stays", "Stays"]].map(([v, l]) => `<button type="button" data-measure="${v}" aria-pressed="${measure === v}">${l}</button>`).join("")}</span></div>
+        <div class="key" style="margin-bottom:6px"><span><i style="background:var(--s3)"></i>2026</span><span><i style="background:repeating-linear-gradient(135deg,var(--s3) 0 3px,var(--s1) 3px 6px)"></i>2026 not finished</span>${S.compare ? '<span><i style="background:var(--prior)"></i>2025 final</span>' : ""}</div>
+        <div class="tbl-wrap"><table><thead><tr><th>Arrival month</th><th style="text-align:left"></th><th>2026</th>${S.compare ? "<th>2025</th>" : ""}</tr></thead><tbody>${monthsHtml}</tbody></table></div>
+      </section>
+      <section class="panel"><div class="panel-head"><h2>Who came</h2><span class="muted">By camper days</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Retreat type</th><th></th><th>Stays</th><th>Days</th>${S.compare ? "<th>Stays vs 2025</th>" : ""}</tr></thead><tbody>${typeHtml}</tbody></table></div>
+        <p class="muted" style="margin:8px 0 0">Select any row to see its stays.</p>
+      </section>
+    </div></div>`;
+}
+function renderMap() {
+  const { idx, unplaced } = nightIndex();
+  const opens = openWeekends().filter((w) => w.beds >= S.fit);
+  let grid = "";
+  const label = (b) => `<div class="rowlabel">${b.label}<small>${b.cap ? `up to ${b.cap}` : "no capacity set"}</small></div>`;
+  if (S.zoom === "year") {
+    const start = "2025-12-29";
+    const weeks = Array.from({ length: 53 }, (_, i) => addDays(start, i * 7));
+    const heads = weeks.map((w, i) => { const m = +addDays(w, 3).slice(5, 7) - 1, prev = i ? +addDays(weeks[i - 1], 3).slice(5, 7) - 1 : -1; return `<div class="colhead">${m !== prev ? MONTHS[m] : ""}</div>`; }).join("");
+    const rowHtml = BUILDINGS.map((b) => label(b) + weeks.map((w) => {
+      const nights = Array.from({ length: 7 }, (_, i) => addDays(w, i)).filter((n) => idx.has(b.id + n)).length;
+      const c = nights === 0 ? "" : nights <= 2 ? "c1" : nights <= 4 ? "c2" : "c3";
+      return `<button type="button" class="cell ${c}" data-week="${w}" data-b="${b.id}" data-tip="${b.label}, week of ${fmtDay(w)}: ${plural(nights, "night")} in use" aria-label="${b.label}, week of ${fmtDay(w)}, ${plural(nights, "night")} in use"></button>`;
+    }).join("")).join("");
+    const noBuilding = `<div class="rowlabel">No building<small>recorded</small></div>` + weeks.map((w) => {
+      const n = Array.from({ length: 7 }, (_, i) => addDays(w, i)).filter((x) => unplaced.has(x)).length;
+      return `<button type="button" class="cell ${n ? "unplaced" : ""}" data-week="${w}" data-b="" data-tip="Week of ${fmtDay(w)}: ${n ? "stays with no building" : "none"}" aria-label="Week of ${fmtDay(w)}, ${n ? "stays with no building" : "none"}">${n ? "!" : ""}</button>`;
+    }).join("");
+    grid = `<div class="map" style="grid-template-columns:96px repeat(53,14px)"><div></div>${heads}${rowHtml}${noBuilding}</div>`;
+  } else {
+    const y = 2026, m = S.month, count = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+    const nights = Array.from({ length: count }, (_, i) => `${y}-${String(m + 1).padStart(2, "0")}-${String(i + 1).padStart(2, "0")}`);
+    const heads = nights.map((n) => `<div class="colhead ${[5, 6].includes(dow(n)) ? "we" : ""}">${"SMTWTFS"[dow(n)]}<br>${+n.slice(8)}</div>`).join("");
+    const rowHtml = BUILDINGS.map((b) => label(b) + nights.map((n) => {
+      const stays = idx.get(b.id + n) || [], wait = stays.length && stays.every((s) => s.state === "waitlist");
+      const cls = !stays.length ? "" : wait ? "wait" : "booked";
+      const we = [5, 6].includes(dow(n)) ? "we" : "";
+      const text = !stays.length ? "open" : `${stays.map((s) => s.group).join(", ")}${wait ? " (waitlist)" : ""}`;
+      return `<button type="button" class="cell ${cls} ${we}" data-night="${n}" data-b="${b.id}" data-tip="${esc(b.label)}, ${fmtDay(n)}: ${esc(text)}" aria-label="${esc(b.label)}, ${fmtDay(n)}, ${esc(text)}">${wait ? "W" : ""}</button>`;
+    }).join("")).join("");
+    const noBuilding = `<div class="rowlabel">No building<small>recorded</small></div>` + nights.map((n) => {
+      const list = unplaced.get(n) || [];
+      return `<button type="button" class="cell ${list.length ? "unplaced" : ""}" data-night="${n}" data-b="" data-tip="${fmtDay(n)}: ${list.length ? esc(list.map((s) => s.group).join(", ")) : "none"}" aria-label="${fmtDay(n)}, ${list.length ? plural(list.length, "stay") + " with no building" : "none"}">${list.length ? "!" : ""}</button>`;
+    }).join("");
+    grid = `<div class="map" style="grid-template-columns:96px repeat(${count},24px)"><div></div>${heads}${rowHtml}${noBuilding}</div>`;
+  }
+  const legend = S.zoom === "year"
+    ? `<span><i style="background:var(--surface-3)"></i>Open</span><span><i style="background:var(--s1)"></i>1 to 2 nights</span><span><i style="background:var(--s2)"></i>3 to 4</span><span><i style="background:var(--s3)"></i>5 to 7</span><span><i style="background:var(--amber-bg);box-shadow:inset 0 0 0 1px var(--amber-line)"></i>! Needs a building</span>`
+    : `<span><i style="background:var(--surface-3)"></i>Open</span><span><i style="background:var(--s2)"></i>Booked</span><span><i style="background:var(--amber-bg);box-shadow:inset 0 0 0 1px var(--amber-line)"></i>W Waitlist, ! Needs a building</span>`;
+  const gapList = opens.slice(0, 7).map((w) => `<button type="button" class="gap" data-jump="${w.d}"><strong>${fmtDay(w.d)} to ${fmtDay(addDays(w.d, 2))}</strong><b>up to ${w.beds}</b><small>${esc(w.open.map((b) => b.label).join(", "))}${w.unplaced ? " · a stay on these dates has no building yet" : ""}</small></button>`).join("");
+  return `<div class="mapcols">
+    <section class="panel"><div class="panel-head"><div><h2>Building use, 2026</h2><span class="muted">Nights held, using the Lodging Calendar's rule. Cancelled stays and inquiries hold no building.</span></div>
+      <span class="seg" role="group" aria-label="Zoom"><button type="button" data-zoom="year" aria-pressed="${S.zoom === "year"}">Year</button><button type="button" data-zoom="month" aria-pressed="${S.zoom === "month"}">Month</button></span></div>
+      ${S.zoom === "month" ? `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><button type="button" class="btn" data-mstep="-1" aria-label="Previous month">‹</button><strong>${MONTHS[S.month]} 2026</strong><button type="button" class="btn" data-mstep="1" aria-label="Next month">›</button><span class="muted">Fri and Sat nights are marked</span></div>` : ""}
+      <div class="map-scroll">${grid}</div>
+      <div class="key" style="margin-top:9px">${legend}</div>
+      <p class="muted" style="margin:6px 0 0">Select any cell to see the stays behind it. Use Back in a booking to return here.</p>
+    </section>
+    <section class="panel map-side"><div><h2>Open weekends</h2><span class="muted">Where a new group could fit, Nov 6 to Dec 31</span></div>
+      <label class="field" for="fit">Group size
+        <select id="fit">${[10, 20, 40, 60, 80, 120].map((n) => `<option value="${n}" ${n === S.fit ? "selected" : ""}>${n} guests</option>`).join("")}</select>
+      </label>
+      <div>${gapList || `<p class="muted">No weekend in this window has that much room in open buildings.</p>`}</div>
+      <p class="muted" style="margin:0">Upper recorded capacities added across empty buildings. Check the dates in the Lodging Calendar before offering them. Closed dates are not recorded yet.</p>
+    </section></div>`;
+}
+function renderCheck() {
+  const all = issues(), live = Y26.filter((s) => s.state === "booked");
+  const flagged = new Set(all.flatMap((i) => i.list.filter((s) => s.kind === "booking").map((s) => s.id)));
+  const good = live.length - flagged.size, pct = Math.round(good / live.length * 100);
+  const rec = (s) => `<div class="rec"><strong>${esc(s.group)}</strong><small>${s.start ? `${fmtDay(s.start)}, ${s.start > TODAY ? "arriving" : "stayed"}` : `Wanted: ${esc(s.wanted)}`}</small><button type="button" class="link" data-open="${s.id}">Open</button></div>`;
+  return `<div class="stack">
+    <section class="panel check-summary"><div><h2>${num(good)} of ${num(live.length)} stays in 2026 are complete</h2><span class="muted">Complete means dates, nights, a guest count, a building for upcoming stays, and actuals for finished ones.</span></div>
+      <strong style="font-size:22px">${pct}%</strong><div class="meter"><span style="width:${pct}%"></span></div></section>
+    <section class="panel"><div class="panel-head"><h2>What to fix first</h2><span class="muted">Sorted by what affects upcoming stays</span></div>
+      ${all.map((i, n) => `<details class="issue" ${n === 0 ? "open" : ""}><summary><strong>${esc(i.title)}</strong><em>${num(i.list.length)}</em><span>${esc(i.why)}</span></summary>${i.list.slice(0, 8).map(rec).join("")}${i.list.length > 8 ? `<p class="muted" style="margin:6px 0 10px">${num(i.list.length - 8)} more in the full list</p>` : ""}</details>`).join("")}
+    </section></div>`;
+}
+function emptyFilter() {
+  return `<section class="panel state"><h2>No stays match these settings</h2><p>The saved retreat type “Old Type (not mapped)” no longer exists, so nothing can match it. The report did not change any records.</p><button type="button" class="btn primary" data-clear="1">Clear filter</button></section>`;
+}
+function render() {
+  document.querySelectorAll(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.tab === S.tab)));
+  const period = PERIODS[S.period][2];
+  $("headSub").textContent = S.tab === "map" ? "Where the buildings are in use, and where a group could still fit." : S.tab === "check" ? "Records to fix so the reports can be trusted." : `${period}, as of Nov 5.`;
+  $("basisNote").textContent = S.tab === "map" ? "Season Map always follows the Lodging Calendar rule, so Counting does not change it." : S.tab === "check" ? "Data Check always looks at booked stays and undated inquiries." : S.basis === "stays" ? "Counting booked and archived stays. Cancelled, waitlisted and inquiries are left out." : "Counting every record except hosts, including cancelled, waitlisted and inquiries.";
+  $("checkBadge").textContent = issues().reduce((t, i) => t + i.list.length, 0);
+  if (S.demo === "loading") { view.innerHTML = `<div class="stack" aria-busy="true"><p class="muted" role="status">Loading bookings. Figures appear when every record has arrived.</p><div class="skeleton"></div><div class="skeleton" style="height:190px"></div></div>`; return; }
+  if (S.demo === "failed") { view.innerHTML = `<section class="panel state" role="alert"><h2>Reports could not load</h2><p>The booking records did not arrive, so no figures are shown. Zeros here would be misleading. Your records are not affected.</p><button type="button" class="btn primary" data-demo-reset="1">Try again</button></section>`; return; }
+  if (S.demo === "empty") { view.innerHTML = emptyFilter(); return; }
+  view.innerHTML = S.tab === "brief" ? renderBrief(S.demo === "incomplete") : S.tab === "map" ? renderMap() : renderCheck();
+}
+
+/* ---------- Drawer and booking return ---------- */
+function drawer(title, list, note) {
+  S.drawer = { title, list, note };
+  const known = list.filter((s) => s.guests != null);
+  $("drawer").innerHTML = `<div class="drawer-head"><div><h2>${esc(title)}</h2><span class="muted">${plural(list.length, "record")}${list.length ? `, ${num(known.reduce((t, s) => t + s.guests, 0))} known guests` : ""}</span></div><button type="button" class="btn" data-close="1">Close</button></div>
+    ${note ? `<p class="muted" style="margin:0">${esc(note)}</p>` : "<span></span>"}
+    <div class="drawer-list">${list.length ? list.slice(0, 80).map((s) => `<div class="rec"><strong>${esc(s.group)}</strong><small>${s.start ? `${fmtDay(s.start)} · ${plural(s.nights, "night")}` : "No date"} · ${s.guests == null ? "guests unknown" : `${num(s.guests)} ${s.guestSource.toLowerCase()}`}${s.state !== "booked" ? ` · ${s.state}` : ""}</small><button type="button" class="link" data-open="${s.id}">Open</button></div>`).join("") : '<p class="muted">Nothing here. The space is open.</p>'}</div>
+    <div class="drawer-foot"><span>Same rules as the number you selected</span><button type="button" class="link" data-csv="1">Export these rows</button></div>`;
+  $("drawer").hidden = false; $("scrim").hidden = false;
+  $("drawer").querySelector("[data-close]").focus();
+}
+function closeDrawer() { $("drawer").hidden = true; $("scrim").hidden = true; S.drawer = null; }
+function openBooking(id) {
+  const s = [...Y26, ...Y25, ...UNDATED].find((x) => x.id === id);
+  $("over").innerHTML = `<div class="inner"><div><button type="button" class="btn" data-back="1">‹ Back to Reports</button></div><section class="panel"><h1 style="font-size:22px">${esc(s.group)}</h1><p class="sub">${s.start ? `${fmtDay(s.start)} to ${fmtDay(s.end)}` : "No stay date"} · ${esc(s.type)}</p><p>This stands in for the real Booking Detail page. Staff edit the record there, then Back returns them to the same report view, filters, scroll position and open list.</p></section></div>`;
+  $("over").hidden = false; $("over").scrollTop = 0; $("over").querySelector("[data-back]").focus();
+}
+function openBrief() {
+  const soFar = pick(Y26, 2026, TODAY), t = totals(soFar), p = totals(pick(Y25, 2025, lastYear(TODAY)));
+  const obs = observations(t, p), next = Y26.filter((s) => s.state === "booked" && s.start > TODAY).slice(0, 6);
+  $("over").innerHTML = `<div class="inner"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button type="button" class="btn" data-back="1">‹ Back to Reports</button><span class="muted">In the app this page prints on one letter sheet. Print always uses Light.</span></div>
+    <article class="sheet"><h2>Staff meeting brief</h2><span class="muted" style="color:#555b66">${PERIODS[S.period][2]}, as of Nov 5 · Booked and archived stays · Compared with the same dates in 2025</span>
+      <table><thead><tr><th></th><th>2026 so far</th><th>2025 same dates</th></tr></thead><tbody><tr><td>Stays</td><td>${num(t.stays)}</td><td>${num(p.stays)}</td></tr><tr><td>Guests</td><td>${num(t.guests)}</td><td>${num(p.guests)}</td></tr><tr><td>Camper days</td><td>${num(t.camper)}</td><td>${num(p.camper)}</td></tr><tr><td>Building-nights</td><td>${num(t.bn)}</td><td>${num(p.bn)}</td></tr></tbody></table>
+      <h3>What stands out</h3><ul>${obs.map((o) => `<li>${esc(o.text)}</li>`).join("")}</ul>
+      <h3>Next arrivals</h3><table><tbody>${next.map((s) => `<tr><td>${fmtDay(s.start)}</td><td style="text-align:left">${esc(s.group)}</td><td>${s.guests == null ? "count unknown" : num(s.guests)}</td><td>${s.buildings.length ? esc(s.buildings.map((b) => BUILDINGS.find((x) => x.id === b).label).join(", ")) : "no building"}</td></tr>`).join("")}</tbody></table>
+    </article></div>`;
+  $("over").hidden = false; $("over").scrollTop = 0; $("over").querySelector("[data-back]").focus();
+}
+
+/* ---------- Events ---------- */
+const types = [...new Set(Y26.map((s) => s.type))].sort();
+$("rtype").innerHTML = `<option value="all">All types</option>` + types.map((t) => `<option>${esc(t)}</option>`).join("");
+const toast = (msg) => { const n = document.createElement("div"); n.className = "banner"; n.setAttribute("role", "status"); n.textContent = msg; document.querySelector(".wrap").insertBefore(n, view); setTimeout(() => n.remove(), 3200); };
+
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("button, tr.click"); if (!t) { if (e.target.id === "scrim") closeDrawer(); return; }
+  const d = t.dataset;
+  if (t.classList.contains("tab")) { S.tab = d.tab; render(); return; }
+  if (d.go) { S.tab = d.go; render(); window.scrollTo(0, 0); return; }
+  if (d.measure) { S.measure = d.measure; render(); return; }
+  if (d.zoom) { S.zoom = d.zoom; render(); return; }
+  if (d.mstep) { S.month = (S.month + Number(d.mstep) + 12) % 12; render(); return; }
+  if (d.close) { closeDrawer(); return; }
+  if (d.back) { $("over").hidden = true; return; }
+  if (d.open) { openBooking(d.open); return; }
+  if (d.csv) { toast("In the app, this downloads the rows in the open list."); return; }
+  if (d.clear || d.demoReset) { S.demo = "normal"; $("demoState").value = "normal"; render(); return; }
+  if (d.obs !== undefined) { const o = observations()[Number(d.obs)]; drawer(o.title, o.list, o.how); return; }
+  if (d.drill) {
+    const soFar = pick(Y26, 2026, TODAY);
+    const title = { sofar: "Stays so far", guests: "Guests so far", camper: "Camper days so far", bn: "Building-nights used" }[d.drill];
+    drawer(title, soFar, "Stays arriving from the start of the period to Nov 5.");
+    return;
+  }
+  if (d.month !== undefined) { const r = monthRows().find((x) => x.m === Number(d.month)); drawer(`${r.label} 2026`, r.now, `Stays arriving in ${r.label}.`); return; }
+  if (d.type !== undefined) { drawer(d.type, typeRows().find((x) => x.type === d.type).now, "Stays of this retreat type in the selected period."); return; }
+  if (d.jump) { S.zoom = "month"; S.month = +d.jump.slice(5, 7) - 1; render(); return; }
+  if (d.week || d.night) {
+    const nights = d.week ? Array.from({ length: 7 }, (_, i) => addDays(d.week, i)) : [d.night];
+    const { idx, unplaced } = nightIndex(), seen = new Map();
+    nights.forEach((n) => (d.b ? idx.get(d.b + n) || [] : unplaced.get(n) || []).forEach((s) => seen.set(s.id, s)));
+    const name = d.b ? BUILDINGS.find((b) => b.id === d.b).label : "No building recorded";
+    drawer(`${name}, ${d.week ? `week of ${fmtDay(d.week)}` : fmtDay(d.night)}`, [...seen.values()], "");
+  }
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { if (!$("over").hidden) $("over").hidden = true; else if (S.drawer) closeDrawer(); }
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches("tr.click")) { e.preventDefault(); e.target.click(); }
+});
+document.addEventListener("change", (e) => {
+  const id = e.target.id;
+  if (id === "period") S.period = e.target.value;
+  else if (id === "basis") S.basis = e.target.value;
+  else if (id === "rtype") S.rtype = e.target.value;
+  else if (id === "compare") S.compare = e.target.checked;
+  else if (id === "fit") S.fit = Number(e.target.value);
+  else if (id === "demoState") S.demo = e.target.value;
+  else return;
+  render();
+});
+const tip = $("tip");
+document.addEventListener("pointermove", (e) => {
+  const c = e.target.closest?.("[data-tip]");
+  if (!c) { tip.hidden = true; return; }
+  tip.textContent = c.dataset.tip; tip.hidden = false;
+  tip.style.left = Math.min(e.clientX + 12, innerWidth - 270) + "px"; tip.style.top = e.clientY + 14 + "px";
+});
+$("briefBtn").addEventListener("click", openBrief);
+$("csvBtn").addEventListener("click", () => toast("In the app, this downloads the current view with its period, counting rule and filters at the top."));
+function setTheme(mode) {
+  document.documentElement.dataset.theme = mode;
+  $("themeLight").setAttribute("aria-pressed", String(mode === "light"));
+  $("themeNight").setAttribute("aria-pressed", String(mode === "dark"));
+}
+$("themeLight").addEventListener("click", () => setTheme("light"));
+$("themeNight").addEventListener("click", () => setTheme("dark"));
+const startDark = document.documentElement.dataset.theme === "dark" || (!document.documentElement.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+$("themeLight").setAttribute("aria-pressed", String(!startDark));
+$("themeNight").setAttribute("aria-pressed", String(startDark));
+render();
+</script>

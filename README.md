@@ -194,7 +194,7 @@ Each main staff view has its own route inside the dashboard.
 | `/contacts` | Contacts View | Contact directory generated from booking records, including primary and secondary contacts. |
 | `/guest-inquiries` | Guest Inquiries | Reviews public inquiry submissions. Staff can convert an inquiry into a booking or decline it with a reason. |
 | `/portal-admin` | Portal View | Manages group leader portal tasks, documents, custom uploads, guest uploads, and portal links. |
-| `/reports` | Reports | Reporting for status, retreat type, source, monthly trends, lodging usage, camper days, financial fields, and data quality, with CSV export. |
+| `/reports` | Reports | Season Brief, Season Map and Data Check, where every number opens its records, with CSV export and a printable meeting brief. A New / Original toggle returns to the earlier single-page report. |
 | `/jobs` | Jobs | Aggregates checklist and program logistics tasks assigned to staff across bookings. |
 | `/user-admin` | User Admin | Shared staff directory (Supabase table `staff_directory`) used for task assignment, and the per-computer "Working as" choice. |
 | `/backup` | Backups & Restore | Creates, validates, compares, merges, and restores booking JSON backups. |

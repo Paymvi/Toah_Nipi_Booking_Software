@@ -76,10 +76,11 @@ test("Back and delete leave a detail view through the remembered origin", () => 
   assert.doesNotMatch(source, /navigate\("\/inquiry-spreadsheet"\)/);
 });
 
-test("both calendars stay mounted behind the record they opened", () => {
+test("both calendars and Reports stay mounted behind the record they opened", () => {
   const source = readFileSync("src/pages/Dashboard.jsx", "utf8");
 
   assert.match(source, /keptCalendarView === "Calendar View"/);
   assert.match(source, /keptCalendarView === "Lodging Calendar"/);
-  assert.equal(source.match(/onOpenBooking=\{openCalendarBooking\}/g)?.length, 2);
+  assert.match(source, /keptCalendarView === "Reports"/);
+  assert.equal(source.match(/onOpenBooking=\{openCalendarBooking\}/g)?.length, 3);
 });

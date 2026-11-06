@@ -45,7 +45,8 @@ export const TUTORIAL_TARGETS = {
   "nav-form": "Form button in the sidebar",
   "nav-master-spreadsheet": "Master Spreadsheet in the sidebar",
   "nav-calendar": "Main Calendar in the sidebar",
-    "nav-contacts": "Contacts in the sidebar",
+  "nav-contacts": "Contacts in the sidebar",
+  "nav-reports": "Reports in the sidebar",
   "nav-portals": "Portals in the sidebar",
 
 
@@ -92,6 +93,10 @@ export const TUTORIAL_TARGETS = {
   "contacts-view-bookings": "View Bookings button",
   "contacts-history": "booking history",
     "contacts-deleted": "Deleted contacts button",
+
+  "reports-layout": "New and Original layout switch",
+  "reports-tabs": "Season Brief, Season Map and Data Check tabs",
+  "reports-figures": "key figures",
 
   "portal-page": "Portal Progress page",
   "portal-summary": "summary tiles",
@@ -515,6 +520,45 @@ export const TUTORIALS = [
         target: "contacts-deleted",
         say: "Deleting a contact only hides them from this list, for everyone. Hidden contacts wait here and can be restored anytime.",
                 show: "Deleted contacts are only hidden. They can be restored from here at any time.",
+      },
+    ],
+  },
+
+  {
+    id: "reports",
+    title: "Read your reports",
+    description: "Find your way around Reports and open the records behind any number.",
+    category: "Reports",
+    difficulty: "Beginner",
+    keywords: ["season", "map", "data check", "weekends", "camper days", "compare", "brief"],
+    steps: [
+      {
+        id: "open-reports",
+        target: "nav-reports",
+        say: "Open Reports in the sidebar.",
+        show: "Reports shows how the season is going, where there is room, and which records need fixing.",
+        done: (ctx) => ctx.path() === "/reports",
+        demoClick: true,
+      },
+      {
+        id: "layout",
+        target: "reports-layout",
+        say: "New is the layout we'll use here. Original brings back the earlier single-page report anytime.",
+        show: "New and Original switch between the two layouts. Your choice is remembered in this browser.",
+      },
+      {
+        id: "views",
+        target: "reports-tabs",
+        say: "Season Brief sums up the season. Season Map shows building use and open weekends. Data Check lists records to fix, soonest arrivals first.",
+        show: "Three views: Season Brief for the summary, Season Map for buildings and open weekends, Data Check for records to fix.",
+        missing: "Choose New in the Layout switch at the top of the page to see these tabs.",
+      },
+      {
+        id: "figures",
+        target: "reports-figures",
+        say: "These compare this year so far with the same dates last year. Select any number to see the records behind it, then use Back in a booking to return right here.",
+        show: "Figures compare the same dates last year. Selecting one lists its records, and Back from a booking returns here.",
+        missing: "Open Season Brief with the New layout. These figures appear once stays match your settings.",
       },
     ],
   },

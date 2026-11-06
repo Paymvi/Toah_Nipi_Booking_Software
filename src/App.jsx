@@ -22,6 +22,7 @@ import "./styles/BookingDetail.css";
 import "./styles/BookingActivities.css";
 import "./styles/BookingDetailTabs.css";
 import "./styles/ReportsView.css";
+import "./styles/ReportsSeason.css";
 import "./styles/AdminJobsView.css";
 import "./styles/Auth.css";
 import "./styles/PortalAdminView.css";

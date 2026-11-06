@@ -206,6 +206,17 @@ export function neutralizeCsvCell(value) {
   return /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
 }
 
+export function downloadCsv(filename, sections) {
+  const url = URL.createObjectURL(new Blob([toCsv(sections)], { type: "text/csv;charset=utf-8;" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 export function toCsv(sections) {
   const escape = (value) => {
     const text = String(neutralizeCsvCell(value) ?? "");

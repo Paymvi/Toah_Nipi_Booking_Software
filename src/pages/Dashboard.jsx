@@ -194,7 +194,7 @@ import ContactsView from "../pages/ContactsView";
 import InquiryPipelineView, {
   getInquiryPipelineColumnKey,
 } from "../pages/InquiryPipeline";
-import ReportsView from "../pages/ReportsView";
+import ReportsPage from "../pages/ReportsPage";
 import JobsView, {
   getAssignedStaffNamesFromBookings,
 } from "../pages/JobsView";
@@ -7965,6 +7965,8 @@ export default function Dashboard() {
 
   const [publicInquiries, setPublicInquiries] = useState([]);
   const [isBookingsLoading, setIsBookingsLoading] = useState(false);
+  const [bookingsLoadError, setBookingsLoadError] = useState(null);
+  const [bookingsLoadedAt, setBookingsLoadedAt] = useState(0);
 
   const [isDashboardActionCenterExpanded, setIsDashboardActionCenterExpanded] =
     useState(() =>
@@ -8025,7 +8027,10 @@ export default function Dashboard() {
       const bookings = await fetchBookings();
 
       setPublicInquiries(bookings);
+      setBookingsLoadError(null);
+      setBookingsLoadedAt(Date.now());
     } catch (error) {
+      setBookingsLoadError(error);
       console.error("Could not load bookings from Supabase:", error);
       alert("Could not load bookings from Supabase. Check the console.");
     } finally {
@@ -9583,7 +9588,7 @@ export default function Dashboard() {
       view: returnView,
       scrollY: window.scrollY,
       scrollers: [
-        ...document.querySelectorAll(".calendar-view-card, .calendar-week-grid"),
+        ...document.querySelectorAll(".calendar-view-card, .calendar-week-grid, .season-map-scroll, .season-drawer-list"),
       ].map((element) => [element, element.scrollLeft]),
       // Only for keyboard use: after a mouse click it would pop the tooltip open.
       focusTarget: focused?.matches(":focus-visible") ? focused : null,
@@ -9776,6 +9781,7 @@ export default function Dashboard() {
     "Calendar View": "nav-calendar",
     [SPREADSHEET_VIEW_NAME]: "nav-master-spreadsheet",
     "Contacts View": "nav-contacts",
+    Reports: "nav-reports",
   };
 
   const sidebarItemLookup = Object.fromEntries(
@@ -10174,6 +10180,27 @@ export default function Dashboard() {
         )}
 
 
+        {keptCalendarView === "Reports" && (
+          <section
+            className={`dashboard-keepalive-view ${
+              activeView === "Reports"
+                ? "dashboard-keepalive-view-active"
+                : ""
+            }`}
+            aria-hidden={activeView !== "Reports"}
+          >
+            <ReportsPage
+              inquiryBookings={inquiryBookings}
+              isLoading={isBookingsLoading}
+              loadError={bookingsLoadError}
+              loadedAt={bookingsLoadedAt}
+              onRetry={loadBookingsFromSupabase}
+              onOpenBooking={openCalendarBooking}
+            />
+          </section>
+        )}
+
+
         {activeView === "Form" ? (
           <section className="dashboard-form-view">
             {bookingFormNotice && (
@@ -10237,6 +10264,7 @@ export default function Dashboard() {
           />
         ) : activeView === "Calendar View" ||
           activeView === "Lodging Calendar" ||
+          activeView === "Reports" ||
           activeView === SPREADSHEET_VIEW_NAME ? null : activeView === INQUIRY_SPREADSHEET_VIEW_NAME ? (
                 <InquirySpreadsheetView
                   inquiryBookings={inquiryBookings}
@@ -10300,8 +10328,6 @@ export default function Dashboard() {
             }}
           />
 
-        ) : activeView === "Reports" ? (
-          <ReportsView inquiryBookings={inquiryBookings} />
         ) : activeView === "Portal View" ? (
           <PortalAdminView
             inquiryBookings={inquiryBookings}
