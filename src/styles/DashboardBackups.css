@@ -1503,3 +1503,124 @@
   background: var(--n-amber-bg-2, #fdecc8);
   color: var(--n-amber-text, #9a6400);
 }
+
+/* =========================================================
+   MINIMAL / DETAILED VIEW
+========================================================= */
+
+.backup-view-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--n-green-line, #d7e0da);
+  border-radius: 0.688rem;
+  background: var(--n-surface, #fff);
+}
+
+.backup-view-toggle button {
+  min-height: 2.375rem;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: 0.562rem;
+  color: var(--backup-slate-700);
+  background: none;
+  font: inherit;
+  font-size: 0.93rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.backup-view-toggle button:hover {
+  background: var(--backup-green-100);
+}
+
+.backup-view-toggle button[aria-pressed="true"] {
+  color: #fff;
+  background: var(--backup-green-800);
+  font-weight: 800;
+}
+
+.backup-view-toggle button:focus-visible,
+.backup-disclosure > summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* The real radio is invisible, so the card shows keyboard focus for it. */
+.backup-mode-card:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.backup-disclosure-list {
+  display: grid;
+  gap: 0.625rem;
+  margin-top: 1.125rem;
+}
+
+.backup-disclosure {
+  border: 1px solid var(--n-green-line, #dde5df);
+  border-radius: 0.875rem;
+  background: var(--n-surface, #fff);
+}
+
+.backup-disclosure > summary {
+  padding: 0.812rem 1rem;
+  border-radius: 0.875rem;
+  color: var(--backup-slate-900);
+  font-size: 0.955rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.backup-disclosure-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.875rem;
+  padding: 0 1rem 1rem;
+}
+
+.backup-disclosure-body > * {
+  margin-top: 0;
+}
+
+.backups-page-minimal .backup-metric-card {
+  min-height: 0;
+  align-items: center;
+  padding: 0.938rem 1.125rem;
+}
+
+.backups-page-minimal .backup-dropzone {
+  min-height: 0;
+  padding: 1.25rem;
+}
+
+.backups-page-minimal .backup-dropzone h3 {
+  margin-bottom: 0.812rem;
+}
+
+.backups-page-minimal .backup-preview-grid {
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.backups-page-minimal .backup-mode-icon {
+  display: none;
+}
+
+.backups-page-minimal .backup-restore-footer {
+  justify-content: flex-end;
+}
+
+.backups-hero-actions {
+  align-items: center;
+}
+
+@media (max-width: 680px) {
+  .backups-hero-actions {
+    align-items: stretch;
+  }
+
+  .backup-view-toggle {
+    align-self: flex-start;
+  }
+}

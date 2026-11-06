@@ -34,6 +34,7 @@ import {
   validateBackupShape,
   verifyBackupIntegrity,
 } from "../utils/backupFormat";
+import { getSavedBackupView, saveBackupView } from "../utils/backupView";
 
 const LAST_BACKUP_STORAGE_KEY = "toahNipiLastManualBackup";
 const MAX_BACKUP_FILE_BYTES = 25 * 1024 * 1024;
@@ -48,6 +49,11 @@ const MAX_BACKUP_FILE_BYTES = 25 * 1024 * 1024;
   may delete (only admins).
 */
 const REPLACE_CONFIRMATION_PHRASE = "REPLACE AND RISK PORTAL DATA";
+
+const BACKUP_VIEWS = [
+  { value: "minimal", label: "Minimal" },
+  { value: "detailed", label: "Detailed" },
+];
 
 function formatDateTime(value) {
   if (!value) return "Never";
@@ -218,6 +224,15 @@ function BackupNotice({ tone = "info", icon: Icon, title, children }) {
   );
 }
 
+function BackupDisclosure({ label, open, onToggle, children }) {
+  return (
+    <details className="backup-disclosure" open={open} onToggle={onToggle}>
+      <summary>{label}</summary>
+      <div className="backup-disclosure-body">{children}</div>
+    </details>
+  );
+}
+
 export default function DashboardBackups({
   onRestoreComplete,
   isDevMode = false,
@@ -227,6 +242,11 @@ export default function DashboardBackups({
   // Replace needs Dev Mode AND an account the database lets delete bookings.
   const replaceAvailable = isDevMode && canReplace;
   const fileInputRef = useRef(null);
+
+  const [view, setView] = useState(getSavedBackupView);
+  const isMinimal = view === "minimal";
+  // Held here so sections stay open across a trip to Detailed and back.
+  const [openDisclosures, setOpenDisclosures] = useState({});
 
   const [liveBookings, setLiveBookings] = useState([]);
   const [isLoadingLiveData, setIsLoadingLiveData] = useState(true);
@@ -780,6 +800,19 @@ export default function DashboardBackups({
     }
   };
 
+  const chooseView = (nextView) => {
+    setView(nextView);
+    saveBackupView(nextView);
+  };
+
+  const disclosureProps = (key) => ({
+    open: Boolean(openDisclosures[key]),
+    onToggle: (event) => {
+      const { open } = event.currentTarget;
+      setOpenDisclosures((current) => ({ ...current, [key]: open }));
+    },
+  });
+
   const progressPercent = restoreProgress.total
     ? Math.min(
         100,
@@ -787,25 +820,246 @@ export default function DashboardBackups({
       )
     : 0;
 
+  // Shared by both views, so Detailed and Minimal can't drift apart.
+  const includedDetails = (
+    <>
+      <div className="backup-coverage-card">
+        <div className="backup-coverage-heading">
+          <div>
+            <span className="backup-coverage-kicker">Included in this backup</span>
+            <strong>Bookings, website inquiries and portal records</strong>
+          </div>
+
+          <span className="backup-covered-pill">
+            <FaCheckCircle />
+            Covered
+          </span>
+        </div>
+
+        <div className="backup-coverage-list">
+          <span><FaCheckCircle /> Core booking fields</span>
+          <span><FaCheckCircle /> Imported spreadsheet source data</span>
+          <span><FaCheckCircle /> Rental form details</span>
+          <span><FaCheckCircle /> Activities, facilities & assignments</span>
+          <span><FaCheckCircle /> Checklists and booking-level metadata</span>
+          <span><FaCheckCircle /> Booking IDs, portal link tokens and creation dates</span>
+          <span><FaCheckCircle /> Website inquiries</span>
+          <span><FaCheckCircle /> Portal tasks and portal documents</span>
+          <span><FaCheckCircle /> A list of uploaded files (names and locations only, not the files)</span>
+        </div>
+      </div>
+
+      <div className="backup-snapshot-summary">
+        <div>
+          <small>Records ready to back up</small>
+          <strong>{liveBookings.length.toLocaleString()}</strong>
+        </div>
+
+        <div>
+          <small>Status categories</small>
+          <strong>{liveStatusBreakdown.length}</strong>
+        </div>
+
+        <div>
+          <small>Integrity protection</small>
+          <strong>SHA-256</strong>
+        </div>
+      </div>
+
+      {liveStatusBreakdown.length > 0 && (
+        <div className="backup-status-strip">
+          {liveStatusBreakdown.slice(0, 6).map(({ status, count }) => (
+            <span key={status}>
+              <strong>{count}</strong>
+              {status}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <BackupNotice
+        tone="info"
+        icon={FaLock}
+        title="The backup file does not contain your Supabase login credentials"
+      >
+        It exports the booking records returned by your existing booking service.
+        Keep the file private anyway because booking records can contain guest
+        names, contact information, notes, and operational details.
+      </BackupNotice>
+    </>
+  );
+
+  const routineDetails = (
+    <>
+      <div className="backup-routine-list">
+        <div className="backup-routine-item">
+          <span>1</span>
+          <div>
+            <strong>Create a backup before major imports</strong>
+            <p>
+              Especially before replacing spreadsheet data or making broad record
+              changes.
+            </p>
+          </div>
+        </div>
+
+        <div className="backup-routine-item">
+          <span>2</span>
+          <div>
+            <strong>Keep a second copy off this computer</strong>
+            <p>
+              Put one copy in a restricted cloud folder or other organization-owned
+              storage.
+            </p>
+          </div>
+        </div>
+
+        <div className="backup-routine-item">
+          <span>3</span>
+          <div>
+            <strong>Periodically test a backup file here</strong>
+            <p>
+              Loading a file into the restore preview verifies its format and checksum
+              without changing live data.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {lastBackup ? (
+        <div className="backup-last-file-card">
+          <span className="backup-last-file-icon">
+            <FaFileAlt />
+          </span>
+
+          <div>
+            <small>Last backup created from this browser</small>
+            <strong>{lastBackup.filename}</strong>
+            <p>
+              {lastBackup.bookingCount} records · {formatFileSize(lastBackup.fileSize)} ·{" "}
+              {formatDateTime(lastBackup.createdAt)}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="backup-empty-history">
+          <FaArchive />
+          <strong>No manual backup recorded yet</strong>
+          <p>Your first successful download will appear here.</p>
+        </div>
+      )}
+    </>
+  );
+
+  const limitationsCard = (
+    <section className="backup-limitations-card">
+      <span className="backup-limitations-icon">
+        <FaShieldAlt />
+      </span>
+
+      <div>
+        <strong>What this version protects</strong>
+        <p>
+          New backups (version 2) hold bookings, website inquiries, portal tasks,
+          portal documents and a list of the uploaded files those records point to.
+          The files themselves stay in Supabase Storage and are not copied; a
+          section that could not be read is named in the file and when it is
+          loaded here. Older backups (version 1), including the daily Google
+          Drive backups the README describes, hold bookings only and still
+          restore. The staff directory, contact preferences and saved spreadsheet
+          views are not included.
+        </p>
+      </div>
+    </section>
+  );
+
+  const technicalPreviewCells = (
+    <>
+    <div>
+      <small>Schema</small>
+      <strong>Version {selectedBackup?.schemaVersion ?? "—"}</strong>
+    </div>
+
+    <div>
+      <small>Integrity</small>
+      <strong>
+        {backupValidation?.integrity?.ok ? "Verified" : "Failed"}
+      </strong>
+    </div>
+    </>
+  );
+
+  const backupStatusCard = (
+    <>
+    {backupStatusBreakdown.length > 0 && (
+      <div className="backup-preview-statuses">
+        <div className="backup-subheading-row">
+          <div>
+            <strong>Backup contents by status</strong>
+            <span>Quick check before restore</span>
+          </div>
+        </div>
+
+        <div className="backup-preview-status-grid">
+          {backupStatusBreakdown.map(({ status, count }) => (
+            <div key={status}>
+              <strong>{count}</strong>
+              <span>{status}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+    </>
+  );
+
   return (
-    <main className="backups-page">
+    <main className={`backups-page ${isMinimal ? "backups-page-minimal" : ""}`}>
       <section className="backups-hero">
         <div className="backups-hero-copy">
-          <span className="backups-eyebrow">
-            <FaShieldAlt />
-            Data Protection
-          </span>
+          {!isMinimal && (
+            <span className="backups-eyebrow">
+              <FaShieldAlt />
+              Data Protection
+            </span>
+          )}
 
           <h1>Backups & Restore</h1>
 
-          <p>
-            Create a portable snapshot of the live booking database, inspect a
-            backup before using it, and restore records with safeguards against
-            accidental data loss.
-          </p>
+          {isMinimal ? (
+            <p>
+              Backup files hold guest details, so keep them private. Uploaded files
+              are not included.
+            </p>
+          ) : (
+            <p>
+              Create a portable snapshot of the live booking database, inspect a
+              backup before using it, and restore records with safeguards against
+              accidental data loss.
+            </p>
+          )}
         </div>
 
         <div className="backups-hero-actions">
+          {/* data-tutorial-ui: during a tutorial the click guard must let this through. */}
+          <div
+            className="backup-view-toggle"
+            role="group"
+            aria-label="Page view"
+            data-tutorial-ui
+          >
+            {BACKUP_VIEWS.map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={view === value}
+                onClick={() => chooseView(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           <button
             className="backup-primary-button"
             type="button"
@@ -853,7 +1107,7 @@ export default function DashboardBackups({
           icon={FaDatabase}
           label="Live Records"
           value={isLoadingLiveData ? "…" : liveBookings.length.toLocaleString()}
-          helper="Booking records currently stored in Supabase"
+          helper={isMinimal ? undefined : "Booking records currently stored in Supabase"}
         />
 
         <BackupMetric
@@ -863,7 +1117,7 @@ export default function DashboardBackups({
           helper={
             lastBackup
               ? `${lastBackup.bookingCount} records · ${formatFileSize(lastBackup.fileSize)}`
-              : "Create your first downloadable snapshot"
+              : !isMinimal && "Create your first downloadable snapshot"
           }
         />
 
@@ -875,190 +1129,74 @@ export default function DashboardBackups({
               ? "No dated records"
               : `${liveDateRange.first} – ${liveDateRange.last}`
           }
-          helper="Based on booking start and end dates"
+          helper={isMinimal ? undefined : "Based on booking start and end dates"}
         />
       </section>
 
-      <section className="backup-workspace-grid">
-        <article className="backup-panel backup-create-panel">
-          <header className="backup-panel-header">
-            <span className="backup-panel-icon backup-panel-icon-green">
-              <FaCloudDownloadAlt />
-            </span>
-
-            <div>
-              <p className="backup-panel-eyebrow">Export</p>
-              <h2>Create a fresh backup</h2>
-              <span>
-                Downloads the live booking database as a validated JSON snapshot.
+      {!isMinimal && (
+        <section className="backup-workspace-grid">
+          <article className="backup-panel backup-create-panel">
+            <header className="backup-panel-header">
+              <span className="backup-panel-icon backup-panel-icon-green">
+                <FaCloudDownloadAlt />
               </span>
-            </div>
-          </header>
 
-          <div className="backup-coverage-card">
-            <div className="backup-coverage-heading">
               <div>
-                <span className="backup-coverage-kicker">Included in this backup</span>
-                <strong>Bookings, website inquiries and portal records</strong>
-              </div>
-
-              <span className="backup-covered-pill">
-                <FaCheckCircle />
-                Covered
-              </span>
-            </div>
-
-            <div className="backup-coverage-list">
-              <span><FaCheckCircle /> Core booking fields</span>
-              <span><FaCheckCircle /> Imported spreadsheet source data</span>
-              <span><FaCheckCircle /> Rental form details</span>
-              <span><FaCheckCircle /> Activities, facilities & assignments</span>
-              <span><FaCheckCircle /> Checklists and booking-level metadata</span>
-              <span><FaCheckCircle /> Booking IDs, portal link tokens and creation dates</span>
-              <span><FaCheckCircle /> Website inquiries</span>
-              <span><FaCheckCircle /> Portal tasks and portal documents</span>
-              <span><FaCheckCircle /> A list of uploaded files (names and locations only, not the files)</span>
-            </div>
-          </div>
-
-          <div className="backup-snapshot-summary">
-            <div>
-              <small>Records ready to back up</small>
-              <strong>{liveBookings.length.toLocaleString()}</strong>
-            </div>
-
-            <div>
-              <small>Status categories</small>
-              <strong>{liveStatusBreakdown.length}</strong>
-            </div>
-
-            <div>
-              <small>Integrity protection</small>
-              <strong>SHA-256</strong>
-            </div>
-          </div>
-
-          {liveStatusBreakdown.length > 0 && (
-            <div className="backup-status-strip">
-              {liveStatusBreakdown.slice(0, 6).map(({ status, count }) => (
-                <span key={status}>
-                  <strong>{count}</strong>
-                  {status}
+                <p className="backup-panel-eyebrow">Export</p>
+                <h2>Create a fresh backup</h2>
+                <span>
+                  Downloads the live booking database as a validated JSON snapshot.
                 </span>
-              ))}
-            </div>
-          )}
+              </div>
+            </header>
 
-          <BackupNotice
-            tone="info"
-            icon={FaLock}
-            title="The backup file does not contain your Supabase login credentials"
-          >
-            It exports the booking records returned by your existing booking service.
-            Keep the file private anyway because booking records can contain guest
-            names, contact information, notes, and operational details.
-          </BackupNotice>
+            {includedDetails}
 
-          <button
-            className="backup-large-action backup-large-action-create"
-            type="button"
-            onClick={handleCreateBackup}
-            disabled={isCreatingBackup || isRestoring || isLoadingLiveData}
-          >
-            <span>
-              {isCreatingBackup ? (
-                <FaRedoAlt className="backup-spin" />
-              ) : (
-                <FaDownload />
-              )}
-            </span>
-
-            <div>
-              <strong>{isCreatingBackup ? "Building snapshot…" : "Download Backup"}</strong>
-              <small>
-                {isCreatingBackup
-                  ? "Reading the live database and calculating its checksum"
-                  : "Create a timestamped .json file from the live database"}
-              </small>
-            </div>
-          </button>
-        </article>
-
-        <article className="backup-panel backup-history-panel">
-          <header className="backup-panel-header">
-            <span className="backup-panel-icon backup-panel-icon-slate">
-              <FaHistory />
-            </span>
-
-            <div>
-              <p className="backup-panel-eyebrow">Backup Routine</p>
-              <h2>Keep more than one copy</h2>
+            <button
+              className="backup-large-action backup-large-action-create"
+              type="button"
+              onClick={handleCreateBackup}
+              disabled={isCreatingBackup || isRestoring || isLoadingLiveData}
+            >
               <span>
-                A downloaded backup only helps if it survives a lost laptop or bad
-                deployment.
-              </span>
-            </div>
-          </header>
-
-          <div className="backup-routine-list">
-            <div className="backup-routine-item">
-              <span>1</span>
-              <div>
-                <strong>Create a backup before major imports</strong>
-                <p>
-                  Especially before replacing spreadsheet data or making broad record
-                  changes.
-                </p>
-              </div>
-            </div>
-
-            <div className="backup-routine-item">
-              <span>2</span>
-              <div>
-                <strong>Keep a second copy off this computer</strong>
-                <p>
-                  Put one copy in a restricted cloud folder or other organization-owned
-                  storage.
-                </p>
-              </div>
-            </div>
-
-            <div className="backup-routine-item">
-              <span>3</span>
-              <div>
-                <strong>Periodically test a backup file here</strong>
-                <p>
-                  Loading a file into the restore preview verifies its format and checksum
-                  without changing live data.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {lastBackup ? (
-            <div className="backup-last-file-card">
-              <span className="backup-last-file-icon">
-                <FaFileAlt />
+                {isCreatingBackup ? (
+                  <FaRedoAlt className="backup-spin" />
+                ) : (
+                  <FaDownload />
+                )}
               </span>
 
               <div>
-                <small>Last backup created from this browser</small>
-                <strong>{lastBackup.filename}</strong>
-                <p>
-                  {lastBackup.bookingCount} records · {formatFileSize(lastBackup.fileSize)} ·{" "}
-                  {formatDateTime(lastBackup.createdAt)}
-                </p>
+                <strong>{isCreatingBackup ? "Building snapshot…" : "Download Backup"}</strong>
+                <small>
+                  {isCreatingBackup
+                    ? "Reading the live database and calculating its checksum"
+                    : "Create a timestamped .json file from the live database"}
+                </small>
               </div>
-            </div>
-          ) : (
-            <div className="backup-empty-history">
-              <FaArchive />
-              <strong>No manual backup recorded yet</strong>
-              <p>Your first successful download will appear here.</p>
-            </div>
-          )}
-        </article>
-      </section>
+            </button>
+          </article>
+
+          <article className="backup-panel backup-history-panel">
+            <header className="backup-panel-header">
+              <span className="backup-panel-icon backup-panel-icon-slate">
+                <FaHistory />
+              </span>
+
+              <div>
+                <p className="backup-panel-eyebrow">Backup Routine</p>
+                <h2>Keep more than one copy</h2>
+                <span>
+                  A downloaded backup only helps if it survives a lost laptop or bad
+                  deployment.
+                </span>
+              </div>
+            </header>
+
+            {routineDetails}
+          </article>
+        </section>
+      )}
 
       <section className="backup-restore-section">
         <header className="backup-section-heading">
@@ -1068,11 +1206,12 @@ export default function DashboardBackups({
             </span>
 
             <div>
-              <p className="backup-panel-eyebrow">Recovery</p>
+              {!isMinimal && <p className="backup-panel-eyebrow">Recovery</p>}
               <h2>Restore from a backup</h2>
               <span>
-                Select a backup file. Nothing is written to the database until you review
-                the preview and press Restore.
+                {isMinimal
+                  ? "Selecting a file only previews it. Nothing changes until you confirm."
+                  : "Select a backup file. Nothing is written to the database until you review the preview and press Restore."}
               </span>
             </div>
           </div>
@@ -1107,7 +1246,7 @@ export default function DashboardBackups({
             </span>
 
             <h3>{isReadingBackup ? "Reading backup…" : "Drop a backup file here"}</h3>
-            <p>or select a .json backup from your computer</p>
+            {!isMinimal && <p>or select a .json backup from your computer</p>}
 
             <button
               className="backup-secondary-button"
@@ -1153,8 +1292,9 @@ export default function DashboardBackups({
                 icon={FaCheckCircle}
                 title="Backup file passed validation"
               >
-                The file format, schema version, record IDs, duplicate check, and SHA-256
-                integrity checksum all passed.
+                {isMinimal
+                  ? "Format, record IDs and checksum passed."
+                  : "The file format, schema version, record IDs, duplicate check, and SHA-256 integrity checksum all passed."}
               </BackupNotice>
             ) : (
               <BackupNotice
@@ -1201,18 +1341,7 @@ export default function DashboardBackups({
                     <strong>{backupBookings.length.toLocaleString()}</strong>
                   </div>
 
-                  <div>
-                    <small>Schema</small>
-                    <strong>Version {selectedBackup.schemaVersion ?? "—"}</strong>
-                  </div>
-
-                  <div>
-                    <small>Integrity</small>
-                    <strong>
-                      {backupValidation?.integrity?.ok ? "Verified" : "Failed"}
-                    </strong>
-                  </div>
-
+                  {!isMinimal && technicalPreviewCells}
                   <div>
                     <small>Earliest booking date</small>
                     <strong>{backupDateRange.first}</strong>
@@ -1224,25 +1353,7 @@ export default function DashboardBackups({
                   </div>
                 </div>
 
-                {backupStatusBreakdown.length > 0 && (
-                  <div className="backup-preview-statuses">
-                    <div className="backup-subheading-row">
-                      <div>
-                        <strong>Backup contents by status</strong>
-                        <span>Quick check before restore</span>
-                      </div>
-                    </div>
-
-                    <div className="backup-preview-status-grid">
-                      {backupStatusBreakdown.map(({ status, count }) => (
-                        <div key={status}>
-                          <strong>{count}</strong>
-                          <span>{status}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {!isMinimal && backupStatusCard}
 
                 {comparison && (
                   <div className="backup-comparison-card">
@@ -1277,7 +1388,9 @@ export default function DashboardBackups({
                     <div className="backup-subheading-row">
                       <div>
                         <strong>Choose restore mode</strong>
-                        <span>Pick how the backup should interact with current data.</span>
+                        {!isMinimal && (
+                          <span>Pick how the backup should interact with current data.</span>
+                        )}
                       </div>
                     </div>
 
@@ -1307,8 +1420,9 @@ export default function DashboardBackups({
 
                           <strong>Safe Merge</strong>
                           <p>
-                            Adds missing backup records and updates records with matching
-                            IDs. Current records that are not in the backup stay untouched.
+                            {isMinimal
+                              ? "Adds missing records and updates matching IDs. Other current records stay untouched."
+                              : "Adds missing backup records and updates records with matching IDs. Current records that are not in the backup stay untouched."}
                           </p>
 
                           <em>Recommended for most recoveries</em>
@@ -1338,9 +1452,9 @@ export default function DashboardBackups({
 
                           <strong>Full Replace</strong>
                           <p>
-                            Deletes every current booking, then restores the backup. Portal
-                            tasks and documents linked to deleted bookings may be deleted or
-                            orphaned by the database, and uploaded files are never restored.
+                            {isMinimal
+                              ? "Deletes every current booking, then restores the backup. Linked portal tasks and documents may be lost. Uploaded files are never restored."
+                              : "Deletes every current booking, then restores the backup. Portal tasks and documents linked to deleted bookings may be deleted or orphaned by the database, and uploaded files are never restored."}
                           </p>
 
                                                     <em>
@@ -1412,13 +1526,15 @@ export default function DashboardBackups({
                     )}
 
                     <div className="backup-restore-footer">
-                      <div>
-                        <FaShieldAlt />
-                        <span>
-                          Restore uses the same Supabase booking service as the rest of the
-                          dashboard.
-                        </span>
-                      </div>
+                      {!isMinimal && (
+                        <div>
+                          <FaShieldAlt />
+                          <span>
+                            Restore uses the same Supabase booking service as the rest of the
+                            dashboard.
+                          </span>
+                        </div>
+                      )}
 
                       <button
                         className={`backup-primary-button ${
@@ -1445,31 +1561,33 @@ export default function DashboardBackups({
                     </div>
                   </div>
                 )}
+
+                {isMinimal && (
+                  <BackupDisclosure label="More details" {...disclosureProps("restore")}>
+                    <div className="backup-preview-grid">{technicalPreviewCells}</div>
+                    {backupStatusCard}
+                  </BackupDisclosure>
+                )}
               </>
             )}
           </div>
         )}
       </section>
 
-      <section className="backup-limitations-card">
-        <span className="backup-limitations-icon">
-          <FaShieldAlt />
-        </span>
+      {isMinimal ? (
+        <section className="backup-disclosure-list">
+          <BackupDisclosure label="What's included" {...disclosureProps("included")}>
+            {includedDetails}
+            {limitationsCard}
+          </BackupDisclosure>
 
-        <div>
-          <strong>What this version protects</strong>
-          <p>
-            New backups (version 2) hold bookings, website inquiries, portal tasks,
-            portal documents and a list of the uploaded files those records point to.
-            The files themselves stay in Supabase Storage and are not copied; a
-            section that could not be read is named in the file and when it is
-            loaded here. Older backups (version 1), including the daily Google
-            Drive backups the README describes, hold bookings only and still
-            restore. The staff directory, contact preferences and saved spreadsheet
-            views are not included.
-          </p>
-        </div>
-      </section>
+          <BackupDisclosure label="Backup routine" {...disclosureProps("routine")}>
+            {routineDetails}
+          </BackupDisclosure>
+        </section>
+      ) : (
+        limitationsCard
+      )}
     </main>
   );
 }
