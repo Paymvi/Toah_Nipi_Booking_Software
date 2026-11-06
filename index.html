@@ -6,6 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>toah-nipi-booking-software</title>
 
+    <!-- Runs before anything paints so a saved Night choice never flashes Light. Same rule as src/utils/theme.js. -->
+    <style>
+      @media screen {
+        html[data-theme="night"] {
+          color-scheme: dark;
+          background: #15171e;
+        }
+      }
+    </style>
+    <script>
+      (function () {
+        var theme = "light";
+        try {
+          if (localStorage.getItem("toahNipiTheme") === "night") theme = "night";
+        } catch (error) {}
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

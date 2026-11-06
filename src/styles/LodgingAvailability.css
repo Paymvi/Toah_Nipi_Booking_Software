@@ -5,9 +5,9 @@
 .lodging-availability-generator {
   margin: 1.125rem 1.25rem 0;
   padding: 1.125rem;
-  border: 1px solid #dfe4ec;
+  border: 1px solid var(--n-line-2, #dfe4ec);
   border-radius: 0.875rem;
-  background: #fbfcfe;
+  background: var(--n-surface-2, #fbfcfe);
 }
 
 .lodging-availability-generator-header {
@@ -25,7 +25,7 @@
 .lodging-availability-kicker {
   display: block;
   margin-bottom: 0.312rem;
-  color: #443a9c;
+  color: var(--n-violet-text, #443a9c);
   font-size: 0.88rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -34,7 +34,7 @@
 
 .lodging-availability-generator-header h3 {
   margin: 0;
-  color: #252936;
+  color: var(--n-text, #252936);
   font-size: 1.073rem;
   font-weight: 700;
   line-height: 1.25;
@@ -43,7 +43,7 @@
 .lodging-availability-generator-header p {
   max-width: 45rem;
   margin: 0.375rem 0 0;
-  color: #707887;
+  color: var(--n-text-3, #707887);
   font-size: 0.967rem;
   line-height: 1.5;
 }
@@ -54,10 +54,10 @@
   align-items: center;
   min-height: 1.875rem;
   padding: 0 0.625rem;
-  border: 1px solid #e0e4ea;
+  border: 1px solid var(--n-line-2, #e0e4ea);
   border-radius: 999px;
-  background: #ffffff;
-  color: #747b89;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text-3, #747b89);
   font-size: 0.88rem;
   font-weight: 650;
   white-space: nowrap;
@@ -78,7 +78,7 @@
 }
 
 .lodging-availability-controls label > span {
-  color: #5e6574;
+  color: var(--n-text-2, #5e6574);
   font-size: 0.905rem;
   font-weight: 650;
 }
@@ -88,10 +88,10 @@
   min-height: 2.625rem;
   box-sizing: border-box;
   padding: 0 0.75rem;
-  border: 1px solid #d8dde6;
+  border: 1px solid var(--n-field-line, #d8dde6);
   border-radius: 0.562rem;
-  background: #ffffff;
-  color: #323744;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #323744);
   font: inherit;
   font-size: 0.967rem;
   outline: none;
@@ -100,8 +100,8 @@
 }
 
 .lodging-availability-controls input:focus {
-  border-color: #6b62b3;
-  box-shadow: 0 0 0 0.188rem rgba(68, 58, 156, 0.1);
+  border-color: var(--n-violet-text, #6b62b3);
+  box-shadow: 0 0 0 0.188rem var(--n-violet-ring, rgba(68, 58, 156, 0.1));
 }
 
 .lodging-availability-generate-button {
@@ -112,7 +112,7 @@
   padding: 0 1rem;
   border: 1px solid #443a9c;
   border-radius: 0.562rem;
-  background: #443a9c;
+  background: var(--n-accent-solid, #443a9c);
   color: #ffffff;
   font: inherit;
   font-size: 0.942rem;
@@ -125,23 +125,23 @@
 }
 
 .lodging-availability-generate-button:hover {
-  background: #393181;
-  box-shadow: 0 0.438rem 1rem rgba(68, 58, 156, 0.18);
+  background: var(--n-accent-solid-hover, #393181);
+  box-shadow: 0 0.438rem 1rem var(--n-violet-ring, rgba(68, 58, 156, 0.18));
   transform: translateY(-1px);
 }
 
 .lodging-availability-generate-button:focus-visible {
-  outline: 3px solid rgba(68, 58, 156, 0.16);
+  outline: 3px solid var(--n-violet-ring, rgba(68, 58, 156, 0.16));
   outline-offset: 2px;
 }
 
 .lodging-availability-error {
   margin: 0.75rem 0 0;
   padding: 0.625rem 0.75rem;
-  border: 1px solid #e8c9c9;
+  border: 1px solid var(--n-red-line, #e8c9c9);
   border-radius: 0.562rem;
-  background: #fff6f6;
-  color: #8a4141;
+  background: var(--n-red-bg, #fff6f6);
+  color: var(--n-red-text, #8a4141);
   font-size: 0.93rem;
   font-weight: 600;
 }
@@ -154,7 +154,7 @@
 .lodging-availability-summary {
   margin-top: 1.125rem;
   padding-top: 1.125rem;
-  border-top: 1px solid #e4e8ee;
+  border-top: 1px solid var(--n-line-2, #e4e8ee);
 }
 
 .lodging-availability-summary-header {
@@ -173,7 +173,7 @@
 }
 
 .lodging-availability-summary-header > div:first-child > span {
-  color: #7a8291;
+  color: var(--n-text-3, #7a8291);
   font-size: 0.88rem;
   font-weight: 650;
   letter-spacing: 0.04em;
@@ -181,7 +181,7 @@
 }
 
 .lodging-availability-summary-header > div:first-child > strong {
-  color: #252936;
+  color: var(--n-text, #252936);
   font-size: 1.017rem;
   font-weight: 700;
 }
@@ -204,15 +204,15 @@
 }
 
 .lodging-availability-summary-totals > span.available {
-  border: 1px solid #bfd8cc;
-  background: #edf6f1;
-  color: #2f6f5f;
+  border: 1px solid var(--n-green-line, #bfd8cc);
+  background: var(--n-green-bg, #edf6f1);
+  color: var(--n-teal-text, #2f6f5f);
 }
 
 .lodging-availability-summary-totals > span.assigned {
-  border: 1px solid #e3d2bd;
-  background: #fbf4ea;
-  color: #8b5a26;
+  border: 1px solid var(--n-orange-line, #e3d2bd);
+  background: var(--n-orange-bg, #fbf4ea);
+  color: var(--n-orange-text, #8b5a26);
 }
 
 .lodging-availability-summary-grid {
@@ -222,22 +222,22 @@
 }
 
 .lodging-availability-building-card {
-  --lodging-color: #687083;
-  --lodging-soft: #f4f5f7;
+  --lodging-color: var(--n-text-3, #687083);
+  --lodging-soft: var(--n-page, #f4f5f7);
   min-width: 0;
   padding: 0.75rem;
-  border: 1px solid #dfe4ec;
+  border: 1px solid var(--n-line-2, #dfe4ec);
   border-top: 3px solid var(--lodging-color);
   border-radius: 0.688rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
 }
 
 .lodging-availability-building-card.is-available {
-  box-shadow: inset 0 0 0 1px rgba(47, 111, 95, 0.03);
+  box-shadow: inset 0 0 0 1px var(--n-shadow-1, rgba(47, 111, 95, 0.03));
 }
 
 .lodging-availability-building-card.has-assignments {
-  background: #fffdf9;
+  background: var(--n-surface-2, #fffdf9);
 }
 
 .lodging-availability-building-heading {
@@ -280,13 +280,13 @@
 }
 
 .lodging-availability-building-name strong {
-  color: #353a47;
+  color: var(--n-text, #353a47);
   font-size: 0.955rem;
   font-weight: 700;
 }
 
 .lodging-availability-building-name small {
-  color: #7b8290;
+  color: var(--n-text-3, #7b8290);
   font-size: 0.861rem;
   line-height: 1.35;
 }
@@ -303,20 +303,20 @@
 }
 
 .lodging-availability-status.available {
-  border: 1px solid #bfd8cc;
-  background: #edf6f1;
-  color: #2f6f5f;
+  border: 1px solid var(--n-green-line, #bfd8cc);
+  background: var(--n-green-bg, #edf6f1);
+  color: var(--n-teal-text, #2f6f5f);
 }
 
 .lodging-availability-status.assigned {
-  border: 1px solid #e3d2bd;
-  background: #fbf4ea;
-  color: #8b5a26;
+  border: 1px solid var(--n-orange-line, #e3d2bd);
+  background: var(--n-orange-bg, #fbf4ea);
+  color: var(--n-orange-text, #8b5a26);
 }
 
 .lodging-availability-clear-message {
   margin: 0.688rem 0 0;
-  color: #687083;
+  color: var(--n-text-3, #687083);
   font-size: 0.892rem;
   line-height: 1.45;
 }
@@ -328,7 +328,7 @@
 .lodging-availability-conflicts > span {
   display: block;
   margin-bottom: 0.375rem;
-  color: #747b89;
+  color: var(--n-text-3, #747b89);
   font-size: 0.838rem;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -350,9 +350,9 @@
   justify-content: space-between;
   gap: 0.625rem;
   padding: 0.5rem 0.562rem;
-  border: 1px solid #ece5db;
+  border: 1px solid var(--n-orange-line, #ece5db);
   border-radius: 0.5rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
 }
 
 .lodging-availability-conflicts li > div {
@@ -364,7 +364,7 @@
 
 .lodging-availability-conflicts li strong {
   overflow: hidden;
-  color: #414652;
+  color: var(--n-text, #414652);
   font-size: 0.88rem;
   font-weight: 700;
   text-overflow: ellipsis;
@@ -372,7 +372,7 @@
 }
 
 .lodging-availability-conflicts li small {
-  color: #838a97;
+  color: var(--n-text-3, #838a97);
   font-size: 0.812rem;
 }
 
@@ -380,7 +380,7 @@
   flex: 0 0 auto;
   max-width: 6.875rem;
   overflow: hidden;
-  color: #7b654d;
+  color: var(--n-orange-text, #7b654d);
   font-size: 0.8rem;
   font-weight: 650;
   text-overflow: ellipsis;
@@ -390,7 +390,7 @@
 .lodging-availability-conflicts em {
   display: block;
   margin-top: 0.438rem;
-  color: #7d8492;
+  color: var(--n-text-3, #7d8492);
   font-size: 0.861rem;
   font-style: normal;
   font-weight: 600;
@@ -398,7 +398,7 @@
 
 .lodging-availability-summary-footnote {
   margin: 0.688rem 0 0;
-  color: #89909c;
+  color: var(--n-text-3, #89909c);
   font-size: 0.861rem;
   line-height: 1.45;
 }
@@ -452,13 +452,13 @@
 /* Room-level conflicts and limits (AUDIT-037, Q-006). */
 .lodging-availability-status.conflict,
 .lodging-availability-summary-totals > span.conflict {
-  border: 1px solid #f0c2c2;
-  background: #fdeeee;
-  color: #a03a3a;
+  border: 1px solid var(--n-red-line, #f0c2c2);
+  background: var(--n-red-bg, #fdeeee);
+  color: var(--n-red-text, #a03a3a);
 }
 
 .lodging-availability-building-card.has-conflict {
-  border-color: #f0c2c2;
+  border-color: var(--n-red-line, #f0c2c2);
 }
 
 .lodging-availability-room-conflict,
@@ -469,10 +469,10 @@
 }
 
 .lodging-availability-room-conflict {
-  color: #a03a3a;
+  color: var(--n-red-text, #a03a3a);
   font-weight: 600;
 }
 
 .lodging-availability-room-note {
-  color: #6b5b2e;
+  color: var(--n-amber-text, #6b5b2e);
 }

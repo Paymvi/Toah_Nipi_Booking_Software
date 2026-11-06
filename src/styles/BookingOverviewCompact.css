@@ -11,9 +11,9 @@
   --bo-pad-y: 0.625rem;
   --bo-row-y: 0.312rem;
   --bo-field-min: 17rem;
-  --bo-line: #edf0f4;
-  --bo-edge: #e1e5ec;
-  --bo-title: #252936;
+  --bo-line: var(--n-line, #edf0f4);
+  --bo-edge: var(--n-line-2, #e1e5ec);
+  --bo-title: var(--n-text, #252936);
   --bo-amber: #956600;
 }
 
@@ -63,7 +63,7 @@
   flex: 1 1 12rem;
   flex-direction: column;
   min-width: 0;
-  color: #596477;
+  color: var(--n-text-2, #596477);
   font-size: 0.967rem;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -94,7 +94,7 @@
 }
 
 .booking-compact-summary-item a {
-  color: var(--button);
+  color: var(--n-violet-text, var(--button));
   text-decoration: none;
 }
 
@@ -145,7 +145,7 @@
   min-width: 0;
   border: 1px solid var(--bo-edge);
   border-radius: 0.5rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
 }
 
 .booking-compact-section {
@@ -164,7 +164,7 @@
 
 .booking-compact-section-header > svg {
   flex-shrink: 0;
-  color: var(--button);
+  color: var(--n-violet-text, var(--button));
   font-size: 0.94rem;
 }
 
@@ -204,12 +204,12 @@
 }
 
 .booking-compact-cancellation h4 {
-  color: #a43b3b;
+  color: var(--n-red-text, #a43b3b);
 }
 
 .booking-compact-text {
   margin: 0;
-  color: #334155;
+  color: var(--n-blue-text, #334155);
   font-size: 0.992rem;
   line-height: 1.45;
   white-space: pre-wrap;
@@ -217,7 +217,7 @@
 }
 
 .booking-compact-muted {
-  color: #6b7280;
+  color: var(--n-text-3, #6b7280);
   font-weight: 400;
 }
 
@@ -250,7 +250,7 @@
 }
 
 .booking-compact-field dt {
-  color: #596477;
+  color: var(--n-text-2, #596477);
 }
 
 .booking-compact-field dd {
@@ -314,14 +314,14 @@
 }
 
 .booking-compact-sheet thead th {
-  border-bottom-color: #dfe4ec;
+  border-bottom-color: var(--n-line-2, #dfe4ec);
   color: var(--text-muted);
   font-size: 0.93rem;
   font-weight: 650;
 }
 
 .booking-compact-sheet tbody th {
-  color: #596477;
+  color: var(--n-text-2, #596477);
 }
 
 .booking-compact-sheet-numeric th:not(:first-child),
@@ -336,13 +336,13 @@
 
 .booking-compact-sheet-unused th,
 .booking-compact-sheet-unused td {
-  color: #6b7280;
+  color: var(--n-text-3, #6b7280);
   font-weight: 400;
 }
 
 .booking-compact-schedule td:first-child,
 .booking-compact-schedule td:nth-child(2) {
-  color: #596477;
+  color: var(--n-text-2, #596477);
   white-space: nowrap;
 }
 
@@ -382,7 +382,7 @@
   gap: 0.5rem;
   padding: 0.5rem 0.625rem;
   border: 0;
-  background: #fafbfc;
+  background: var(--n-surface-2, #fafbfc);
 }
 
 .booking-compact-meals .booking-overview-program-summary-icon {
@@ -435,8 +435,8 @@
 }
 
 .booking-compact-meals .booking-overview-program-panel-diet {
-  border-color: #ead7a7;
-  background: #fffdf8;
+  border-color: var(--n-amber-line, #ead7a7);
+  background: var(--n-surface-2, #fffdf8);
 }
 
 .booking-compact-meals .booking-overview-program-panel-header {
@@ -613,12 +613,12 @@
 }
 
 .booking-compact-empty summary:hover {
-  background: #f8f9fb;
+  background: var(--n-surface-3, #f8f9fb);
 }
 
 .booking-compact-empty summary > svg:first-child {
   flex-shrink: 0;
-  color: #8a94a4;
+  color: var(--n-text-3, #8a94a4);
   font-size: 0.94rem;
 }
 
@@ -638,7 +638,7 @@
 
 .booking-compact-empty-chevron {
   flex-shrink: 0;
-  color: #8a94a4;
+  color: var(--n-text-3, #8a94a4);
   font-size: 0.72rem;
   transition: transform 120ms ease;
 }
@@ -656,7 +656,7 @@
 
 .booking-compact-empty-body p {
   margin: 0;
-  color: #596477;
+  color: var(--n-text-2, #596477);
   font-size: 0.967rem;
   line-height: 1.4;
 }
@@ -695,12 +695,12 @@
 ========================================================= */
 
 .booking-compact-incident {
-  border-color: #ead7a7;
-  background: #fffdf8;
+  border-color: var(--n-amber-line, #ead7a7);
+  background: var(--n-surface-2, #fffdf8);
 }
 
 .booking-compact-incident .booking-compact-section-header > svg {
-  color: var(--bo-amber);
+  color: var(--n-amber-text, var(--bo-amber));
 }
 
 .booking-compact-archive-links {
@@ -714,7 +714,7 @@
   align-items: center;
   gap: 0.312rem;
   min-height: 1.75rem;
-  color: var(--button);
+  color: var(--n-violet-text, var(--button));
   font-size: 0.967rem;
   font-weight: 600;
   text-decoration: none;
@@ -785,6 +785,6 @@
 
   .booking-compact-schedule td:nth-child(n + 4)::before {
     content: attr(data-label) ": ";
-    color: #596477;
+    color: var(--n-text-2, #596477);
   }
 }

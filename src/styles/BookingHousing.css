@@ -12,21 +12,21 @@
 
 .booking-housing-tab-card {
   padding: 0;
-  background: #ffffff;
-  border: 1px solid #dfe4ec;
+  background: var(--n-surface, #ffffff);
+  border: 1px solid var(--n-line-2, #dfe4ec);
   border-radius: 0.625rem;
-  box-shadow: 0 0.375rem 1.125rem rgba(28, 35, 52, 0.04);
+  box-shadow: 0 0.375rem 1.125rem var(--n-shadow-1, rgba(28, 35, 52, 0.04));
   overflow: hidden;
 }
 
 .booking-housing-tab-header {
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
   padding: 1.5rem 1.625rem;
-  border-bottom: 1px solid #e7eaf0;
+  border-bottom: 1px solid var(--n-line-2, #e7eaf0);
 }
 
 .booking-housing-tab-title {
@@ -41,13 +41,13 @@
   justify-content: center;
   flex: 0 0 auto;
   font-size: 1.148rem;
-  color: #5142a5;
+  color: var(--n-violet-text, #5142a5);
 }
 
 .booking-housing-tab-title h3,
 .booking-housing-linens-header h3 {
   margin: 0;
-  color: #2f3442;
+  color: var(--n-text, #2f3442);
   font-size: 1.195rem;
   font-weight: 700;
 }
@@ -55,7 +55,7 @@
 .booking-housing-tab-title p,
 .booking-housing-linens-header p {
   margin: 0.312rem 0 0;
-  color: #8790a2;
+  color: var(--n-text-3, #8790a2);
   font-size: 1.011rem;
 }
 
@@ -70,7 +70,7 @@
 .booking-housing-summary {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-bottom: 1px solid #e7eaf0;
+  border-bottom: 1px solid var(--n-line-2, #e7eaf0);
 }
 
 .booking-housing-summary-item {
@@ -79,7 +79,7 @@
   gap: 0.812rem;
   min-height: 5.75rem;
   padding: 1.125rem 1.625rem;
-  border-right: 1px solid #e7eaf0;
+  border-right: 1px solid var(--n-line-2, #e7eaf0);
 }
 
 .booking-housing-summary-item:last-child {
@@ -90,14 +90,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #5142a5;
+  color: var(--n-violet-text, #5142a5);
   font-size: 1.055rem;
 }
 
 .booking-housing-summary-item small {
   display: block;
   margin-bottom: 0.25rem;
-  color: #828b9c;
+  color: var(--n-text-3, #828b9c);
   font-size: 0.898rem;
   font-weight: 700;
   letter-spacing: 0.045em;
@@ -105,7 +105,7 @@
 }
 
 .booking-housing-summary-item strong {
-  color: #2f3442;
+  color: var(--n-text, #2f3442);
   font-size: 1.383rem;
   font-weight: 700;
 }
@@ -114,7 +114,7 @@
 
 .booking-housing-table-wrap {
   max-width: 100%;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
   width: 100%;
   overflow-x: auto;
 }
@@ -126,9 +126,9 @@
 
 .booking-housing-table thead th {
   padding: 1rem 1.125rem;
-  background: #f7f8fa;
-  border-bottom: 1px solid #e1e5eb;
-  color: #626a79;
+  background: var(--n-page, #f7f8fa);
+  border-bottom: 1px solid var(--n-line-2, #e1e5eb);
+  color: var(--n-text-2, #626a79);
   font-size: 0.911rem;
   font-weight: 700;
   letter-spacing: 0.045em;
@@ -138,8 +138,8 @@
 
 .booking-housing-table tbody td {
   padding: 1rem 1.125rem;
-  border-bottom: 1px solid #edf0f4;
-  color: #535b6b;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+  color: var(--n-text-2, #535b6b);
   font-size: 1.023rem;
   vertical-align: middle;
 }
@@ -149,7 +149,7 @@
 }
 
 .booking-housing-row-assigned {
-  background: #fbfdfb;
+  background: var(--n-surface-2, #fbfdfb);
 }
 
 .housing-room-cell {
@@ -160,7 +160,7 @@
 }
 
 .housing-room-cell strong {
-  color: #313746;
+  color: var(--n-text, #313746);
   font-weight: 700;
 }
 
@@ -173,8 +173,8 @@
 }
 
 .housing-room-thumb {
-  border: 1px solid #dfe4ec;
-  background: #f6f7f9;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  background: var(--n-page, #f6f7f9);
   box-shadow: none;
   object-fit: cover;
 }
@@ -183,12 +183,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #f0f1f7;
-  color: #8278bd;
+  background: var(--n-surface-3, #f0f1f7);
+  color: var(--n-violet-text, #8278bd);
 }
 
 .booking-housing-assigned-count {
-  color: #313746;
+  color: var(--n-text, #313746);
   font-size: 1.055rem;
   font-weight: 700;
 }
@@ -197,16 +197,16 @@
   width: 5.75rem;
   min-height: 2.625rem;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #d9dee8;
+  border: 1px solid var(--n-field-line, #d9dee8);
   border-radius: 0.562rem;
-  background: #ffffff;
-  color: #303746;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #303746);
   font: inherit;
 }
 
 .booking-housing-count-input:focus {
-  border-color: #786ac1;
-  outline: 3px solid rgba(81, 66, 165, 0.09);
+  border-color: var(--n-violet-text, #786ac1);
+  outline: 3px solid var(--n-violet-ring, rgba(81, 66, 165, 0.09));
 }
 
 /* Linens */
@@ -220,7 +220,7 @@
   align-items: center;
   gap: 0.875rem;
   padding: 1.375rem 1.625rem;
-  border-bottom: 1px solid #e7eaf0;
+  border-bottom: 1px solid var(--n-line-2, #e7eaf0);
 }
 
 .booking-housing-linens-grid {
@@ -237,7 +237,7 @@
 }
 
 .booking-housing-linen-field > span {
-  color: #697181;
+  color: var(--n-text-2, #697181);
   font-size: 0.942rem;
   font-weight: 700;
 }
@@ -247,10 +247,10 @@
   display: flex;
   align-items: center;
   padding: 0 0.875rem;
-  border: 1px solid #e1e5eb;
+  border: 1px solid var(--n-field-line, #e1e5eb);
   border-radius: 0.625rem;
-  background: #fafbfc;
-  color: #343a49;
+  background: var(--n-surface-2, #fafbfc);
+  color: var(--n-text, #343a49);
   font-weight: 600;
 }
 
@@ -258,22 +258,22 @@
 .booking-housing-linen-field select {
   min-height: 2.875rem;
   padding: 0 0.812rem;
-  border: 1px solid #d9dee8;
+  border: 1px solid var(--n-field-line, #d9dee8);
   border-radius: 0.625rem;
-  background: #ffffff;
-  color: #343a49;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #343a49);
   font: inherit;
 }
 
 .booking-housing-linen-field input:focus,
 .booking-housing-linen-field select:focus {
-  border-color: #786ac1;
-  outline: 3px solid rgba(81, 66, 165, 0.09);
+  border-color: var(--n-violet-text, #786ac1);
+  outline: 3px solid var(--n-violet-ring, rgba(81, 66, 165, 0.09));
 }
 
 .booking-housing-linen-field input:disabled {
-  background: #f4f5f7;
-  color: #a1a7b2;
+  background: var(--n-page, #f4f5f7);
+  color: var(--n-text-3, #a1a7b2);
 }
 
 /* Imported / Legacy Housing */
@@ -285,7 +285,7 @@
 .booking-housing-legacy-card small {
   display: block;
   margin-bottom: 0.438rem;
-  color: #7d8594;
+  color: var(--n-text-3, #7d8594);
   font-size: 0.898rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -294,13 +294,13 @@
 
 .booking-housing-legacy-card strong {
   display: block;
-  color: #343a49;
+  color: var(--n-text, #343a49);
   font-weight: 650;
 }
 
 .booking-housing-legacy-card p {
   margin: 0.5rem 0 0;
-  color: #8a92a1;
+  color: var(--n-text-3, #8a92a1);
   font-size: 0.98rem;
 }
 
@@ -318,7 +318,7 @@
 
   .booking-housing-summary-item {
     border-right: 0;
-    border-bottom: 1px solid #e7eaf0;
+    border-bottom: 1px solid var(--n-line-2, #e7eaf0);
   }
 
   .booking-housing-summary-item:last-child {
@@ -344,8 +344,8 @@
 }
 
 .booking-housing-use-pill-active {
-  background: #edf7f0;
-  color: #34704a;
+  background: var(--n-green-bg, #edf7f0);
+  color: var(--n-green-text, #34704a);
 }
 
 .booking-housing-use-pill-active svg {
@@ -355,7 +355,7 @@
 .booking-housing-use-pill-empty {
   padding-left: 0.25rem;
   background: transparent;
-  color: #a1a7b3;
+  color: var(--n-text-3, #a1a7b3);
 }
 
 /* Edit Checkbox */
@@ -365,7 +365,7 @@
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  color: #4e5666;
+  color: var(--n-text-2, #4e5666);
   font-size: 0.98rem;
   font-weight: 600;
 }
@@ -373,7 +373,7 @@
 .booking-housing-use-toggle input {
   width: 1.062rem;
   height: 1.062rem;
-  accent-color: #5142a5;
+  accent-color: var(--n-accent-solid, #5142a5);
   cursor: pointer;
 }
 
@@ -385,14 +385,14 @@
   min-height: 1.875rem;
   padding: 0.312rem 0.625rem;
   border-radius: 0.5rem;
-  background: #f3f1fa;
-  color: #675b9e;
+  background: var(--n-violet-bg, #f3f1fa);
+  color: var(--n-violet-text, #675b9e);
   font-size: 0.942rem;
   font-weight: 650;
 }
 
 .booking-housing-assigned-count-zero {
-  color: #a0a6b1;
+  color: var(--n-text-3, #a0a6b1);
 }
 
 /* Import Warning */
@@ -403,17 +403,17 @@
   gap: 0.75rem;
   margin: 1.125rem 1.5rem 0;
   padding: 0.812rem 0.938rem;
-  border: 1px solid #e4dfc8;
+  border: 1px solid var(--n-amber-line, #e4dfc8);
   border-radius: 0.625rem;
-  background: #fcfaf1;
-  color: #665f45;
+  background: var(--n-amber-bg, #fcfaf1);
+  color: var(--n-amber-text, #665f45);
   margin-bottom: 1.25rem;
 }
 
 .booking-housing-import-warning > svg {
   flex: 0 0 auto;
   margin-top: 2px;
-  color: #8c7d3d;
+  color: var(--n-amber-text, #8c7d3d);
 }
 
 .booking-housing-import-warning div {
@@ -428,7 +428,7 @@
 }
 
 .booking-housing-import-warning span {
-  color: #817960;
+  color: var(--n-amber-text, #817960);
   font-size: 0.942rem;
   line-height: 1.45;
 }
@@ -461,7 +461,7 @@
 }
 
 .housing-room-expand-button:focus-visible {
-  outline: 3px solid rgba(81, 66, 165, 0.12);
+  outline: 3px solid var(--n-violet-ring, rgba(81, 66, 165, 0.12));
   outline-offset: 5px;
   border-radius: 0.5rem;
 }
@@ -474,21 +474,21 @@
 }
 
 .housing-room-expand-copy strong {
-  color: #313746;
+  color: var(--n-text, #313746);
   font-size: 1.023rem;
   font-weight: 700;
   line-height: 1.25;
 }
 
 .housing-room-expand-copy small {
-  color: #969dac;
+  color: var(--n-text-3, #969dac);
   font-size: 0.88rem;
   font-weight: 500;
   line-height: 1.25;
 }
 
 .housing-room-expand-button:hover .housing-room-expand-copy strong {
-  color: #5142a5;
+  color: var(--n-violet-text, #5142a5);
 }
 
 .housing-room-expand-chevron {
@@ -499,19 +499,19 @@
   align-items: center;
   justify-content: center;
   border-radius: 0.438rem;
-  color: #8c94a4;
+  color: var(--n-text-3, #8c94a4);
   font-size: 0.88rem;
   transition: background-color 140ms ease,
     color 140ms ease;
 }
 
 .housing-room-expand-button:hover .housing-room-expand-chevron {
-  background: #f1eff9;
-  color: #5142a5;
+  background: var(--n-violet-bg, #f1eff9);
+  color: var(--n-violet-text, #5142a5);
 }
 
 .booking-housing-row-expanded {
-  background: #fbfaff;
+  background: var(--n-surface-2, #fbfaff);
 }
 
 .booking-housing-row-expanded td {
@@ -529,7 +529,7 @@
 }
 
 .booking-housing-calculated-count > strong {
-  color: #313746;
+  color: var(--n-text, #313746);
   font-size: 1.055rem;
   font-weight: 700;
   line-height: 1.1;
@@ -537,7 +537,7 @@
 
 .booking-housing-calculated-count > small,
 .booking-housing-assigned-total > small {
-  color: #8278bd;
+  color: var(--n-violet-text, #8278bd);
   font-size: 0.867rem;
   font-weight: 600;
   line-height: 1.2;
@@ -547,8 +547,8 @@
 
 .booking-housing-floor-detail-row > td {
   padding: 0 !important;
-  border-bottom: 1px solid #e3e0f0 !important;
-  background: #fbfaff;
+  border-bottom: 1px solid var(--n-violet-line, #e3e0f0) !important;
+  background: var(--n-surface-2, #fbfaff);
 }
 
 .booking-housing-floor-detail-cell {
@@ -558,10 +558,10 @@
 .booking-housing-floor-panel {
   margin: 0 1.125rem 1rem 5.125rem;
   overflow: hidden;
-  border: 1px solid #ded9ef;
+  border: 1px solid var(--n-violet-line, #ded9ef);
   border-radius: 0.688rem;
-  background: #ffffff;
-  box-shadow: 0 0.25rem 0.75rem rgba(48, 42, 94, 0.04);
+  background: var(--n-surface, #ffffff);
+  box-shadow: 0 0.25rem 0.75rem var(--n-shadow-1, rgba(48, 42, 94, 0.04));
 }
 
 /* Floor Panel Header */
@@ -582,9 +582,9 @@
   flex-direction: column;
   gap: 0.875rem;
   padding: 1.125rem;
-  border: 1px solid #e4e8ef;
+  border: 1px solid var(--n-field-line, #e4e8ef);
   border-radius: 0.625rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
 }
 
 .booking-housing-floor-total-card {
@@ -593,8 +593,8 @@
   justify-self: end;
   height: 100%;
   min-height: 7.5rem;
-  background: #e8f5ee;
-  border: 1px solid #b7dfc8;
+  background: var(--n-green-bg, #e8f5ee);
+  border: 1px solid var(--n-green-line, #b7dfc8);
   border-radius: 0.562rem;
   padding: 0.75rem;
   display: flex;
@@ -604,7 +604,7 @@
 }
 
 .booking-housing-floor-field > span {
-  color: #5f6777;
+  color: var(--n-text-2, #5f6777);
   font-size: 0.917rem;
   font-weight: 700;
 }
@@ -613,13 +613,13 @@
   min-height: 2.625rem;
   display: flex;
   align-items: center;
-  color: #303746;
+  color: var(--n-text, #303746);
   font-size: 1.055rem;
   font-weight: 700;
 }
 
 .booking-housing-floor-total-card span {
-  color: #2f6f5f;
+  color: var(--n-teal-text, #2f6f5f);
   font-size: 0.859rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -627,7 +627,7 @@
 
 .booking-housing-floor-total-card strong {
   margin-top: 0.5rem;
-  color: #1f513f;
+  color: var(--n-green-text, #1f513f);
   font-size: 1.406rem;
   font-weight: 700;
 }
@@ -640,12 +640,12 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.688rem 1rem;
-  border-top: 1px solid #eceff3;
-  background: #fbfcfd;
+  border-top: 1px solid var(--n-line, #eceff3);
+  background: var(--n-surface-2, #fbfcfd);
 }
 
 .booking-housing-floor-panel-footer > span {
-  color: #858d9d;
+  color: var(--n-text-3, #858d9d);
   font-size: 0.892rem;
   line-height: 1.4;
 }
@@ -654,10 +654,10 @@
   flex: 0 0 auto;
   min-height: 2rem;
   padding: 0 0.625rem;
-  border: 1px solid #d8dce5;
+  border: 1px solid var(--n-line-3, #d8dce5);
   border-radius: 0.438rem;
-  background: #ffffff;
-  color: #687083;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text-3, #687083);
   font: inherit;
   font-size: 0.88rem;
   font-weight: 600;
@@ -665,9 +665,9 @@
 }
 
 .booking-housing-clear-floor-button:hover {
-  border-color: #c9c4e8;
-  background: #f8f7fc;
-  color: #5142a5;
+  border-color: var(--n-violet-line, #c9c4e8);
+  background: var(--n-surface-3, #f8f7fc);
+  color: var(--n-violet-text, #5142a5);
 }
 
 /* Responsive Floor Panel */
@@ -706,13 +706,13 @@
 }
 
 .booking-housing-floor-header strong {
-  color: #303442;
+  color: var(--n-text, #303442);
   font-size: 1.023rem;
   font-weight: 650;
 }
 
 .booking-housing-floor-header span {
-  color: #5c6f46;
+  color: var(--n-olive-text, #5c6f46);
   font-size: 0.93rem;
   font-weight: 650;
 }
@@ -728,24 +728,24 @@
   justify-content: space-between;
   padding: 0.625rem 0.75rem;
   border-radius: 0.5rem;
-  background: #f8fafc;
-  border: 1px solid #edf0f4;
+  background: var(--n-surface-2, #f8fafc);
+  border: 1px solid var(--n-line, #edf0f4);
 }
 
 .booking-housing-room-row span {
-  color: #4b5563;
+  color: var(--n-text-2, #4b5563);
   font-size: 0.961rem;
   font-weight: 600;
 }
 
 .booking-housing-room-row input {
   width: 4.375rem;
-  border: 1px solid #dfe4ec;
+  border: 1px solid var(--n-field-line, #dfe4ec);
   border-radius: 0.438rem;
   padding: 0.375rem 0.5rem;
   text-align: center;
 }
 
 .booking-housing-room-row strong {
-  color: #303442;
+  color: var(--n-text, #303442);
 }

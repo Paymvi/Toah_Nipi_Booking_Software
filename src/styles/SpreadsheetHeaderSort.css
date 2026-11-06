@@ -10,12 +10,12 @@
 }
 
 .spreadsheet-header-sort-control:hover {
-  border-color: #c8cfe0;
-  background: #fcfcfe;
+  border-color: var(--n-line-3, #c8cfe0);
+  background: var(--n-surface-3, #fcfcfe);
 }
 
 /* The select has outline: none, so the wrapper shows keyboard focus. */
 .spreadsheet-header-sort-control:focus-within {
-  border-color: #7769c7;
-  box-shadow: 0 0 0 0.188rem rgba(119, 105, 199, 0.12);
+  border-color: var(--n-violet-text, #7769c7);
+  box-shadow: 0 0 0 0.188rem var(--n-violet-ring, rgba(119, 105, 199, 0.12));
 }

@@ -107,6 +107,7 @@ import CreateBooking from "../pages/CreateBooking";
 import GuestInquiriesView from "../pages/GuestInquiriesView";
 
 import StaffSignOutButton from "../components/StaffSignOutButton";
+import ThemeToggle from "../components/ThemeToggle";
 
 import PortalAdminView from "../pages/PortalAdminView";
 import {
@@ -9794,6 +9795,10 @@ export default function Dashboard() {
 
         <div className="dashboard-sidebar-signout">
           <StaffSignOutButton />
+        </div>
+
+        <div className="dashboard-sidebar-theme">
+          <ThemeToggle />
         </div>
 
         <div className="sidebar-section sidebar-main-section">

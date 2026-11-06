@@ -34,6 +34,7 @@ import "./styles/InquiryRecordDetail.css";
 import "./styles/StaffBookingDetails.css";
 import "./styles/DashboardBackups.css";
 import "./styles/TutorialGnome.css";
+import "./styles/theme.css";
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 

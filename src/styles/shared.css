@@ -9,20 +9,20 @@
 
 :root {
   --font-heading: "Atkinson Hyperlegible Next", sans-serif;
-  --page-bg: #f6f7f9;
-  --card-bg: #ffffff;
-  --text-main: #22242a;
-  --text-muted: #6b7280;
-  --label: #4b5563;
-  --border: #e5e7eb;
-  --border-strong: #d1d5db;
-  --focus: #5146d8;
-  --focus-soft: rgba(81, 70, 216, 0.14);
+  --page-bg: var(--n-page, #f6f7f9);
+  --card-bg: var(--n-surface, #ffffff);
+  --text-main: var(--n-text, #22242a);
+  --text-muted: var(--n-text-3, #6b7280);
+  --label: var(--n-text-2, #4b5563);
+  --border: var(--n-line-2, #e5e7eb);
+  --border-strong: var(--n-line-3, #d1d5db);
+  --focus: var(--n-violet-text, #5146d8);
+  --focus-soft: var(--n-violet-ring, rgba(81, 70, 216, 0.14));
   --button: #4f46c7;
   --button-hover: #4338a8;
-  --success-bg: #effaf3;
-  --success-border: #bbebcb;
-  --success-text: #236b3a;
+  --success-bg: var(--n-green-bg, #effaf3);
+  --success-border: var(--n-green-line, #bbebcb);
+  --success-text: var(--n-green-text, #236b3a);
 }
 
 /* =========================================================

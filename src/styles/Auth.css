@@ -14,9 +14,9 @@
   display: grid;
   place-items: center;
   padding: 1.5rem;
-  background: radial-gradient(circle at top left, rgba(68, 58, 156, 0.08), transparent 34%),
-    #f5f6f8;
-  color: #2f3240;
+  background: radial-gradient(circle at top left, var(--n-violet-ring, rgba(68, 58, 156, 0.08)), transparent 34%),
+    var(--n-page, #f5f6f8);
+  color: var(--n-text, #2f3240);
   font-family: Inter,
     system-ui,
     -apple-system,
@@ -28,15 +28,15 @@
 .staff-login-card {
   width: min(26.875rem, 100%);
   padding: 1.625rem;
-  border: 1px solid #dfe4ec;
+  border: 1px solid var(--n-line-2, #dfe4ec);
   border-radius: 0.625rem;
-  background: #ffffff;
-  box-shadow: 0 0.75rem 2rem rgba(28, 35, 52, 0.08);
+  background: var(--n-surface, #ffffff);
+  box-shadow: 0 0.75rem 2rem var(--n-shadow-2, rgba(28, 35, 52, 0.08));
 }
 
 .staff-login-card h1 {
   margin: 0;
-  color: #252936;
+  color: var(--n-text, #252936);
   font-family: var(--font-heading);
   font-size: clamp(1.477rem, 2vw, 1.898rem);
   font-weight: 700;
@@ -46,7 +46,7 @@
 
 .staff-login-card p {
   margin: 0.5rem 0 0;
-  color: #858c9b;
+  color: var(--n-text-3, #858c9b);
   font-size: 0.98rem;
   line-height: 1.5;
 }
@@ -58,7 +58,7 @@
 }
 
 .staff-login-card label span {
-  color: #7b8290;
+  color: var(--n-text-3, #7b8290);
   font-family: var(--font-heading);
   font-size: 0.85rem;
   font-weight: 650;
@@ -69,10 +69,10 @@
 .staff-login-card input {
   width: 100%;
   height: 2.5rem;
-  border: 1px solid #dfe4ec;
+  border: 1px solid var(--n-field-line, #dfe4ec);
   border-radius: 0.5rem;
-  background: #ffffff;
-  color: #303442;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #303442);
   padding: 0 0.75rem;
   font: inherit;
   font-size: 0.992rem;
@@ -84,17 +84,17 @@
 }
 
 .staff-login-card input:focus {
-  border-color: #9f98d4;
-  box-shadow: 0 0 0 0.188rem rgba(68, 58, 156, 0.12);
+  border-color: var(--n-violet-text, #9f98d4);
+  box-shadow: 0 0 0 0.188rem var(--n-violet-ring, rgba(68, 58, 156, 0.12));
 }
 
 .staff-login-error {
   margin: 0.875rem 0 0;
   padding: 0.625rem 0.75rem;
-  border: 1px solid #e8c7c7;
+  border: 1px solid var(--n-red-line, #e8c7c7);
   border-radius: 0.5rem;
-  background: #fbf0f0;
-  color: #9f2f2f;
+  background: var(--n-red-bg, #fbf0f0);
+  color: var(--n-red-text, #9f2f2f);
   font-size: 0.942rem;
   font-weight: 600;
 }
@@ -111,7 +111,7 @@
 
 .dashboard-sidebar-signout {
   padding: 0 0.875rem 0.875rem;
-  border-bottom: 1px solid #edf0f4;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
   margin-bottom: 0.25rem;
 }
 
@@ -120,22 +120,22 @@
   min-height: 2.375rem;
   justify-content: center;
   border-radius: 0.5rem;
-  border-color: #dfe4ec;
-  background: #fbfcfd;
-  color: #5f6877;
+  border-color: var(--n-line-2, #dfe4ec);
+  background: var(--n-surface-2, #fbfcfd);
+  color: var(--n-text-2, #5f6877);
   font-size: 0.955rem;
   font-weight: 600;
   box-shadow: none;
 }
 
 .dashboard-sidebar-signout .secondary-dashboard-button:hover {
-  border-color: #c9c4e8;
-  background: #f7f5ff;
-  color: #443a9c;
+  border-color: var(--n-violet-line, #c9c4e8);
+  background: var(--n-violet-bg, #f7f5ff);
+  color: var(--n-violet-text, #443a9c);
 }
 
 .dashboard-sidebar-signout .secondary-dashboard-button:focus-visible {
-  outline: 3px solid rgba(68, 58, 156, 0.14);
+  outline: 3px solid var(--n-violet-ring, rgba(68, 58, 156, 0.14));
   outline-offset: 2px;
 }
 

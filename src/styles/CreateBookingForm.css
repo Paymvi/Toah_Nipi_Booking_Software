@@ -6,7 +6,7 @@
 .rental-page {
   min-height: 100vh;
   padding: 2.75rem 1.25rem;
-  background: var(--page-bg, #f6f7f9);
+  background: var(--page-bg, var(--n-page, #f6f7f9));
 }
 
 
@@ -19,10 +19,10 @@
   max-width: 1180px;
   margin: 0 auto;
   padding: 2.25rem 2.5rem 2.375rem;
-  background: var(--card-bg, #ffffff);
-  border: 1px solid var(--border, #dde2e8);
+  background: var(--card-bg, var(--n-surface, #ffffff));
+  border: 1px solid var(--border, var(--n-line-2, #dde2e8));
   border-radius: 0.875rem;
-  box-shadow: 0 1.125rem 2.812rem rgba(15, 23, 42, 0.06);
+  box-shadow: 0 1.125rem 2.812rem var(--n-shadow-1, rgba(15, 23, 42, 0.06));
 }
 
 
@@ -36,7 +36,7 @@
 
 .rental-eyebrow {
   margin: 0 0 0.438rem;
-  color: #6c7b70;
+  color: var(--n-text-2, #6c7b70);
   font-size: 0.88rem;
   font-weight: 700;
   letter-spacing: 0.09em;
@@ -45,7 +45,7 @@
 
 .rental-header h1 {
   margin: 0;
-  color: var(--text-main, #252936);
+  color: var(--text-main, var(--n-text, #252936));
   font-size: clamp(1.992rem, 3.2vw, 2.555rem);
   line-height: 1.1;
   letter-spacing: -0.04em;
@@ -63,7 +63,7 @@
 .rental-header > p:last-child {
   max-width: 42.5rem;
   margin: 0.625rem 0 0;
-  color: var(--text-muted, #7c8492);
+  color: var(--text-muted, var(--n-text-3, #7c8492));
   font-size: 1.042rem;
   line-height: 1.6;
 }
@@ -84,9 +84,9 @@
 }
 
 .success-message {
-  border: 1px solid var(--success-border, #c6dfcd);
-  background: var(--success-bg, #edf7f0);
-  color: var(--success-text, #306342);
+  border: 1px solid var(--success-border, var(--n-green-line, #c6dfcd));
+  background: var(--success-bg, var(--n-green-bg, #edf7f0));
+  color: var(--success-text, var(--n-green-text, #306342));
 }
 
 @media (max-width: 780px) {
@@ -96,9 +96,9 @@
 }
 
 .rental-error-message {
-  border: 1px solid #e6c7c7;
-  background: #fff2f2;
-  color: #913737;
+  border: 1px solid var(--n-red-line, #e6c7c7);
+  background: var(--n-red-bg, #fff2f2);
+  color: var(--n-red-text, #913737);
 }
 
 .success-message svg,
@@ -143,9 +143,9 @@
 
 .rental-form-section {
   overflow: hidden;
-  border: 1px solid var(--border, #dde2e8);
+  border: 1px solid var(--border, var(--n-line-2, #dde2e8));
   border-radius: 0.625rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
 }
 
 
@@ -158,8 +158,8 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.938rem 1.125rem;
-  border-bottom: 1px solid #dce5dc;
-  background: #f4f7f3;
+  border-bottom: 1px solid var(--n-green-line, #dce5dc);
+  background: var(--n-page, #f4f7f3);
 }
 
 .rental-section-icon {
@@ -168,16 +168,16 @@
   flex: 0 0 2.125rem;
   display: grid;
   place-items: center;
-  border: 1px solid #d2dfd0;
+  border: 1px solid var(--n-line-3, #d2dfd0);
   border-radius: 0.5rem;
-  background: #ffffff;
-  color: #5f735f;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-green-text, #5f735f);
   font-size: 0.961rem;
 }
 
 .rental-section-header h2 {
   margin: 0;
-  color: var(--text-main, #252936);
+  color: var(--text-main, var(--n-text, #252936));
   font-size: 1.042rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -185,7 +185,7 @@
 
 .rental-section-header p {
   margin: 0.188rem 0 0;
-  color: var(--text-muted, #858c9b);
+  color: var(--text-muted, var(--n-text-3, #858c9b));
   font-size: 0.905rem;
   line-height: 1.4;
 }
@@ -243,13 +243,13 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  color: #4c5562;
+  color: var(--n-text-2, #4c5562);
   font-size: 1.011rem;
   font-weight: 550;
 }
 
 .rental-field > span small {
-  color: #9ca3af;
+  color: var(--n-text-3, #9ca3af);
   font-size: 0.892rem;
   font-weight: 400;
 }
@@ -258,10 +258,10 @@
 .rental-field select,
 .rental-field textarea {
   width: 100%;
-  border: 1px solid var(--border, #d6dbe2);
+  border: 1px solid var(--border, var(--n-field-line, #d6dbe2));
   border-radius: 0.375rem;
-  background: #ffffff;
-  color: var(--text-main, #252936);
+  background: var(--n-surface, #ffffff);
+  color: var(--text-main, var(--n-text, #252936));
   padding: 0.812rem 0.938rem;
   font: inherit;
   font-size: 1.055rem;
@@ -284,7 +284,7 @@
 
 .rental-field input::placeholder,
 .rental-field textarea::placeholder {
-  color: #b8bec8;
+  color: var(--n-text-3, #b8bec8);
   opacity: 1;
 }
 
@@ -295,15 +295,15 @@
 .rental-field input:focus,
 .rental-field select:focus,
 .rental-field textarea:focus {
-  border-color: var(--focus, #718b76);
+  border-color: var(--focus, var(--n-green-text, #718b76));
   box-shadow: 0 0 0 0.25rem
-    var(--focus-soft, rgba(91, 119, 98, 0.11));
-  background: #ffffff;
+    var(--focus-soft, var(--n-green-ring, rgba(91, 119, 98, 0.11)));
+  background: var(--n-surface, #ffffff);
 }
 
 .rental-field input:disabled {
-  background: #f4f5f6;
-  color: #9ca3af;
+  background: var(--n-page, #f4f5f6);
+  color: var(--n-text-3, #9ca3af);
   cursor: not-allowed;
 }
 
@@ -319,7 +319,7 @@
 
 .rental-subsection + .rental-subsection {
   padding-top: 1.375rem;
-  border-top: 1px solid #e3e9e2;
+  border-top: 1px solid var(--n-line-2, #e3e9e2);
 }
 
 .rental-subsection h3 {
@@ -327,14 +327,14 @@
   align-items: center;
   gap: 0.438rem;
   margin: 0;
-  color: #4d5561;
+  color: var(--n-text-2, #4d5561);
   font-size: 0.955rem;
   font-weight: 600;
   letter-spacing: 0.02em;
 }
 
 .rental-subsection h3 svg {
-  color: #6b7e6e;
+  color: var(--n-green-text, #6b7e6e);
 }
 
 
@@ -367,9 +367,9 @@
   gap: 0.75rem;
   min-height: 4.5rem;
   padding: 0.75rem;
-  border: 1px solid #e1e5ea;
+  border: 1px solid var(--n-field-line, #e1e5ea);
   border-radius: 0.5rem;
-  background: #fafbfc;
+  background: var(--n-surface-2, #fafbfc);
 }
 
 .rental-lodging-field > span {
@@ -380,13 +380,13 @@
 }
 
 .rental-lodging-field strong {
-  color: #3f4651;
+  color: var(--n-text, #3f4651);
   font-size: 0.955rem;
   font-weight: 600;
 }
 
 .rental-lodging-field small {
-  color: #8c94a1;
+  color: var(--n-text-3, #8c94a1);
   font-size: 0.88rem;
 }
 
@@ -394,11 +394,11 @@
   width: 4.062rem;
   height: 2.625rem;
   flex: 0 0 4.062rem;
-  border: 1px solid var(--border, #d6dbe2);
+  border: 1px solid var(--border, var(--n-field-line, #d6dbe2));
   border-radius: 0.375rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
   padding: 0 0.5rem;
-  color: var(--text-main, #252936);
+  color: var(--text-main, var(--n-text, #252936));
   font: inherit;
   font-size: 0.992rem;
   text-align: center;
@@ -406,9 +406,9 @@
 }
 
 .rental-lodging-field input:focus {
-  border-color: var(--focus, #718b76);
+  border-color: var(--focus, var(--n-green-text, #718b76));
   box-shadow: 0 0 0 0.25rem
-    var(--focus-soft, rgba(91, 119, 98, 0.11));
+    var(--focus-soft, var(--n-green-ring, rgba(91, 119, 98, 0.11)));
 }
 
 
@@ -439,9 +439,9 @@
 }
 
 .form-actions button:hover {
-  background: var(--button-hover);
+  background: var(--n-accent-solid, var(--button-hover));
   transform: translateY(-1px);
-  box-shadow: 0 0.75rem 1.375rem rgba(79, 70, 199, 0.22);
+  box-shadow: 0 0.75rem 1.375rem var(--n-violet-ring, rgba(79, 70, 199, 0.22));
 }
 
 .form-actions button:active {
@@ -450,9 +450,9 @@
 }
 
 .form-actions button:hover:not(:disabled) {
-  background: var(--button-hover, #4338b3);
+  background: var(--button-hover, var(--n-accent-solid-hover, #4338b3));
   transform: translateY(-1px);
-  box-shadow: 0 0.75rem 1.375rem rgba(79, 70, 199, 0.22);
+  box-shadow: 0 0.75rem 1.375rem var(--n-violet-ring, rgba(79, 70, 199, 0.22));
 }
 
 .form-actions button:active:not(:disabled) {
@@ -529,10 +529,10 @@
 .rental-test-data-button {
   flex: 0 0 auto;
   margin-top: 0.25rem;
-  border: 1px solid #d8d4f0;
+  border: 1px solid var(--n-violet-line, #d8d4f0);
   border-radius: 0.5rem;
-  background: #ffffff;
-  color: #4f46a5;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-violet-text, #4f46a5);
   padding: 0.625rem 0.938rem;
   font: inherit;
   font-size: 0.942rem;
@@ -544,8 +544,8 @@
 }
 
 .rental-test-data-button:hover {
-  border-color: #bdb6e5;
-  background: #f8f7fd;
+  border-color: var(--n-violet-line, #bdb6e5);
+  background: var(--n-surface-3, #f8f7fd);
   transform: translateY(-1px);
 }
 
@@ -576,7 +576,7 @@
   gap: 0.625rem;
   padding: 0 2px;
   font-size: 0.942rem;
-  color: #7b8496;
+  color: var(--n-text-3, #7b8496);
 }
 
 .rental-allergy-list {
@@ -604,10 +604,10 @@
   display: grid;
   place-items: center;
   padding: 0;
-  border: 1px solid #dfe4ea;
+  border: 1px solid var(--n-line-2, #dfe4ea);
   border-radius: 0.5rem;
-  background: #ffffff;
-  color: #465064;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text-2, #465064);
   font-size: 1.383rem;
   line-height: 1;
   cursor: pointer;
@@ -616,8 +616,8 @@
 }
 
 .rental-allergy-remove:hover {
-  background: #f5f7f9;
-  border-color: #cbd2da;
+  background: var(--n-surface-3, #f5f7f9);
+  border-color: var(--n-line-3, #cbd2da);
 }
 
 .rental-allergy-add-below {
@@ -627,10 +627,10 @@
   justify-content: center;
   min-height: 2.625rem;
   padding: 0 0.875rem;
-  border: 1px solid #b8d3c1;
+  border: 1px solid var(--n-green-line, #b8d3c1);
   border-radius: 0.5rem;
-  background: #edf7f0;
-  color: #2f6b45;
+  background: var(--n-green-bg, #edf7f0);
+  color: var(--n-green-text, #2f6b45);
   font-size: 1.023rem;
   font-weight: 600;
   cursor: pointer;
@@ -640,8 +640,8 @@
 }
 
 .rental-allergy-add-below:hover {
-  background: #e3f2e8;
-  border-color: #9fc8ad;
+  background: var(--n-green-bg-2, #e3f2e8);
+  border-color: var(--n-green-text, #9fc8ad);
   transform: translateY(-1px);
 }
 
@@ -653,7 +653,7 @@
 }
 
 .rental-allergy-notes > span {
-  color: #4c5562;
+  color: var(--n-text-2, #4c5562);
   font-size: 1.011rem;
   font-weight: 550;
 }
@@ -678,7 +678,7 @@
 
 .rental-stay-schedule-title {
   font-weight: 650;
-  color: #343b49;
+  color: var(--n-text, #343b49);
 }
 
 .rental-stay-schedule-fields {
@@ -705,7 +705,7 @@
   flex-shrink: 0;
   object-fit: cover;
   border-radius: 0.5rem;
-  border: 1px solid #e1e5e9;
+  border: 1px solid var(--n-line-2, #e1e5e9);
 }
 
 .rental-lodging-text {
@@ -744,7 +744,7 @@
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #9ca6b8;
+  color: var(--n-text-3, #9ca6b8);
   font-size: 1.055rem;
   pointer-events: none;
 }
@@ -758,9 +758,9 @@
 .rental-meal-schedule {
   margin-bottom: 0.25rem;
   overflow: hidden;
-  border: 1px solid #e1e5ea;
+  border: 1px solid var(--n-line-2, #e1e5ea);
   border-radius: 0.5rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
 }
 
 
@@ -774,13 +774,13 @@
   justify-content: space-between;
   gap: 1.125rem;
   padding: 0.875rem 1rem;
-  border-bottom: 1px solid #e8ebef;
-  background: #fafbfc;
+  border-bottom: 1px solid var(--n-line-2, #e8ebef);
+  background: var(--n-surface-2, #fafbfc);
 }
 
 .rental-meal-schedule-header h4 {
   margin: 0;
-  color: #4d5561;
+  color: var(--n-text-2, #4d5561);
   font-size: 0.955rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -788,7 +788,7 @@
 
 .rental-meal-schedule-header p {
   margin: 0.25rem 0 0;
-  color: #858c9b;
+  color: var(--n-text-3, #858c9b);
   font-size: 0.905rem;
   line-height: 1.4;
 }
@@ -806,21 +806,21 @@
   justify-content: center;
   gap: 0.312rem;
   padding: 0.5rem 0.688rem;
-  border: 1px solid #dbe2dc;
+  border: 1px solid var(--n-line-3, #dbe2dc);
   border-radius: 0.438rem;
-  background: #f1f5f1;
-  color: #647666;
+  background: var(--n-surface-3, #f1f5f1);
+  color: var(--n-green-text, #647666);
 }
 
 .rental-meal-total-badge strong {
-  color: #435346;
+  color: var(--n-text, #435346);
   font-size: 1.055rem;
   font-weight: 700;
   line-height: 1;
 }
 
 .rental-meal-total-badge span {
-  color: #748078;
+  color: var(--n-text-3, #748078);
   font-size: 0.867rem;
   font-weight: 500;
 }
@@ -832,8 +832,8 @@
 
 .rental-meal-schedule-empty {
   padding: 1.625rem 1.25rem;
-  background: #ffffff;
-  color: #8c94a1;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text-3, #8c94a1);
   font-size: 0.942rem;
   line-height: 1.5;
   text-align: center;
@@ -859,13 +859,13 @@
   min-width: 32.5rem;
   border-collapse: collapse;
   table-layout: fixed;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
 }
 
 .rental-meal-table th,
 .rental-meal-table td {
   padding: 0.688rem 0.875rem;
-  border-bottom: 1px solid #eceff2;
+  border-bottom: 1px solid var(--n-line, #eceff2);
   vertical-align: middle;
   text-align: center;
 }
@@ -890,8 +890,8 @@
 ========================================================= */
 
 .rental-meal-table thead th {
-  background: #ffffff;
-  color: #59616e;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text-2, #59616e);
   font-size: 0.905rem;
   font-weight: 600;
 }
@@ -899,7 +899,7 @@
 .rental-meal-table thead th strong {
   display: block;
   margin-bottom: 0.188rem;
-  color: #4d5561;
+  color: var(--n-text-2, #4d5561);
   font-size: 0.98rem;
   font-weight: 650;
   line-height: 1;
@@ -907,7 +907,7 @@
 
 .rental-meal-table thead th span {
   display: block;
-  color: #8c94a1;
+  color: var(--n-text-3, #8c94a1);
   font-size: 0.85rem;
   font-weight: 400;
 }
@@ -918,7 +918,7 @@
 ========================================================= */
 
 .rental-meal-date strong {
-  color: #3f4651;
+  color: var(--n-text, #3f4651);
   font-size: 0.955rem;
   font-weight: 600;
 }
@@ -926,7 +926,7 @@
 /* Give alternating rows a tiny bit of separation */
 
 .rental-meal-table tbody tr:nth-child(even) {
-  background: #fbfcfd;
+  background: var(--n-surface-2, #fbfcfd);
 }
 
 /* Row hover */
@@ -936,7 +936,7 @@
 }
 
 .rental-meal-table tbody tr:hover {
-  background: #f8faf9;
+  background: var(--n-surface-3, #f8faf9);
 }
 
 
@@ -970,9 +970,9 @@
   height: 1.562rem;
   display: grid;
   place-items: center;
-  border: 1px solid #cfd5dc;
+  border: 1px solid var(--n-line-3, #cfd5dc);
   border-radius: 0.375rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
   transition: border-color 150ms ease,
     background-color 150ms ease,
     box-shadow 150ms ease,
@@ -996,8 +996,8 @@
 /* Hover */
 
 .rental-meal-checkbox:hover > span {
-  border-color: #aebbb0;
-  background: #f8faf9;
+  border-color: var(--n-line-4, #aebbb0);
+  background: var(--n-surface-3, #f8faf9);
 }
 
 /* Checked */
@@ -1015,9 +1015,9 @@
 /* Keyboard focus */
 
 .rental-meal-checkbox input:focus-visible + span {
-  border-color: #718b76;
+  border-color: var(--n-green-text, #718b76);
   box-shadow: 0 0 0 0.25rem
-    rgba(91, 119, 98, 0.11);
+    var(--n-green-ring, rgba(91, 119, 98, 0.11));
 }
 
 /* Small click feedback */
@@ -1036,20 +1036,20 @@
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
   border-bottom: 0;
-  background: #fafbfc;
-  color: #4d5561;
+  background: var(--n-surface-2, #fafbfc);
+  color: var(--n-text-2, #4d5561);
   font-size: 0.93rem;
   font-weight: 600;
 }
 
 .rental-meal-table tfoot th {
-  color: #59616e;
+  color: var(--n-text-2, #59616e);
 }
 
 /* Slight emphasis on total numbers */
 
 .rental-meal-table tfoot td {
-  color: #435346;
+  color: var(--n-text, #435346);
   font-size: 0.98rem;
   font-weight: 700;
 }
@@ -1100,7 +1100,7 @@
 
 .rental-field-label-icon {
   flex: 0 0 auto;
-  color: #718b76;
+  color: var(--n-green-text, #718b76);
   font-size: 0.917rem;
   opacity: 0.9;
 }
@@ -1229,7 +1229,7 @@
 .rental-controlled-field-help {
   display: block;
   margin-top: 0.438rem;
-  color: #6f746c;
+  color: var(--n-text-2, #6f746c);
   font-size: 0.917rem;
   font-weight: 500;
   line-height: 1.4;
@@ -1243,10 +1243,10 @@
     0.75rem;
   border: 1px
     solid
-    rgba(74, 94, 70, 0.16);
+    var(--n-green-ring, rgba(74, 94, 70, 0.16));
   border-radius: 0.625rem;
-  background: rgba(74, 94, 70, 0.06);
-  color: #5f675d;
+  background: var(--n-green-ring, rgba(74, 94, 70, 0.06));
+  color: var(--n-text-2, #5f675d);
   font-size: 0.98rem;
   line-height: 1.5;
 }

@@ -713,17 +713,17 @@ function ReportBarRow({
 
 const REPORTS_RETREAT_TYPE_COLORS = {
   pr: "#5c6bc0",
-  "day use": "#636671",
-  men: "#2563eb",
+  "day use": "var(--n-text-3, #636671)",
+  men: "var(--n-blue-text, #2563eb)",
   women: "#be5091",
   students: "#d97706",
   "students / youth": "#d97706",
   youth: "#d97706",
   families: "#0d9488",
-  adults: "#4f46e5",
-  "staff / leaders": "#166534",
-  staff: "#166534",
-  leaders: "#166534",
+  adults: "var(--n-accent-solid-hover, #4f46e5)",
+  "staff / leaders": "var(--n-green-text, #166534)",
+  staff: "var(--n-green-text, #166534)",
+  leaders: "var(--n-green-text, #166534)",
   "pastors / elders": "#7e57c2",
   pastors: "#7e57c2",
   elders: "#7e57c2",
@@ -738,13 +738,13 @@ const REPORTS_RETREAT_TYPE_COLORS = {
 
 const REPORTS_RETREAT_FALLBACK_COLORS = [
   "#5c6bc0",
-  "#636671",
-  "#2563eb",
+  "var(--n-text-3, #636671)",
+  "var(--n-blue-text, #2563eb)",
   "#be5091",
   "#d97706",
   "#0d9488",
-  "#4f46e5",
-  "#166534",
+  "var(--n-accent-solid-hover, #4f46e5)",
+  "var(--n-green-text, #166534)",
   "#7e57c2",
   "#0891b2",
   "#c2410c",
@@ -845,7 +845,7 @@ function ReportRetreatTypePieChart({ rows, totalBookings }) {
     ? `conic-gradient(${pieRows
         .map((row) => `${row.color} ${row.start}% ${row.end}%`)
         .join(", ")})`
-    : "#edf0f4";
+    : "var(--n-surface-3, #edf0f4)";
 
   return (
     <div className="reports-retreat-pie-card">

@@ -21,10 +21,10 @@
   gap: 0.438rem;
   min-height: 2.25rem;
   padding: 0 0.75rem;
-  border: 1px solid #d9dfeb;
+  border: 1px solid var(--n-line-2, #d9dfeb);
   border-radius: 0.562rem;
-  background: #ffffff;
-  color: #5142a5;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-violet-text, #5142a5);
   font: inherit;
   font-size: 0.967rem;
   font-weight: 700;
@@ -39,8 +39,8 @@
 }
 
 .inquiry-create-booking-button:hover {
-  background: #f5f3ff;
-  border-color: #bcb5ea;
+  background: var(--n-violet-bg, #f5f3ff);
+  border-color: var(--n-violet-line, #bcb5ea);
   transform: translateY(-1px);
 }
 
@@ -59,17 +59,17 @@
   gap: 0.875rem;
   margin: 0 0 1.5rem;
   padding: 1.125rem 1.25rem;
-  border: 1px solid #ddd9f5;
+  border: 1px solid var(--n-violet-line, #ddd9f5);
   border-radius: 0.875rem;
-  background: #f8f7ff;
-  color: #24324a;
+  background: var(--n-violet-bg, #f8f7ff);
+  color: var(--n-blue-text, #24324a);
 }
 
 .rental-inquiry-prefill-notice > svg {
   flex: 0 0 auto;
   margin-top: 2px;
   font-size: 1.195rem;
-  color: #5142a5;
+  color: var(--n-violet-text, #5142a5);
 }
 
 .rental-inquiry-prefill-notice > div {
@@ -86,7 +86,7 @@
 
 .rental-inquiry-prefill-notice p {
   margin: 0;
-  color: #68738a;
+  color: var(--n-blue-text, #68738a);
   font-size: 0.992rem;
   line-height: 1.55;
 }
@@ -103,14 +103,14 @@
   flex-direction: column;
   min-width: 9.375rem;
   padding: 0.562rem 0.75rem;
-  border: 1px solid #e5e3f3;
+  border: 1px solid var(--n-violet-line, #e5e3f3);
   border-radius: 0.625rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
 }
 
 .rental-inquiry-prefill-details small {
   margin-bottom: 2px;
-  color: #8a94a7;
+  color: var(--n-text-3, #8a94a7);
   font-size: 0.88rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -118,7 +118,7 @@
 }
 
 .rental-inquiry-prefill-details strong {
-  color: #25324a;
+  color: var(--n-blue-text, #25324a);
   font-size: 0.98rem;
   font-weight: 700;
 }

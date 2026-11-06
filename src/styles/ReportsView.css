@@ -15,10 +15,10 @@
 
 .reports-header-card {
   overflow: hidden;
-  border: 1px solid #dfe4ec;
+  border: 1px solid var(--n-line-2, #dfe4ec);
   border-radius: 0.75rem;
-  background: #fff;
-  box-shadow: 0 0.375rem 1.125rem rgba(28, 35, 52, 0.04);
+  background: var(--n-surface, #fff);
+  box-shadow: 0 0.375rem 1.125rem var(--n-shadow-1, rgba(28, 35, 52, 0.04));
 }
 
 .reports-header {
@@ -27,12 +27,12 @@
   justify-content: space-between;
   gap: 1.25rem;
   padding: 1.25rem;
-  border-bottom: 1px solid #edf0f4;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
 }
 
 .reports-header h2 {
   margin: 0;
-  color: #252936;
+  color: var(--n-text, #252936);
   font-size: 1.261rem;
   font-weight: 700;
   letter-spacing: -0.015em;
@@ -41,7 +41,7 @@
 .reports-header p:not(.dashboard-eyebrow) {
   max-width: 48.75rem;
   margin: 0.312rem 0 0;
-  color: #858c9b;
+  color: var(--n-text-3, #858c9b);
   font-size: 0.955rem;
   line-height: 1.5;
 }
@@ -50,10 +50,10 @@
   display: inline-flex;
   margin-top: 0.5rem;
   padding: 0.312rem 0.562rem;
-  border: 1px solid #e5e8ee;
+  border: 1px solid var(--n-line-2, #e5e8ee);
   border-radius: 999px;
-  background: #f8f9fb;
-  color: #71798a;
+  background: var(--n-surface-2, #f8f9fb);
+  color: var(--n-text-3, #71798a);
   font-size: 0.892rem;
   font-weight: 600;
 }
@@ -64,7 +64,7 @@
   flex-wrap: wrap;
   gap: 0.625rem;
   padding: 0.938rem 1.25rem;
-  background: #fbfcfd;
+  background: var(--n-surface-2, #fbfcfd);
 }
 
 .reports-filter-field {
@@ -74,7 +74,7 @@
 }
 
 .reports-filter-field span {
-  color: #7b8290;
+  color: var(--n-text-3, #7b8290);
   font-size: 0.85rem;
   font-weight: 650;
   letter-spacing: 0.065em;
@@ -86,10 +86,10 @@
   width: 100%;
   height: 2.5rem;
   padding: 0 0.688rem;
-  border: 1px solid #dfe4ec;
+  border: 1px solid var(--n-field-line, #dfe4ec);
   border-radius: 0.5rem;
-  background: #fff;
-  color: #303442;
+  background: var(--n-surface, #fff);
+  color: var(--n-text, #303442);
   font: inherit;
   font-size: 0.955rem;
   font-weight: 500;
@@ -98,8 +98,8 @@
 
 .reports-filter-field select:focus,
 .reports-filter-field input:focus {
-  border-color: #9f98d4;
-  box-shadow: 0 0 0 0.188rem rgba(68, 58, 156, 0.1);
+  border-color: var(--n-violet-text, #9f98d4);
+  box-shadow: 0 0 0 0.188rem var(--n-violet-ring, rgba(68, 58, 156, 0.1));
 }
 
 .reports-reset-button {
@@ -124,10 +124,10 @@
   align-items: start;
   min-width: 0;
   padding: 1rem;
-  border: 1px solid #dfe4ec;
+  border: 1px solid var(--n-line-2, #dfe4ec);
   border-radius: 0.688rem;
-  background: #fff;
-  box-shadow: 0 0.375rem 1.125rem rgba(28, 35, 52, 0.035);
+  background: var(--n-surface, #fff);
+  box-shadow: 0 0.375rem 1.125rem var(--n-shadow-1, rgba(28, 35, 52, 0.035));
 }
 
 .reports-summary-icon {
@@ -137,49 +137,49 @@
   align-items: center;
   justify-content: center;
   border-radius: 0.562rem;
-  background: #f0edfa;
-  color: #443a9c;
+  background: var(--n-violet-bg, #f0edfa);
+  color: var(--n-violet-text, #443a9c);
   font-size: 1.005rem;
 }
 
 .reports-summary-card-green .reports-summary-icon {
-  background: #eaf4ee;
-  color: #2f6f4f;
+  background: var(--n-green-bg, #eaf4ee);
+  color: var(--n-green-text, #2f6f4f);
 }
 
 .reports-summary-card-blue .reports-summary-icon {
-  background: #eef3fb;
-  color: #4c65a9;
+  background: var(--n-blue-bg, #eef3fb);
+  color: var(--n-blue-text, #4c65a9);
 }
 
 .reports-summary-card-gold .reports-summary-icon {
-  background: #fbf5e4;
-  color: #9a6f08;
+  background: var(--n-amber-bg, #fbf5e4);
+  color: var(--n-amber-text, #9a6f08);
 }
 
 .reports-summary-card-teal .reports-summary-icon {
-  background: #edf6f5;
-  color: #377d7a;
+  background: var(--n-teal-bg, #edf6f5);
+  color: var(--n-teal-text, #377d7a);
 }
 
 .reports-summary-card-red .reports-summary-icon {
-  background: #fbf0f0;
-  color: #9f2f2f;
+  background: var(--n-red-bg, #fbf0f0);
+  color: var(--n-red-text, #9f2f2f);
 }
 
 .reports-summary-card-indigo .reports-summary-icon {
-  background: #f0effa;
-  color: #5a50a5;
+  background: var(--n-violet-bg, #f0effa);
+  color: var(--n-violet-text, #5a50a5);
 }
 
 .reports-summary-card-orange .reports-summary-icon {
-  background: #fbf1e8;
-  color: #a45f20;
+  background: var(--n-orange-bg, #fbf1e8);
+  color: var(--n-orange-text, #a45f20);
 }
 
 .reports-summary-card small {
   display: block;
-  color: #7b8290;
+  color: var(--n-text-3, #7b8290);
   font-size: 0.85rem;
   font-weight: 650;
   letter-spacing: 0.055em;
@@ -189,7 +189,7 @@
 .reports-summary-card strong {
   display: block;
   margin-top: 0.375rem;
-  color: #252936;
+  color: var(--n-text, #252936);
   font-size: 1.355rem;
   font-weight: 700;
   line-height: 1.05;
@@ -197,7 +197,7 @@
 
 .reports-summary-card p {
   margin: 0.375rem 0 0;
-  color: #858c9b;
+  color: var(--n-text-3, #858c9b);
   font-size: 0.905rem;
   line-height: 1.4;
 }
@@ -216,10 +216,10 @@
 .reports-panel {
   position: relative;
   padding: 0;
-  border: 1px solid #dfe4ec;
+  border: 1px solid var(--n-line-2, #dfe4ec);
   border-radius: 0.75rem;
-  background: #fff;
-  box-shadow: 0 0.375rem 1.125rem rgba(28, 35, 52, 0.035);
+  background: var(--n-surface, #fff);
+  box-shadow: 0 0.375rem 1.125rem var(--n-shadow-1, rgba(28, 35, 52, 0.035));
   overflow: visible;
 }
 
@@ -229,12 +229,12 @@
 
 .reports-panel-header {
   padding: 1.062rem 1.188rem;
-  border-bottom: 1px solid #edf0f4;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
 }
 
 .reports-panel-header h3 {
   margin: 0;
-  color: #252936;
+  color: var(--n-text, #252936);
   font-size: 1.083rem;
   font-weight: 700;
   letter-spacing: -0.015em;
@@ -243,7 +243,7 @@
 .reports-panel-header span {
   display: block;
   margin-top: 0.312rem;
-  color: #858c9b;
+  color: var(--n-text-3, #858c9b);
   font-size: 0.942rem;
   line-height: 1.45;
 }
@@ -265,7 +265,7 @@
   align-items: center;
   gap: 0.5rem;
   margin: 0 0 0.875rem;
-  color: #252936;
+  color: var(--n-text, #252936);
   font-size: 1.005rem;
   font-weight: 700;
 }
@@ -300,7 +300,7 @@
 
 .reports-bar-row-top strong {
   min-width: 0;
-  color: #303442;
+  color: var(--n-text, #303442);
   font-size: 0.955rem;
   font-weight: 650;
   overflow: hidden;
@@ -310,7 +310,7 @@
 
 .reports-bar-row-top span {
   flex: 0 0 auto;
-  color: #4f5564;
+  color: var(--n-text-2, #4f5564);
   font-size: 0.917rem;
   font-weight: 600;
   white-space: nowrap;
@@ -320,18 +320,18 @@
   height: 0.5rem;
   overflow: hidden;
   border-radius: 999px;
-  background: #edf0f4;
+  background: var(--n-surface-3, #edf0f4);
 }
 
 .reports-bar-track span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: #5142a5;
+  background: var(--n-accent-solid, #5142a5);
 }
 
 .reports-bar-row small {
-  color: #858c9b;
+  color: var(--n-text-3, #858c9b);
   font-size: 0.886rem;
 }
 
@@ -353,9 +353,9 @@
 
 .reports-table th {
   padding: 0.75rem 0.938rem;
-  border-bottom: 1px solid #dfe4ec;
-  background: #f6f7f9;
-  color: #565d6b;
+  border-bottom: 1px solid var(--n-line-2, #dfe4ec);
+  background: var(--n-page, #f6f7f9);
+  color: var(--n-text-2, #565d6b);
   text-align: left;
   font-size: 0.85rem;
   font-weight: 650;
@@ -366,8 +366,8 @@
 
 .reports-table td {
   padding: 0.875rem 0.938rem;
-  border-bottom: 1px solid #edf0f4;
-  color: #3f4351;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+  color: var(--n-text, #3f4351);
   font-size: 0.955rem;
   vertical-align: middle;
 }
@@ -378,7 +378,7 @@
 
 .reports-table td strong {
   display: block;
-  color: #303442;
+  color: var(--n-text, #303442);
   font-size: 0.967rem;
   font-weight: 650;
 }
@@ -430,14 +430,14 @@
   height: 0.438rem;
   overflow: hidden;
   border-radius: 999px;
-  background: #edf0f4;
+  background: var(--n-surface-3, #edf0f4);
 }
 
 .reports-mini-track span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: #5142a5;
+  background: var(--n-accent-solid, #5142a5);
 }
 
 .reports-housing-unknown {
@@ -448,8 +448,8 @@
   min-height: 1.625rem;
   padding: 0.25rem 0.562rem;
   border-radius: 999px;
-  background: #f3f1fa;
-  color: #675b9e;
+  background: var(--n-violet-bg, #f3f1fa);
+  color: var(--n-violet-text, #675b9e);
   font-size: 0.917rem;
   font-weight: 650;
 }
@@ -466,9 +466,9 @@
   gap: 1.125rem;
   margin: 1.125rem;
   padding: 1rem;
-  border: 1px solid #e2e7ee;
+  border: 1px solid var(--n-line-2, #e2e7ee);
   border-radius: 0.625rem;
-  background: #fbfcfd;
+  background: var(--n-surface-2, #fbfcfd);
 }
 
 .reports-retreat-pie-chart {
@@ -477,7 +477,7 @@
   display: grid;
   place-items: center;
   border-radius: 999px;
-  box-shadow: inset 0 0 0 1px rgba(28, 35, 52, 0.08);
+  box-shadow: inset 0 0 0 1px var(--n-shadow-2, rgba(28, 35, 52, 0.08));
 }
 
 .reports-retreat-pie-center {
@@ -488,20 +488,20 @@
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-  border: 1px solid #e2e7ee;
+  border: 1px solid var(--n-line-2, #e2e7ee);
   border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 0.375rem 0.875rem rgba(28, 35, 52, 0.08);
+  background: var(--n-surface, #fff);
+  box-shadow: 0 0.375rem 0.875rem var(--n-shadow-2, rgba(28, 35, 52, 0.08));
 }
 
 .reports-retreat-pie-center strong {
-  color: #252936;
+  color: var(--n-text, #252936);
   font-size: 1.289rem;
   font-weight: 700;
 }
 
 .reports-retreat-pie-center span {
-  color: #7f8796;
+  color: var(--n-text-3, #7f8796);
   font-size: 0.85rem;
   font-weight: 650;
   text-transform: uppercase;
@@ -533,7 +533,7 @@
 .reports-retreat-pie-legend-row strong {
   display: block;
   min-width: 0;
-  color: #252936;
+  color: var(--n-text, #252936);
   font-size: 0.917rem;
   font-weight: 650;
   overflow: hidden;
@@ -544,7 +544,7 @@
 .reports-retreat-pie-legend-row small {
   display: block;
   margin-top: 2px;
-  color: #7f8796;
+  color: var(--n-text-3, #7f8796);
   font-size: 0.867rem;
 }
 
@@ -557,9 +557,9 @@
   position: relative;
   margin: 0 1.125rem 1.125rem;
   padding: 0.875rem;
-  border: 1px solid #e2e7ee;
+  border: 1px solid var(--n-line-2, #e2e7ee);
   border-radius: 0.625rem;
-  background: #fbfcfd;
+  background: var(--n-surface-2, #fbfcfd);
   overflow: visible;
 }
 
@@ -573,7 +573,7 @@
 
 .reports-help-heading h4 {
   margin: 0;
-  color: #252936;
+  color: var(--n-text, #252936);
   font-size: 1.005rem;
   font-weight: 650;
 }
@@ -590,10 +590,10 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid #e0c878;
+  border: 1px solid var(--n-amber-text, #e0c878);
   border-radius: 999px;
-  background: #fbf5e4;
-  color: #8a6412;
+  background: var(--n-amber-bg, #fbf5e4);
+  color: var(--n-amber-text, #8a6412);
   cursor: pointer;
   list-style: none;
 }
@@ -604,9 +604,9 @@
 
 .reports-help-popover summary:hover,
 .reports-help-popover[open] summary {
-  background: #f4e7bd;
-  border-color: #d6b957;
-  color: #6f4f0d;
+  background: var(--n-amber-bg-2, #f4e7bd);
+  border-color: var(--n-amber-text, #d6b957);
+  color: var(--n-amber-text, #6f4f0d);
 }
 
 .reports-help-card {
@@ -616,11 +616,11 @@
   right: 0;
   z-index: 999;
   padding: 1rem;
-  border: 1px solid #dfe4ec;
+  border: 1px solid var(--n-line-2, #dfe4ec);
   border-radius: 0.625rem;
-  background: #fff;
-  color: #252936;
-  box-shadow: 0 1.125rem 2.812rem rgba(28, 35, 52, 0.16);
+  background: var(--n-surface, #fff);
+  color: var(--n-text, #252936);
+  box-shadow: 0 1.125rem 2.812rem var(--n-shadow-3, rgba(28, 35, 52, 0.16));
 }
 
 .reports-help-card > strong {
@@ -632,7 +632,7 @@
 
 .reports-help-card p {
   margin: 0 0 0.85rem;
-  color: #687083;
+  color: var(--n-text-3, #687083);
   font-size: 0.93rem;
   line-height: 1.5;
 }
@@ -645,14 +645,14 @@
 }
 
 .reports-help-card li {
-  color: #687083;
+  color: var(--n-text-3, #687083);
   font-size: 0.917rem;
   line-height: 1.45;
 }
 
 .reports-help-card li strong {
   display: block;
-  color: #252936;
+  color: var(--n-text, #252936);
   font-weight: 700;
 }
 
@@ -686,14 +686,14 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.5rem 0.75rem;
   padding: 0.812rem;
-  border: 1px solid #edf0f4;
+  border: 1px solid var(--n-line, #edf0f4);
   border-radius: 0.562rem;
-  background: #fbfcfd;
+  background: var(--n-surface-2, #fbfcfd);
 }
 
 .reports-quality-row strong {
   display: block;
-  color: #303442;
+  color: var(--n-text, #303442);
   font-size: 0.955rem;
   font-weight: 650;
 }
@@ -701,12 +701,12 @@
 .reports-quality-row span {
   display: block;
   margin-top: 0.188rem;
-  color: #858c9b;
+  color: var(--n-text-3, #858c9b);
   font-size: 0.905rem;
 }
 
 .reports-quality-row em {
-  color: #9f2f2f;
+  color: var(--n-red-text, #9f2f2f);
   font-size: 1.055rem;
   font-style: normal;
   font-weight: 700;
@@ -745,14 +745,14 @@
 .reports-camper-days-stat {
   min-width: 0;
   padding: 0.938rem;
-  border: 1px solid #e2e7ee;
+  border: 1px solid var(--n-line-2, #e2e7ee);
   border-radius: 0.625rem;
-  background: #fbfcfd;
+  background: var(--n-surface-2, #fbfcfd);
 }
 
 .reports-camper-days-stat small {
   display: block;
-  color: #7b8290;
+  color: var(--n-text-3, #7b8290);
   font-size: 0.85rem;
   font-weight: 650;
   letter-spacing: 0.055em;
@@ -762,7 +762,7 @@
 .reports-camper-days-stat strong {
   display: block;
   margin-top: 0.438rem;
-  color: #252936;
+  color: var(--n-text, #252936);
   font-size: 1.383rem;
   font-weight: 700;
   line-height: 1.1;
@@ -770,7 +770,7 @@
 
 .reports-camper-days-stat p {
   margin: 0.438rem 0 0;
-  color: #858c9b;
+  color: var(--n-text-3, #858c9b);
   font-size: 0.905rem;
   line-height: 1.45;
 }
@@ -793,9 +793,9 @@
 .reports-camper-days-trend {
   height: 100%;
   min-width: 0;
-  border: 1px solid #e2e7ee;
+  border: 1px solid var(--n-line-2, #e2e7ee);
   border-radius: 0.625rem;
-  background: #fff;
+  background: var(--n-surface, #fff);
   padding: 1.125rem;
 }
 
@@ -808,20 +808,20 @@
   align-items: center;
   gap: 0.5rem;
   margin: 0;
-  color: #252936;
+  color: var(--n-text, #252936);
   font-size: 1.023rem;
   font-weight: 700;
 }
 
 .reports-camper-days-section-heading h4 svg {
-  color: #5b52a4;
+  color: var(--n-violet-text, #5b52a4);
   font-size: 0.98rem;
 }
 
 .reports-camper-days-section-heading > div > span {
   display: block;
   margin-top: 0.312rem;
-  color: #858c9b;
+  color: var(--n-text-3, #858c9b);
   font-size: 0.917rem;
   line-height: 1.45;
 }
@@ -840,19 +840,19 @@
 
 .reports-camper-days-note {
   height: 100%;
-  border: 1px solid #dddff0;
+  border: 1px solid var(--n-violet-line, #dddff0);
   border-radius: 0.625rem;
   background: linear-gradient(
     180deg,
-    #fcfcff 0%,
-    #f7f5ff 100%
+    var(--n-surface-2, #fcfcff) 0%,
+    var(--n-violet-bg, #f7f5ff) 100%
   );
   padding: 1.125rem;
 }
 
 .reports-camper-days-note > small {
   display: block;
-  color: #6a60a4;
+  color: var(--n-violet-text, #6a60a4);
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -862,7 +862,7 @@
 .reports-camper-days-note > strong {
   display: block;
   margin-top: 0.5rem;
-  color: #252936;
+  color: var(--n-text, #252936);
   font-size: 1.036rem;
   font-weight: 700;
   line-height: 1.4;
@@ -870,7 +870,7 @@
 
 .reports-camper-days-note > p {
   margin: 0.5rem 0 0;
-  color: #6f7788;
+  color: var(--n-text-3, #6f7788);
   font-size: 0.93rem;
   line-height: 1.5;
 }
@@ -889,9 +889,9 @@
 
 .reports-camper-days-insight-card {
   min-width: 0;
-  border: 1px solid #e2e7ee;
+  border: 1px solid var(--n-line-2, #e2e7ee);
   border-radius: 0.625rem;
-  background: #fff;
+  background: var(--n-surface, #fff);
   padding: 1.125rem;
 }
 
@@ -902,7 +902,7 @@
 /* Give camper day bars a slightly distinct treatment */
 
 .reports-camper-days-panel .reports-bar-track span {
-  background: #5142a5;
+  background: var(--n-accent-solid, #5142a5);
 }
 
 
@@ -924,22 +924,22 @@
 .reports-empty-state {
   margin: 1.125rem;
   padding: 1.375rem;
-  border: 1px dashed #cfd6e1;
+  border: 1px dashed var(--n-line-3, #cfd6e1);
   border-radius: 0.562rem;
-  background: #fbfcfd;
+  background: var(--n-surface-2, #fbfcfd);
   text-align: center;
 }
 
 .reports-empty-state strong {
   display: block;
-  color: #303442;
+  color: var(--n-text, #303442);
   font-size: 1.017rem;
   font-weight: 650;
 }
 
 .reports-empty-state p {
   margin: 0.438rem 0 0;
-  color: #858c9b;
+  color: var(--n-text-3, #858c9b);
   font-size: 0.955rem;
 }
 

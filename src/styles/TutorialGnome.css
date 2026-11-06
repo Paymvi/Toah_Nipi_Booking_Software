@@ -9,14 +9,14 @@
 .tg-paused {
   --tg-green: #4e7c59;
   --tg-green-dark: #2f5d3a;
-  --tg-green-soft: #e7f0e9;
+  --tg-green-soft: var(--n-green-bg-2, #e7f0e9);
   --tg-red: #e4573f;
   --tg-accent: #f3b562;
-  --tg-cream: #fbf8f1;
-  --tg-ink: #22242a;
-  --tg-muted: #5b616e;
-  --tg-line: #e3e6ea;
-  --tg-shadow: 0 1.25rem 3rem rgba(28, 37, 31, 0.22), 0 0.25rem 0.75rem rgba(28, 37, 31, 0.1);
+  --tg-cream: var(--n-amber-bg, #fbf8f1);
+  --tg-ink: var(--n-text, #22242a);
+  --tg-muted: var(--n-text-2, #5b616e);
+  --tg-line: var(--n-line-2, #e3e6ea);
+  --tg-shadow: 0 1.25rem 3rem var(--n-shadow-3, rgba(28, 37, 31, 0.22)), 0 0.25rem 0.75rem var(--n-shadow-2, rgba(28, 37, 31, 0.1));
   font-family: inherit;
   color: var(--tg-ink);
 }
@@ -140,7 +140,7 @@
   padding: 0.45rem 0.85rem;
   border: 1px solid var(--tg-line);
   border-radius: 0.6rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
   color: var(--tg-ink);
   font-size: 0.98rem;
   font-weight: 600;
@@ -149,8 +149,8 @@
 }
 
 .tg-button:hover:not(:disabled, [aria-disabled="true"]) {
-  background: #f4f6f4;
-  border-color: #cfd6d1;
+  background: var(--n-surface-3, #f4f6f4);
+  border-color: var(--n-line-3, #cfd6d1);
 }
 
 .tg-button:disabled,
@@ -183,14 +183,14 @@
 }
 
 .tg-icon-button:hover {
-  background: #eef1ee;
+  background: var(--n-surface-3, #eef1ee);
   color: var(--tg-ink);
 }
 
 .tg-root :focus-visible,
 .tg-runner :focus-visible,
 .tg-paused :focus-visible {
-  outline: 3px solid var(--tg-green-dark);
+  outline: 3px solid var(--n-green-text, var(--tg-green-dark));
   outline-offset: 2px;
 }
 
@@ -210,15 +210,15 @@
   padding: 0;
   border: 1px solid #d6e3d9;
   border-radius: 999px;
-  background: radial-gradient(circle at 50% 40%, #f4f8f4 0%, var(--tg-green-soft) 70%);
-  box-shadow: 0 0.5rem 1.5rem rgba(28, 37, 31, 0.18);
+  background: radial-gradient(circle at 50% 40%, var(--n-page, #f4f8f4) 0%, var(--tg-green-soft) 70%);
+  box-shadow: 0 0.5rem 1.5rem var(--n-shadow-3, rgba(28, 37, 31, 0.18));
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
 .tg-launcher:hover,
 .tg-launcher-open {
   transform: translateY(-2px);
-  box-shadow: 0 0.75rem 1.75rem rgba(28, 37, 31, 0.24);
+  box-shadow: 0 0.75rem 1.75rem var(--n-shadow-3, rgba(28, 37, 31, 0.24));
 }
 
 /* The seated gnome sits on the bottom of the circle and its hat tip rises above it,
@@ -256,7 +256,7 @@
   padding: 0.7rem 0.9rem;
   border: 1px solid var(--tg-line);
   border-radius: 0.9rem 0.9rem 0.25rem 0.9rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
   box-shadow: var(--tg-shadow);
   font-size: 0.98rem;
   line-height: 1.4;
@@ -278,7 +278,7 @@
   max-height: min(42rem, calc(100vh - 8.5rem));
   border: 1px solid var(--tg-line);
   border-radius: 1.1rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
   box-shadow: var(--tg-shadow);
   overflow: hidden;
   transform-origin: bottom right;
@@ -345,8 +345,8 @@
 }
 
 .tg-search:focus-within {
-  border-color: var(--tg-green);
-  box-shadow: 0 0 0 3px rgba(78, 124, 89, 0.18);
+  border-color: var(--n-green-text, var(--tg-green));
+  box-shadow: 0 0 0 3px var(--n-green-ring, rgba(78, 124, 89, 0.18));
 }
 
 .tg-search input:focus-visible {
@@ -397,7 +397,7 @@
 }
 
 .tg-tutorial-item:hover {
-  background: #f3f6f3;
+  background: var(--n-surface-3, #f3f6f3);
 }
 
 .tg-tutorial-item span {
@@ -419,11 +419,11 @@
 
 .tg-tutorial-item > svg {
   flex: 0 0 auto;
-  color: #9aa1ab;
+  color: var(--n-text-3, #9aa1ab);
 }
 
 .tg-tutorial-item .tg-item-done {
-  color: var(--tg-green);
+  color: var(--n-green-text, var(--tg-green));
 }
 
 .tg-empty {
@@ -438,9 +438,9 @@
   align-items: center;
   margin-bottom: 0.9rem;
   padding: 0.75rem;
-  border: 1px solid #f2dfb8;
+  border: 1px solid var(--n-amber-line, #f2dfb8);
   border-radius: 0.8rem;
-  background: #fff9ec;
+  background: var(--n-amber-bg, #fff9ec);
 }
 
 .tg-resume-gnome {
@@ -469,7 +469,7 @@
   padding: 0.3rem 0;
   border: 0;
   background: transparent;
-  color: var(--tg-green-dark);
+  color: var(--n-green-text, var(--tg-green-dark));
   font-weight: 600;
 }
 
@@ -494,16 +494,16 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  color: var(--tg-green-dark);
+  color: var(--n-green-text, var(--tg-green-dark));
   font-weight: 600;
 }
 
 .tg-warning {
   padding: 0.6rem 0.75rem;
-  border: 1px solid #f0d9a8;
+  border: 1px solid var(--n-amber-line, #f0d9a8);
   border-radius: 0.6rem;
-  background: #fff8e8;
-  color: #6b4300;
+  background: var(--n-amber-bg, #fff8e8);
+  color: var(--n-orange-text, #6b4300);
   font-size: 0.95rem;
 }
 
@@ -520,21 +520,21 @@
   padding: 0.85rem 0.9rem;
   border: 1px solid var(--tg-line);
   border-radius: 0.8rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
   color: var(--tg-ink);
   text-align: left;
   transition: border-color 150ms ease, background-color 150ms ease;
 }
 
 .tg-mode-option:hover {
-  border-color: var(--tg-green);
-  background: #f5f9f6;
+  border-color: var(--n-green-text, var(--tg-green));
+  background: var(--n-surface-3, #f5f9f6);
 }
 
 .tg-mode-option > svg {
   flex: 0 0 auto;
   margin-top: 0.2rem;
-  color: var(--tg-green);
+  color: var(--n-green-text, var(--tg-green));
   font-size: 1.2rem;
 }
 
@@ -562,7 +562,7 @@
   padding: 1.25rem 1.25rem 1.1rem;
   border: 1px solid var(--tg-line);
   border-radius: 1.1rem;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
   box-shadow: var(--tg-shadow);
   text-align: center;
   animation: tg-panel-open 240ms ease-out;
@@ -633,28 +633,28 @@
 
 .tg-dim {
   inset: 0;
-  background: rgba(20, 26, 22, 0.42);
+  background: var(--n-scrim, rgba(20, 26, 22, 0.42));
 }
 
 .tg-spotlight {
   border-radius: 0.7rem;
   box-shadow:
     0 0 0 3px var(--tg-accent),
-    0 0 0 9px rgba(243, 181, 98, 0.28),
-    0 0 0 200vmax rgba(20, 26, 22, 0.48);
+    0 0 0 9px var(--n-orange-ring, rgba(243, 181, 98, 0.28)),
+    0 0 0 200vmax var(--n-shadow-3, rgba(20, 26, 22, 0.48));
   animation: tg-glow 2s ease-in-out infinite;
 }
 
 .tg-spotlight-success {
   box-shadow:
-    0 0 0 3px #62b27a,
-    0 0 0 9px rgba(98, 178, 122, 0.3),
-    0 0 0 200vmax rgba(20, 26, 22, 0.48);
+    0 0 0 3px var(--n-green-text, #62b27a),
+    0 0 0 9px var(--n-green-ring, rgba(98, 178, 122, 0.3)),
+    0 0 0 200vmax var(--n-shadow-3, rgba(20, 26, 22, 0.48));
 }
 
 @keyframes tg-glow {
   0%, 100% { outline: 0 solid transparent; }
-  50% { outline: 6px solid rgba(243, 181, 98, 0.22); outline-offset: 6px; }
+  50% { outline: 6px solid var(--n-orange-ring, rgba(243, 181, 98, 0.22)); outline-offset: 6px; }
 }
 
 .tg-is-moving .tg-spotlight {
@@ -714,7 +714,7 @@
   width: min(25rem, calc(100vw - 1.5rem));
   border: 1px solid var(--tg-line);
   border-radius: 1rem;
-  background: #ffffff;
+  background: var(--n-raised, #ffffff);
   box-shadow: var(--tg-shadow);
   outline: none;
 }
@@ -783,15 +783,15 @@
 }
 
 .tg-mode-chip-demo {
-  background: #fff1d9;
-  color: #7a4b00;
+  background: var(--n-orange-bg-2, #fff1d9);
+  color: var(--n-orange-text, #7a4b00);
 }
 
 .tg-progress {
   height: 0.25rem;
   margin: 0.25rem 0.85rem 0;
   border-radius: 999px;
-  background: #edf0ed;
+  background: var(--n-surface-3, #edf0ed);
   overflow: hidden;
 }
 
@@ -816,14 +816,14 @@
   display: grid;
   gap: 0.15rem;
   padding: 0.55rem 0.7rem;
-  border: 1px dashed #d9c49d;
+  border: 1px dashed var(--n-amber-text, #d9c49d);
   border-radius: 0.6rem;
-  background: #fffaf0;
+  background: var(--n-amber-bg, #fffaf0);
   font-weight: 600;
 }
 
 .tg-example span {
-  color: #7a4b00;
+  color: var(--n-orange-text, #7a4b00);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -839,13 +839,13 @@
   padding: 0.5rem 0.65rem;
   border-left: 3px solid var(--tg-accent);
   border-radius: 0.3rem;
-  background: #fff8e8;
-  color: #5a3b00;
+  background: var(--n-amber-bg, #fff8e8);
+  color: var(--n-amber-text, #5a3b00);
   font-size: 0.96rem;
 }
 
 .tg-success {
-  color: var(--tg-green-dark);
+  color: var(--n-green-text, var(--tg-green-dark));
   font-size: 1.2rem;
   font-weight: 700;
 }
@@ -858,7 +858,7 @@
   height: 0.2rem;
   margin: 0 0.95rem;
   border-radius: 999px;
-  background: #f4efe4;
+  background: var(--n-amber-bg-2, #f4efe4);
   overflow: hidden;
 }
 
@@ -902,7 +902,7 @@
   padding: 0.55rem 0.55rem 0.55rem 0.7rem;
   border: 1px solid var(--tg-line);
   border-radius: 999px;
-  background: #ffffff;
+  background: var(--n-surface, #ffffff);
   box-shadow: var(--tg-shadow);
   animation: tg-pop-in 200ms ease-out;
 }
@@ -994,7 +994,7 @@
   display: block;
   font-size: 0.82rem;
   font-weight: 600;
-  color: #5a6b5f;
+  color: var(--n-green-text, #5a6b5f);
 }
 
 .tg-choices {
@@ -1036,7 +1036,7 @@
 }
 
 .tg-topics summary:focus-visible {
-  outline: 2px solid #3f6f52;
+  outline: 2px solid var(--n-green-text, #3f6f52);
   outline-offset: 2px;
 }
 
