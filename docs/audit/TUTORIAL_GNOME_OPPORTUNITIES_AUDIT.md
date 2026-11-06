@@ -242,11 +242,11 @@ Five tutorials, about 4 to 7 days in total. None needs new engine work or fictio
 ### B. New tutorials
 
 #### N-01 · What needs my attention today?
-- **Teaches:** reading the Dashboard: the four metrics, Action Center, Upcoming Arrivals, Today at Camp, Quick Actions. Staff start each day here.
+- **Teaches:** reading the Dashboard: the four metrics, Today at Camp, Arrivals & On Site, Quick Actions, Action Center (collapsed by default, at the bottom). Staff start each day here.
 - **Audience:** general staff. **Priority:** High, it is the first screen and has no guidance.
 - **Screen and start:** Dashboard, from anywhere.
 - **Mode:** both.
-- **Steps:** open Dashboard → metrics → Action Center (each item opens a filtered list) → Upcoming Arrivals → Today at Camp → Quick Actions. **End state:** the person knows where to start each morning.
+- **Steps:** open Dashboard → metrics → Today at Camp → Arrivals & On Site → Quick Actions → Action Center (each item opens a filtered list). **End state:** the person knows where to start each morning.
 - **Demo data:** none. Text must not assume any item exists; "No groups are scheduled on site today" is a valid state.
 - **Prerequisites:** targets for the five areas and `nav-dashboard`.
 - **Overlap:** none. **Effort:** Small.

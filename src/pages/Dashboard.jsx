@@ -101,6 +101,14 @@ import BookingStaffAssignmentsTab from "../components/BookingStaffAssignmentsTab
 import DashboardTopbar from "../components/DashboardTopbar";
 import BookingCalendar from "../components/BookingCalendar";
 import DashboardBackups from "../components/DashboardBackups";
+import DashboardPeriodDialog from "../components/DashboardPeriodDialog";
+import {
+  DASHBOARD_PERIOD_STORAGE_KEY,
+  formatDashboardPeriodRange,
+  formatDashboardPeriodTitle,
+  getDashboardPeriodEnd,
+  parseDashboardPeriod,
+} from "../utils/dashboardPeriod";
 
 import CreateBooking from "../pages/CreateBooking";
 
@@ -1103,6 +1111,8 @@ function saveDashboardFilterValue(key, value) {
 
 const STAFF_USERS_STORAGE_KEY = "toahNipiStaffUsers";
 const CURRENT_STAFF_USER_STORAGE_KEY = "toahNipiCurrentStaffUserId";
+const DASHBOARD_ACTION_CENTER_STORAGE_KEY = "toahNipiDashboardActionCenter";
+const DASHBOARD_QUICK_ACTIONS_STORAGE_KEY = "toahNipiDashboardQuickActions";
 
 
 /*
@@ -7609,13 +7619,80 @@ function dashboardHomeBookingNeedsHousing(booking) {
   return getBookingLodgingAssignments(booking).length === 0;
 }
 
-function formatDashboardHomeDateTile(date) {
-  return {
-    month: date.toLocaleDateString("en-US", {
-      month: "short",
-    }),
-    day: date.getDate(),
-  };
+// Weekday in secondary text, such as "Fri, Nov 6".
+function DashboardHomeDate({ date }) {
+  return (
+    <span className="home-dashboard-date">
+      <span className="home-dashboard-weekday">
+        {date.toLocaleDateString("en-US", { weekday: "short" })},
+      </span>{" "}
+      {date.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+    </span>
+  );
+}
+
+function DashboardHomeScheduleRow({ booking, isArrival, onOpen }) {
+  const startDate = getDashboardHomeBookingDate(booking.startDate);
+  const endDate = getDashboardHomeBookingDate(booking.endDate);
+  const guestCount = getDashboardHomeGuestCount(booking);
+  const displayState = getBookingDisplayState(booking);
+  const buildingTags = getDashboardHomeBuildingTags(booking);
+
+  return (
+    <button
+      className="home-dashboard-schedule-row"
+      type="button"
+      onClick={() => onOpen(booking)}
+    >
+      <span className="home-dashboard-schedule-row-main">
+        <strong>
+          {isArrival && (
+            <FaSignInAlt
+              className="home-dashboard-arrival-icon"
+              role="img"
+              title="Arriving this day"
+            />
+          )}
+          {booking.organizationName || "Unnamed Organization"}
+        </strong>
+
+        <small>
+          <DashboardHomeDate date={startDate} />
+          {endDate && !isDashboardHomeSameDay(startDate, endDate) && (
+            <>
+              {" – "}
+              <DashboardHomeDate date={endDate} />
+            </>
+          )}
+          {" · "}
+          {guestCount > 0
+            ? `${guestCount} guest${guestCount === 1 ? "" : "s"}`
+            : "Guest count not recorded"}
+          {displayState.key !== "booked"
+            ? ` · ${displayState.label}`
+            : ""}
+        </small>
+      </span>
+
+      <span
+        className="home-dashboard-building-pills"
+        aria-label={`Lodging: ${buildingTags
+          .map((building) => building.label)
+          .join(", ")}`}
+      >
+        {buildingTags.map((building) => (
+          <span
+            className={`home-dashboard-building-pill home-dashboard-building-pill-${building.key}`}
+            key={building.key}
+          >
+            {building.label}
+          </span>
+        ))}
+      </span>
+
+      <FaChevronRight className="home-dashboard-row-arrow" />
+    </button>
+  );
 }
 
 
@@ -7888,6 +7965,51 @@ export default function Dashboard() {
 
   const [publicInquiries, setPublicInquiries] = useState([]);
   const [isBookingsLoading, setIsBookingsLoading] = useState(false);
+
+  const [isDashboardActionCenterExpanded, setIsDashboardActionCenterExpanded] =
+    useState(() =>
+      getSavedDashboardFilterValue(DASHBOARD_ACTION_CENTER_STORAGE_KEY) ===
+      "expanded"
+    );
+  const [isDashboardQuickActionsVisible, setIsDashboardQuickActionsVisible] =
+    useState(() =>
+      getSavedDashboardFilterValue(DASHBOARD_QUICK_ACTIONS_STORAGE_KEY) !==
+      "hidden"
+    );
+  const [dashboardSummaryPeriod, setDashboardSummaryPeriod] = useState(() =>
+    parseDashboardPeriod(
+      getSavedDashboardFilterValue(DASHBOARD_PERIOD_STORAGE_KEY),
+      getDashboardHomeDay()
+    )
+  );
+  const [isDashboardPeriodDialogOpen, setIsDashboardPeriodDialogOpen] =
+    useState(false);
+
+  const toggleDashboardActionCenter = () => {
+    const isExpanded = !isDashboardActionCenterExpanded;
+    setIsDashboardActionCenterExpanded(isExpanded);
+    saveDashboardFilterValue(
+      DASHBOARD_ACTION_CENTER_STORAGE_KEY,
+      isExpanded ? "expanded" : "collapsed"
+    );
+  };
+
+  const toggleDashboardQuickActions = () => {
+    const isVisible = !isDashboardQuickActionsVisible;
+    setIsDashboardQuickActionsVisible(isVisible);
+    saveDashboardFilterValue(
+      DASHBOARD_QUICK_ACTIONS_STORAGE_KEY,
+      isVisible ? "visible" : "hidden"
+    );
+  };
+
+  const saveDashboardSummaryPeriod = (period) => {
+    setDashboardSummaryPeriod(period);
+    saveDashboardFilterValue(
+      DASHBOARD_PERIOD_STORAGE_KEY,
+      JSON.stringify(period)
+    );
+  };
 
   const updateDatedInquirySetting = (settingName, value) => {
     setDatedInquirySettings((currentSettings) => ({
@@ -8935,11 +9057,16 @@ export default function Dashboard() {
   const dashboardSevenDaysOut =
     addDays(dashboardToday, 7);
 
-  const dashboardFourteenDaysOut =
-    addDays(dashboardToday, 14);
+  const dashboardPeriodEnd =
+    getDashboardPeriodEnd(
+      dashboardToday,
+      dashboardSummaryPeriod
+    );
 
-  const dashboardThirtyDaysOut =
-    addDays(dashboardToday, 30);
+  const dashboardPeriodTitle =
+    formatDashboardPeriodTitle(
+      dashboardSummaryPeriod
+    );
 
   const dashboardNinetyDaysOut =
     addDays(dashboardToday, 90);
@@ -9011,23 +9138,7 @@ export default function Dashboard() {
       }
     );
 
-  const dashboardUpcomingArrivals =
-    dashboardScheduledBookings
-      .filter((booking) => {
-        const startDate =
-          getDashboardHomeBookingDate(
-            booking.startDate
-          );
-
-        return (
-          startDate &&
-          startDate >= dashboardToday &&
-          startDate <= dashboardFourteenDaysOut
-        );
-      })
-      .slice(0, 7);
-
-  const dashboardUpcomingThirtyDays =
+  const dashboardUpcomingPeriod =
     dashboardScheduledBookings.filter(
       (booking) => {
         const startDate =
@@ -9038,13 +9149,13 @@ export default function Dashboard() {
         return (
           startDate &&
           startDate >= dashboardToday &&
-          startDate <= dashboardThirtyDaysOut
+          startDate <= dashboardPeriodEnd
         );
       }
     );
 
-  const dashboardUpcomingThirtyDayGuests =
-    dashboardUpcomingThirtyDays.reduce(
+  const dashboardUpcomingPeriodGuests =
+    dashboardUpcomingPeriod.reduce(
       (total, booking) =>
         total +
         getDashboardHomeGuestCount(
@@ -9210,6 +9321,9 @@ export default function Dashboard() {
       return {
         date,
         arrivals,
+        staying: onSite.filter(
+          (booking) => !arrivals.includes(booking)
+        ),
         onSite,
         guests: onSite.reduce(
           (total, booking) =>
@@ -10269,6 +10383,21 @@ export default function Dashboard() {
                   <FaCalendarAlt />
                   Open Calendar
                 </button>
+
+                <button
+                  className={`dev-mode-toggle home-dashboard-toggle ${
+                    isDashboardQuickActionsVisible ? "is-on" : ""
+                  }`}
+                  type="button"
+                  role="switch"
+                  aria-checked={isDashboardQuickActionsVisible}
+                  onClick={toggleDashboardQuickActions}
+                >
+                  <span className="dev-mode-toggle-track" aria-hidden="true">
+                    <span className="dev-mode-toggle-thumb" />
+                  </span>
+                  Quick Actions
+                </button>
               </div>
             </header>
 
@@ -10336,100 +10465,58 @@ export default function Dashboard() {
                 </span>
 
                 <div>
-                  <span>Next 30 Days</span>
+                  <span>{dashboardPeriodTitle}</span>
                   <strong>
-                    {dashboardUpcomingThirtyDays.length}
+                    {dashboardUpcomingPeriod.length}
                   </strong>
                   <p>
-                    {dashboardUpcomingThirtyDayGuests} expected guest
-                    {dashboardUpcomingThirtyDayGuests === 1
+                    {dashboardUpcomingPeriodGuests} expected guest
+                    {dashboardUpcomingPeriodGuests === 1
                       ? ""
                       : "s"}
                   </p>
+                  <p className="home-dashboard-metric-range">
+                    {formatDashboardPeriodRange(
+                      dashboardToday,
+                      dashboardPeriodEnd
+                    )}
+                  </p>
                 </div>
+
+                <button
+                  className="home-dashboard-metric-settings"
+                  type="button"
+                  title="Change time period"
+                  aria-label={`Change time period, currently ${dashboardPeriodTitle}`}
+                  aria-haspopup="dialog"
+                  onClick={() =>
+                    setIsDashboardPeriodDialogOpen(true)
+                  }
+                >
+                  <FaCog />
+                </button>
               </article>
             </section>
 
-            <section className="home-dashboard-main-grid">
+            {isDashboardPeriodDialogOpen && (
+              <DashboardPeriodDialog
+                period={dashboardSummaryPeriod}
+                start={dashboardToday}
+                onSave={saveDashboardSummaryPeriod}
+                onClose={() =>
+                  setIsDashboardPeriodDialogOpen(false)
+                }
+              />
+            )}
+
+            <section
+              className={`home-dashboard-main-grid ${
+                isDashboardQuickActionsVisible
+                  ? ""
+                  : "home-dashboard-main-grid-stacked"
+              }`}
+            >
               <div className="home-dashboard-column">
-                <article className="home-dashboard-card">
-                  <header className="home-dashboard-card-header">
-                    <div className="home-dashboard-card-heading">
-                      <span className="home-dashboard-card-icon home-dashboard-card-icon-gold">
-                        <FaExclamationTriangle />
-                      </span>
-
-                      <div>
-                        <span className="home-dashboard-section-label">
-                          Staff Focus
-                        </span>
-                        <h2>Action Center</h2>
-                        <p>
-                          The booking records most likely to need follow-up.
-                        </p>
-                      </div>
-                    </div>
-                  </header>
-
-                  {dashboardVisibleAttentionItems.length > 0 ? (
-                    <div className="home-dashboard-attention-list">
-                      {dashboardVisibleAttentionItems.map(
-                        (item) => {
-                          const Icon = item.icon;
-
-                          return (
-                            <button
-                              className={`home-dashboard-attention-item home-dashboard-attention-${item.tone}`}
-                              type="button"
-                              key={item.id}
-                              onClick={() =>
-                                handleActiveViewChange(
-                                  item.view
-                                )
-                              }
-                            >
-                              <span className="home-dashboard-attention-icon">
-                                <Icon />
-                              </span>
-
-                              <span className="home-dashboard-attention-copy">
-                                <strong>
-                                  {item.title}
-                                </strong>
-                                <small>
-                                  {item.description}
-                                </small>
-                              </span>
-
-                              <span className="home-dashboard-attention-count">
-                                {item.count}
-                              </span>
-
-                              <FaChevronRight className="home-dashboard-attention-arrow" />
-                            </button>
-                          );
-                        }
-                      )}
-                    </div>
-                  ) : (
-                    <div className="home-dashboard-all-clear">
-                      <span>
-                        <FaRegCalendarCheck />
-                      </span>
-
-                      <div>
-                        <strong>
-                          Nothing urgent is showing right now
-                        </strong>
-                        <p>
-                          Upcoming booking records have dates, housing,
-                          guest counts, and no outstanding contract flags.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </article>
-
                 <article className="home-dashboard-card">
                   <header className="home-dashboard-card-header home-dashboard-card-header-with-action">
                     <div className="home-dashboard-card-heading">
@@ -10439,136 +10526,114 @@ export default function Dashboard() {
 
                       <div>
                         <span className="home-dashboard-section-label">
-                          Coming Up
+                          Next 7 Days
                         </span>
-                        <h2>Upcoming Arrivals</h2>
-                        <p>
-                          Groups scheduled to arrive during the next two weeks.
-                        </p>
+                        <h2>Arrivals &amp; On Site</h2>
+
                       </div>
                     </div>
 
-                    <button
-                      className="home-dashboard-text-action"
-                      type="button"
-                      onClick={() =>
-                        handleActiveViewChange(
-                          "Calendar View"
-                        )
-                      }
-                    >
-                      View calendar
-                      <FaChevronRight />
-                    </button>
+                    <div className="home-dashboard-header-actions">
+                      <button
+                        className="home-dashboard-text-action"
+                        type="button"
+                        onClick={() =>
+                          handleActiveViewChange(
+                            "Calendar View"
+                          )
+                        }
+                      >
+                        View calendar
+                        <FaChevronRight />
+                      </button>
+
+                      <button
+                        className="home-dashboard-text-action"
+                        type="button"
+                        onClick={() =>
+                          handleActiveViewChange(
+                            "Lodging Calendar"
+                          )
+                        }
+                      >
+                        Check lodging
+                        <FaChevronRight />
+                      </button>
+                    </div>
                   </header>
 
-                  {dashboardUpcomingArrivals.length > 0 ? (
-                    <div className="home-dashboard-arrivals-list">
-                      {dashboardUpcomingArrivals.map(
-                        (booking) => {
-                          const startDate =
-                            getDashboardHomeBookingDate(
-                              booking.startDate
-                            );
+                  {dashboardWeekDays.some(
+                    (day) =>
+                      day.arrivals.length > 0 ||
+                      day.onSite.length > 0
+                  ) ? (
+                    <div className="home-dashboard-schedule">
+                      {dashboardWeekDays.map((day) => {
+                        const isToday =
+                          isDashboardHomeSameDay(
+                            day.date,
+                            dashboardToday
+                          );
 
-                          const dateTile =
-                            formatDashboardHomeDateTile(
-                              startDate
-                            );
+                        return (
+                          <section
+                            className={`home-dashboard-schedule-day ${
+                              isToday
+                                ? "home-dashboard-schedule-day-today"
+                                : ""
+                            }`}
+                            key={day.date.toISOString()}
+                          >
+                            <div className="home-dashboard-schedule-day-heading">
+                              <h3>
+                                <DashboardHomeDate date={day.date} />
+                              </h3>
 
-                          const guestCount =
-                            getDashboardHomeGuestCount(
-                              booking
-                            );
+                              {isToday && <small>Today</small>}
 
-                          const buildingTags =
-                            getDashboardHomeBuildingTags(
-                              booking
-                            );
-
-                          return (
-                            <button
-                              className="home-dashboard-arrival-row"
-                              type="button"
-                              key={booking.id}
-                              onClick={() =>
-                                openBookingDetail(
-                                  booking
-                                )
-                              }
-                            >
-                              <span className="home-dashboard-arrival-date">
-                                <small>
-                                  {dateTile.month}
-                                </small>
-                                <strong>
-                                  {dateTile.day}
-                                </strong>
-                              </span>
-
-                              <span className="home-dashboard-arrival-main">
-                                <strong>
-                                  {booking.organizationName ||
-                                    "Unnamed Organization"}
-                                </strong>
-
+                              <div className="home-dashboard-schedule-day-stats">
                                 <span>
-                                  {formatDateRange(
-                                    booking.startDate,
-                                    booking.endDate
-                                  )}
+                                  <FaSignInAlt />
+                                  {day.arrivals.length} arrival
+                                  {day.arrivals.length === 1 ? "" : "s"}
                                 </span>
 
-                                <small>
-                                  {guestCount > 0
-                                    ? `${guestCount} guest${
-                                        guestCount === 1
-                                          ? ""
-                                          : "s"
-                                      }`
-                                    : "Guest count not recorded"}
-                                  {getBookingDisplayState(booking).key !== "booked"
-                                    ? ` · ${getBookingDisplayState(booking).label}`
-                                    : ""}
-                                </small>
-                              </span>
+                                <span>
+                                  <FaHome />
+                                  {day.onSite.length} on site
+                                </span>
 
-                              <span
-                                className="home-dashboard-building-pills"
-                                aria-label={`Lodging: ${buildingTags
-                                  .map(
-                                    (building) =>
-                                      building.label
-                                  )
-                                  .join(", ")}`}
-                              >
-                                {buildingTags.map(
-                                  (building) => (
-                                    <span
-                                      className={`home-dashboard-building-pill home-dashboard-building-pill-${building.key}`}
-                                      key={
-                                        building.key
-                                      }
-                                    >
-                                      {
-                                        building.label
-                                      }
-                                    </span>
+                                <span>
+                                  <FaUsers />
+                                  {day.guests} recorded guest
+                                  {day.guests === 1 ? "" : "s"}
+                                </span>
+                              </div>
+                            </div>
+
+                            {day.onSite.length + day.arrivals.length > 0 && (
+                              <div className="home-dashboard-schedule-card">
+                                {[...day.arrivals, ...day.staying].map(
+                                  (booking) => (
+                                    <DashboardHomeScheduleRow
+                                      booking={booking}
+                                      isArrival={day.arrivals.includes(booking)}
+                                      onOpen={openBookingDetail}
+                                      key={booking.id}
+                                    />
                                   )
                                 )}
-                              </span>
-
-                              <FaChevronRight className="home-dashboard-row-arrow" />
-                            </button>
-                          );
-                        }
-                      )}
+                              </div>
+                            )}
+                          </section>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="home-dashboard-empty-state">
                       <FaCalendarAlt />
                       <strong>
-                        No arrivals in the next two weeks
+                        No arrivals or groups on site in the next 7 days
                       </strong>
                       <p>
                         Future groups will appear here automatically once they have dates.
@@ -10670,203 +10735,190 @@ export default function Dashboard() {
                         No groups are scheduled on site today
                       </strong>
                       <p>
-                        The next scheduled arrival will appear in the arrivals list.
+                        Arrivals in the next 7 days appear under Arrivals &amp; On Site.
                       </p>
                     </div>
                   )}
                 </article>
 
+                {isDashboardQuickActionsVisible && (
+                  <article className="home-dashboard-card">
+                    <header className="home-dashboard-card-header">
+                      <div className="home-dashboard-card-heading">
+                        <span className="home-dashboard-card-icon home-dashboard-card-icon-purple">
+                          <FaClock />
+                        </span>
+  
+                        <div>
+                          <span className="home-dashboard-section-label">
+                            Shortcuts
+                          </span>
+                          <h2>Quick Actions</h2>
+                          <p>
+                            Jump directly into common staff workflows.
+                          </p>
+                        </div>
+                      </div>
+                    </header>
+  
+                    <div className="home-dashboard-quick-actions">
+                      {dashboardQuickActions.map(
+                        (action) => {
+                          const Icon = action.icon;
+  
+                          return (
+                            <button
+                              className="home-dashboard-quick-action"
+                              type="button"
+                              key={action.label}
+                              onClick={() => {
+                                if (
+                                  action.view ===
+                                  "Form"
+                                ) {
+                                  setSelectedBooking(
+                                    null
+                                  );
+                                  setBookingFormSeed(
+                                    null
+                                  );
+                                  setGuestBookingSource(
+                                    null
+                                  );
+                                  setBookingDetailTab(
+                                    "Overview"
+                                  );
+                                  navigate("/form");
+                                  return;
+                                }
+  
+                                handleActiveViewChange(
+                                  action.view
+                                );
+                              }}
+                            >
+                              <span>
+                                <Icon />
+                              </span>
+  
+                              <div>
+                                <strong>
+                                  {action.label}
+                                </strong>
+                                <small>
+                                  {action.description}
+                                </small>
+                              </div>
+  
+                              <FaChevronRight />
+                            </button>
+                          );
+                        }
+                      )}
+                    </div>
+                  </article>
+                )}
+
                 <article className="home-dashboard-card">
-                  <header className="home-dashboard-card-header">
-                    <div className="home-dashboard-card-heading">
-                      <span className="home-dashboard-card-icon home-dashboard-card-icon-purple">
-                        <FaClock />
+                  <h2 className="home-dashboard-collapse-title">
+                    <button
+                      className="home-dashboard-card-heading home-dashboard-collapse-toggle"
+                      type="button"
+                      aria-expanded={isDashboardActionCenterExpanded}
+                      aria-controls="dashboard-action-center-panel"
+                      onClick={toggleDashboardActionCenter}
+                    >
+                      <span className="home-dashboard-card-icon home-dashboard-card-icon-gold">
+                        <FaExclamationTriangle />
                       </span>
 
-                      <div>
+                      <span className="home-dashboard-collapse-copy">
                         <span className="home-dashboard-section-label">
-                          Shortcuts
+                          Staff Focus
                         </span>
-                        <h2>Quick Actions</h2>
-                        <p>
-                          Jump directly into common staff workflows.
-                        </p>
+                        <strong>Action Center</strong>
+                        <small>
+                          {dashboardAttentionTotal === 0
+                            ? "Nothing needs attention"
+                            : dashboardAttentionTotal === 1
+                            ? "1 item needs attention"
+                            : `${dashboardAttentionTotal} items need attention`}
+                        </small>
+                      </span>
+
+                      <FaChevronDown className="home-dashboard-collapse-chevron" />
+                    </button>
+                  </h2>
+
+                  <div
+                    id="dashboard-action-center-panel"
+                    hidden={!isDashboardActionCenterExpanded}
+                  >
+                    <p className="home-dashboard-collapse-description">
+                      The booking records most likely to need follow-up.
+                    </p>
+
+                    {dashboardVisibleAttentionItems.length > 0 ? (
+                      <div className="home-dashboard-attention-list">
+                        {dashboardVisibleAttentionItems.map(
+                          (item) => {
+                            const Icon = item.icon;
+
+                            return (
+                              <button
+                                className={`home-dashboard-attention-item home-dashboard-attention-${item.tone}`}
+                                type="button"
+                                key={item.id}
+                                onClick={() =>
+                                  handleActiveViewChange(
+                                    item.view
+                                  )
+                                }
+                              >
+                                <span className="home-dashboard-attention-icon">
+                                  <Icon />
+                                </span>
+
+                                <span className="home-dashboard-attention-copy">
+                                  <strong>
+                                    {item.title}
+                                  </strong>
+                                  <small>
+                                    {item.description}
+                                  </small>
+                                </span>
+
+                                <span className="home-dashboard-attention-count">
+                                  {item.count}
+                                </span>
+
+                                <FaChevronRight className="home-dashboard-attention-arrow" />
+                              </button>
+                            );
+                          }
+                        )}
                       </div>
-                    </div>
-                  </header>
+                    ) : (
+                      <div className="home-dashboard-all-clear">
+                        <span>
+                          <FaRegCalendarCheck />
+                        </span>
 
-                  <div className="home-dashboard-quick-actions">
-                    {dashboardQuickActions.map(
-                      (action) => {
-                        const Icon = action.icon;
-
-                        return (
-                          <button
-                            className="home-dashboard-quick-action"
-                            type="button"
-                            key={action.label}
-                            onClick={() => {
-                              if (
-                                action.view ===
-                                "Form"
-                              ) {
-                                setSelectedBooking(
-                                  null
-                                );
-                                setBookingFormSeed(
-                                  null
-                                );
-                                setGuestBookingSource(
-                                  null
-                                );
-                                setBookingDetailTab(
-                                  "Overview"
-                                );
-                                navigate("/form");
-                                return;
-                              }
-
-                              handleActiveViewChange(
-                                action.view
-                              );
-                            }}
-                          >
-                            <span>
-                              <Icon />
-                            </span>
-
-                            <div>
-                              <strong>
-                                {action.label}
-                              </strong>
-                              <small>
-                                {action.description}
-                              </small>
-                            </div>
-
-                            <FaChevronRight />
-                          </button>
-                        );
-                      }
+                        <div>
+                          <strong>
+                            Nothing urgent is showing right now
+                          </strong>
+                          <p>
+                            Upcoming booking records have dates, housing,
+                            guest counts, and no outstanding contract flags.
+                          </p>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </article>
               </aside>
             </section>
-
-            <article className="home-dashboard-card home-dashboard-week-card">
-              <header className="home-dashboard-card-header home-dashboard-card-header-with-action">
-                <div className="home-dashboard-card-heading">
-                  <span className="home-dashboard-card-icon home-dashboard-card-icon-purple">
-                    <FaCalendarAlt />
-                  </span>
-
-                  <div>
-                    <span className="home-dashboard-section-label">
-                      Schedule
-                    </span>
-                    <h2>Next 7 Days</h2>
-                    <p>
-                      A compact look at arrivals and groups on site each day.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  className="home-dashboard-text-action"
-                  type="button"
-                  onClick={() =>
-                    handleActiveViewChange(
-                      "Lodging Calendar"
-                    )
-                  }
-                >
-                  Check lodging
-                  <FaChevronRight />
-                </button>
-              </header>
-
-              <div className="home-dashboard-week-strip">
-                {dashboardWeekDays.map(
-                  (day) => {
-                    const isToday =
-                      isDashboardHomeSameDay(
-                        day.date,
-                        dashboardToday
-                      );
-
-                    return (
-                      <div
-                        className={`home-dashboard-day-card ${
-                          isToday
-                            ? "home-dashboard-day-card-today"
-                            : ""
-                        }`}
-                        key={day.date.toISOString()}
-                      >
-                        <div className="home-dashboard-day-heading">
-                          <span>
-                            {day.date.toLocaleDateString(
-                              "en-US",
-                              {
-                                weekday: "short",
-                              }
-                            )}
-                          </span>
-
-                          <strong>
-                            {day.date.getDate()}
-                          </strong>
-
-                          {isToday && (
-                            <small>Today</small>
-                          )}
-                        </div>
-
-                        <div className="home-dashboard-day-stats">
-                          <div>
-                            <span>
-                              <FaSignInAlt />
-                            </span>
-                            <strong>
-                              {day.arrivals.length}
-                            </strong>
-                            <small>
-                              arrival
-                              {day.arrivals.length === 1
-                                ? ""
-                                : "s"}
-                            </small>
-                          </div>
-
-                          <div>
-                            <span>
-                              <FaHome />
-                            </span>
-                            <strong>
-                              {day.onSite.length}
-                            </strong>
-                            <small>
-                              on site
-                            </small>
-                          </div>
-                        </div>
-
-                        <div className="home-dashboard-day-guests">
-                          <FaUsers />
-                          <span>
-                            {day.guests} recorded guest
-                            {day.guests === 1
-                              ? ""
-                              : "s"}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  }
-                )}
-              </div>
-            </article>
           </section>
         )}
 
