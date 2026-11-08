@@ -145,6 +145,24 @@ export async function removePortalItem(client, { bookingId, item, removedBy = nu
   return { message: `Task removed.${fileNote}` };
 }
 
+/*
+  Online signing: link an upload task to the PDF the guest signs (or null
+  to turn online signing off for it). Earlier signatures are never touched;
+  a new link only affects future signing.
+*/
+export async function setPortalItemSignDocument(client, item, documentId) {
+  if (item.guestAction !== "upload_file") {
+    throw new Error("Only upload tasks can be signed online.");
+  }
+  const { data, error } = await client
+    .from("portal_checklist_items")
+    .update({ sign_document_id: documentId || null, last_changed_at: new Date().toISOString() })
+    .eq("id", item.id)
+    .select("id");
+  if (error) throw error;
+  return requireOneRow(data, CHANGED_MESSAGE);
+}
+
 // Staff-shared documents only; the stored file is left in Storage.
 export async function removePortalDocument(client, document) {
   if (document.uploadedByGuest) {

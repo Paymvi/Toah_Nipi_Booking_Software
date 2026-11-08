@@ -78,8 +78,27 @@ export function isPortalComplete(checklistItems = []) {
 export function portalItemHasGuestSubmission(item) {
   return Boolean(
     (item?.uploadedFileName && item?.uploadedFilePath) ||
-      String(item?.responseText || "").trim()
+      String(item?.responseText || "").trim() ||
+      item?.signatures?.length > 0
   );
+}
+
+/*
+  Online signing: staff link an upload task to one of the booking's
+  staff-shared PDFs. Only PDFs stored in Storage can be signed.
+*/
+export function getSignableDocuments(documents = []) {
+  return documents.filter(
+    (document) =>
+      !document.uploadedByGuest &&
+      document.storagePath &&
+      /\.pdf$/i.test(document.fileName || "")
+  );
+}
+
+export function isSigningOnForBooking(settings, bookingId) {
+  if (!settings) return false;
+  return Boolean(settings.enabled || (settings.testBookingIds || []).includes(String(bookingId)));
 }
 
 /*

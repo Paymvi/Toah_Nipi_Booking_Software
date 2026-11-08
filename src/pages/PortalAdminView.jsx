@@ -43,6 +43,8 @@ import {
   getDueDateWarning,
   getPortalBaseUrl,
   getPortalProgress,
+  getSignableDocuments,
+  isSigningOnForBooking,
   PORTAL_BASE_URL_MISSING_MESSAGE,
   portalItemHasGuestSubmission,
   sanitizePortalDocumentFileName,
@@ -54,6 +56,7 @@ import {
   removePortalItem,
   reopenPortalItem,
   requestPortalItemChanges,
+  setPortalItemSignDocument,
 } from "../services/portalCorrections";
 
 
@@ -198,6 +201,38 @@ function formatPortalUploadSize(bytes) {
   }
 
   return `${(numericBytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+
+const PORTAL_SIGNED_BUCKET = "portal-signed";
+
+// Staff open signed copies through their read-only storage access.
+async function openPortalSignedCopy(signature) {
+  try {
+    const { data, error } = await supabase.storage
+      .from(PORTAL_SIGNED_BUCKET)
+      .createSignedUrl(signature.signedPath, 10 * 60);
+    if (error) throw error;
+    if (!data?.signedUrl) throw new Error("Supabase did not return a file URL.");
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  } catch (error) {
+    console.error("Could not open the signed copy:", error);
+    alert("Could not open this signed copy. Please try again.");
+  }
+}
+
+// null when the signing migration has not been run (or settings cannot be read).
+async function fetchPortalSigningSettings() {
+  const { data, error } = await supabase
+    .from("portal_signing_settings")
+    .select("enabled, test_booking_ids, agreement_approved")
+    .maybeSingle();
+  if (error || !data) return null;
+  return {
+    enabled: Boolean(data.enabled),
+    testBookingIds: (data.test_booking_ids || []).map(String),
+    agreementApproved: Boolean(data.agreement_approved),
+  };
 }
 
 
@@ -474,6 +509,34 @@ function normalizePortalChecklistItem(item) {
     staffReviewNote: item.staff_review_note || "",
     lastChangedAt: item.last_changed_at || "",
     sortOrder: item.sort_order || 0,
+    signDocumentId: item.sign_document_id || "",
+    // Filled in by normalizePortalOverviewRecord, newest first.
+    signatures: [],
+  };
+}
+
+
+// Online signatures: read-only records written by the portal-sign function.
+function normalizePortalSignature(row) {
+  return {
+    id: row.id,
+    checklistItemId: row.checklist_item_id,
+    itemTitle: row.item_title || "",
+    documentTitle: row.document_title || "Document",
+    signerName: row.signer_name || "",
+    signerTitle: row.signer_title || "",
+    organizationName: row.organization_name || "",
+    signsForOrganization: Boolean(row.signs_for_organization),
+    signatureType: row.signature_type || "typed",
+    signedAt: row.signed_at || "",
+    agreementVersion: row.agreement_version || "",
+    agreementText: row.agreement_text || "",
+    authorityText: row.authority_text || "",
+    originalSha256: row.original_sha256 || "",
+    signedSha256: row.signed_sha256 || "",
+    originalPageCount: row.original_page_count || 0,
+    signedPath: row.signed_path || "",
+    originalPath: row.original_path || "",
   };
 }
 
@@ -484,6 +547,7 @@ function normalizePortalDocument(document) {
     title: document.title || "Untitled document",
     documentType: document.document_type || "Document",
     fileName: document.file_name || "",
+    storagePath: document.storage_path || "",
     note: document.note || "",
     status: document.status || "ready",
     uploadedByGuest: Boolean(document.uploaded_by_guest),
@@ -589,13 +653,22 @@ function isPortalEligibleBookingRow(row) {
 
 
 function normalizePortalOverviewRecord(row) {
+  const signatures = (Array.isArray(row.portal_signatures) ? row.portal_signatures : [])
+    .map(normalizePortalSignature)
+    .sort((a, b) => String(b.signedAt).localeCompare(String(a.signedAt)));
+
   const checklistItems =
     Array.isArray(
       row.portal_checklist_items
     )
       ? row.portal_checklist_items
           .map(
-            normalizePortalChecklistItem
+            (item) => ({
+              ...normalizePortalChecklistItem(item),
+              signatures: signatures.filter(
+                (signature) => signature.checklistItemId === item.id
+              ),
+            })
           )
           .sort(
             (a, b) =>
@@ -661,6 +734,7 @@ function normalizePortalOverviewRecord(row) {
 
     checklistItems,
     documents,
+    signatures,
     progress,
     guestUploads,
   };
@@ -680,6 +754,17 @@ function normalizePortalOverviewRecord(row) {
 const PORTAL_OVERVIEW_PAGE_SIZE = 1000;
 const PORTAL_OVERVIEW_MAX_PAGES = 1000;
 
+/*
+  Online signing columns exist only after the portal signing migration.
+  Until then the overview is read without them, so Portal Admin keeps
+  working and the signing controls stay hidden.
+*/
+let portalSigningColumnsAvailable = true;
+
+function isMissingSigningSchema(error) {
+  return ["42703", "42P01", "PGRST200", "PGRST204", "PGRST205"].includes(error?.code);
+}
+
 async function fetchPortalOverviewRecords() {
   const rows = [];
 
@@ -688,13 +773,19 @@ async function fetchPortalOverviewRecords() {
     page < PORTAL_OVERVIEW_MAX_PAGES;
     page += 1
   ) {
-    const {
+    let {
       data,
       error,
     } =
       await fetchPortalOverviewPage(
-        rows.length
+        rows.length,
+        portalSigningColumnsAvailable
       );
+
+    if (error && portalSigningColumnsAvailable && isMissingSigningSchema(error)) {
+      portalSigningColumnsAvailable = false;
+      ({ data, error } = await fetchPortalOverviewPage(rows.length, false));
+    }
 
     if (error) {
       throw error;
@@ -726,8 +817,30 @@ async function fetchPortalOverviewRecords() {
 }
 
 
+const PORTAL_SIGNATURE_COLUMNS = `
+  id,
+  checklist_item_id,
+  item_title,
+  document_title,
+  signer_name,
+  signer_title,
+  organization_name,
+  signs_for_organization,
+  signature_type,
+  signed_at,
+  agreement_version,
+  agreement_text,
+  authority_text,
+  original_sha256,
+  signed_sha256,
+  original_page_count,
+  signed_path,
+  original_path
+`;
+
 function fetchPortalOverviewPage(
-  offset
+  offset,
+  withSigning = false
 ) {
   return supabase
       .from("bookings")
@@ -761,7 +874,7 @@ function fetchPortalOverviewPage(
           uploaded_file_size,
           response_text,
           last_changed_at,
-          sort_order
+          sort_order${withSigning ? ",\n          sign_document_id" : ""}
         ),
         portal_documents (
           id,
@@ -772,8 +885,8 @@ function fetchPortalOverviewPage(
           status,
           uploaded_by_guest,
           last_changed_at,
-          created_at
-        )
+          created_at${withSigning ? ",\n          storage_path" : ""}
+        )${withSigning ? `,\n        portal_signatures (${PORTAL_SIGNATURE_COLUMNS})` : ""}
       `)
       .order(
         "start_date",
@@ -1116,7 +1229,44 @@ const CORRECT_TARGETS = {
 };
 
 
-function PortalItemCorrections({ item, onCorrectItem }) {
+function PortalSignDocumentChoice({ item, signing, onCorrectItem }) {
+  const [documentId, setDocumentId] = useState(item.signDocumentId || "");
+  const choices = signing.documents;
+  const current = item.signDocumentId || "";
+  const linkedMissing = current && !choices.some((document) => document.id === current);
+
+  return (
+    <div className="portal-sign-choice">
+      <label>
+        <span>Sign online with</span>
+        <select value={documentId} onChange={(event) => setDocumentId(event.target.value)}>
+          <option value="">Off (paper upload only)</option>
+          {linkedMissing && <option value={current}>Document no longer shared</option>}
+          {choices.map((document) => (
+            <option key={document.id} value={document.id}>
+              {document.title} ({document.fileName})
+            </option>
+          ))}
+        </select>
+      </label>
+      {choices.length === 0 && (
+        <small>Upload the PDF under Assign Documents (custom upload) first. Only PDFs can be signed online.</small>
+      )}
+      <small>Paper upload stays available either way. Changing this never affects copies already signed.</small>
+      <button
+        className="secondary-dashboard-button"
+        type="button"
+        disabled={documentId === current}
+        onClick={() => onCorrectItem(item, "signDocument", { documentId })}
+      >
+        Save signing choice
+      </button>
+    </div>
+  );
+}
+
+
+function PortalItemCorrections({ item, onCorrectItem, signing }) {
   const [dueDate, setDueDate] = useState(item.dueDate || "");
   const [note, setNote] = useState("");
 
@@ -1125,6 +1275,10 @@ function PortalItemCorrections({ item, onCorrectItem }) {
       <summary data-tutorial-target={CORRECT_TARGETS[item.status] || "portal-correct"}>Correct…</summary>
 
       <div className="portal-item-corrections-body">
+        {signing?.available && item.guestAction === "upload_file" && (
+          <PortalSignDocumentChoice item={item} signing={signing} onCorrectItem={onCorrectItem} />
+        )}
+
         <label>
           <span>Due date</span>
           <input
@@ -1197,13 +1351,69 @@ function PortalItemCorrections({ item, onCorrectItem }) {
 }
 
 
+function formatSignedAtLabel(value) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? String(value || "")
+    : date.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+
+function PortalSignatureDetails({ signatures }) {
+  const [latest, ...earlier] = signatures;
+
+  return (
+    <div className="portal-signature-details">
+      <dl>
+        <div><dt>Signed by</dt><dd>{latest.signerName}</dd></div>
+        {latest.signerTitle && <div><dt>Title or role</dt><dd>{latest.signerTitle}</dd></div>}
+        {latest.organizationName && (
+          <div>
+            <dt>{latest.signsForOrganization ? "Signing on behalf of" : "Organization"}</dt>
+            <dd>{latest.organizationName}</dd>
+          </div>
+        )}
+        <div><dt>Signature</dt><dd>{latest.signatureType === "drawn" ? "Drawn" : "Typed"}</dd></div>
+        <div><dt>Signed</dt><dd>{formatSignedAtLabel(latest.signedAt)}</dd></div>
+        <div><dt>Document</dt><dd>{latest.documentTitle} ({latest.originalPageCount} pages + signature page)</dd></div>
+        <div><dt>Wording</dt><dd>“{latest.agreementText}”{latest.authorityText ? ` “${latest.authorityText}”` : ""} <small>({latest.agreementVersion})</small></dd></div>
+        <div><dt>Original fingerprint</dt><dd><code>{latest.originalSha256}</code></dd></div>
+        <div><dt>Signed copy fingerprint</dt><dd><code>{latest.signedSha256}</code></dd></div>
+      </dl>
+      <p className="portal-signature-note">
+        Details are as the signer entered them. The portal link is shared within the group, so the signer&apos;s identity is not verified. Review them as you would a paper copy.
+      </p>
+      {earlier.length > 0 && (
+        <div className="portal-signature-earlier">
+          <strong>Earlier signed copies (kept)</strong>
+          {earlier.map((signature) => (
+            <div key={signature.id}>
+              <span>
+                {signature.documentTitle} · {signature.signerName} · {formatSignedAtLabel(signature.signedAt)}
+              </span>
+              <button className="portal-checklist-file-button" type="button" onClick={() => openPortalSignedCopy(signature)}>
+                <FaExternalLinkAlt />
+                Open
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 function PortalChecklistPreview({
   items,
   isDemo,
   confirmingItemId,
   onConfirmItem,
   onCorrectItem,
+  signing = null,
+  orphanSignatures = [],
 }) {
+  const [signatureItemId, setSignatureItemId] = useState("");
   const [
     isExpanded,
     setIsExpanded,
@@ -1233,13 +1443,34 @@ function PortalChecklistPreview({
   );
 
 
+  // Signed copies whose task was later removed are still listed for staff.
+  const orphanList = orphanSignatures.length > 0 && (
+    <div className="portal-signature-orphans">
+      <strong>Signed online (task since removed, record kept)</strong>
+      {orphanSignatures.map((signature) => (
+        <div key={signature.id}>
+          <span>
+            {signature.itemTitle}: {signature.documentTitle} · {signature.signerName} · {formatSignedAtLabel(signature.signedAt)}
+          </span>
+          <button className="portal-checklist-file-button" type="button" onClick={() => openPortalSignedCopy(signature)}>
+            <FaExternalLinkAlt />
+            Open
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+
   if (
     items.length === 0
   ) {
     return (
-      <div className="portal-checklist-preview-empty" data-tutorial-target="portal-checklist-empty">
-        No portal checklist items yet.
-      </div>
+      <>
+        <div className="portal-checklist-preview-empty" data-tutorial-target="portal-checklist-empty">
+          No portal checklist items yet.
+        </div>
+        {orphanList}
+      </>
     );
   }
 
@@ -1292,6 +1523,13 @@ function PortalChecklistPreview({
               item.uploadedFileSize
             );
 
+          const signatures = item.signatures || [];
+          const latestSignature = signatures[0];
+          const isSignatureOpen = signatureItemId === item.id;
+          const signDocument = item.signDocumentId
+            ? signing?.allDocuments?.find((document) => document.id === item.signDocumentId)
+            : null;
+
           const canConfirm =
             item.status ===
               "needsReview" &&
@@ -1301,7 +1539,8 @@ function PortalChecklistPreview({
             ) &&
             (
               !requiresUpload ||
-              hasUpload
+              hasUpload ||
+              Boolean(latestSignature)
             );
 
           return (
@@ -1341,6 +1580,7 @@ function PortalChecklistPreview({
 
                   {item.uploadedFileName && (
                     <span className="portal-checklist-upload-name">
+                      {item.signDocumentId || latestSignature ? "Paper copy uploaded: " : ""}
                       {item.uploadedFileName}
 
                       {uploadSizeLabel
@@ -1348,9 +1588,43 @@ function PortalChecklistPreview({
                         : ""}
                     </span>
                   )}
+
+                  {latestSignature && (
+                    <span className="portal-checklist-signed-name">
+                      Signed online by {latestSignature.signerName} · {formatSignedAtLabel(latestSignature.signedAt)}
+                      {signatures.length > 1 ? ` · ${signatures.length - 1} earlier signed cop${signatures.length === 2 ? "y" : "ies"} kept` : ""}
+                    </span>
+                  )}
+
+                  {signing?.available && item.signDocumentId && (
+                    <span className="portal-checklist-sign-chip">
+                      Sign online: {signDocument?.title || "document no longer shared"}
+                      {!signing.isOn ? " · off for guests" : ""}
+                    </span>
+                  )}
                 </div>
 
                 <div className="portal-checklist-preview-actions">
+                  {latestSignature && (
+                    <button
+                      className="portal-checklist-file-button"
+                      type="button"
+                      onClick={() => openPortalSignedCopy(latestSignature)}
+                    >
+                      <FaExternalLinkAlt />
+                      Open Signed PDF
+                    </button>
+                  )}
+                  {latestSignature && (
+                    <button
+                      className="portal-checklist-info-button"
+                      type="button"
+                      aria-expanded={isSignatureOpen}
+                      onClick={() => setSignatureItemId((current) => (current === item.id ? "" : item.id))}
+                    >
+                      {isSignatureOpen ? "Hide Signing Details" : "Signing Details"}
+                    </button>
+                  )}
                   {hasUpload && (
                     <button
                       className="portal-checklist-file-button"
@@ -1426,7 +1700,8 @@ function PortalChecklistPreview({
                   {requiresUpload &&
                     item.status ===
                       "needsReview" &&
-                    !hasUpload && (
+                    !hasUpload &&
+                    !latestSignature && (
                     <span className="portal-checklist-missing-label">
                       Missing upload
                     </span>
@@ -1442,10 +1717,14 @@ function PortalChecklistPreview({
                     <PortalItemCorrections
                       item={item}
                       onCorrectItem={onCorrectItem}
+                      signing={signing}
                     />
                   )}
                 </div>
               </div>
+              {latestSignature && isSignatureOpen && (
+                <PortalSignatureDetails signatures={signatures} />
+              )}
               {item.staffReviewNote &&
                 item.status === "waitingOnGuest" && (
                 <p className="portal-item-review-note" data-tutorial-target="portal-item-sent-back">
@@ -1494,6 +1773,7 @@ function PortalChecklistPreview({
         }
       )}
 
+      {orphanList}
 
       {items.length >
         5 && (
@@ -3089,12 +3369,27 @@ function PortalRecordCard({
     onUploadCustomDocument,
   emailAdmin,
   emailApi,
+  signingAvailable = false,
+  signingSettings = null,
 }) {
   const [
     openManager,
     setOpenManager,
   ] =
     useState("");
+
+  const signing = signingAvailable
+    ? {
+        available: true,
+        isOn: isSigningOnForBooking(signingSettings, record.id),
+        documents: getSignableDocuments(record.documents),
+        allDocuments: record.documents,
+      }
+    : null;
+
+  const orphanSignatures = (record.signatures || []).filter(
+    (signature) => !record.checklistItems.some((item) => item.id === signature.checklistItemId)
+  );
 
   const portalStatusLabel =
     getPortalStatusLabel(
@@ -3246,6 +3541,8 @@ function PortalRecordCard({
                 payload
               )
           }
+          signing={signing}
+          orphanSignatures={orphanSignatures}
         />
       </div>
 
@@ -3605,6 +3902,10 @@ function PortalAdminScreen({
   const latestLoadRequestRef =
     useRef(0);
 
+  // Online signing: hidden until the signing migration has been run.
+  const [signingAvailable, setSigningAvailable] = useState(false);
+  const [signingSettings, setSigningSettings] = useState(null);
+
   // Portal email settings; { missing: true } until the migration is run.
   const [loadedEmailAdmin, setEmailAdmin] = useState(null);
   const emailAdmin = demo?.emailAdmin ?? loadedEmailAdmin;
@@ -3636,8 +3937,11 @@ function PortalAdminScreen({
         ""
       );
 
-      const records =
-        await fetchPortalOverviewRecords();
+      const [records, settings] =
+        await Promise.all([
+          fetchPortalOverviewRecords(),
+          fetchPortalSigningSettings(),
+        ]);
 
       if (
         requestId !==
@@ -3649,6 +3953,8 @@ function PortalAdminScreen({
       setPortalRecords(
         records
       );
+      setSigningAvailable(portalSigningColumnsAvailable && Boolean(settings));
+      setSigningSettings(settings);
     } catch (error) {
       if (
         requestId !==
@@ -4084,6 +4390,8 @@ function PortalAdminScreen({
         }
       } else if (action === "reopen") {
         await reopenPortalItem(supabase, item);
+      } else if (action === "signDocument") {
+        await setPortalItemSignDocument(supabase, item, payload.documentId);
       } else if (action === "remove") {
         if (
           !window.confirm(
@@ -4646,6 +4954,8 @@ function PortalAdminScreen({
               }
               emailAdmin={emailAdmin}
               emailApi={demo ? portalDemoEmailApi : undefined}
+              signingAvailable={!demo && signingAvailable}
+              signingSettings={signingSettings}
               />
             )
           )}

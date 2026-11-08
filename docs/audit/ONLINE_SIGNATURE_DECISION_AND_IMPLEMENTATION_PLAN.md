@@ -1,6 +1,6 @@
 # Online Signing in the Guest Portal: Plan
 
-**Status: plan for review only. Nothing is built, deployed, purchased or sent.**
+**Status (2026-11-08): version 1 is built and tested locally, not deployed, and off for every booking.** Setup, tests, deployment and the activation checklist: [docs/portal-signing/SETUP.md](../portal-signing/SETUP.md). Nothing has been purchased or sent.
 
 - **Revised:** 2026-11-07, to a much smaller scope.
 - **Earlier version:** the previous, larger plan is kept unchanged at [archive/ONLINE_SIGNATURE_DECISION_AND_IMPLEMENTATION_PLAN_v1_detailed_2026-11-07.md](archive/ONLINE_SIGNATURE_DECISION_AND_IMPLEMENTATION_PLAN_v1_detailed_2026-11-07.md).

@@ -1,5 +1,6 @@
 import { supabase } from "../lib/supabaseClient";
 import {
+  countLiveSignatures as countLiveSignaturesWithClient,
   fetchBackupSections as fetchSectionsWithClient,
   restoreBookingRows as restoreBookingRowsWithClient,
   restorePortalSnapshot as restorePortalSnapshotWithClient,
@@ -19,6 +20,10 @@ export function restoreBookingRows(bookings, liveIds, options = {}) {
 
 export function restoreSupportingSections(sections) {
   return restoreSupportingSectionsWithClient(sections, { client: supabase });
+}
+
+export function countLiveSignatures() {
+  return countLiveSignaturesWithClient(supabase);
 }
 
 export function restorePortalSnapshot(snapshot, bookingIds) {

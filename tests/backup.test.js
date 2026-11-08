@@ -45,23 +45,27 @@ test("existing version 1 backups (Apps Script format) still validate and verify"
   assert.equal((await verifyBackupIntegrity(backup, sha)).ok, false);
 });
 
-test("version 2 backups cover every section and detect tampering in any of them", async () => {
-  const backup = await createBackupEnvelope(
-    {
-      bookings: [{ id: "b1", portalToken: "tok1", createdAt: "2026-01-01T00:00:00+00:00" }],
-      guestInquiries: [{ id: "gi1", status: "converted", converted_booking_id: "b1" }],
-      portalChecklistItems: [{ id: 10, booking_id: "b1", item_id: "contract", uploaded_file_path: "tok1/contract.pdf" }],
-      portalDocuments: [{ id: 20, booking_id: "b1", file_name: "map.pdf", uploaded_by_guest: false }],
-      storageManifest: [{ path: "tok1/contract.pdf" }],
-    },
-    { hash: sha, createdAt: "2026-10-28T00:00:00.000Z" }
-  );
-  assert.equal(backup.schemaVersion, 2);
+test("version 3 backups cover every section and detect tampering in any of them", async () => {
+  const sections = {
+    bookings: [{ id: "b1", portalToken: "tok1", createdAt: "2026-01-01T00:00:00+00:00" }],
+    guestInquiries: [{ id: "gi1", status: "converted", converted_booking_id: "b1" }],
+    portalChecklistItems: [{ id: 10, booking_id: "b1", item_id: "contract", uploaded_file_path: "tok1/contract.pdf" }],
+    portalDocuments: [{ id: 20, booking_id: "b1", file_name: "map.pdf", uploaded_by_guest: false }],
+    portalSignatures: [{ id: "s1", booking_id: "b1", signer_name: "Fictional Signer" }],
+    storageManifest: [{ path: "tok1/contract.pdf" }],
+  };
+  const backup = await createBackupEnvelope(sections, { hash: sha, createdAt: "2026-10-28T00:00:00.000Z" });
+  assert.equal(backup.schemaVersion, 3);
+  assert.equal(backup.summary.portalSignatureCount, 1);
   assert.deepEqual(validateBackupShape(backup).errors, []);
   assert.equal((await verifyBackupIntegrity(backup, sha)).ok, true);
 
   backup.payload.portalChecklistItems[0].status = "completed";
   assert.equal((await verifyBackupIntegrity(backup, sha)).ok, false);
+
+  const signed = await createBackupEnvelope(sections, { hash: sha });
+  signed.payload.portalSignatures[0].signer_name = "Someone Else";
+  assert.equal((await verifyBackupIntegrity(signed, sha)).ok, false);
 });
 
 test("unreadable sections are named, not silently dropped", async () => {
@@ -205,7 +209,8 @@ test("portal and inquiry rows are restored only when missing, with their links i
   assert.equal(client.tables.portal_documents[0].booking_id, "b1");
 
   const order = client.calls.filter((call) => call.op === "upsert").map((call) => call.table);
-  assert.deepEqual(order, ["guest_inquiries", "portal_checklist_items", "portal_documents"]);
+  // Documents before tasks: a task can point at the document it is signed with (sign_document_id).
+  assert.deepEqual(order, ["guest_inquiries", "portal_documents", "portal_checklist_items"]);
 });
 
 /*

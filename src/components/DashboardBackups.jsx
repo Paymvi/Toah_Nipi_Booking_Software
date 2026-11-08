@@ -21,6 +21,7 @@ import {
   fetchBookings,
 } from "../services/bookingService";
 import {
+  countLiveSignatures,
   fetchBackupSections,
   restoreBookingRows,
   restorePortalSnapshot,
@@ -35,6 +36,7 @@ import {
   verifyBackupIntegrity,
 } from "../utils/backupFormat";
 import { getSavedBackupView, saveBackupView } from "../utils/backupView";
+import SignedDocumentsBackup from "./SignedDocumentsBackup";
 
 const LAST_BACKUP_STORAGE_KEY = "toahNipiLastManualBackup";
 const MAX_BACKUP_FILE_BYTES = 25 * 1024 * 1024;
@@ -567,6 +569,15 @@ export default function DashboardBackups({
       originalBookings = await fetchBookings();
 
       if (restoreMode === "replace") {
+        // Signed records are kept permanently and their bookings cannot be deleted.
+        const signatureCount = await countLiveSignatures();
+        if (signatureCount > 0) {
+          throw new Error(
+            `Full Replace was not started. This database has ${signatureCount} online signing record${signatureCount === 1 ? "" : "s"}, ` +
+              "which are kept permanently, so its bookings cannot all be deleted. Use Merge instead. Nothing was changed."
+          );
+        }
+
         setRestoreProgress({
           current: 0,
           total: bookingsToRestore.length,
@@ -706,6 +717,7 @@ export default function DashboardBackups({
       const supportingSummary = supportingResults
         ? " " +
           ["guestInquiries", "portalChecklistItems", "portalDocuments"]
+            .concat(selectedBackup.schemaVersion >= 3 ? ["portalSignatures"] : [])
             .map((key) => {
               const label = BACKUP_SECTIONS.find((section) => section.key === key)?.label;
               const result = supportingResults[key];
@@ -1453,8 +1465,8 @@ export default function DashboardBackups({
                           <strong>Full Replace</strong>
                           <p>
                             {isMinimal
-                              ? "Deletes every current booking, then restores the backup. Linked portal tasks and documents may be lost. Uploaded files are never restored."
-                              : "Deletes every current booking, then restores the backup. Portal tasks and documents linked to deleted bookings may be deleted or orphaned by the database, and uploaded files are never restored."}
+                              ? "Deletes every current booking, then restores the backup. Linked portal tasks and documents may be lost. Uploaded files are never restored. Not available once documents have been signed online."
+                              : "Deletes every current booking, then restores the backup. Portal tasks and documents linked to deleted bookings may be deleted or orphaned by the database, and uploaded files are never restored. Not available once documents have been signed online (use Merge)."}
                           </p>
 
                                                     <em>
@@ -1573,6 +1585,8 @@ export default function DashboardBackups({
           </div>
         )}
       </section>
+
+      <SignedDocumentsBackup disabled={isRestoring} />
 
       {isMinimal ? (
         <section className="backup-disclosure-list">

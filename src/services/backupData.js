@@ -36,14 +36,20 @@ async function fetchAllRows(table, client) {
   throw new Error(`Stopped reading ${table} after ${MAX_PAGES} pages; the backup would be incomplete.`);
 }
 
+// The table does not exist yet (online signing migration not run).
+export function isMissingTable(error) {
+  return ["42P01", "PGRST205"].includes(error?.code);
+}
+
 export async function fetchBackupSections({ client, fetchBookings }) {
   const sectionErrors = {};
   const bookings = await fetchBookings();
 
-  const readOptional = async (key, table) => {
+  const readOptional = async (key, table, { missingIsEmpty = false } = {}) => {
     try {
       return await fetchAllRows(table, client);
     } catch (error) {
+      if (missingIsEmpty && isMissingTable(error)) return [];
       sectionErrors[key] = error?.message || String(error);
       return [];
     }
@@ -52,12 +58,48 @@ export async function fetchBackupSections({ client, fetchBookings }) {
   const guestInquiries = await readOptional("guestInquiries", "guest_inquiries");
   const portalChecklistItems = await readOptional("portalChecklistItems", "portal_checklist_items");
   const portalDocuments = await readOptional("portalDocuments", "portal_documents");
-  const storageManifest = buildStorageManifest({ portalChecklistItems, portalDocuments, bookings });
+  const portalSignatures = await readOptional("portalSignatures", "portal_signatures", { missingIsEmpty: true });
+  const storageManifest = buildStorageManifest({ portalChecklistItems, portalDocuments, portalSignatures, bookings });
 
   return {
-    sections: { bookings, guestInquiries, portalChecklistItems, portalDocuments, storageManifest },
+    sections: { bookings, guestInquiries, portalChecklistItems, portalDocuments, portalSignatures, storageManifest },
     sectionErrors,
   };
+}
+
+/*
+  Online signing records are never deleted, and a booking that has them
+  cannot be deleted, so Full Replace (which deletes every booking) is
+  refused while any exist. 0 when the signing migration has not been run.
+*/
+export async function countLiveSignatures(client) {
+  const { count, error } = await client.from("portal_signatures").select("id", { count: "exact", head: true });
+  if (error) {
+    if (isMissingTable(error)) return 0;
+    throw error;
+  }
+  return count || 0;
+}
+
+/*
+  Signing records come back through an admin-only database function that
+  only inserts rows that are missing (and whose booking exists). Signing
+  rows are never updated or deleted by a restore.
+*/
+const SIGNATURE_RESTORE_CHUNK = 100;
+
+export async function restoreSignatureRows(rows, { client }) {
+  const live = await fetchAllRows("portal_signatures", client);
+  const missing = getRowsMissingFromLive(rows, live.map((row) => row.id));
+  let inserted = 0;
+  for (let index = 0; index < missing.length; index += SIGNATURE_RESTORE_CHUNK) {
+    const { data, error } = await client.rpc("portal_restore_signatures", {
+      p_rows: missing.slice(index, index + SIGNATURE_RESTORE_CHUNK),
+    });
+    if (error) throw error;
+    inserted += Number(data) || 0;
+  }
+  return { inserted, alreadyPresent: rows.length - missing.length, skipped: missing.length - inserted };
 }
 
 // Restored portal rows come back with email options off (and their
@@ -119,16 +161,32 @@ export async function restoreBookingRows(bookings, liveIds, { client, onProgress
   rows that are missing. Each table is reported separately; one failing
   does not stop the others.
 */
+// Documents before tasks: a task can point at the document it is signed with.
 const SUPPORTING_TABLES = [
   { key: "guestInquiries", table: "guest_inquiries" },
-  { key: "portalChecklistItems", table: "portal_checklist_items" },
   { key: "portalDocuments", table: "portal_documents" },
+  { key: "portalChecklistItems", table: "portal_checklist_items" },
 ];
 
 export const SUPPORTING_SECTION_KEYS = SUPPORTING_TABLES.map(({ key }) => key);
 
 export async function restoreSupportingSections(sections, { client }) {
   const results = {};
+
+  // Version 3 backups: signing records, after the tasks and documents.
+  const finish = async () => {
+    const signatures = Array.isArray(sections.portalSignatures) ? sections.portalSignatures : [];
+    if (signatures.length === 0) {
+      results.portalSignatures = { inserted: 0, alreadyPresent: 0 };
+      return results;
+    }
+    try {
+      results.portalSignatures = await restoreSignatureRows(signatures, { client });
+    } catch (error) {
+      results.portalSignatures = { error: error?.message || String(error) };
+    }
+    return results;
+  };
 
   for (const { key, table } of SUPPORTING_TABLES) {
     const rows = Array.isArray(sections[key]) ? sections[key] : [];
@@ -146,7 +204,7 @@ export async function restoreSupportingSections(sections, { client }) {
     }
   }
 
-  return results;
+  return finish();
 }
 
 /*

@@ -133,6 +133,13 @@ export async function deleteBooking(bookingId) {
     .eq("id", bookingId)
     .select("id");
 
+  // The database refuses to delete a booking that has online-signed documents.
+  if (error?.code === "23503" && String(error.message || "").includes("portal_signatures")) {
+    throw new BookingSaveNotPermittedError(
+      "This booking has documents signed online. Signed records are kept permanently, so the booking cannot be deleted. Mark it cancelled instead."
+    );
+  }
+
   if (error) {
     throw error;
   }

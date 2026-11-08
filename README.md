@@ -402,9 +402,14 @@ Guest file uploads, and cleanup of those uploads, are allowed in `portal-uploads
 
 ### Documents and Signing
 
-There is no electronic-signature implementation in this repository.
+Guests return signed documents in one of two ways, both reviewed by staff with the usual **Confirm**:
 
-For the portal workflow documented here, a "sign and return contract" task means staff make the contract available through the broader portal workflow (for example, by uploading it as a custom staff document) and the group leader returns a signed file for staff review. The contract is not part of the standard document catalog, and signing does not occur inside this application.
+- **Paper:** download, print, sign and upload the file to the task (always available).
+- **Online signing (built, off by default):** staff link an upload task to one of the booking's staff-uploaded PDFs (*Correct… → Sign online with*). The guest reviews it in the portal, types or draws a signature, ticks the agreement (and authority for a group) and clicks **Sign document**. The `portal-sign` Edge Function stores the exact original and a signed copy with an added signature page in the private `portal-signed` bucket, records the details in `portal_signatures` (never edited or deleted), and only then moves the task to **Needs Review**. Booking status and the contract-returned date are not changed.
+
+Online signing stays off for every booking until it is turned on in `portal_signing_settings` (or test bookings are listed there). Setup, testing, deployment and the activation checklist: [docs/portal-signing/SETUP.md](docs/portal-signing/SETUP.md). Decisions and legal notes: [docs/audit/ONLINE_SIGNATURE_DECISION_AND_IMPLEMENTATION_PLAN.md](docs/audit/ONLINE_SIGNATURE_DECISION_AND_IMPLEMENTATION_PLAN.md).
+
+The contract itself is not part of the standard document catalog; staff upload it per booking as a custom document.
 
 The separate guest portal application controls the guest-facing experience.
 

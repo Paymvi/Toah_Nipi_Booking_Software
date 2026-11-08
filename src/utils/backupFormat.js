@@ -18,25 +18,33 @@
   The storage manifest lists the uploaded files that portal records point
   to. It is a list of file locations, not copies of the files.
 
-  Both versions restore. The hash function is a parameter so this module
+  Version 3 (online signing): version 2 plus portalSignatures, the
+  read-only signing records. The storage manifest also lists each signed
+  record's original and signed PDF with its SHA-256 fingerprint. The PDFs
+  themselves are saved by the separate "signed documents" export
+  (src/services/signingBackup.js).
+
+  All three versions restore. The hash function is a parameter so this module
   works in the browser and in Node tests.
 */
 
 import { sanitizePortalDocumentFileName } from "./portalRules.js";
 
 export const BACKUP_FORMAT = "toah-nipi-booking-backup";
-export const CURRENT_BACKUP_SCHEMA_VERSION = 2;
-export const SUPPORTED_BACKUP_SCHEMA_VERSIONS = Object.freeze([1, 2]);
+export const CURRENT_BACKUP_SCHEMA_VERSION = 3;
+export const SUPPORTED_BACKUP_SCHEMA_VERSIONS = Object.freeze([1, 2, 3]);
 
 export const BACKUP_SECTIONS = Object.freeze([
   { key: "bookings", label: "Bookings", table: "bookings" },
   { key: "guestInquiries", label: "Website inquiries", table: "guest_inquiries" },
   { key: "portalChecklistItems", label: "Portal tasks", table: "portal_checklist_items" },
   { key: "portalDocuments", label: "Portal documents", table: "portal_documents" },
+  { key: "portalSignatures", label: "Online signing records", table: "portal_signatures" },
   { key: "storageManifest", label: "Uploaded-file list (names and locations only)", table: null },
 ]);
 
 export const PORTAL_UPLOADS_BUCKET = "portal-uploads";
+export const PORTAL_SIGNED_BUCKET = "portal-signed";
 
 export async function sha256Hex(text, subtle = globalThis.crypto?.subtle) {
   if (!subtle) {
@@ -60,11 +68,21 @@ export function getChecksumPayload(backup) {
   if (backup?.schemaVersion === 1) {
     return { bookings: asArray(payload.bookings) };
   }
+  if (backup?.schemaVersion === 2) {
+    return {
+      bookings: asArray(payload.bookings),
+      guestInquiries: asArray(payload.guestInquiries),
+      portalChecklistItems: asArray(payload.portalChecklistItems),
+      portalDocuments: asArray(payload.portalDocuments),
+      storageManifest: asArray(payload.storageManifest),
+    };
+  }
   return {
     bookings: asArray(payload.bookings),
     guestInquiries: asArray(payload.guestInquiries),
     portalChecklistItems: asArray(payload.portalChecklistItems),
     portalDocuments: asArray(payload.portalDocuments),
+    portalSignatures: asArray(payload.portalSignatures),
     storageManifest: asArray(payload.storageManifest),
   };
 }
@@ -78,7 +96,7 @@ export function getBackupSection(backup, key) {
   stored under the booking's portal token unless the row records its own
   storage_path (see the portal_documents migration).
 */
-export function buildStorageManifest({ portalChecklistItems = [], portalDocuments = [], bookings = [] }) {
+export function buildStorageManifest({ portalChecklistItems = [], portalDocuments = [], portalSignatures = [], bookings = [] }) {
   const tokenByBookingId = new Map(
     bookings.map((booking) => [String(booking.id), booking.portalToken || ""])
   );
@@ -120,6 +138,28 @@ export function buildStorageManifest({ portalChecklistItems = [], portalDocument
     });
   });
 
+  // Signed records: both files, with the fingerprints recorded when they were signed.
+  portalSignatures.forEach((signature) => {
+    [
+      ["original", signature?.original_path, signature?.original_sha256, signature?.original_size],
+      ["signed", signature?.signed_path, signature?.signed_sha256, signature?.signed_size],
+    ].forEach(([kind, path, sha256, size]) => {
+      if (!path) return;
+      manifest.push({
+        bucket: PORTAL_SIGNED_BUCKET,
+        path,
+        source: "portal_signatures",
+        kind,
+        rowId: signature.id ?? null,
+        bookingId: signature.booking_id ?? null,
+        fileName: `${kind}.pdf`,
+        mimeType: "application/pdf",
+        size: size ?? null,
+        sha256: sha256 || "",
+      });
+    });
+  });
+
   return manifest;
 }
 
@@ -132,6 +172,7 @@ export async function createBackupEnvelope(
     guestInquiries: asArray(sections.guestInquiries),
     portalChecklistItems: asArray(sections.portalChecklistItems),
     portalDocuments: asArray(sections.portalDocuments),
+    portalSignatures: asArray(sections.portalSignatures),
     storageManifest: asArray(sections.storageManifest),
   };
   const checksum = await hash(JSON.stringify(payload));
@@ -147,12 +188,15 @@ export async function createBackupEnvelope(
       guestInquiryCount: payload.guestInquiries.length,
       portalChecklistItemCount: payload.portalChecklistItems.length,
       portalDocumentCount: payload.portalDocuments.length,
+      portalSignatureCount: payload.portalSignatures.length,
       storageManifestCount: payload.storageManifest.length,
     },
     coverage: {
       sections: BACKUP_SECTIONS.map((section) => section.key),
       sectionErrors,
-      note: "storageManifest lists uploaded-file locations only; the files themselves are not in this backup.",
+      note:
+        "storageManifest lists uploaded-file locations (and signed-PDF fingerprints) only; the files themselves are not in this backup. " +
+        "Signed PDFs are saved by the separate signed-documents export.",
     },
     integrity: {
       algorithm: "SHA-256",
@@ -215,6 +259,10 @@ export function validateBackupShape(backup) {
 
   if (bookings.length === 0) {
     warnings.push("This backup contains zero booking records.");
+  }
+
+  if (backup.schemaVersion === 2) {
+    warnings.push("This is a version 2 backup, made before online signing. It contains no online signing records.");
   }
 
   if (backup.schemaVersion === 1) {

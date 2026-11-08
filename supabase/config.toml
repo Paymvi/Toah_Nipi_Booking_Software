@@ -438,3 +438,10 @@ entrypoint = "./functions/portal-email/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/verify-dev-mode/index.ts"
+
+# Guests have no user JWT; the function checks the portal token (and, for the
+# admin restore action, the staff session) itself.
+[functions.portal-sign]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/portal-sign/index.ts"

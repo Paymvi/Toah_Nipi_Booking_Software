@@ -1624,3 +1624,51 @@
     align-self: flex-start;
   }
 }
+
+/* ---------- Signed documents (online signing) ---------- */
+
+.signed-documents-backup {
+  margin-top: 1rem;
+}
+
+.signed-documents-since,
+.signed-documents-file {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0.75rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.signed-documents-since input,
+.signed-documents-file input {
+  max-width: 100%;
+  font: inherit;
+  font-weight: 400;
+}
+
+.signed-documents-result {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.6rem;
+  border: 1px solid var(--n-line-2, #e4e8ee);
+  background: var(--n-surface, #ffffff);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.signed-documents-result-success {
+  border-color: var(--n-green-line, #d7e0da);
+  color: var(--n-green-text, #2f6f4f);
+}
+
+.signed-documents-result-warning {
+  border-color: var(--n-orange-line, #f1d9b0);
+  color: var(--n-orange-text, #7a4b00);
+}
+
+.signed-documents-result-error {
+  border-color: var(--n-red-line, #f0c2c2);
+  color: var(--n-red-text, #a03a3a);
+}
