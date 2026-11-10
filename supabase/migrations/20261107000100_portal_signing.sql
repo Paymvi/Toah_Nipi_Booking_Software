@@ -108,6 +108,8 @@ comment on table public.portal_signatures is
 alter table public.portal_signatures enable row level security;
 revoke all on public.portal_signatures from anon, authenticated;
 grant select on public.portal_signatures to authenticated;
+-- The live service_role has no table reads by default; portal-sign needs exactly these. Writes go through portal_record_signature.
+grant select on public.portal_checklist_items, public.portal_documents, public.portal_signatures to service_role;
 
 drop policy if exists "Staff read signatures" on public.portal_signatures;
 create policy "Staff read signatures"
@@ -235,7 +237,8 @@ as $$
 declare
   v_inserted integer;
 begin
-  if not public.is_staff_admin() then
+  -- coalesce: is_staff_admin() is NULL (not false) for a signed-in user without an active staff profile.
+  if not coalesce(public.is_staff_admin(), false) then
     raise exception 'Only administrators can restore signing records.' using errcode = '42501';
   end if;
 

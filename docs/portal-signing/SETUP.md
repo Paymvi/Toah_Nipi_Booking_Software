@@ -58,13 +58,15 @@ Needs Docker Desktop running.
    `npx supabase start --workdir %USERPROFILE%\toah-signing-local -x realtime,studio,imgproxy,vector,supavisor,postgres-meta,mailpit,logflare`
 3. Note the local values: `npx supabase status --workdir %USERPROFILE%\toah-signing-local -o env` (`API_URL`, `ANON_KEY`, `SERVICE_ROLE_KEY`). In PowerShell:
    `$env:LOCAL_SUPABASE_URL="http://127.0.0.1:54321"; $env:LOCAL_ANON_KEY="<ANON_KEY>"; $env:LOCAL_SERVICE_ROLE_KEY="<SERVICE_ROLE_KEY>"`
+   The stack gives anon, authenticated and service_role the same grants as live, so the service role cannot write the tables the tests fill. The scripts seed through a local-only `test_seeder` role instead; make its key from the stack's `JWT_SECRET`:
+   `$env:LOCAL_SEEDER_KEY = node -e "const c=require('crypto'),b=o=>Buffer.from(JSON.stringify(o)).toString('base64url'),h=b({alg:'HS256',typ:'JWT'}),p=b({role:'test_seeder',exp:1983812996});console.log(h+'.'+p+'.'+c.createHmac('sha256',process.argv[1]).update(h+'.'+p).digest('base64url'))" "<JWT_SECRET>"`
 4. Fictional bookings and a local staff login: `node supabase/tests/portal-sign-seed.local.mjs`
 5. Run the apps against the local stack (the variables override `.env.local`):
    - Portal (in `Toah_Nipi_Portal`): `$env:VITE_SUPABASE_URL=$env:LOCAL_SUPABASE_URL; $env:VITE_SUPABASE_PUBLISHABLE_KEY=$env:LOCAL_ANON_KEY; npx vite --port 5311 --host 127.0.0.1`
    - Staff (here, new window, same `LOCAL_*` values): `$env:VITE_SUPABASE_URL=$env:LOCAL_SUPABASE_URL; $env:VITE_SUPABASE_PUBLISHABLE_KEY=$env:LOCAL_ANON_KEY; $env:VITE_GUEST_PORTAL_BASE_URL="http://127.0.0.1:5311"; npx vite --port 5312 --host 127.0.0.1`
 6. Open the printed portal links and http://127.0.0.1:5312 (log in with the printed local staff login → Portal View, Backup).
    - Local quirk: links to PDFs made inside Docker point at `http://kong:8000/...`. Replace that part with `http://127.0.0.1:54321` to open them. Hosted Supabase uses the project address.
-7. Automated checks: `npm test`; `node supabase/tests/portal-sign.local.mjs`; `node supabase/tests/portal-sign-restore.local.mjs` (also needs `LOCAL_SUPABASE_WORKDIR` and `LOCAL_DRILL_DIR` set; it **wipes the local database**).
+7. Automated checks: `npm test`; `node supabase/tests/portal-sign.local.mjs`; `node supabase/tests/security-access.local.mjs` (access matrix, see `docs/audit/SECURITY_AUDIT_2026-11-10.md`); `node supabase/tests/portal-sign-restore.local.mjs` (also needs `LOCAL_SUPABASE_WORKDIR` and `LOCAL_DRILL_DIR` set; it **wipes the local database**).
 8. Stop: `npx supabase stop --workdir %USERPROFILE%\toah-signing-local`
 
 ## Deploy (after review; not done)

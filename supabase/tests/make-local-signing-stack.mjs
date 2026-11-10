@@ -58,13 +58,52 @@ create policy "portal uploads staff delete" on storage.objects for delete to aut
 create policy "portal uploads staff read" on storage.objects for select to authenticated
   using ((bucket_id = 'portal-uploads') AND public.is_active_staff());
 `;
-fs.writeFileSync(path.join(out, "migrations", "20260101000000_local_baseline.sql"), `${dumpText}\n${storageBaseline}`);
+/*
+  Grants like live. A fresh local project grants anon, authenticated and
+  service_role everything on new tables and functions; live does not (its
+  service_role cannot even read portal_checklist_items). Clear those local
+  defaults just before the dump's own GRANT/REVOKE section, so the dump's
+  statements leave the same privileges as live. Without this, a function
+  that works locally can fail live (security audit 2026-11-10, SEC-05).
+*/
+const liveGrants = `
+-- LOCAL TEST ONLY: clear local default privileges so the grants below match live.
+revoke all on all tables in schema public from anon, authenticated, service_role;
+revoke all on all functions in schema public from anon, authenticated, service_role;
+alter default privileges for role postgres in schema public revoke all on tables from anon, authenticated, service_role;
+alter default privileges for role postgres in schema public revoke all on functions from anon, authenticated, service_role;
+`;
+const grantsAt = dumpText.search(/^(GRANT|REVOKE|ALTER DEFAULT PRIVILEGES) /m);
+const baseline = grantsAt < 0 ? `${dumpText}\n${liveGrants}` : `${dumpText.slice(0, grantsAt)}${liveGrants}\n${dumpText.slice(grantsAt)}`;
+fs.writeFileSync(path.join(out, "migrations", "20260101000000_local_baseline.sql"), `${baseline}\n${storageBaseline}`);
+
+// Fixture role for the test scripts (LOCAL_SEEDER_KEY), so service_role keeps the live grants the functions get.
+fs.writeFileSync(path.join(out, "migrations", "20991231000000_local_test_seeder.sql"), `
+-- LOCAL TEST ONLY.
+do $$ begin create role test_seeder nologin bypassrls; exception when duplicate_object then null; end $$;
+grant usage on schema public, storage to test_seeder;
+grant all on all tables in schema public to test_seeder;
+grant all on all sequences in schema public to test_seeder;
+grant execute on all functions in schema public to test_seeder;
+grant all on storage.objects, storage.buckets to test_seeder;
+grant test_seeder to authenticator;
+`);
 
 const copy = (from, to) => fs.copyFileSync(path.join(repo, from), path.join(out, to));
-copy("supabase/migrations/20261107000100_portal_signing.sql", "migrations/20261107000100_portal_signing.sql");
+// Not yet live: online signing and the 2026-11-10 hardening migrations.
+for (const name of fs.readdirSync(path.join(repo, "supabase", "migrations"))) {
+  if (name >= "20261107000100") copy(`supabase/migrations/${name}`, `migrations/${name}`);
+}
 copy("supabase/functions/portal-sign/index.ts", "functions/portal-sign/index.ts");
 copy("supabase/functions/portal-sign/signing.js", "functions/portal-sign/signing.js");
+fs.mkdirSync(path.join(out, "functions", "submit-guest-inquiry"), { recursive: true });
+for (const name of ["index.ts", "deno.json"]) copy(`supabase/functions/submit-guest-inquiry/${name}`, `functions/submit-guest-inquiry/${name}`);
+fs.appendFileSync(
+  path.join(out, "config.toml"),
+  '\n[functions.submit-guest-inquiry]\nenabled = true\nverify_jwt = false\nimport_map = "./functions/submit-guest-inquiry/deno.json"\n'
+);
 
 console.log(`Local stack folder ready: ${path.resolve(target)}`);
 console.log("Next: npx supabase start --workdir <that folder> -x realtime,studio,imgproxy,vector,supavisor,postgres-meta,mailpit,logflare");
 console.log("After editing the function in the repo, run this script again and restart the edge runtime container.");
+console.log("Fixture key for the tests: an HS256 JWT with role test_seeder, signed with the stack's JWT_SECRET (see docs/audit/SECURITY_AUDIT_2026-11-10.md).");

@@ -37,7 +37,9 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(url) || !anonKey || !service
 fs.mkdirSync(drillDir, { recursive: true });
 
 const options = { auth: { persistSession: false, autoRefreshToken: false } };
-const admin = () => createClient(url, serviceKey, options);
+// LOCAL_SEEDER_KEY (optional): a fixture role, so the stack's service_role can keep the live grants the function gets.
+const admin = () => createClient(url, process.env.LOCAL_SEEDER_KEY || serviceKey, options);
+const authAdmin = () => createClient(url, serviceKey, options);
 const step = (text) => console.log(`\n== ${text}`);
 
 // After a reset the API and storage services restart; wait until both answer.
@@ -60,10 +62,10 @@ async function signIn() {
   const service = admin();
   const email = "drill-admin@example.test";
   const password = "drill-Local-Only-1!";
-  const { data: list } = await service.auth.admin.listUsers();
+  const { data: list } = await authAdmin().auth.admin.listUsers();
   let user = list.users.find((candidate) => candidate.email === email);
   if (!user) {
-    const created = await service.auth.admin.createUser({ email, password, email_confirm: true });
+    const created = await authAdmin().auth.admin.createUser({ email, password, email_confirm: true });
     if (created.error) throw created.error;
     user = created.data.user;
   }

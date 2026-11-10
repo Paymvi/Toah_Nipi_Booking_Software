@@ -27,6 +27,10 @@ function getCorsHeaders(req: Request) {
   };
 }
 
+const MAX_BODY_CHARS = 200_000;
+const FLOOD_WINDOW_MS = 10 * 60 * 1000;
+const FLOOD_LIMIT = 20;
+
 // A real calendar date written as YYYY-MM-DD.
 function isIsoDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -142,14 +146,42 @@ export default {
       }
 
 
+      // The largest real form is well under 100 KB; refuse anything bigger before parsing.
+      const text = await req.text();
+      if (text.length > MAX_BODY_CHARS) {
+        return respond({ error: "This request is too large." }, 413);
+      }
+
       let body;
 
       try {
-        body = await req.json();
+        body = JSON.parse(text);
       } catch {
         return respond({
             error: "Invalid request body.",
           }, 400);
+      }
+
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        return respond({ error: "Invalid request body." }, 400);
+      }
+
+      /*
+        Flood brake: the form gets a handful of requests a season, so a burst
+        far above that is a bot. It is site-wide on purpose: per-IP or
+        per-email limits are trivial to dodge, and there is no shared store
+        for them. While it trips, real guests are told to email instead.
+      */
+      const since = new Date(Date.now() - FLOOD_WINDOW_MS).toISOString();
+      const { count: recent } = await ctx.supabaseAdmin
+        .from("guest_inquiries")
+        .select("id", { count: "exact", head: true })
+        .gte("submitted_at", since);
+      if ((recent ?? 0) >= FLOOD_LIMIT) {
+        console.warn("Guest inquiry flood brake engaged:", recent, "in the last 10 minutes");
+        return respond({
+          error: "We are receiving an unusually high number of requests. Please try again later, or email office@toahnipi.org.",
+        }, 429);
       }
 
 

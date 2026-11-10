@@ -23,7 +23,9 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(url) || !anonKey || !service
 }
 
 const options = { auth: { persistSession: false, autoRefreshToken: false } };
-const admin = createClient(url, serviceKey, options);
+// LOCAL_SEEDER_KEY (optional): a fixture role, so the stack's service_role can keep the live grants the function gets.
+const admin = createClient(url, process.env.LOCAL_SEEDER_KEY || serviceKey, options);
+const authAdmin = createClient(url, serviceKey, options);
 const anon = createClient(url, anonKey, options);
 const run = Date.now().toString(36);
 const results = [];
@@ -62,7 +64,7 @@ const reachable = (link) => {
 async function makeStaff(role) {
   const email = `staff-${role}-${run}@example.test`;
   const password = `pw-${run}-${role}-Local1!`;
-  const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true });
+  const { data, error } = await authAdmin.auth.admin.createUser({ email, password, email_confirm: true });
   if (error) throw error;
   const { error: profileError } = await admin
     .from("staff_profiles")

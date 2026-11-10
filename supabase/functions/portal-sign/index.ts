@@ -154,7 +154,8 @@ function clientIp(request: Request) {
 async function requireAdmin(request: Request) {
   const authorization = request.headers.get("authorization") ?? "";
   if (!authorization.startsWith("Bearer ")) throw new SigningError("FORBIDDEN", "Staff sign-in required.", 401);
-  const asUser = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? serviceKey, {
+  // Never fall back to the service key here: the role check must run as the caller.
+  const asUser = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
     global: { headers: { Authorization: authorization } },
     auth: { persistSession: false },
   });

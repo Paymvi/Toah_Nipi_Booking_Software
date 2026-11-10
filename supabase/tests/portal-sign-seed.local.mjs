@@ -14,14 +14,16 @@ if (!/^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(url) || !process.env.LOCAL_S
   console.error("LOCAL stack only: set LOCAL_SUPABASE_URL (http://127.0.0.1:<port>), LOCAL_ANON_KEY and LOCAL_SERVICE_ROLE_KEY.");
   process.exit(2);
 }
-const admin = createClient(url, process.env.LOCAL_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+// LOCAL_SEEDER_KEY: fixture role; the stack's service_role has live grants and cannot write these tables.
+const admin = createClient(url, process.env.LOCAL_SEEDER_KEY || process.env.LOCAL_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+const authAdmin = createClient(url, process.env.LOCAL_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const run = Date.now().toString(36);
 
 const email = "local-staff@example.test";
 const password = "local-only-Staff-1!";
-const { data: list } = await admin.auth.admin.listUsers();
+const { data: list } = await authAdmin.auth.admin.listUsers();
 let user = list.users.find((candidate) => candidate.email === email);
-if (!user) user = (await admin.auth.admin.createUser({ email, password, email_confirm: true })).data.user;
+if (!user) user = (await authAdmin.auth.admin.createUser({ email, password, email_confirm: true })).data.user;
 await admin.from("staff_profiles").upsert({ user_id: user.id, email, full_name: "Local Staff (fictional)", role: "admin", is_active: true });
 
 async function addDocument(bookingId, token, title, fileName, bytes) {
