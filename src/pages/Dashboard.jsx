@@ -96,6 +96,10 @@ import {
   mirrorTopLevelIntoDetails,
   recordStaffEdits,
 } from "../utils/bookingFields";
+import {
+  getLegacyBookingNotes,
+  isNoteTextShown,
+} from "../utils/legacyBookingNotes";
 import BookingHousingTab from "../components/BookingHousingTab";
 import BookingStaffAssignmentsTab from "../components/BookingStaffAssignmentsTab";
 import DashboardTopbar from "../components/DashboardTopbar";
@@ -361,13 +365,15 @@ function BookingMealsProgramOverview({
     details?.mealNotes
   );
 
-  const needToKnowText =
-    String(booking.needToKnow || "").trim() !==
-    String(details?.mealNotes || "").trim()
-      ? getOverviewDisplayValue(
-          booking.needToKnow
-        )
-      : "";
+  // Master imports copy Need To Know into the meal notes; show it once.
+  const needToKnowText = isNoteTextShown(
+    booking.needToKnow,
+    details?.mealNotes
+  )
+    ? ""
+    : getOverviewDisplayValue(booking.needToKnow);
+
+  const legacyMealNotes = getLegacyBookingNotes(booking).meals;
 
   const parsedMealSummary =
     parseBookingMealSummary(mealPlanText);
@@ -433,6 +439,7 @@ function BookingMealsProgramOverview({
     hasDietaryAlerts ||
     hasOverviewDisplayValue(mealNotesText) ||
     hasOverviewDisplayValue(needToKnowText) ||
+    legacyMealNotes.length > 0 ||
     hasMealSummary;
 
   if (!hasAnyContent) {
@@ -649,7 +656,7 @@ function BookingMealsProgramOverview({
         </div>
       </div>
 
-      {(mealNotesText || needToKnowText) && (
+      {(mealNotesText || needToKnowText || legacyMealNotes.length > 0) && (
         <div className="booking-overview-program-panel booking-overview-program-panel-notes">
           <div className="booking-overview-program-panel-header">
             <span className="booking-overview-program-panel-icon">
@@ -688,6 +695,19 @@ function BookingMealsProgramOverview({
                 </p>
               </div>
             )}
+
+            {legacyMealNotes.map((note) => (
+              <div className="booking-overview-program-note-block" key={note.label}>
+                <div className="booking-overview-program-note-heading">
+                  <FaClock />
+                  <span>{note.label}</span>
+                </div>
+
+                <p className="booking-overview-program-note-value">
+                  {note.text}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -785,21 +805,15 @@ function BookingActivitiesOverview({
           booking.activities
         );
 
-  const legacyActivities =
-    !Array.isArray(booking.activities)
-      ? booking.activities
-      : "";
-
   const activityNotes =
     details?.activityNotes || "";
 
-  const hasLegacyActivities =
-    activities.length === 0 &&
-    hasBookingOverviewValue(legacyActivities);
+  const legacyActivityNotes =
+    getLegacyBookingNotes(booking).activities;
 
   if (
     activities.length === 0 &&
-    !hasLegacyActivities &&
+    legacyActivityNotes.length === 0 &&
     !activityNotes
   ) {
     return (
@@ -829,15 +843,14 @@ function BookingActivitiesOverview({
         />
       )}
 
-      {hasLegacyActivities && (
-        <p className="booking-compact-text">
-          {formatBookingOverviewValue(legacyActivities)}
-        </p>
-      )}
-
       <BookingOverviewFields
         fields={[
           { label: "Activity Notes", value: activityNotes, multiline: true },
+          ...legacyActivityNotes.map((note) => ({
+            label: note.label,
+            value: note.text,
+            multiline: true,
+          })),
         ]}
       />
     </BookingOverviewSection>
@@ -4366,13 +4379,11 @@ function BookingActivitiesLargeOverview({
           booking.activities
         );
 
-  const legacyActivities =
-    !Array.isArray(booking.activities)
-      ? booking.activities
-      : "";
-
   const activityNotes =
     details?.activityNotes || "";
+
+  const legacyActivityNotes =
+    getLegacyBookingNotes(booking).activities;
 
   return (
     <section className="booking-overview-card booking-overview-card-wide booking-overview-schedule-showcase">
@@ -4428,15 +4439,7 @@ function BookingActivitiesLargeOverview({
             ))}
           </div>
         </div>
-      ) : hasBookingOverviewValue(
-          legacyActivities
-        ) ? (
-        <div className="booking-overview-schedule-legacy">
-          {formatBookingOverviewValue(
-            legacyActivities
-          )}
-        </div>
-      ) : (
+      ) : legacyActivityNotes.length > 0 ? null : (
         <div className="booking-overview-schedule-empty">
           <FaHiking />
 
@@ -4455,6 +4458,13 @@ function BookingActivitiesLargeOverview({
           <p>{activityNotes}</p>
         </div>
       )}
+
+      {legacyActivityNotes.map((note) => (
+        <div className="booking-overview-schedule-notes" key={note.label}>
+          <strong>{note.label}</strong>
+          <p>{note.text}</p>
+        </div>
+      ))}
     </section>
   );
 }
@@ -5944,6 +5954,11 @@ const overviewLinenPieces =
         : "",
       multiline: true,
     },
+    ...getLegacyBookingNotes(booking).additional.map((note) => ({
+      label: note.label,
+      value: note.text,
+      multiline: true,
+    })),
   ];
 
 

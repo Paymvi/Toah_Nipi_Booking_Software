@@ -161,17 +161,6 @@
    LEGACY + NOTES
 ========================================================= */
 
-.booking-overview-schedule-legacy {
-  padding: 1rem 1.125rem;
-  border: 1px solid var(--n-line-2, #e3e8ef);
-  border-radius: 0.75rem;
-  background: var(--n-surface-2, #fbfcfd);
-  color: var(--n-blue-text, #39475a);
-  font-size: 0.992rem;
-  line-height: 1.6;
-  white-space: pre-wrap;
-}
-
 .booking-overview-schedule-notes {
   margin-top: 1rem;
   padding: 0.875rem 1rem;
