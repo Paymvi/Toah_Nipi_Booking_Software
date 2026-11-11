@@ -7,6 +7,7 @@ import {
   withImportBaseline,
 } from "../src/utils/masterImportMerge.js";
 import { recordStaffEdits } from "../src/utils/bookingFields.js";
+import { convertRecordKind, isHostRecord } from "../src/utils/bookingClassification.js";
 
 function sheetRow(overrides = {}, detailOverrides = {}) {
   return {
@@ -172,4 +173,17 @@ test("app-owned data is never taken from the sheet", () => {
 test("each import stores a fresh baseline", () => {
   const { merged } = mergeMasterImportRecord(importedRecord(), sheetRow({ notes: "v2" }));
   assert.deepEqual(merged.rentalFormDetails.importBaseline, buildImportBaseline(sheetRow({ notes: "v2" })));
+});
+
+test("a re-import never turns hosting into a booking or a booking into hosting", () => {
+  const hosting = convertRecordKind(importedRecord({ retreatType: "Church" }), true, { now: "2027-01-01T00:00:00.000Z" });
+  const { merged, keptAppValues } = mergeMasterImportRecord(hosting, sheetRow({ retreatType: "Church", notes: "New sheet note" }));
+  assert.equal(isHostRecord(merged), true);
+  assert.equal(merged.retreatType, "Hosting");
+
+  const booking = importedRecord();
+  const renamed = mergeMasterImportRecord(booking, sheetRow({ organizationName: "Host: Test Camp" }));
+  assert.equal(isHostRecord(renamed.merged), false);
+  assert.ok(renamed.keptAppValues.some((entry) => /Convert/.test(entry.reason)));
+  assert.ok(Array.isArray(keptAppValues));
 });

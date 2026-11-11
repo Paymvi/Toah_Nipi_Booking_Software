@@ -3,6 +3,11 @@ import assert from "node:assert/strict";
 
 import {
   applyBookingClassification,
+  convertRecordKind,
+  getCalendarVisibilityKey,
+  isHostRecord,
+  isPossibleHostRecord,
+  keepRecordClassification,
   countsForLodgingOccupancy,
   countsInReports,
   getBookingDisplayState,
@@ -47,12 +52,13 @@ test("clearly cancelled needs a cancel status or a real date", () => {
   assert.equal(isClearlyCancelled(unknownCancelDate), false);
 });
 
-test("lodging occupancy excludes hosts, inquiries and clearly cancelled only", () => {
+test("lodging occupancy excludes inquiries and clearly cancelled only; hosting holds rooms", () => {
   assert.equal(countsForLodgingOccupancy(master), true);
   assert.equal(countsForLodgingOccupancy(staff), true);
   assert.equal(countsForLodgingOccupancy(waitlist), true);
   assert.equal(countsForLodgingOccupancy(archive), true);
-  assert.equal(countsForLodgingOccupancy(host), false);
+  assert.equal(countsForLodgingOccupancy(host), true);
+  assert.equal(countsForLodgingOccupancy({ ...host, status: "Cancelled" }), false);
   assert.equal(countsForLodgingOccupancy(inquiry), false);
   assert.equal(countsForLodgingOccupancy(cancelled), false);
   assert.equal(countsForLodgingOccupancy(cancelledByDate), false);
@@ -73,7 +79,8 @@ test("calendar hides exceptional records unless their toggle is on", () => {
   assert.equal(isVisibleOnCalendar(waitlist), false);
   assert.equal(isVisibleOnCalendar(archive), false);
   assert.equal(isVisibleOnCalendar(archive, { archive: true }), true);
-  assert.equal(isVisibleOnCalendar(host, { host: true }), true);
+  // Hosting is filtered before the guest calendars; on the Hosting calendars it simply shows.
+  assert.equal(getCalendarVisibilityKey(host), "");
 });
 
 test("converted inquiry ids come from bookings, not other inquiries", () => {
@@ -110,4 +117,99 @@ test("reinstating keeps the cancellation date as history", () => {
 
 test("archive records cannot be reclassified from the edit forms", () => {
   assert.equal(applyBookingClassification(archive, "cancelled"), archive);
+});
+
+/* ---------------- Hosting ---------------- */
+
+test("hosting rule: explicit name prefix or retreat type only, legacy variants included", () => {
+  [
+    { organizationName: "Host: Board" },
+    { organizationName: "host - Board" },
+    { organizationName: "HOSTING – Staff day" },
+    { organizationName: "  Hosting—Alumni" },
+    { organizationName: "Board dinner", retreatType: "Hosting" },
+    { organizationName: "Board dinner", retreatType: " host " },
+  ].forEach((record) => assert.equal(isHostRecord(record), true, record.organizationName));
+
+  [
+    { organizationName: "Hostel Youth Group" },
+    { organizationName: "Hosted by Pastor Lee" },
+    { organizationName: "The Host: retreat" },
+    { organizationName: "Board", retreatType: "Friends/Hosts" },
+    { organizationName: "Board", notes: "Host: staff" },
+  ].forEach((record) => assert.equal(isHostRecord(record), false, record.organizationName));
+
+  assert.equal(getBookingDisplayState(host).label, "Hosting");
+});
+
+test("records that only mention hosting are listed for review, not reclassified", () => {
+  assert.equal(isPossibleHostRecord({ organizationName: "Hosted by Pastor Lee" }), true);
+  assert.equal(isPossibleHostRecord({ organizationName: "Board", retreatType: "Friends/Hosts" }), true);
+  assert.equal(isPossibleHostRecord({ organizationName: "Hostel Youth Group" }), false);
+  assert.equal(isPossibleHostRecord(host), false);
+  assert.equal(getRecordKind({ ...master, organizationName: "Hosted by Pastor Lee" }), "booking");
+});
+
+const now = "2027-01-02T03:04:05.000Z";
+const bookingWithHistory = {
+  ...master,
+  id: "conv1",
+  retreatType: "Church",
+  portalToken: "abc",
+  notes: "keep me",
+  buildingsRooms: "Bethel: 4",
+  rentalFormDetails: { retreatType: "Church", lodgingBethel: "4", housingSavedAt: "x" },
+};
+
+test("booking -> hosting keeps everything but the classification and records the change", () => {
+  const hosting = convertRecordKind(bookingWithHistory, true, { now });
+  assert.equal(isHostRecord(hosting), true);
+  assert.equal(hosting.id, "conv1");
+  assert.equal(hosting.organizationName, master.organizationName);
+  assert.equal(hosting.retreatType, "Hosting");
+  assert.equal(hosting.rentalFormDetails.retreatType, "Hosting");
+  assert.equal(hosting.notes, "keep me");
+  assert.equal(hosting.buildingsRooms, "Bethel: 4");
+  assert.equal(hosting.rentalFormDetails.lodgingBethel, "4");
+  assert.equal(hosting.portalToken, "");
+  assert.deepEqual(hosting.rentalFormDetails.hostingConversions, [
+    { to: "hosting", at: now, previousRetreatType: "Church" },
+  ]);
+  assert.equal(hosting.rentalFormDetails.staffEditedFields.retreatType, now);
+  assert.equal(convertRecordKind(hosting, true), hosting);
+});
+
+test("hosting -> booking restores the previous retreat type, strips the name prefix, never a token", () => {
+  const hosting = convertRecordKind(bookingWithHistory, true, { now });
+  const back = convertRecordKind(hosting, false, { now });
+  assert.equal(isHostRecord(back), false);
+  assert.equal(back.retreatType, "Church");
+  assert.equal(back.portalToken, "");
+  assert.equal(back.rentalFormDetails.hostingConversions.length, 2);
+  assert.equal(back.rentalFormDetails.lodgingBethel, "4");
+
+  const named = convertRecordKind({ ...master, organizationName: "Host: Board Weekend", retreatType: "" }, false, { now });
+  assert.equal(named.organizationName, "Board Weekend");
+  assert.equal(isHostRecord(named), false);
+
+  const both = convertRecordKind({ ...master, organizationName: "Hosting - X", retreatType: "Host" }, false, { now });
+  assert.equal(both.organizationName, "X");
+  assert.equal(both.retreatType, "");
+  assert.equal(isHostRecord(both), false);
+});
+
+test("older copies never flip a record between booking and hosting", () => {
+  const live = convertRecordKind(bookingWithHistory, true, { now });
+  const oldBackup = { ...bookingWithHistory, notes: "backup notes" };
+  const kept = keepRecordClassification(oldBackup, live);
+  assert.equal(isHostRecord(kept), true);
+  assert.equal(kept.notes, "backup notes");
+  assert.equal(kept.rentalFormDetails.retreatType, "Hosting");
+
+  const liveBooking = { ...master, organizationName: "Board" };
+  const renamedSheetRow = { ...master, organizationName: "Host: Board" };
+  assert.equal(isHostRecord(keepRecordClassification(renamedSheetRow, liveBooking)), false);
+
+  assert.equal(keepRecordClassification(oldBackup, undefined), oldBackup);
+  assert.equal(keepRecordClassification(oldBackup, bookingWithHistory), oldBackup);
 });

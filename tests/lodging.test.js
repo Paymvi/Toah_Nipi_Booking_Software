@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 import {
   buildLodgingSummary,
   describeLodgingAvailability,
+  describeLodgingConflict,
+  findLodgingConflicts,
   getBookingCalendarGroups,
   getBookingLodgingAssignments,
   getLodgingNights,
@@ -114,4 +116,54 @@ test("generic Hebron text lands in the Hebron group without guessing the area", 
   assert.equal(assignments.length, 1);
   assert.equal(assignments[0].calendarGroup, "hebron");
   assert.match(assignments[0].label, /not specified/);
+});
+
+/* ---------------- Hosting occupancy and allocation clashes ---------------- */
+
+const room1 = (id, extra = {}) => ({
+  id,
+  sourceType: "Staff Booking",
+  status: "Confirmed",
+  startDate: "2027-06-01",
+  endDate: "2027-06-03",
+  rentalFormDetails: { housingSavedAt: "x", lodgingBethel: "3", lodgingBethelUpperRoom1: "3" },
+  ...extra,
+});
+const hostingInRoom1 = room1("h1", { organizationName: "Host: Fictional Board", retreatType: "Hosting" });
+const bookingInRoom1 = room1("b1", { organizationName: "Fictional Church" });
+
+test("hidden hosting in a room blocks a booking for that room, and the other way round", () => {
+  const [clash] = findLodgingConflicts(bookingInRoom1, [hostingInRoom1]);
+  assert.equal(clash.certain, true);
+  assert.equal(clash.record.id, "h1");
+  assert.deepEqual(clash.nights, ["2027-06-01", "2027-06-02"]);
+  assert.match(describeLodgingConflict(clash), /^Unavailable — Hosting: Host: Fictional Board \(Bethel Upper Floor Room 1, 2 nights from 2027-06-01\)$/);
+
+  const [reverse] = findLodgingConflicts(hostingInRoom1, [bookingInRoom1]);
+  assert.equal(reverse.record.id, "b1");
+  assert.match(describeLodgingConflict(reverse), /^Unavailable — Fictional Church/);
+
+  const bethel = describeLodgingAvailability([bookingInRoom1, hostingInRoom1], "2027-06-01", "2027-06-03").find((group) => group.id === "bethel");
+  assert.equal(bethel.status, "conflict");
+});
+
+test("hosting without lodging, cancelled hosting and checkout day block nothing", () => {
+  const noLodging = { ...hostingInRoom1, id: "h2", rentalFormDetails: {} , buildingsRooms: "" };
+  assert.deepEqual(findLodgingConflicts(bookingInRoom1, [noLodging]), []);
+  assert.deepEqual(findLodgingConflicts(bookingInRoom1, [{ ...hostingInRoom1, status: "Cancelled" }]), []);
+  // Arriving the day hosting leaves: no shared night.
+  const nextGroup = room1("b2", { startDate: "2027-06-03", endDate: "2027-06-05" });
+  assert.deepEqual(findLodgingConflicts(nextGroup, [hostingInRoom1]), []);
+  // A record never clashes with itself, and undated records hold nothing.
+  assert.deepEqual(findLodgingConflicts(hostingInRoom1, [hostingInRoom1]), []);
+  assert.deepEqual(findLodgingConflicts({ ...bookingInRoom1, startDate: "" }, [hostingInRoom1]), []);
+});
+
+test("a different room in the same building is fine; missing room detail is a possible clash", () => {
+  const room2 = room1("b3", { rentalFormDetails: { housingSavedAt: "x", lodgingBethel: "4", lodgingBethelUpperRoom2: "4" } });
+  assert.deepEqual(findLodgingConflicts(room2, [hostingInRoom1]), []);
+  const noRoomDetail = room1("b4", { rentalFormDetails: { housingSavedAt: "x", lodgingBethel: "4" } });
+  const [possible] = findLodgingConflicts(noRoomDetail, [hostingInRoom1]);
+  assert.equal(possible.certain, false);
+  assert.match(describeLodgingConflict(possible), /^Possible clash — Hosting:/);
 });

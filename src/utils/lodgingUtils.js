@@ -6,6 +6,7 @@ import {
   getLodgingCapacityLimit,
 } from "../constants/lodgingConstants.js";
 import { getBookingDetails } from "./bookingFields.js";
+import { countsForLodgingOccupancy, isHostRecord } from "./bookingClassification.js";
 import { isHousingAuthoritative } from "./masterImportMerge.js";
 
 /*
@@ -374,6 +375,50 @@ export function describeLodgingAvailability(bookings, startDate, endDate) {
       notes: [...new Set(notes)],
     };
   });
+}
+
+/*
+  Allocation check for one record (a booking or hosting being edited)
+  against everything else that holds lodging, hosting included even
+  though it is hidden from the guest calendars. Same rules as
+  describeLodgingAvailability: the same room on the same night is a clash
+  (certain); a shared building without room detail on both sides cannot
+  be ruled out (not certain). Shared bunk and camping areas are fine.
+*/
+export function findLodgingConflicts(record, others = []) {
+  const nights = getLodgingNights(record);
+  const mine = getBookingLodgingAssignments(record);
+  if (!nights.length || !mine.length) return [];
+
+  const results = [];
+  others.forEach((other) => {
+    if (!other || String(other.id) === String(record?.id) || !countsForLodgingOccupancy(other)) return;
+    const shared = sharedNights(nights, getLodgingNights(other));
+    if (!shared.length) return;
+
+    getBookingLodgingAssignments(other).forEach((theirs) => {
+      const entry = mine.find((assignment) => assignment.buildingId === theirs.buildingId);
+      if (!entry) return;
+      const theirRooms = new Set(theirs.rooms.map((room) => room.key));
+      const rooms = entry.rooms.filter((room) => theirRooms.has(room.key)).map((room) => room.label);
+      const building = LODGING_BUILDINGS.find((item) => item.id === entry.buildingId);
+      const unsure = getLodgingBuildingRooms(building).length > 0
+        ? !entry.hasRoomDetail || !theirs.hasRoomDetail
+        : !building?.areas;
+      if (rooms.length || unsure) {
+        results.push({ record: other, buildingLabel: entry.label, rooms, nights: shared, certain: rooms.length > 0 });
+      }
+    });
+  });
+  return results;
+}
+
+// One line per clash, e.g. "Unavailable — Hosting: Board retreat (Bethel Upper Floor Room 1, night of 2027-06-01)".
+export function describeLodgingConflict({ record, buildingLabel, rooms, nights, certain }) {
+  const who = `${isHostRecord(record) ? "Hosting: " : ""}${record?.organizationName || "Unnamed Organization"}`;
+  const where = rooms.length ? `${buildingLabel} ${rooms.join(", ")}` : `${buildingLabel}, room detail missing`;
+  const when = nights.length === 1 ? `night of ${nights[0]}` : `${nights.length} nights from ${nights[0]}`;
+  return `${certain ? "Unavailable" : "Possible clash"} — ${who} (${where}, ${when})`;
 }
 
 /*

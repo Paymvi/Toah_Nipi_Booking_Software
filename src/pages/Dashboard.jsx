@@ -90,6 +90,8 @@ import {
   getRecordKind,
   isInquirySpreadsheetRecord,
   isActiveBooking,
+  isHostRecord,
+  convertRecordKind,
   RECORD_KIND,
 } from "../utils/bookingClassification";
 import {
@@ -123,6 +125,9 @@ import ThemeToggle from "../components/ThemeToggle";
 import CopyButton from "../components/CopyButton";
 
 import PortalAdminView from "../pages/PortalAdminView";
+import HostingView from "../pages/HostingView";
+import HostingDetailView from "../pages/HostingDetailView";
+import { createGuestPortalLink } from "../services/bookingService";
 import {
   buildPortalUrl,
   getPortalBaseUrl,
@@ -4262,8 +4267,22 @@ function BookingOverviewSummary({ booking, dateSettings }) {
 }
 
 
-function BookingOverviewPortalLink({ booking }) {
+function BookingOverviewPortalLink({ booking, onCreatePortalLink }) {
   const portalUrl = buildPortalUrl(booking.portalToken);
+
+  // No link (for example after converting from Hosting): staff create one on purpose.
+  if (!booking.portalToken && getPortalBaseUrl() && onCreatePortalLink) {
+    return (
+      <button
+        className="secondary-dashboard-button booking-overview-portal-link"
+        type="button"
+        onClick={() => onCreatePortalLink(booking)}
+      >
+        <FaExternalLinkAlt aria-hidden="true" />
+        Create Guest Portal Link
+      </button>
+    );
+  }
 
   if (!portalUrl) {
     return (
@@ -5184,6 +5203,7 @@ function BookingOverview({
   dateSettings,
   setActiveTab,
   onSaveBooking,
+  onCreatePortalLink,
   isLarge,
 }) {
   const details =
@@ -6214,7 +6234,7 @@ const overviewLinenPieces =
               Edit Booking
             </button>
 
-            <BookingOverviewPortalLink booking={booking} />
+            <BookingOverviewPortalLink booking={booking} onCreatePortalLink={onCreatePortalLink} />
 
           </div>
 
@@ -6848,6 +6868,10 @@ function BookingDetailView({
   staffUsers,
   currentStaffUserId,
   canDeleteBookings = true,
+  occupancyRecords = [],
+  onOpenRecord,
+  onConvertToHosting,
+  onCreatePortalLink,
 }) {
   const [isDateSettingsOpen, setIsDateSettingsOpen] = useState(false);
   const [dateSettings, setDateSettings] = useState(() =>
@@ -6949,8 +6973,20 @@ function BookingDetailView({
             Date Display
           </button>
 
+          {onConvertToHosting && (
+            <button
+              className="secondary-dashboard-button"
+              type="button"
+              title="Internal use of the property, not a guest booking"
+              onClick={() => onConvertToHosting(booking)}
+            >
+              <FaConciergeBell aria-hidden="true" />
+              Convert to Hosting
+            </button>
+          )}
+
           {isCompactOverview && (
-            <BookingOverviewPortalLink booking={booking} />
+            <BookingOverviewPortalLink booking={booking} onCreatePortalLink={onCreatePortalLink} />
           )}
 
           {isCompactOverview && (
@@ -7017,6 +7053,7 @@ function BookingDetailView({
           dateSettings={dateSettings}
           setActiveTab={setActiveTab}
           onSaveBooking={onSaveBooking}
+          onCreatePortalLink={onCreatePortalLink}
           isLarge={isLargeOverview}
         />
       )}
@@ -7038,6 +7075,7 @@ function BookingDetailView({
         existingBooking={booking}
         onBookingUpdated={onSaveBooking}
         staffUsers={staffUsers}
+        occupancyRecords={occupancyRecords}
         embedded
       />
     ) : (
@@ -7054,6 +7092,8 @@ function BookingDetailView({
   <BookingHousingTab
     booking={booking}
     onSaveBooking={onSaveBooking}
+    occupancyRecords={occupancyRecords}
+    onOpenRecord={onOpenRecord}
   />
 )}
 
@@ -7770,6 +7810,7 @@ export default function Dashboard() {
     Jobs: "/jobs",
 
     "Guest Inquiries": "/guest-inquiries",
+    Hosting: "/hosting",
   };
 
   useEffect(() => {
@@ -7893,7 +7934,8 @@ export default function Dashboard() {
   */
   const isRecordDetailOpen =
     activeView === "Booking Detail" ||
-    activeView === "Inquiry Record Detail";
+    activeView === "Inquiry Record Detail" ||
+    activeView === "Hosting Detail";
   const keptCalendarView = isRecordDetailOpen ? bookingReturnView : activeView;
   const calendarReturnPointRef = useRef(null);
 
@@ -8213,7 +8255,28 @@ export default function Dashboard() {
     booking since (AUDIT-045). Screens keep their unsaved edits when a save
     fails, so nothing typed is lost.
   */
-    const saveBookingEdits = async (updatedBooking) => {
+    const saveBookingEdits = async (updatedBooking, { allowClassificationChange = false } = {}) => {
+    /*
+      Booking <-> hosting only through Convert, so an ordinary edit (a
+      renamed group, a changed retreat type) never moves a record between
+      guest screens and Hosting by accident.
+    */
+    const previousRecord = publicInquiries.find((inquiry) => inquiry.id === updatedBooking?.id);
+    if (
+      previousRecord &&
+      !allowClassificationChange &&
+      isHostRecord(previousRecord) !== isHostRecord(updatedBooking)
+    ) {
+      const error = new Error(
+        isHostRecord(previousRecord)
+          ? 'This change would turn the hosting entry into a guest booking. Nothing was saved. Use "Convert to booking" instead.'
+          : 'This change would turn the booking into hosting (a name starting "Host:" or retreat type "Hosting"). Nothing was saved. Use "Convert to Hosting" instead.'
+      );
+      error.code = "BOOKING_CLASSIFICATION_CHANGE";
+      alert(error.message);
+      throw error;
+    }
+
     if (isViewOnlyAccount) {
       const error = new Error(
         "This account is view-only, so changes cannot be saved. Ask an administrator for staff access."
@@ -9005,11 +9068,31 @@ export default function Dashboard() {
     }
   }, [datedInquirySettings]);
 
-  const inquiryBookings = useMemo(() => {
+  /*
+    Every record, for staff names and lodging occupancy. Guest booking
+    screens get inquiryBookings, which never holds hosting; the Hosting
+    view gets hostingRecords.
+  */
+  const allBookingRecords = useMemo(() => {
     return publicInquiries.map((inquiry, index) =>
       normalizeInquiry(inquiry, index)
     );
   }, [publicInquiries]);
+
+  const inquiryBookings = useMemo(
+    () => allBookingRecords.filter((record) => !isHostRecord(record)),
+    [allBookingRecords]
+  );
+
+  const hostingRecords = useMemo(
+    () => allBookingRecords.filter(isHostRecord),
+    [allBookingRecords]
+  );
+
+  const datedHostingRecords = useMemo(
+    () => hostingRecords.filter((record) => record.startDate),
+    [hostingRecords]
+  );
 
   /*
     Names on bookings that are not in the staff directory. They are shown
@@ -9019,10 +9102,10 @@ export default function Dashboard() {
   const unlistedStaffNames = useMemo(
     () =>
       getUnlistedStaffNames(
-        getAssignedStaffNamesFromBookings(inquiryBookings),
+        getAssignedStaffNamesFromBookings(allBookingRecords),
         staffUsers
       ),
-    [inquiryBookings, staffUsers]
+    [allBookingRecords, staffUsers]
   );
 
   const inquiryPipelineNeedsReviewCount = useMemo(() => {
@@ -9597,7 +9680,18 @@ export default function Dashboard() {
     navigate(routes[nextView] || "/dashboard");
   };
 
+  const openHostingDetail = (record, returnView = "Hosting") => {
+    setBookingReturnView(returnView);
+    setSelectedBooking(record);
+    setActiveView("Hosting Detail");
+  };
+
+  // Hosting always opens in its own detail view, wherever it was found.
   const openBookingDetail = (booking, returnView = SPREADSHEET_VIEW_NAME) => {
+    if (isHostRecord(booking)) {
+      openHostingDetail(booking, returnView);
+      return;
+    }
     setBookingReturnView(returnView);
     setSelectedBooking(booking);
     setBookingDetailTab("Overview");
@@ -9659,11 +9753,89 @@ export default function Dashboard() {
     calendarReturnPointRef.current = returnPoint;
 
     const booking = normalizeInquiry(latestBooking);
-    const openDetail = isInquirySpreadsheetRecord(booking)
-      ? openInquiryRecordDetail
-      : openBookingDetail;
+    const openDetail = isHostRecord(booking)
+      ? openHostingDetail
+      : isInquirySpreadsheetRecord(booking)
+        ? openInquiryRecordDetail
+        : openBookingDetail;
 
     openDetail(booking, returnView);
+  };
+
+  /*
+    Booking <-> Hosting. Staff see the concrete effects first. The save is
+    one conditional update (refused if anyone saved the record since), and
+    the database drops a hosting record's portal link in the same write.
+  */
+  const convertRecord = async (record, toHosting) => {
+    const next = convertRecordKind(record, toHosting);
+    if (next === record) return;
+
+    const changes = ["organizationName", "retreatType"]
+      .filter((field) => String(record[field] ?? "") !== String(next[field] ?? ""))
+      .map((field) =>
+        `  ${field === "organizationName" ? "Name" : "Retreat type"}: "${record[field] || ""}" -> "${next[field] || ""}"`
+      );
+
+    const effects = toHosting
+      ? [
+          `Convert "${record.organizationName}" to Hosting?`,
+          "",
+          "- It leaves the spreadsheets, calendars, dashboard, reports, Portal Admin and contacts' booking history, and appears under Hosting.",
+          "- Its guest portal link stops working immediately. Converting back later does not restore that link.",
+          "- No guest emails are sent; queued or automatic guest emails for it are suppressed.",
+          "- Lodging stays assigned and still blocks those rooms.",
+          "- Notes, files, portal tasks, signatures and email history are kept for staff.",
+        ]
+      : [
+          `Convert "${record.organizationName}" to a guest booking?`,
+          "",
+          "- It returns to the spreadsheets, calendars, dashboard and reports.",
+          "- Nothing is sent: no emails, no signing, no reminders. Portal emails stay off until staff turn them on.",
+          "- It has no guest portal link. Create a new one from the booking when the group needs it.",
+          "- Lodging, notes, files and history are kept.",
+        ];
+
+    if (!window.confirm([...effects, ...(changes.length ? ["", "Fields that change:", ...changes] : [])].join("\n"))) {
+      return;
+    }
+
+    try {
+      const saved = normalizeInquiry(await saveBookingEdits(next, { allowClassificationChange: true }));
+      if (toHosting) {
+        // Back then lands on the Hosting page, where the record now lives.
+        openHostingDetail(saved, "Hosting");
+      } else {
+        openBookingDetail(saved, SPREADSHEET_VIEW_NAME);
+      }
+    } catch {
+      // saveBookingEdits already explained the failure; nothing changed.
+    }
+  };
+
+  // Explicit staff action: a booking without a portal link gets a new one.
+  const createPortalLinkForBooking = async (record) => {
+    if (!window.confirm(`Create a new guest portal link for "${record.organizationName}"? Nothing is emailed; share the link yourself when ready.`)) {
+      return;
+    }
+    try {
+      const saved = await createGuestPortalLink(record.id);
+      setPublicInquiries((current) => current.map((item) => (item.id === saved.id ? saved : item)));
+      setSelectedBooking(normalizeInquiry(saved));
+    } catch (error) {
+      console.error("Could not create a portal link:", error);
+      alert(error?.message || "Could not create a portal link.");
+    }
+  };
+
+  // A clash link inside a detail view: open that record; Back keeps the original origin.
+  const openRecordFromDetail = (recordId) => {
+    const record = allBookingRecords.find((item) => item.id === recordId);
+    if (!record) {
+      alert("This record is not in the loaded list. Refresh and try again.");
+      return;
+    }
+    openBookingDetail(record, bookingReturnView);
   };
 
   const startBookingFromInquiry = (booking) => {
@@ -9875,6 +10047,16 @@ export default function Dashboard() {
           icon:
             sidebarItemLookup["Contacts"]?.icon ||
             FaUsers,
+        },
+      ],
+    },
+    {
+      label: "Internal",
+      items: [
+        {
+          label: "Hosting",
+          view: "Hosting",
+          icon: FaConciergeBell,
         },
       ],
     },
@@ -10200,6 +10382,7 @@ export default function Dashboard() {
             aria-hidden={activeView !== "Lodging Calendar"}
           >
             <LodgingCalendarView
+              hiddenOccupancy={datedHostingRecords}
               calendarCells={calendarCells}
               datedInquiries={datedInquiries}
               selectedMonthInquiries={selectedMonthInquiries}
@@ -10227,7 +10410,8 @@ export default function Dashboard() {
             aria-hidden={activeView !== "Reports"}
           >
             <ReportsPage
-              inquiryBookings={inquiryBookings}
+              // Report builders leave hosting out themselves and say how many (countsInReports).
+              inquiryBookings={allBookingRecords}
               isLoading={isBookingsLoading}
               loadError={bookingsLoadError}
               loadedAt={bookingsLoadedAt}
@@ -10278,6 +10462,7 @@ export default function Dashboard() {
                             initialInquiry={bookingFormSeed}
               isDevMode={isDevMode}
               staffUsers={staffUsers}
+              occupancyRecords={allBookingRecords}
               onBookingCreated={handleBookingCreated}
             />
           </section>
@@ -10287,9 +10472,43 @@ export default function Dashboard() {
             onSaveBooking={saveBookingEdits}
             onBack={closeBookingDetail}
           />
+        ) : activeView === "Hosting Detail" ? (
+          <HostingDetailView
+            key={selectedBooking?.id || "new-hosting"}
+            record={selectedBooking}
+            occupancyRecords={allBookingRecords}
+            onSave={saveBookingEdits}
+            onDelete={canDeleteBookings ? deleteSingleBooking : undefined}
+            onConvertToBooking={(record) => convertRecord(record, false)}
+            onOpenRecord={openRecordFromDetail}
+            onBack={closeBookingDetail}
+          />
+        ) : activeView === "Hosting" ? (
+          <HostingView
+            hostingRecords={hostingRecords}
+            guestBookings={inquiryBookings}
+            calendarProps={{
+              calendarCells,
+              selectedMonth,
+              selectedYear,
+              setSelectedMonth,
+              setSelectedYear,
+              goToCurrentMonth,
+              goToPreviousMonth,
+              goToNextMonth,
+              getCalendarEventColor,
+            }}
+            onOpenRecord={(record) => openBookingDetail(record, "Hosting")}
+            onOpenRecordById={openCalendarBooking}
+            onAddHosting={() => openHostingDetail(null, "Hosting")}
+          />
         ) : activeView === "Booking Detail" ? (
           <BookingDetailView
             booking={selectedBooking}
+            occupancyRecords={allBookingRecords}
+            onOpenRecord={openRecordFromDetail}
+            onConvertToHosting={isViewOnlyAccount ? undefined : (record) => convertRecord(record, true)}
+            onCreatePortalLink={isViewOnlyAccount ? undefined : createPortalLinkForBooking}
             activeTab={bookingDetailTab}
             setActiveTab={setBookingDetailTab}
             onSaveBooking={saveBookingEdits}
@@ -10314,7 +10533,7 @@ export default function Dashboard() {
               ) : activeView === "Contacts View" ? (
                     // Secondary contacts are part of the main list now (AUDIT-039).
           <ContactsView
-            inquiryBookings={inquiryBookings}
+            inquiryBookings={allBookingRecords}
             openBookingDetail={openBookingDetail}
           />
         ) : activeView === "Inquiry Pipeline" && !isDevMode ? (

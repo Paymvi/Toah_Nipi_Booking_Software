@@ -15,6 +15,8 @@
   no single filter for every screen.
 */
 
+import { mirrorTopLevelIntoDetails, recordStaffEdits } from "./bookingFields.js";
+
 export const RECORD_KIND = Object.freeze({
   BOOKING: "booking",
   INQUIRY: "inquiry",
@@ -82,16 +84,34 @@ export function isInquirySpreadsheetRecord(booking) {
 }
 
 /*
-  Internal hosting records. Staff name them "Host: ..." (Portal Admin has
-  always excluded that prefix); "Hosting: ..." and a retreat type of
-  exactly "Host"/"Hosting" are treated the same. "host" elsewhere in a
-  name (for example "Hostel Youth") does not count.
+  Hosting records (internal use of the property, not guest bookings).
+  This is the one classification rule; the database mirrors it in
+  public.is_hosting_booking (supabase/migrations/20261111000100).
+
+    - organization name starts "Host:" / "Hosting:" (also "-", "–", "—"),
+      the staff naming convention used by the Master sheets; or
+    - retreat type is exactly "Host" or "Hosting". New hosting entries and
+      conversions use retreat type "Hosting".
+
+  "host" elsewhere in a name ("Hostel Youth", "Hosted by ...") does not
+  count; isPossibleHostRecord lists those for staff review instead.
 */
+export const HOSTING_RETREAT_TYPE = "Hosting";
+const HOST_NAME_PREFIX = /^\s*host(?:ing)?\s*[:\-–—]\s*/i;
+const HOST_RETREAT_TYPE = /^\s*host(?:ing)?\s*$/i;
+
 export function isHostRecord(booking) {
-  const organizationName = String(booking?.organizationName ?? "").trim();
   return (
-    /^host(?:ing)?\s*[:\-–—]/i.test(organizationName) ||
-    /^host(?:ing)?$/i.test(String(booking?.retreatType ?? "").trim())
+    HOST_NAME_PREFIX.test(String(booking?.organizationName ?? "")) ||
+    HOST_RETREAT_TYPE.test(String(booking?.retreatType ?? ""))
+  );
+}
+
+// Not classified as hosting, but the name or retreat type mentions it.
+export function isPossibleHostRecord(booking) {
+  if (isHostRecord(booking)) return false;
+  return /\bhost(?:s|ing|ed)?\b/i.test(
+    `${booking?.organizationName ?? ""} | ${booking?.retreatType ?? ""}`
   );
 }
 
@@ -177,7 +197,7 @@ export function getBookingDisplayState(booking) {
   if (exception === BOOKING_EXCEPTION.CANCELLED) {
     return { key: "cancelled", label: "Cancelled", kind, exception };
   }
-  if (kind === RECORD_KIND.HOST) return { key: "host", label: "Host", kind, exception };
+  if (kind === RECORD_KIND.HOST) return { key: "host", label: "Hosting", kind, exception };
   if (kind === RECORD_KIND.ARCHIVE) {
     return { key: "archive", label: "Archived visit", kind, exception };
   }
@@ -194,13 +214,15 @@ export function getBookingDisplayState(booking) {
    Per-screen inclusion rules. Each is deliberate and named.
 --------------------------------------------------------- */
 
-// Lodging occupancy (Q-004): everything except hosts, inquiries, and
-// clearly cancelled bookings. Waitlist and archive records still count.
+/*
+  Lodging occupancy (Q-004): everything except inquiries and clearly
+  cancelled records. Waitlist, archive and hosting records still count:
+  hosting is hidden from guest screens but its rooms are really in use.
+  A record with no lodging assigned occupies nothing either way.
+*/
 export function countsForLodgingOccupancy(booking) {
-  const kind = getRecordKind(booking);
   return (
-    kind !== RECORD_KIND.HOST &&
-    kind !== RECORD_KIND.INQUIRY &&
+    getRecordKind(booking) !== RECORD_KIND.INQUIRY &&
     !isClearlyCancelled(booking)
   );
 }
@@ -212,19 +234,19 @@ export function countsInReports(booking) {
 }
 
 /*
-  Main Calendar (Q-005): ordinary bookings and inquiries show by default.
-  Cancelled, waitlisted, archived and host records each have a toggle.
+  Calendars (Q-005): ordinary bookings and inquiries show by default.
+  Cancelled, waitlisted and archived records each have a toggle. Hosting
+  is never passed to the guest calendars; the Hosting calendars show it.
 */
 export const CALENDAR_EXCEPTION_TOGGLES = Object.freeze([
   { key: "cancelled", label: "Cancelled" },
   { key: "waitlist", label: "Waitlist" },
   { key: "archive", label: "Archived visits" },
-  { key: "host", label: "Host records" },
 ]);
 
 export function getCalendarVisibilityKey(booking) {
   const { key } = getBookingDisplayState(booking);
-  return key === "booked" || key === "inquiry" ? "" : key;
+  return key === "booked" || key === "inquiry" || key === "host" ? "" : key;
 }
 
 export function isVisibleOnCalendar(booking, shownExceptions = {}) {
@@ -309,4 +331,76 @@ export function applyBookingClassification(booking, nextValue) {
       ? { ...getDetails(booking), reinstatedAt: new Date().toISOString() }
       : booking.rentalFormDetails,
   };
+}
+
+/* ---------------------------------------------------------
+   Booking <-> Hosting conversion
+   The only way a record changes between booking and hosting. The id,
+   notes, lodging, portal history and every other field stay; only the
+   two classifying fields change, and each conversion is recorded in
+   rentalFormDetails.hostingConversions (like reinstatedAt). The database
+   drops a hosting record's guest portal link in the same write.
+--------------------------------------------------------- */
+
+const CLASSIFYING_FIELDS = ["organizationName", "retreatType"];
+
+export function convertRecordKind(booking, toHosting, { now = new Date().toISOString() } = {}) {
+  if (isHostRecord(booking) === Boolean(toHosting)) return booking;
+
+  const details = getDetails(booking);
+  const history = Array.isArray(details.hostingConversions) ? details.hostingConversions : [];
+  let next;
+
+  if (toHosting) {
+    next = {
+      ...booking,
+      retreatType: HOSTING_RETREAT_TYPE,
+      portalToken: "",
+      rentalFormDetails: {
+        ...details,
+        hostingConversions: [
+          ...history,
+          { to: "hosting", at: now, previousRetreatType: String(booking?.retreatType ?? "") },
+        ],
+      },
+    };
+  } else {
+    const lastToHosting = [...history].reverse().find((entry) => entry?.to === "hosting");
+    const previousType = String(lastToHosting?.previousRetreatType ?? "");
+    const currentType = String(booking?.retreatType ?? "");
+    const name = String(booking?.organizationName ?? "");
+    const strippedName = name.replace(HOST_NAME_PREFIX, "").trim();
+
+    next = {
+      ...booking,
+      organizationName: HOST_NAME_PREFIX.test(name) ? strippedName || "Unnamed Organization" : name,
+      retreatType: HOST_RETREAT_TYPE.test(currentType)
+        ? (HOST_RETREAT_TYPE.test(previousType) ? "" : previousType)
+        : currentType,
+      rentalFormDetails: {
+        ...details,
+        hostingConversions: [...history, { to: "booking", at: now }],
+      },
+    };
+  }
+
+  // Duplicated detail copies follow, and re-imports leave the change alone.
+  next = mirrorTopLevelIntoDetails(next, CLASSIFYING_FIELDS);
+  return recordStaffEdits(booking, next, CLASSIFYING_FIELDS, { now });
+}
+
+/*
+  Older copies (a backup, a re-imported sheet row) never flip a record
+  between booking and hosting: the current record's classifying fields
+  win. Returns `incoming` unchanged when the kinds already agree.
+*/
+export function keepRecordClassification(incoming, current) {
+  if (!incoming || !current || isHostRecord(incoming) === isHostRecord(current)) {
+    return incoming;
+  }
+  const next = { ...incoming };
+  CLASSIFYING_FIELDS.forEach((field) => {
+    next[field] = current[field];
+  });
+  return mirrorTopLevelIntoDetails(next, CLASSIFYING_FIELDS);
 }

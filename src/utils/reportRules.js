@@ -20,7 +20,7 @@ import { getBookingDetails, getStaffEditedFields } from "./bookingFields.js";
   a booking is counted once, as the booking.
 */
 export const REPORT_INCLUSION_TEXT =
-  "Counts every record except host records, including inquiries, waitlisted, cancelled and archived groups. " +
+  "Counts every record except hosting, including inquiries, waitlisted, cancelled and archived groups. " +
   "An inquiry that became a booking is counted once, as the booking. " +
   "Each stay is counted in the month it arrives.";
 

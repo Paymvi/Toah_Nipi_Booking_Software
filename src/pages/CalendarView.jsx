@@ -247,6 +247,7 @@ export default function CalendarView({
   goToNextMonth,
   getCalendarEventColor,
   onOpenBooking,
+  eyebrow = "Rentals & Events",
 }) {
   const [calendarView, setCalendarView] = useState("month");
   const [yearDisplayView, setYearDisplayView] = useState("heatmap");
@@ -256,8 +257,8 @@ export default function CalendarView({
   const propertyToday = usePropertyToday();
 
   /*
-    Ordinary bookings and inquiries always show. Cancelled, waitlisted,
-    archived and host records each have a toggle, off by default (Q-005).
+    Ordinary bookings and inquiries always show. Cancelled, waitlisted and
+    archived records each have a toggle, off by default (Q-005).
     An inquiry that became a booking is shown once, as the booking.
     The toggles are remembered per browser.
   */
@@ -497,7 +498,7 @@ export default function CalendarView({
       <article className="dashboard-card calendar-view-card">
         <div className="calendar-view-header">
           <div>
-            <p className="dashboard-eyebrow">Rentals & Events</p>
+            <p className="dashboard-eyebrow">{eyebrow}</p>
 
             <h2 data-tutorial-target="calendar-title">
               {calendarView === "year"

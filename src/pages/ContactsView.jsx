@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import { isHostRecord } from "../utils/bookingClassification";
 import {
   contactMatchesSavedKeys,
   groupByIdentities,
@@ -520,11 +521,18 @@ function getContactsFromBookings(bookings) {
         mailingAddresses,
         retreatTypes,
         sourceTypes,
-        bookings: [...contact.bookings].sort(
-          (a, b) =>
-            getBookingChronologyValue(b) -
-            getBookingChronologyValue(a)
-        ),
+        /*
+          Guest booking history and counts leave hosting out; hosting is
+          listed separately so a contact seen only on hosting stays.
+        */
+        bookings: [...contact.bookings]
+          .filter((booking) => !isHostRecord(booking))
+          .sort(
+            (a, b) =>
+              getBookingChronologyValue(b) -
+              getBookingChronologyValue(a)
+          ),
+        hostingRecords: contact.bookings.filter(isHostRecord),
       };
 
             return {
@@ -1630,13 +1638,17 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                                 <span>
                                   {contact.bookings.length} booking
                                   {contact.bookings.length === 1 ? "" : "s"}
+                                  {contact.hostingRecords.length > 0 &&
+                                    ` · ${contact.hostingRecords.length} hosting (not counted)`}
                                 </span>
                               </div>
 
                               <div className="contacts-bookings-list">
-                                {contact.bookings.map((booking, index) => {
-                                  const bookingStatus =
-                                    getBookingStatus(booking);
+                                {[...contact.bookings, ...contact.hostingRecords].map((booking, index) => {
+                                  const isHosting = isHostRecord(booking);
+                                  const bookingStatus = isHosting
+                                    ? "Hosting"
+                                    : getBookingStatus(booking);
 
                                   const retreatType =
                                     getBookingRetreatType(booking);
@@ -1702,7 +1714,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
                                             openBookingDetail?.(booking)
                                           }
                                         >
-                                          Open Booking
+                                          {isHosting ? "Open Hosting" : "Open Booking"}
                                         </button>
                                       </div>
                                     </div>

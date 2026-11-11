@@ -15,6 +15,7 @@ import "./styles/shared.css";
 import "./styles/Dashboard.css";
 import "./styles/ReportsCamperDaysExplainer.css";
 import "./styles/CalendarView.css";
+import "./styles/Hosting.css";
 import "./styles/InquiryPipeline.css";
 import "./styles/SpreadsheetView.css";
 import "./styles/ContactsView.css";
@@ -127,6 +128,8 @@ export default function App() {
             path="/guest-inquiries"
             element={<Dashboard />}
           />
+
+          <Route path="/hosting" element={<Dashboard />} />
 
 
 

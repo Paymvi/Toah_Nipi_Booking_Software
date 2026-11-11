@@ -16,6 +16,8 @@
   Never log or return portal tokens, file contents or signer entries.
 */
 
+import { isHostRecord } from "../../../src/utils/bookingClassification.js";
+
 export const ORIGINALS_BUCKET = "portal-uploads";
 export const SIGNED_BUCKET = "portal-signed";
 export const MAX_ORIGINAL_BYTES = 10 * 1024 * 1024;
@@ -370,7 +372,10 @@ export function createSigningService({ db, storage, PDFLib, now = () => new Date
     const cleaned = String(token || "").trim();
     if (cleaned.length < 20 || cleaned.length > 200) fail("NOT_FOUND", 404);
     const booking = await db.findBookingByToken(cleaned);
-    if (!booking) fail("NOT_FOUND", 404);
+    // Hosting is never a guest record, even if an old link still resolved.
+    if (!booking || isHostRecord({ organizationName: booking.organization_name, retreatType: booking.retreat_type })) {
+      fail("NOT_FOUND", 404);
+    }
     return booking;
   }
 

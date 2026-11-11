@@ -5,6 +5,8 @@ import { isStaffBookingRecord } from "../utils/bookingClassification";
 import {
   buildLinenSummary,
   buildLodgingSummary,
+  describeLodgingConflict,
+  findLodgingConflicts,
   getBookingLodgingAssignments,
   getLegacyLodgingText,
 } from "../utils/lodgingUtils";
@@ -374,6 +376,8 @@ function getInitialLinenSets(booking) {
 export default function BookingHousingTab({
   booking,
   onSaveBooking,
+  occupancyRecords = [],
+  onOpenRecord,
 }) {
   const [isEditing, setIsEditing] =
     useState(false);
@@ -744,12 +748,8 @@ export default function BookingHousingTab({
     );
     setIsEditing(false);
   };
-  const handleSave = async () => {
-    if (!onSaveBooking) {
-      console.error("BookingHousingTab: onSaveBooking is missing");
-      alert("Save function is not connected");
-      return;
-    }
+  // The record as it would be saved; also used to check room clashes while editing.
+  const buildHousingRecord = () => {
   const buildingsRooms =
     buildLodgingSummary(
       housingValues,
@@ -855,7 +855,7 @@ export default function BookingHousingTab({
           ? ""
           : linenSets,
     };
-    const updatedBooking = recordStaffEdits(
+    return recordStaffEdits(
       booking,
       {
         ...booking,
@@ -869,6 +869,33 @@ export default function BookingHousingTab({
       [],
       { forceKeys: ["lodging", "linenSets"] }
     );
+  };
+
+  const lodgingConflicts = findLodgingConflicts(
+    isEditing ? buildHousingRecord() : booking,
+    occupancyRecords
+  );
+
+  const handleSave = async () => {
+    if (!onSaveBooking) {
+      console.error("BookingHousingTab: onSaveBooking is missing");
+      alert("Save function is not connected");
+      return;
+    }
+    const updatedBooking = buildHousingRecord();
+    const clashes = findLodgingConflicts(updatedBooking, occupancyRecords).filter(
+      (conflict) => conflict.certain
+    );
+    if (
+      clashes.length &&
+      !window.confirm(
+        `These rooms are already taken on some of the same nights:\n\n${clashes
+          .map(describeLodgingConflict)
+          .join("\n")}\n\nSave anyway?`
+      )
+    ) {
+      return;
+    }
     try {
         await onSaveBooking(updatedBooking);
         setIsEditing(false);
@@ -899,6 +926,30 @@ export default function BookingHousingTab({
       ).trim();
   return (
     <div className="booking-housing-tab" data-tutorial-unsaved={isEditing ? "Housing edits" : undefined}>
+      {lodgingConflicts.length > 0 && (
+        <section className="dashboard-card booking-housing-conflicts" role="status">
+          <strong>Lodging clashes on these dates</strong>
+          <ul>
+            {lodgingConflicts.map((conflict, index) => (
+              <li
+                key={`${conflict.record.id}-${conflict.buildingLabel}-${index}`}
+                className={conflict.certain ? "is-certain" : ""}
+              >
+                <span>{describeLodgingConflict(conflict)}</span>
+                {onOpenRecord && (
+                  <button
+                    className="table-link"
+                    type="button"
+                    onClick={() => onOpenRecord(conflict.record.id)}
+                  >
+                    Open
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {/* ===================================================
 
           HEADER / SUMMARY

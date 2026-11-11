@@ -36,6 +36,7 @@ import {
   verifyBackupIntegrity,
 } from "../utils/backupFormat";
 import { getSavedBackupView, saveBackupView } from "../utils/backupView";
+import { keepRecordClassification } from "../utils/bookingClassification";
 import SignedDocumentsBackup from "./SignedDocumentsBackup";
 
 const LAST_BACKUP_STORAGE_KEY = "toahNipiLastManualBackup";
@@ -632,7 +633,13 @@ export default function DashboardBackups({
           ? new Set()
           : new Set(originalBookings.map((booking) => String(booking.id)));
 
-      await restoreBookingRows(bookingsToRestore, liveIdsBeforeRestore, {
+      // An older copy never flips a live record between booking and hosting.
+      const liveById = new Map(originalBookings.map((booking) => [String(booking.id), booking]));
+      const classifiedRows = bookingsToRestore.map((booking) =>
+        keepRecordClassification(booking, liveById.get(String(booking.id)))
+      );
+
+      await restoreBookingRows(classifiedRows, liveIdsBeforeRestore, {
         onProgress: (current, total) => {
           setRestoreProgress({
             current,

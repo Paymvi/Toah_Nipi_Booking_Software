@@ -4,6 +4,7 @@ import {
   getStaffEditedFields,
   isBlankFieldValue,
 } from "./bookingFields.js";
+import { keepRecordClassification } from "./bookingClassification.js";
 
 /*
   Master re-import merge (AUDIT-006, Q-001 A, Q-002 A).
@@ -260,7 +261,17 @@ export function mergeMasterImportRecord(existing, incoming, { rebuildBaseline } 
   merged.id = existing.id;
   merged.submittedAt = existing.submittedAt || incoming.submittedAt;
 
-  return { merged, keptAppValues };
+  // A sheet row never turns hosting into a booking or back; staff convert.
+  const classified = keepRecordClassification(merged, existing);
+  if (classified !== merged) {
+    ["organizationName", "retreatType"].forEach((field) => {
+      if (!sameValue(merged[field], existing[field])) {
+        note(field, existing[field], incoming[field], "booking/hosting changes only through Convert");
+      }
+    });
+  }
+
+  return { merged: classified, keptAppValues };
 }
 
 export function withImportBaseline(incoming) {

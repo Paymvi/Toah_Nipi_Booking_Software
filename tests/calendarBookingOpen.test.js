@@ -71,7 +71,8 @@ test("Enter and Space become a real click so the tutorial guard sees them", () =
 test("Back and delete leave a detail view through the remembered origin", () => {
   const source = readFileSync("src/pages/Dashboard.jsx", "utf8");
 
-  assert.equal(source.match(/onBack=\{closeBookingDetail\}/g)?.length, 2);
+  // Booking, inquiry and hosting details.
+  assert.equal(source.match(/onBack=\{closeBookingDetail\}/g)?.length, 3);
   assert.doesNotMatch(source, /navigate\("\/master-spreadsheet"\)/);
   assert.doesNotMatch(source, /navigate\("\/inquiry-spreadsheet"\)/);
 });

@@ -1,0 +1,261 @@
+/* =========================================================
+   HOSTING page and detail. Colours come from the night-mode theme
+   variables with light fallbacks, so Light and Night both work.
+========================================================= */
+
+.hosting-page,
+.hosting-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.hosting-header,
+.hosting-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.hosting-header .calendar-view-switcher {
+  margin: 0;
+}
+
+.hosting-subtitle,
+.hosting-muted {
+  margin: 0.25rem 0 0;
+  color: var(--n-text-3, #6b7385);
+  font-size: 0.92rem;
+}
+
+.hosting-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hosting-count {
+  color: var(--n-text-2, #565d6b);
+  font-size: 0.9rem;
+}
+
+.hosting-detail-title {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.hosting-detail-title h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.hosting-review {
+  flex-basis: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--n-amber-line, #ecd9a6);
+  border-radius: 0.5rem;
+  background: var(--n-amber-bg, #fff9ea);
+  color: var(--n-amber-text, #6b5b2e);
+  font-size: 0.9rem;
+}
+
+.hosting-review summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.hosting-review ul,
+.hosting-portal-history ul,
+.hosting-more ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.hosting-review li,
+.hosting-portal-history li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+  align-items: baseline;
+  padding: 0.15rem 0;
+}
+
+.hosting-tag {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0 0.4rem;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 999px;
+  color: var(--n-text-3, #6b7385);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* Spreadsheet */
+.hosting-sheet {
+  padding: 0;
+  overflow: hidden;
+}
+
+.hosting-sheet-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem 0.9rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--n-line-2, #e7eaf0);
+}
+
+.hosting-sheet-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  color: var(--n-text-2, #565d6b);
+  font-size: 0.85rem;
+}
+
+.hosting-sheet-controls input[type="search"] {
+  min-width: min(16rem, 100%);
+}
+
+.hosting-sheet-controls input,
+.hosting-fields input,
+.hosting-fields textarea {
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--n-line-3, #c8cfe0);
+  border-radius: 0.4rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #2f3442);
+  font: inherit;
+}
+
+.hosting-sheet-controls label.hosting-check,
+.hosting-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.hosting-table-wrap {
+  height: auto;
+  max-height: 70vh;
+}
+
+.hosting-table {
+  width: 100%;
+  min-width: 56rem;
+}
+
+.hosting-sort {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.hosting-notes {
+  max-width: 20rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hosting-empty {
+  margin: 0;
+  padding: 1.25rem;
+  color: var(--n-text-3, #6b7385);
+}
+
+/* Detail */
+.hosting-detail-card,
+.hosting-more {
+  padding: 1rem 1.25rem;
+}
+
+.hosting-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem 1.25rem;
+  margin: 0;
+}
+
+.hosting-fields > div {
+  min-width: 0;
+}
+
+.hosting-fields .hosting-field-wide {
+  grid-column: 1 / -1;
+}
+
+.hosting-fields dt {
+  color: var(--n-text-3, #6b7385);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.hosting-fields dd {
+  margin: 0.2rem 0 0;
+}
+
+.hosting-fields input,
+.hosting-fields textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hosting-value {
+  color: var(--n-text, #2f3442);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.hosting-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.hosting-more summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--n-text, #2f3442);
+}
+
+.hosting-more h4 {
+  margin: 1rem 0 0.35rem;
+  color: var(--n-text-2, #565d6b);
+  font-size: 0.9rem;
+}
+
+.hosting-note p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.hosting-other-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.35rem 1rem;
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.hosting-other-fields dt {
+  color: var(--n-text-3, #6b7385);
+}
+
+.hosting-other-fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

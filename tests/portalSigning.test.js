@@ -381,3 +381,15 @@ test("files that are not readable PDFs are refused with a paper-upload message",
     { code: "DOCUMENT_UNREADABLE" }
   );
 });
+
+test("a hosting record's portal link cannot open, sign or download, even if it still resolved", async () => {
+  const world = await makeWorld();
+  const input = await validSign(world); // prepared while it was still a booking
+  world.bookings[0].retreat_type = "Hosting";
+  await assert.rejects(world.service.open({ token: TOKEN_A, itemKey: "contract" }), { code: "NOT_FOUND" });
+  await assert.rejects(world.service.sign({ token: TOKEN_A, input }), { code: "NOT_FOUND" });
+  world.bookings[0].retreat_type = "";
+  world.bookings[0].organization_name = "Host: Fictional Fellowship";
+  await assert.rejects(world.service.open({ token: TOKEN_A, itemKey: "contract" }), { code: "NOT_FOUND" });
+  assert.equal(signedFiles(world).length, 0);
+});

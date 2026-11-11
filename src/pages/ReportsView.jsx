@@ -1468,7 +1468,7 @@ function ReportsView({ inquiryBookings }) {
           ["Retreat type", reportsSettings.retreatType === "all" ? "All" : reportsSettings.retreatType],
           ["Source", reportsSettings.sourceMode === "all" ? "All" : reportsSettings.sourceMode],
           ["Included records", REPORT_INCLUSION_TEXT],
-          ["Host records left out", reportSelection.hostExcluded],
+          ["Hosting entries left out", reportSelection.hostExcluded],
           ["Converted inquiries counted as their booking", reportSelection.convertedExcluded],
           ["Exported", new Date().toISOString()],
         ],
@@ -1577,8 +1577,8 @@ function ReportsView({ inquiryBookings }) {
               <span className="reports-header-note">
                 {REPORT_INCLUSION_TEXT}
                 {reportSelection.hostExcluded > 0
-                  ? ` ${reportSelection.hostExcluded} host record${
-                      reportSelection.hostExcluded === 1 ? " is" : "s are"
+                  ? ` ${reportSelection.hostExcluded} hosting entr${
+                      reportSelection.hostExcluded === 1 ? "y is" : "ies are"
                     } left out.`
                   : ""}
                 {reportSelection.convertedExcluded > 0

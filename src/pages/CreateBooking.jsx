@@ -24,6 +24,8 @@ import {
 } from "../utils/bookingClassification";
 import { LODGING_BUILDINGS } from "../constants/lodgingConstants";
 import {
+  describeLodgingConflict,
+  findLodgingConflicts,
   buildLinenSummary,
   buildLodgingSummary as buildSharedLodgingSummary,
 } from "../utils/lodgingUtils";
@@ -1894,6 +1896,7 @@ export default function CreateBooking({
   onBookingUpdated,
 
   embedded = false,
+  occupancyRecords = [],
 }) {
 
   const isEditMode = Boolean(existingBooking);
@@ -2553,6 +2556,21 @@ export default function CreateBooking({
         bookingToSave.waitlist;
       delete bookingToSave.rentalFormDetails.classification;
 
+
+      // Rooms already held on these nights by a booking or (hidden) hosting.
+      const lodgingClashes = findLodgingConflicts(bookingToSave, occupancyRecords).filter(
+        (conflict) => conflict.certain
+      );
+      if (
+        lodgingClashes.length &&
+        !window.confirm(
+          `These rooms are already taken on some of the same nights:\n\n${lodgingClashes
+            .map(describeLodgingConflict)
+            .join("\n")}\n\nSave anyway?`
+        )
+      ) {
+        return;
+      }
 
       let savedBooking;
 

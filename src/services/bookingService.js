@@ -89,6 +89,37 @@ export async function fetchBookingById(bookingId) {
 }
 
 /*
+  Explicit staff action for a booking that has no portal link (for
+  example one converted back from Hosting). Only fills an empty link, so
+  it can never replace a link a guest already has. The database refuses
+  links on hosting records (bookings_hosting_guard), which shows up here
+  as a row that still has no link.
+*/
+export async function createGuestPortalLink(bookingId) {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  const token = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+
+  const { data, error } = await supabase
+    .from("bookings")
+    .update({ portal_token: token })
+    .eq("id", bookingId)
+    .is("portal_token", null)
+    .select();
+
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : null;
+  if (!row) {
+    throw new BookingSaveNotPermittedError(
+      "No link was created. The booking may already have one (reload to see it), or your account cannot edit bookings."
+    );
+  }
+  if (!row.portal_token) {
+    throw new BookingSaveNotPermittedError("Hosting entries cannot have a guest portal link.");
+  }
+  return dbRowToBooking(row);
+}
+
+/*
   Unconditional write, used only by backup restore, where replacing the
   live values with the backup's values is the intended result.
 */

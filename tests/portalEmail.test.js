@@ -7,6 +7,7 @@ import {
   getContactEmails,
   getDueEvents,
   getEmailIneligibleReason,
+  getStopReason,
   getLocalDate,
   getLocalHour,
   getTemplateProblems,
@@ -315,4 +316,18 @@ test("Resend adapter: idempotency key, retryable vs permanent errors, and no-res
   assert.ok(!permanent.detail.includes("@"), "provider text is not copied into history");
   const lost = await createResendProvider({ apiKey: "k", fetchImpl: async () => { throw new Error("network"); } }).send(email);
   assert.equal(lost.uncertain, true);
+});
+
+test("hosting never gets guest email, even if converted after the email was queued", () => {
+  const now = nyWinter("2026-11-24");
+  const decide = (booking, msg) => decideDelivery({ message: msg, settings, booking, config: readyConfig, now });
+  // Converted to hosting after queueing: the final send step rechecks and suppresses.
+  for (const row of [{ retreat_type: "Hosting" }, { organization_name: "Hosting - Fictional Board" }]) {
+    const booking = makeBooking({ row });
+    assert.match(getEmailIneligibleReason(booking.row), /Hosting entries never get guest emails/);
+    for (const trigger of ["welcome", "automatic", "manual_welcome", "manual_reminder"]) {
+      assert.equal(decide(booking, message({ trigger })).action, "suppressed", trigger);
+    }
+    assert.equal(getStopReason(booking), "ineligible");
+  }
 });

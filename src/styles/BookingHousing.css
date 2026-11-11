@@ -749,3 +749,32 @@
 .booking-housing-room-row strong {
   color: var(--n-text, #303442);
 }
+
+/* Allocation clashes with other bookings or hosting on the same nights */
+.booking-housing-conflicts {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--n-amber-line, #ecd9a6);
+  background: var(--n-amber-bg, #fff9ea);
+  color: var(--n-amber-text, #6b5b2e);
+}
+
+.booking-housing-conflicts ul {
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.booking-housing-conflicts li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.2rem 0;
+  font-size: 0.9rem;
+}
+
+.booking-housing-conflicts li.is-certain {
+  color: var(--n-red-text, #a03a3a);
+  font-weight: 600;
+}

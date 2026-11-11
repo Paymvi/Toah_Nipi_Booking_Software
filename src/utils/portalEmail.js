@@ -122,7 +122,7 @@ function toClassificationBooking(row) {
 /*
   Guest emails go only to ordinary bookings that are going ahead, using
   the shared classification. Having portal tasks is not enough: Portal
-  Admin also lists cancelled and host records that already have tasks.
+  Admin also lists cancelled bookings that already have tasks.
 */
 export function getEmailIneligibleReason(row) {
   if (!row) return "The booking no longer exists.";
@@ -131,7 +131,7 @@ export function getEmailIneligibleReason(row) {
   if (exception === BOOKING_EXCEPTION.CANCELLED) return "The booking is cancelled.";
   if (exception === BOOKING_EXCEPTION.WAITLIST) return "The booking is waitlisted.";
   const kind = getRecordKind(booking);
-  if (kind === RECORD_KIND.HOST) return "Host records never get guest emails.";
+  if (kind === RECORD_KIND.HOST) return "Hosting entries never get guest emails.";
   if (kind === RECORD_KIND.ARCHIVE) return "Archived visits never get guest emails.";
   if (kind === RECORD_KIND.INQUIRY) return "Inquiries never get portal emails.";
   if (!row.portal_token) return "The booking has no portal link.";

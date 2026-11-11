@@ -454,8 +454,8 @@ export const TUTORIALS = [
       {
         id: "exceptions",
         target: "calendar-exceptions",
-        say: "Cancelled, waitlisted, archived and host records only appear when you tick them here. This browser remembers your choice.",
-        show: "Also show adds cancelled, waitlisted, archived or host records. The count shows how many there are this month.",
+        say: "Cancelled, waitlisted and archived records only appear when you tick them here. Hosting has its own page. This browser remembers your choice.",
+        show: "Also show adds cancelled, waitlisted or archived records. The count shows how many there are this month.",
         explore: true,
       },
       {

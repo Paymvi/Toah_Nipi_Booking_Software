@@ -72,7 +72,7 @@ Needs Docker Desktop running.
 ## Deploy (after review; not done)
 
 1. Run `supabase/migrations/20261107000100_portal_signing.sql` in the Supabase SQL editor. It is safe to run twice. It replaces `get_portal_record` with the live definition read on 2026-11-07 plus signing fields. If that function has been changed since, merge first (the live definition is in [ONLINE_SIGNATURE_LIVE_SCHEMA_2026-11-07.sql](../audit/ONLINE_SIGNATURE_LIVE_SCHEMA_2026-11-07.sql)).
-2. Deploy the function: `npx supabase functions deploy portal-sign --no-verify-jwt`.
+2. Deploy the function: `npx supabase functions deploy portal-sign --no-verify-jwt --use-api` (`--use-api` bundles the shared `src/utils` classification it imports).
 3. Deploy the staff app and the portal (both builds are needed; the order does not matter while signing is off).
 4. Check: Portal Admin loads and shows **Sign online with** under Correct… on upload tasks; a guest portal still loads; `select enabled, test_booking_ids from portal_signing_settings;` shows `false` and `{}`.
 5. Trial on a **fictional booking** made in the live system:

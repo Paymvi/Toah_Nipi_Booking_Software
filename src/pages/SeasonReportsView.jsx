@@ -120,7 +120,7 @@ function SeasonReportsView({ inquiryBookings, isLoading, loadError, loadedAt, on
         ["Period", period.label],
         ["Counting", settings.counting === "stays" ? "Booked and archived stays" : "Every record except hosts"],
         ["Retreat type", retreatType === "all" ? "All" : retreatType],
-        ["Host records left out", hostExcluded],
+        ["Hosting entries left out", hostExcluded],
         ["Converted inquiries counted as their booking", convertedExcluded],
         ["Exported", new Date().toISOString()],
       ],

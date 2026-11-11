@@ -245,6 +245,8 @@ function getBookingBuildingSummary(booking) {
 
 
 export default function LodgingCalendarView({
+  hiddenOccupancy = [],
+  eyebrow = "Housing & Lodging",
   calendarCells,
   datedInquiries,
   selectedMonthInquiries,
@@ -657,8 +659,12 @@ export default function LodgingCalendarView({
       return;
     }
 
+    /*
+      Hosting is not drawn on this calendar, but rooms it holds are not
+      free: the availability check counts it (hiddenOccupancy).
+    */
     const buildings = describeLodgingAvailability(
-      safeDatedInquiries,
+      [...safeDatedInquiries, ...hiddenOccupancy.filter(countsForLodgingOccupancy)],
       availabilityStartDate,
       availabilityEndDate
     ).map((building) => ({
@@ -728,7 +734,7 @@ export default function LodgingCalendarView({
         <div className="calendar-view-header">
           <div>
             <p className="dashboard-eyebrow">
-              Housing & Lodging
+              {eyebrow}
             </p>
 
             <h2>
@@ -1043,8 +1049,10 @@ export default function LodgingCalendarView({
               </div>
 
               <p className="lodging-availability-summary-footnote">
-                Counted: every booking except host records,
+                Counted: every booking and hosting entry except
                 open inquiries and clearly cancelled groups.
+                Hosting is not drawn on this calendar but still
+                holds its rooms.
                 Several groups can share a building; a room
                 conflict is shown only when the saved Housing
                 assignments put two groups in the same room on
