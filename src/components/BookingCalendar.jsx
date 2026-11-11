@@ -15,6 +15,7 @@ booking progress is tracked in the guest portal.
 
 import { getBookingDisplayState } from "../utils/bookingClassification";
 import { getBookingOpenProps } from "../utils/bookingOpenProps";
+import { toDateKey, usePropertyToday } from "../utils/propertyToday";
 import {
   addDays,
   daysBetween,
@@ -157,6 +158,8 @@ export default function BookingCalendar({
   const calendarWeeks =
     getCalendarWeeks(calendarCells);
 
+  const today = usePropertyToday();
+
   return (
     <div
       className={`calendar-grid-span-mode ${
@@ -201,20 +204,32 @@ export default function BookingCalendar({
               "--calendar-event-row-count": eventRowCount,
             }}
           >
-            {week.map((day, dayIndex) => (
-              <div
-                className={`calendar-cell ${
-                  isLarge ? "calendar-cell-large" : ""
-                } ${!day ? "calendar-cell-empty" : ""}`}
-                key={`week-${weekIndex}-day-${dayIndex}`}
-              >
-                {day && (
-                  <span className="calendar-day-number">
-                    {day}
-                  </span>
-                )}
-              </div>
-            ))}
+            {week.map((day, dayIndex) => {
+              const isToday =
+                Boolean(day) &&
+                toDateKey(new Date(selectedYear, selectedMonth, day)) === today;
+
+              return (
+                <div
+                  className={`calendar-cell ${
+                    isLarge ? "calendar-cell-large" : ""
+                  } ${!day ? "calendar-cell-empty" : ""} ${
+                    isToday ? "calendar-cell-today" : ""
+                  }`}
+                  key={`week-${weekIndex}-day-${dayIndex}`}
+                  aria-current={isToday ? "date" : undefined}
+                >
+                  {day && (
+                    <span
+                      className="calendar-day-number"
+                      title={isToday ? "Today" : undefined}
+                    >
+                      {day}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
 
             {weekSegments.map((segment) => {
               const colorClass =

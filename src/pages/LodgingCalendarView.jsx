@@ -16,6 +16,7 @@ import { monthNames } from "../constants/dashboardConstants";
 
 import { getBookingOpenProps } from "../utils/bookingOpenProps";
 import { formatDateRange } from "../utils/dateUtils";
+import { toDateKey, usePropertyToday } from "../utils/propertyToday";
 
 
 const calendarViewOptions = [
@@ -282,6 +283,7 @@ export default function LodgingCalendarView({
     useState(() =>
       getStartOfWeek(new Date())
     );
+  const propertyToday = usePropertyToday();
 
   const safeDatedInquiries = useMemo(
     () => (datedInquiries || []).filter(countsForLodgingOccupancy),
@@ -415,6 +417,7 @@ export default function LodgingCalendarView({
         return {
           date,
           dayLabel,
+          isToday: toDateKey(date) === propertyToday,
           inquiries,
         };
 
@@ -423,7 +426,8 @@ export default function LodgingCalendarView({
 
   },[
   filteredDatedInquiries,
-  selectedWeekStart
+  selectedWeekStart,
+  propertyToday
   ]);
 
   const selectedYearHeatmapMonths = useMemo(() => {
@@ -1196,6 +1200,7 @@ export default function LodgingCalendarView({
                     day.isToday ? "calendar-week-day-today" : ""
                   }`}
                   key={day.date.toISOString()}
+                  aria-current={day.isToday ? "date" : undefined}
                 >
                   <div className="calendar-week-day-header">
                     <span>{day.dayLabel}</span>
@@ -1326,6 +1331,9 @@ export default function LodgingCalendarView({
                             day.primaryBucket
                               ? getBuildingConfig(day.primaryBucket)?.colorClass
                               : "",
+                            toDateKey(day.date) === propertyToday
+                              ? "calendar-year-heatmap-day-today"
+                              : "",
                           ]
                           .filter(Boolean)
                           .join(" ");
@@ -1337,6 +1345,9 @@ export default function LodgingCalendarView({
                               key={day.date.toISOString()}
                               title={getHeatmapDayTitle(day)}
                               aria-label={getHeatmapDayTitle(day)}
+                              aria-current={
+                                toDateKey(day.date) === propertyToday ? "date" : undefined
+                              }
                               style={{
                                 "--heat-opacity": day.heatOpacity,
                               }}

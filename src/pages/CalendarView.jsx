@@ -14,6 +14,7 @@ import { monthNames } from "../constants/dashboardConstants";
 
 import { getBookingOpenProps } from "../utils/bookingOpenProps";
 import { formatDateRange } from "../utils/dateUtils";
+import { toDateKey, usePropertyToday } from "../utils/propertyToday";
 
 const calendarViewOptions = [
   { value: "month", label: "Month", tutorialTarget: "calendar-view-month" },
@@ -252,6 +253,7 @@ export default function CalendarView({
   const [selectedWeekStart, setSelectedWeekStart] = useState(() =>
     getStartOfWeek(new Date())
   );
+  const propertyToday = usePropertyToday();
 
   /*
     Ordinary bookings and inquiries always show. Cancelled, waitlisted,
@@ -317,21 +319,17 @@ export default function CalendarView({
   const selectedWeekDays = useMemo(() => {
     return weekDayLabels.map((dayLabel, index) => {
       const date = addDays(selectedWeekStart, index);
-      const today = new Date();
 
       return {
         date,
         dayLabel,
-        isToday:
-          date.getFullYear() === today.getFullYear() &&
-          date.getMonth() === today.getMonth() &&
-          date.getDate() === today.getDate(),
+        isToday: toDateKey(date) === propertyToday,
         inquiries: safeDatedInquiries.filter((inquiry) =>
           inquiryTouchesDate(inquiry, date)
         ),
       };
     });
-  }, [safeDatedInquiries, selectedWeekStart]);
+  }, [safeDatedInquiries, selectedWeekStart, propertyToday]);
 
   const selectedYearMonths = useMemo(() => {
     return monthNames.map((monthName, monthIndex) => ({
@@ -630,6 +628,7 @@ export default function CalendarView({
                     day.isToday ? "calendar-week-day-today" : ""
                   }`}
                   key={day.date.toISOString()}
+                  aria-current={day.isToday ? "date" : undefined}
                 >
                   <div className="calendar-week-day-header">
                     <span>{day.dayLabel}</span>
@@ -758,6 +757,9 @@ export default function CalendarView({
                             day.primaryBucket
                               ? `calendar-year-heatmap-day-${day.primaryBucket}`
                               : "",
+                            toDateKey(day.date) === propertyToday
+                              ? "calendar-year-heatmap-day-today"
+                              : "",
                           ]
                             .filter(Boolean)
                             .join(" ");
@@ -769,6 +771,9 @@ export default function CalendarView({
                               key={day.date.toISOString()}
                               title={getHeatmapDayTitle(day)}
                               aria-label={getHeatmapDayTitle(day)}
+                              aria-current={
+                                toDateKey(day.date) === propertyToday ? "date" : undefined
+                              }
                               style={{
                                 "--heat-opacity": day.heatOpacity,
                               }}
