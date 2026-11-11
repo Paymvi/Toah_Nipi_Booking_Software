@@ -11,6 +11,7 @@ import {
   FaUser,
   FaUsers,
 } from "react-icons/fa";
+import CopyButton from "../components/CopyButton";
 
 
 /* =========================================================
@@ -220,6 +221,7 @@ function InquiryValue({
   label,
   value,
   icon: Icon,
+  copyLabel,
 }) {
   return (
     <div className="inquiry-record-field">
@@ -228,7 +230,10 @@ function InquiryValue({
         <span>{label}</span>
       </div>
 
-      <strong>{value || "—"}</strong>
+      <strong>
+        {value || "—"}
+        {copyLabel && <CopyButton value={value} label={copyLabel} />}
+      </strong>
     </div>
   );
 }
@@ -747,6 +752,7 @@ export default function InquiryRecordDetailView({
                   booking.email ||
                   "No email provided"
                 }
+                copyLabel="email address"
               />
 
 
@@ -757,6 +763,7 @@ export default function InquiryRecordDetailView({
                   booking.phone ||
                   "No phone provided"
                 }
+                copyLabel="phone number"
               />
 
 

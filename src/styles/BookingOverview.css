@@ -119,12 +119,14 @@
   line-height: 1.45;
 }
 
-.booking-overview-sidebar-section > a {
+.booking-overview-sidebar-section > a,
+.booking-overview-sidebar-contact-line > a {
   color: var(--n-violet-text, #5142a5);
   text-decoration: none;
 }
 
-.booking-overview-sidebar-section > a:hover {
+.booking-overview-sidebar-section > a:hover,
+.booking-overview-sidebar-contact-line > a:hover {
   text-decoration: underline;
 }
 

@@ -120,6 +120,7 @@ import GuestInquiriesView from "../pages/GuestInquiriesView";
 
 import StaffSignOutButton from "../components/StaffSignOutButton";
 import ThemeToggle from "../components/ThemeToggle";
+import CopyButton from "../components/CopyButton";
 
 import PortalAdminView from "../pages/PortalAdminView";
 import {
@@ -4193,14 +4194,22 @@ function BookingOverviewSummary({ booking, dateSettings }) {
           hasBookingOverviewValue(booking.phone)) && (
           <span>
             {hasBookingOverviewValue(booking.email) && (
-              <a href={`mailto:${booking.email}`}>{booking.email}</a>
+              <>
+                <a href={`mailto:${booking.email}`}>{booking.email}</a>
+                <CopyButton value={booking.email} label="email address" />
+              </>
             )}
 
             {hasBookingOverviewValue(booking.email) &&
               hasBookingOverviewValue(booking.phone) &&
               " · "}
 
-            {hasBookingOverviewValue(booking.phone) && booking.phone}
+            {hasBookingOverviewValue(booking.phone) && (
+              <>
+                {booking.phone}
+                <CopyButton value={booking.phone} label="phone number" />
+              </>
+            )}
           </span>
         )}
 
@@ -4224,9 +4233,12 @@ function BookingOverviewSummary({ booking, dateSettings }) {
             secondaryContact.secondaryContactPhone) && (
             <span>
               {secondaryContact.secondaryContactEmail && (
-                <a href={`mailto:${secondaryContact.secondaryContactEmail}`}>
-                  {secondaryContact.secondaryContactEmail}
-                </a>
+                <>
+                  <a href={`mailto:${secondaryContact.secondaryContactEmail}`}>
+                    {secondaryContact.secondaryContactEmail}
+                  </a>
+                  <CopyButton value={secondaryContact.secondaryContactEmail} label="secondary contact email address" />
+                </>
               )}
 
               {secondaryContact.secondaryContactEmail &&
@@ -4234,9 +4246,12 @@ function BookingOverviewSummary({ booking, dateSettings }) {
                 " · "}
 
               {secondaryContact.secondaryContactPhone && (
-                <a href={`tel:${secondaryContact.secondaryContactPhone.replace(/[^\d+]/g, "")}`}>
-                  {secondaryContact.secondaryContactPhone}
-                </a>
+                <>
+                  <a href={`tel:${secondaryContact.secondaryContactPhone.replace(/[^\d+]/g, "")}`}>
+                    {secondaryContact.secondaryContactPhone}
+                  </a>
+                  <CopyButton value={secondaryContact.secondaryContactPhone} label="secondary contact phone number" />
+                </>
               )}
             </span>
           )}
@@ -6087,11 +6102,14 @@ const overviewLinenPieces =
             {hasBookingOverviewValue(
               booking.email
             ) && (
-              <a
-                href={`mailto:${booking.email}`}
-              >
-                {booking.email}
-              </a>
+              <span className="booking-overview-sidebar-contact-line">
+                <a
+                  href={`mailto:${booking.email}`}
+                >
+                  {booking.email}
+                </a>
+                <CopyButton value={booking.email} label="email address" />
+              </span>
             )}
 
             {hasBookingOverviewValue(
@@ -6099,6 +6117,7 @@ const overviewLinenPieces =
             ) && (
               <span className="booking-overview-sidebar-contact-line">
                 {booking.phone}
+                <CopyButton value={booking.phone} label="phone number" />
               </span>
             )}
 
@@ -6125,18 +6144,21 @@ const overviewLinenPieces =
               )}
 
               {secondaryContact.secondaryContactEmail && (
-                <a href={`mailto:${secondaryContact.secondaryContactEmail}`}>
-                  {secondaryContact.secondaryContactEmail}
-                </a>
+                <span className="booking-overview-sidebar-contact-line">
+                  <a href={`mailto:${secondaryContact.secondaryContactEmail}`}>
+                    {secondaryContact.secondaryContactEmail}
+                  </a>
+                  <CopyButton value={secondaryContact.secondaryContactEmail} label="secondary contact email address" />
+                </span>
               )}
 
               {secondaryContact.secondaryContactPhone && (
-                <a
-                  className="booking-overview-sidebar-contact-line"
-                  href={`tel:${secondaryContact.secondaryContactPhone.replace(/[^\d+]/g, "")}`}
-                >
-                  {secondaryContact.secondaryContactPhone}
-                </a>
+                <span className="booking-overview-sidebar-contact-line">
+                  <a href={`tel:${secondaryContact.secondaryContactPhone.replace(/[^\d+]/g, "")}`}>
+                    {secondaryContact.secondaryContactPhone}
+                  </a>
+                  <CopyButton value={secondaryContact.secondaryContactPhone} label="secondary contact phone number" />
+                </span>
               )}
             </div>
           )}

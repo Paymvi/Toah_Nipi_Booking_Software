@@ -22,6 +22,7 @@ import {
   FaUpload,
   FaEnvelope,
 } from "react-icons/fa";
+import CopyButton from "../components/CopyButton";
 
 import { supabase } from "../lib/supabaseClient";
 import {
@@ -3562,6 +3563,7 @@ function PortalRecordCard({
           <span>
             {record.email ||
               "No email"}
+            <CopyButton value={record.email} label="email address" />
           </span>
         </div>
 

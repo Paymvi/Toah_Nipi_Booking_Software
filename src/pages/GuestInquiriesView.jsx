@@ -27,6 +27,7 @@ import {
   FaUsers,
   FaUtensils,
 } from "react-icons/fa";
+import CopyButton from "../components/CopyButton";
 
 import {
   declineGuestInquiry,
@@ -517,6 +518,7 @@ function DetailField({
   label,
   value,
   wide = false,
+  copyLabel,
 }) {
   return (
     <div
@@ -534,6 +536,7 @@ function DetailField({
       <strong>
         {value ??
           "—"}
+        {copyLabel && <CopyButton value={value} label={copyLabel} />}
       </strong>
     </div>
   );
@@ -1341,6 +1344,7 @@ export default function GuestInquiriesView({
                     value={
                       selectedInquiry.email
                     }
+                    copyLabel="email address"
                   />
 
                   <DetailField
@@ -1351,6 +1355,7 @@ export default function GuestInquiriesView({
                     value={
                       selectedInquiry.phone
                     }
+                    copyLabel="phone number"
                   />
 
                   <DetailField

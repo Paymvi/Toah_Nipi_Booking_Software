@@ -12,6 +12,7 @@ import {
   uploadBrowserContactPreferences,
 } from "../services/contactPreferences";
 import { getBookingInquiryDateValue } from "../utils/dateUtils";
+import { copyTextToClipboard } from "../utils/clipboard";
 
 const CONTACTS_PREFERENCES_UPLOADED_KEY = "toahNipiContactPreferencesUploaded";
 
@@ -551,34 +552,6 @@ function getLastName(fullName) {
   }
 
   return parts[parts.length - 1];
-}
-
-
-async function copyTextToClipboard(text) {
-  const textToCopy = String(text ?? "").trim();
-
-  if (!textToCopy) {
-    return;
-  }
-
-  if (navigator.clipboard && window.isSecureContext) {
-    await navigator.clipboard.writeText(textToCopy);
-    return;
-  }
-
-  const textArea = document.createElement("textarea");
-  textArea.value = textToCopy;
-  textArea.setAttribute("readonly", "");
-  textArea.style.position = "fixed";
-  textArea.style.left = "-9999px";
-  textArea.style.top = "-9999px";
-
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-
-  document.execCommand("copy");
-  document.body.removeChild(textArea);
 }
 
 

@@ -1,0 +1,51 @@
+.copy-value-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-left: 0.312rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--n-text-3, #7b8290);
+  font-size: 0.78rem;
+  line-height: 1;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.copy-value-button:hover {
+  border-color: var(--n-line, #e6e9ef);
+  background: var(--n-surface-2, #f6f7fb);
+  color: var(--n-violet-text, #5142a5);
+}
+
+.copy-value-button:focus-visible {
+  outline: 2px solid var(--n-accent-solid, #443a9c);
+  outline-offset: 1px;
+}
+
+.copy-value-button.is-copied {
+  color: var(--n-green-text, #1f7a4d);
+}
+
+.copy-value-feedback {
+  margin-left: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  vertical-align: middle;
+}
+
+.copy-value-feedback:empty {
+  margin-left: 0;
+}
+
+.copy-value-feedback.is-copied {
+  color: var(--n-green-text, #1f7a4d);
+}
+
+.copy-value-feedback.is-failed {
+  color: var(--n-red-text, #b42318);
+}
