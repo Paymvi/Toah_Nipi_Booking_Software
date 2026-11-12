@@ -16,9 +16,11 @@ import {
   FaArrowLeft,
   FaBook,
   FaCalendarAlt,
+  FaChartBar,
   FaCheckCircle,
   FaChevronRight,
   FaClipboardList,
+  FaEnvelope,
   FaEye,
     FaHandPointer,
   FaKey,
@@ -36,7 +38,6 @@ import {
   getResumeStep,
   getStepPosition,
   getUnsavedWork,
-  groupTutorialsByCategory,
   isShown,
   loadTutorialProgress,
   saveTutorialProgress,
@@ -48,8 +49,10 @@ import {
 const CATEGORY_ICONS = {
   Bookings: FaClipboardList,
   Calendar: FaCalendarAlt,
-    Contacts: FaUsers,
+  Contacts: FaUsers,
+  Reports: FaChartBar,
   Portals: FaKey,
+  Emails: FaEnvelope,
 };
 
 const EXIT_MESSAGE_MS = 4500;
@@ -100,6 +103,23 @@ function getStepCount(tutorial) {
   return getStepPosition(tutorial.steps, 0, false).total;
 }
 
+// One library row. A completed row keeps its check and says it can be replayed.
+function TutorialItem({ tutorial, icon: Icon, isDone, onOpen }) {
+  return (
+    <button className="tg-tutorial-item" type="button" onClick={() => onOpen(tutorial)}>
+      {Icon && <Icon className="tg-item-icon" aria-hidden="true" />}
+      <strong>{tutorial.title}</strong>
+      {isDone ? (
+        <span className="tg-item-done">
+          <FaCheckCircle aria-hidden="true" /> <span className="tg-visually-hidden">Completed. </span>Replay
+        </span>
+      ) : (
+        <FaChevronRight className="tg-item-go" aria-hidden="true" />
+      )}
+    </button>
+  );
+}
+
 export default function TutorialGnome() {
   const navigate = useNavigate();
   // closed | panel | running | complete
@@ -121,9 +141,7 @@ export default function TutorialGnome() {
     const tutorialsById = Object.fromEntries(ALL_TUTORIALS.map((tutorial) => [tutorial.id, tutorial]));
   const matchedIds = new Set(searchTutorials(ALL_TUTORIALS, query).map((tutorial) => tutorial.id));
   const getShownTopics = (tutorial) => (tutorial.topics ?? []).filter((topic) => matchedIds.has(topic.id));
-  const visibleGroups = groupTutorialsByCategory(
-    TUTORIALS.filter((tutorial) => matchedIds.has(tutorial.id) || getShownTopics(tutorial).length > 0)
-  );
+  const visibleTutorials = TUTORIALS.filter((tutorial) => matchedIds.has(tutorial.id) || getShownTopics(tutorial).length > 0);
   const unfinished = progress.unfinished && tutorialsById[progress.unfinished.id] ? progress.unfinished : null;
 
   function updateProgress(next) {
@@ -342,10 +360,7 @@ export default function TutorialGnome() {
           <header className="tg-panel-header">
             <GnomeMascot pose="wave" mood="happy" className="tg-panel-gnome" />
 
-            <div className="tg-panel-greeting">
-              <h2 id="tg-panel-title">Hi! I'm your tutorial gnome.</h2>
-              <p>Pick something to learn. I can walk you through it while you do it, or show you how it's done.</p>
-            </div>
+            <h2 id="tg-panel-title">What would you like to learn?</h2>
 
             <button className="tg-icon-button" type="button" onClick={closePanel} aria-label="Close tutorials">
               <FaTimes aria-hidden="true" />
@@ -378,10 +393,10 @@ export default function TutorialGnome() {
                             <p>{detailTutorial.description}</p>
 
               <p className="tg-meta">
-                {detailTutorial.category} · {detailTutorial.difficulty} · {getStepCount(detailTutorial)} steps
+                {getStepCount(detailTutorial)} steps
                 {progress.completed[detailTutorial.id] && (
                   <span className="tg-done-badge">
-                    <FaCheckCircle aria-hidden="true" /> Completed
+                    <FaCheckCircle aria-hidden="true" /> Completed · replay anytime
                   </span>
                 )}
               </p>
@@ -471,85 +486,40 @@ export default function TutorialGnome() {
                 />
               </label>
 
-              {visibleGroups.length === 0 ? (
+              {visibleTutorials.length === 0 ? (
                 <p className="tg-empty">No tutorials match "{query}". Try "calendar" or "contacts".</p>
               ) : (
-                visibleGroups.map(({ category, items }) => {
-                  const Icon = CATEGORY_ICONS[category] || FaBook;
+                <ul className="tg-list">
+                  {visibleTutorials.map((tutorial) => {
+                    const Icon = CATEGORY_ICONS[tutorial.category] || FaBook;
+                    const topics = getShownTopics(tutorial);
 
-                  return (
-                    <section className="tg-category" key={category} aria-label={category}>
-                      <h3>
-                        <Icon aria-hidden="true" /> {category}
-                      </h3>
+                    return (
+                      <li key={tutorial.id}>
+                        <TutorialItem tutorial={tutorial} icon={Icon} isDone={progress.completed[tutorial.id]} onOpen={openDetail} />
 
-                      <ul>
-                        {items.map((tutorial) => (
-                          <li key={tutorial.id}>
-                            <button className="tg-tutorial-item" type="button" onClick={() => openDetail(tutorial)}>
-                              <span>
-                                <strong>{tutorial.title}</strong>
-                                                                <small>
-                                  {tutorial.topics ? "Full walkthrough" : tutorial.difficulty} · {getStepCount(tutorial)} steps
-                                </small>
-                              </span>
-
-                              {progress.completed[tutorial.id] ? (
-                                <FaCheckCircle className="tg-item-done" aria-label="Completed" />
-                              ) : (
-                                <FaChevronRight aria-hidden="true" />
-                              )}
-                                                        </button>
-
-                            {getShownTopics(tutorial).length > 0 && (
-                              <details
-                                className="tg-topics"
-                                open={Boolean(query)}
-                                onToggle={(event) =>
-                                  event.currentTarget.open && event.currentTarget.scrollIntoView({ block: "start" })
-                                }
-                              >
-                                <summary>
-                                  Or learn just one topic
-                                  <small>
-                                    {tutorial.topics.filter((topic) => progress.completed[topic.id]).length} of{" "}
-                                    {tutorial.topics.length} done
-                                  </small>
-                                </summary>
-
-                                {[...new Set(getShownTopics(tutorial).map((topic) => topic.group))].map((group) => (
-                                  <div key={group}>
-                                    <h4>{group}</h4>
-                                    {getShownTopics(tutorial)
-                                      .filter((topic) => topic.group === group)
-                                      .map((topic) => (
-                                        <button
-                                          className="tg-tutorial-item"
-                                          type="button"
-                                          key={topic.id}
-                                          onClick={() => openDetail(topic)}
-                                        >
-                                          <span>
-                                            <strong>{topic.title}</strong>
-                                          </span>
-
-                                          {progress.completed[topic.id] ? (
-                                            <FaCheckCircle className="tg-item-done" aria-label="Completed" />
-                                          ) : (
-                                            <FaChevronRight aria-hidden="true" />
-                                          )}
-                                        </button>
-                                      ))}
-                                  </div>
-                                ))}
-                              </details>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </section>
-                  );
-                })
+                        {topics.length > 0 && (
+                          <details
+                            className="tg-topics"
+                            open={Boolean(query)}
+                            onToggle={(event) => event.currentTarget.open && event.currentTarget.scrollIntoView({ block: "nearest" })}
+                          >
+                            <summary>
+                              <FaChevronRight aria-hidden="true" /> Individual topics
+                            </summary>
+                            <ul>
+                              {topics.map((topic) => (
+                                <li key={topic.id}>
+                                  <TutorialItem tutorial={topic} isDone={progress.completed[topic.id]} onOpen={openDetail} />
+                                </li>
+                              ))}
+                            </ul>
+                          </details>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </div>
           )}

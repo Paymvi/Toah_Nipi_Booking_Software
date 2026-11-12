@@ -297,35 +297,25 @@
 
 .tg-panel-header {
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 1rem 0.75rem 0.9rem 1rem;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.85rem;
   background: var(--tg-cream);
   border-bottom: 1px solid var(--tg-line);
 }
 
 .tg-panel-gnome {
   flex: 0 0 auto;
-  width: 3.5rem;
-  height: 4.6rem;
+  width: 2.3rem;
+  height: 3rem;
 }
 
-.tg-panel-greeting {
+.tg-panel-header h2 {
   flex: 1;
   min-width: 0;
-}
-
-.tg-panel-greeting h2 {
-  margin: 0.2rem 0 0.3rem;
-  font-size: 1.2rem;
-  line-height: 1.25;
-}
-
-.tg-panel-greeting p {
   margin: 0;
-  color: var(--tg-muted);
-  font-size: 0.98rem;
-  line-height: 1.45;
+  font-size: 1.1rem;
+  line-height: 1.25;
 }
 
 .tg-library,
@@ -364,33 +354,23 @@
   font: inherit;
 }
 
-.tg-category h3 {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin: 1rem 0 0.4rem;
-  color: var(--tg-muted);
-  font-size: 0.86rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.tg-category ul {
-  margin: 0;
+.tg-list,
+.tg-topics ul {
+  margin: 0.5rem 0 0;
   padding: 0;
   list-style: none;
 }
 
+/* One line per tutorial: icon, title, then a chevron or the replay check. */
 .tg-tutorial-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.65rem;
   width: 100%;
-  padding: 0.65rem 0.7rem;
+  min-height: 3.4rem;
+  padding: 0.4rem 0.6rem;
   border: 0;
-  border-radius: 0.6rem;
+  border-radius: 0.55rem;
   background: transparent;
   color: var(--tg-ink);
   text-align: left;
@@ -400,14 +380,30 @@
   background: var(--n-surface-3, #f3f6f3);
 }
 
-.tg-tutorial-item span {
-  display: grid;
-  gap: 0.15rem;
+.tg-tutorial-item strong {
+  flex: 1;
+  min-width: 0;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
-.tg-tutorial-item strong {
-  font-size: 1.02rem;
-  font-weight: 600;
+.tg-item-icon {
+  flex: 0 0 1rem;
+  color: var(--n-green-text, var(--tg-green));
+}
+
+.tg-item-go {
+  flex: 0 0 auto;
+  color: var(--n-text-3, #9aa1ab);
+}
+
+.tg-item-done {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--n-green-text, var(--tg-green));
+  font-size: 0.85rem;
 }
 
 .tg-tutorial-item small,
@@ -415,15 +411,6 @@
 .tg-muted {
   color: var(--tg-muted);
   font-size: 0.9rem;
-}
-
-.tg-tutorial-item > svg {
-  flex: 0 0 auto;
-  color: var(--n-text-3, #9aa1ab);
-}
-
-.tg-tutorial-item .tg-item-done {
-  color: var(--n-green-text, var(--tg-green));
 }
 
 .tg-empty {
@@ -1037,18 +1024,35 @@
   white-space: nowrap;
 }
 
-.tg-topics {
-  margin-top: 6px;
-}
-
 .tg-topics summary {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 6px 10px;
-  border-radius: 8px;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3.1rem;
+  padding: 0 0.6rem 0 2.25rem;
+  border-radius: 0.55rem;
+  color: var(--tg-muted);
+  font-size: 0.92rem;
   font-weight: 600;
+  list-style: none;
   cursor: pointer;
+}
+
+.tg-topics summary::-webkit-details-marker {
+  display: none;
+}
+
+.tg-topics summary:hover {
+  background: var(--n-surface-3, #f3f6f3);
+}
+
+.tg-topics summary svg {
+  font-size: 0.75rem;
+  transition: transform 150ms ease;
+}
+
+.tg-topics[open] summary svg {
+  transform: rotate(90deg);
 }
 
 .tg-topics summary:focus-visible {
@@ -1056,19 +1060,18 @@
   outline-offset: 2px;
 }
 
-.tg-topics summary small {
-  font-weight: 400;
-  opacity: 0.7;
-}
-
-.tg-topics h4 {
-  margin: 10px 10px 4px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  opacity: 0.75;
+/* Topics sit under the walkthrough's title, past its icon. */
+.tg-topics ul {
+  margin: 0 0 0.25rem 1.65rem;
+  border-left: 1px solid var(--tg-line);
 }
 
 .tg-topics .tg-tutorial-item {
-  width: 100%;
-  margin-bottom: 4px;
+  min-height: 3.1rem;
+  font-size: 0.95rem;
+}
+
+.tg-topics .tg-tutorial-item strong {
+  font-size: 0.95rem;
+  font-weight: 500;
 }

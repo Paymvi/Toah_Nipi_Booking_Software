@@ -6,7 +6,7 @@ This report covers the staff-side portal walkthrough: what it teaches, how it's 
 
 ## 1. Structure
 
-Staff start from the gnome: **Portals → How do I manage a group's portal?** for the full walkthrough, or **Or learn just one topic** beneath it for a single topic. Both offer **Walk me through it** and **Show me how**.
+Staff start from the gnome: **Manage a group's portal** for the full walkthrough, or **Individual topics** beneath it for a single topic. Both offer **Walk me through it** and **Show me how**.
 
 The walkthrough has an intro, ten topics in three groups, and a recap.
 

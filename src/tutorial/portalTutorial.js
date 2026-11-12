@@ -1,5 +1,5 @@
 /*
-  "How do I manage a group's portal?": one walkthrough built from sections.
+  "Manage a group's portal": one walkthrough built from sections.
 
   Each section below is written once. composeWalkthrough (tutorialCore.js)
   turns the list into the full walkthrough and into one standalone topic per
@@ -636,7 +636,7 @@ const SECTIONS = [
 
 const { walkthrough, topics } = composeWalkthrough({
   id: "portal",
-  title: "How do I manage a group's portal?",
+  title: "Manage a group's portal",
   description: "From finding a group to assigning tasks, emailing the guest and reviewing what comes back.",
   category: "Portals",
   difficulty: "Intermediate",

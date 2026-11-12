@@ -271,7 +271,7 @@ export const TUTORIALS = [
 
   {
     id: "open-booking",
-    title: "Open a booking and read its Overview",
+    title: "Open and read a booking",
     description: "Find a booking in the Master Spreadsheet, open it, and tour the Overview tab.",
     category: "Bookings",
     difficulty: "Beginner",
@@ -390,7 +390,7 @@ export const TUTORIALS = [
 
   {
     id: "calendar",
-    title: "Navigate the Calendar",
+    title: "Use the calendar",
     description: "Move between months, jump back to today, and switch between Month, Week and Year views.",
     category: "Calendar",
     difficulty: "Beginner",

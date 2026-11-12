@@ -492,14 +492,14 @@ await test("Checklist edits are detected", async ({ page }) => {
 }, { path: "/master-spreadsheet" });
 
 await test("the Form is only flagged once something is typed, in every tutorial", async ({ page }) => {
-  await start(page, "Navigate the Calendar", "guided");
+  await start(page, "Use the calendar", "guided");
   await waitForStep(page, "open-calendar");
   await page.locator(END).click();
   await sleep(300);
   await page.locator(`${target("nav-form")}`).first().click();
   await page.waitForSelector(`${target("booking-form-group-name")}`);
   await page.locator(`${target("booking-form-group-name")} input, input${target("booking-form-group-name")}`).first().fill("My own group");
-  await expectWarning(page, "Navigate the Calendar", "the booking form");
+  await expectWarning(page, "Use the calendar", "the booking form");
   await page.getByRole("button", { name: "Start anyway" }).click();
   await waitForStep(page, "open-calendar");
 });
@@ -613,7 +613,7 @@ await test("an outdated saved step resumes safely", async ({ page }) => {
 
 await test("the library shows the walkthrough with grouped topics, and search finds one", async ({ page }) => {
   await openLibrary(page);
-  await page.locator(".tg-tutorial-item", { hasText: "How do I manage a group's portal?" }).waitFor();
+  await page.locator(".tg-tutorial-item", { hasText: "Manage a group's portal" }).waitFor();
   assert(!(await page.locator(".tg-tutorial-item", { hasText: "Assign tasks" }).isVisible()), "topics aren't tucked away");
   await page.locator(".tg-topics summary").click();
   for (const group of ["Set up a portal", "Reach the guest", "Review what comes back"]) {
