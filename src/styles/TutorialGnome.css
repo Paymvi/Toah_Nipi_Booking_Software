@@ -835,6 +835,22 @@
   font-weight: 400;
 }
 
+.tg-learn-more {
+  margin: 0 0 0.55rem;
+  color: var(--tg-muted);
+  font-size: 0.92rem;
+}
+
+.tg-learn-more summary {
+  cursor: pointer;
+  color: var(--tg-ink);
+  font-weight: 600;
+}
+
+.tg-learn-more p {
+  margin: 0.3rem 0 0;
+}
+
 .tg-nudge {
   padding: 0.5rem 0.65rem;
   border-left: 3px solid var(--tg-accent);

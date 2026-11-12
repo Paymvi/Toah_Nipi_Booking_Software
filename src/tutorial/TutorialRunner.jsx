@@ -862,6 +862,13 @@ export default function TutorialRunner({
                 </p>
               )}
 
+              {step.learnMore && (
+                <details className="tg-learn-more" key={step.id}>
+                  <summary>Learn more</summary>
+                  <p>{step.learnMore}</p>
+                </details>
+              )}
+
               {phase === "working" && <p className="tg-muted">Getting ready…</p>}
             </>
           )}

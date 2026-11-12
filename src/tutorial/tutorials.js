@@ -24,6 +24,7 @@
                  Use the same fictional group (Community Bible Church, led by
                  Jordan Smith) across tutorials, with values the field accepts.
      missing     extra hint when the target is not on screen
+     learnMore   optional detail, folded under "Learn more" in both modes
 
   ctx (tutorialCore.js createStepContext): path(), visible(id), text(id),
   hasValue(id), filled(id), fields(id).
@@ -39,7 +40,7 @@
   is built by composeWalkthrough: see portalTutorial.js.
 */
 
-import { PORTAL_TOPICS, PORTAL_WALKTHROUGH } from "./portalTutorial.js";
+import { AUTOMATED_EMAILS_TUTORIAL, PORTAL_TOPICS, PORTAL_WALKTHROUGH } from "./portalTutorial.js";
 
 export const TUTORIAL_TARGETS = {
   "nav-form": "Form button in the sidebar",
@@ -151,6 +152,7 @@ export const TUTORIAL_TARGETS = {
   "portal-email-send-now": "Send now section",
   "portal-email-preview": "Preview section",
   "portal-email-history": "History section",
+  "portal-email-upcoming": "Upcoming automatic emails list",
   "portal-email-card": "Guest portal emails card",
   "portal-email-summary": "Guest portal emails heading",
   "portal-email-mode": "Sending mode options",
@@ -564,6 +566,7 @@ export const TUTORIALS = [
   },
 
   PORTAL_WALKTHROUGH,
+  AUTOMATED_EMAILS_TUTORIAL,
 ];
 
 // Everything that can be started, including topics, which the library shows under their walkthrough.

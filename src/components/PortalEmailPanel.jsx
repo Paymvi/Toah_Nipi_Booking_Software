@@ -877,6 +877,7 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose, api = po
               <p className="portal-email-muted">{overviewError ? "Preview unavailable." : "Loading preview..."}</p>
             )}
 
+            <div data-tutorial-target="portal-email-upcoming">
             <h5>Upcoming automatic emails</h5>
             {overview?.automationBlock ? (
               <p className="portal-email-muted">None scheduled: {overview.automationBlock}</p>
@@ -891,6 +892,7 @@ export default function PortalEmailPanel({ record, emailAdmin, onClose, api = po
             ) : (
               <p className="portal-email-muted">Nothing scheduled.</p>
             )}
+            </div>
           </fieldset>
 
           <fieldset className="portal-email-section">

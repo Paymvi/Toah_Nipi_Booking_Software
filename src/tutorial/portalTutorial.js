@@ -665,3 +665,79 @@ const { walkthrough, topics } = composeWalkthrough({
 
 export const PORTAL_WALKTHROUGH = walkthrough;
 export const PORTAL_TOPICS = topics;
+
+// A short standalone tutorial, built around one example: a 7-day reminder for one task.
+export const AUTOMATED_EMAILS_TUTORIAL = {
+  id: "automated-emails",
+  title: "Automated emails",
+  description: "Turn on a group's automatic reminder, see when it sends, and check or stop it.",
+  category: "Emails",
+  difficulty: "Beginner",
+  keywords: ["email", "automatic", "automated", "reminder", "schedule", "welcome", "pause", "upcoming", "history"],
+  writeLock: true,
+  finished: "Saving and sending are back on. Any practice ticks stay in the Emails panel until you close it, so close it rather than saving them.",
+  scenario: { scope: PORTAL_DEMO_GROUP_ID, home: "/portal-admin", show: showPortalDemo, end: endPortalDemo },
+  steps: [
+    openPortals,
+    chooseGroup,
+    {
+      id: "open-emails",
+      target: "portal-emails",
+      say: "Automatic emails are set per group. Click Emails on the group's card.",
+      show: "Automatic emails are set per group, under Emails on the group's card.",
+      done: (ctx) => ctx.visible("portal-email-panel"),
+      demoClick: true,
+      needs: EMAIL_NEEDS,
+    },
+    ...inPanel(openEmails, [
+      {
+        id: "recipients",
+        target: "portal-email-recipients",
+        say: "First, who gets the emails. Only ticked addresses get mail, and everyone ticked gets the group's private portal link.",
+        show: "First, who gets the emails. Only ticked addresses get mail, and everyone ticked gets the group's private portal link.",
+        example: "jordan.smith@example.org",
+        learnMore: "Addresses on the booking are listed unticked. Add another address here without changing the booking. Each person gets their own email.",
+      },
+      {
+        id: "items",
+        target: "portal-email-items",
+        say: "Then, what sends. You can't write your own schedule: each task has set options. Tick 7 days before on a task with a due date if you like. It isn't saved.",
+        show: "Then, what sends. There's no custom schedule: each task has set options. Ticking 7 days before sends a reminder a week before that task's due date.",
+        example: "Submit food allergy information: 7 days before",
+        explore: true,
+        learnMore:
+          "The options are New-task notice, reminders 7 days before, 2 days before or once when overdue, and Changes requested. Reminders need a due date and stop once the guest submits, the task is confirmed or removed, or the retreat starts. They go out on the first run at or after 9:00 New York time on the day.",
+      },
+      {
+        id: "preview",
+        target: "portal-email-preview",
+        say: "Preview shows the wording and sends nothing. Try the Welcome and Reminder tabs.",
+        show: "Preview shows the wording and sends nothing, so it's a safe place to check an email.",
+        explore: true,
+      },
+      {
+        id: "save",
+        target: "portal-email-enable",
+        say: "Ticking Enable and pressing Save, then confirming, does two things: it sends the welcome email now, and it schedules the ticked reminders for later. Save is switched off during practice, so nothing was sent.",
+        show: "Ticking Enable and pressing Save, then confirming, does two things: it sends the welcome email now, and it schedules the ticked reminders for later. In this demo nothing is sent.",
+        writes: true,
+        demoEffect: "enableEmails",
+        learnMore:
+          "Emails follow the sending mode set by an admin under Guest portal emails: Dry run records them without sending, Test sends only to test inboxes, Live sends real email. Automatic emails also has to be on there.",
+      },
+      {
+        id: "status",
+        target: "portal-email-upcoming",
+        say: "Check here what's scheduled and on which date. If nothing is, it says why. History at the bottom of the panel shows each email that went and what happened to it.",
+        show: "Upcoming shows the reminder is scheduled, with its date. History at the bottom of the panel shows each email that went: this demo's welcome is marked Simulated, because nothing was really sent.",
+      },
+      {
+        id: "turn-off",
+        target: "portal-email-enable",
+        say: "To stop, press Pause: nothing more sends until you Resume, and anything missed isn't sent later. To turn emails off for good, untick Enable and Save. The line at the top of the panel shows On, Paused or Off. Both are switched off during practice.",
+        show: "To stop, Pause halts this group's emails until Resume, and anything missed isn't sent later. To turn them off for good, untick Enable and Save. The line at the top of the panel shows On, Paused or Off.",
+        writes: true,
+      },
+    ]),
+  ],
+};
