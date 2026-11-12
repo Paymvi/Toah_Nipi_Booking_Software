@@ -120,7 +120,7 @@ Yes, to the group leader. Anyone with the link can open that group's portal, so 
 Only if staff turn it on. Guest emails (a welcome, task notices and due-date reminders) are built in and controlled from **Guest portal emails** on the Portals page. At its last recorded check they were in Test mode with automatic emails off. [docs/portal-email/SETUP.md](docs/portal-email/SETUP.md) has the current state.
 
 **Can groups sign their contract online?**
-Not yet. Online signing is built but switched off and not deployed, pending legal review. Groups download, sign and upload documents instead. See [docs/portal-signing/SETUP.md](docs/portal-signing/SETUP.md).
+Not yet for real guests. Online signing is built but switched off, pending legal review. The migration and signing function were reported deployed; production staff and portal builds still need verification. Groups download, sign and upload documents instead. See [docs/portal-signing/SETUP.md](docs/portal-signing/SETUP.md).
 
 **What happens if two people edit the same booking?**
 The second save is refused with a message instead of silently overwriting the first person's changes, and the screen keeps your unsaved edits so you can redo them on the fresh copy.

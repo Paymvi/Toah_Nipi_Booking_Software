@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Staff App Concept</title>
+<!-- Presentation prototype only. Fictional data. Not connected to Supabase or the booking app. -->
+<style>
+  :root {
+    --brand: #443a9c; --brand-2: #eceafb; --text: #1f2330; --text-2: #4c5263; --text-3: #6b7183;
+    --line: #e3e5ec; --page: #f4f5f8; --card: #fff;
+    --green: #1f7a4d; --green-bg: #e6f4ec; --amber: #8a5a00; --amber-bg: #fff4dc; --amber-line: #f0d38c;
+    --red: #a8322d; --red-bg: #fdecea; --blue: #2457a6; --blue-bg: #e8f0fc; --grey-bg: #eef0f4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--page); color: var(--text);
+    font: 16px/1.4 Inter, "Segoe UI", system-ui, -apple-system, sans-serif; -webkit-text-size-adjust: 100%; }
+  .screen { display: none; min-height: 100vh; }
+  .screen:target, body:not(:has(.screen:target)) #today { display: block; }
+
+  .concept { background: #2b2f3c; color: #fff; font-size: 12px; text-align: center; padding: 4px 8px; letter-spacing: .02em; }
+  header { background: var(--card); border-bottom: 1px solid var(--line); padding: 12px 16px 12px; position: sticky; top: 0; z-index: 2; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .date { font-size: 13px; font-weight: 600; color: var(--brand); text-transform: uppercase; letter-spacing: .05em; }
+  h1 { font-size: 24px; line-height: 1.2; margin: 2px 0 0; }
+  .fresh { font-size: 13px; color: var(--text-3); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; flex: none; }
+  .role { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 1px solid var(--line);
+    border-radius: 22px; background: var(--card); font: inherit; font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; }
+  .role b { color: var(--brand); }
+  .back { display: inline-flex; align-items: center; min-height: 44px; color: var(--brand); font-weight: 600; text-decoration: none; font-size: 15px; }
+
+  main { padding: 12px 16px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); margin: 18px 0 8px; display: flex; justify-content: space-between; align-items: baseline; }
+  h2 .count { font-size: 13px; letter-spacing: 0; text-transform: none; }
+  .list { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; min-height: 56px; border-top: 1px solid var(--line); color: inherit; text-decoration: none; }
+  .row:first-child { border-top: 0; }
+  .row .main { flex: 1; min-width: 0; }
+  .row .t { font-weight: 600; font-size: 16px; }
+  .row .s { font-size: 14px; color: var(--text-2); margin-top: 2px; }
+  .row .n { text-align: right; font-weight: 700; font-size: 20px; line-height: 1.1; white-space: nowrap; }
+  .row .n small { display: block; font-size: 12px; font-weight: 500; color: var(--text-3); }
+  .chev { color: #a3a8b6; font-size: 20px; flex: none; }
+  .icon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; font-size: 17px; }
+  .i-in { background: var(--blue-bg); color: var(--blue); } .i-out { background: var(--grey-bg); color: var(--text-2); }
+  .i-here { background: var(--green-bg); color: var(--green); } .i-int { background: #f1ecfa; color: #6b4aa5; }
+
+  .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 10px; vertical-align: 1px; white-space: nowrap; }
+  .ok { background: var(--green-bg); color: var(--green); } .est { background: var(--amber-bg); color: var(--amber); }
+  .chg { background: var(--blue-bg); color: var(--blue); } .open { background: var(--red-bg); color: var(--red); }
+  .int { background: #f1ecfa; color: #6b4aa5; } .muted { background: var(--grey-bg); color: var(--text-2); }
+
+  .note { border-radius: 12px; padding: 12px 14px; font-size: 14px; margin-top: 10px; }
+  .note b { display: block; font-size: 14px; margin-bottom: 2px; }
+  .note.change { background: var(--blue-bg); border: 1px solid #c4d6f3; }
+  .note.missing { background: var(--amber-bg); border: 1px solid var(--amber-line); }
+  .note .who { color: var(--text-3); font-size: 13px; margin-top: 4px; }
+
+  .work { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fff; background: var(--brand); border-radius: 14px; padding: 14px; margin-top: 12px; min-height: 64px; }
+  .work .t { font-weight: 700; font-size: 16px; } .work .s { font-size: 14px; opacity: .88; }
+
+  /* Kitchen */
+  .seg { display: flex; background: var(--grey-bg); border-radius: 12px; padding: 4px; gap: 4px; margin-top: 12px; }
+  .seg a { flex: 1; text-align: center; min-height: 40px; display: grid; place-items: center; border-radius: 9px; font-weight: 600; font-size: 15px; color: var(--text-2); text-decoration: none; }
+  .seg a.on { background: var(--card); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .meal { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 12px; }
+  .meal.done { opacity: .6; }
+  .meal .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .meal .name { font-size: 18px; font-weight: 700; }
+  .meal .time { font-size: 15px; color: var(--text-2); }
+  .meal .time s { color: var(--text-3); }
+  .meal .big { font-size: 32px; font-weight: 800; line-height: 1; text-align: right; }
+  .meal .big small { display: block; font-size: 12px; font-weight: 600; color: var(--text-3); margin-top: 4px; }
+  .grp { display: flex; justify-content: space-between; gap: 8px; font-size: 15px; padding: 8px 0; border-top: 1px dashed var(--line); margin-top: 10px; }
+  .grp + .grp { margin-top: 0; }
+  .diet { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .diet span { font-size: 14px; background: var(--grey-bg); border-radius: 8px; padding: 4px 8px; }
+  .diet span.alert { background: var(--red-bg); color: var(--red); font-weight: 600; }
+  .ack { margin-top: 12px; display: flex; align-items: center; gap: 10px; min-height: 48px; width: 100%; border: 1px solid var(--line); background: var(--page);
+    border-radius: 12px; font: inherit; font-size: 15px; font-weight: 600; color: var(--text); padding: 0 14px; }
+  .ack .box { width: 22px; height: 22px; border: 2px solid #9aa0ae; border-radius: 6px; flex: none; }
+  .ack em { font-style: normal; font-weight: 400; font-size: 12px; color: var(--text-3); margin-left: auto; text-align: right; }
+
+  /* Calendar agenda */
+  .day { font-size: 15px; font-weight: 700; margin: 18px 0 8px; display: flex; gap: 8px; align-items: center; }
+  .today-pill { background: var(--brand); color: #fff; font-size: 12px; border-radius: 10px; padding: 2px 8px; }
+  .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 12px; text-align: center; }
+  .week a { text-decoration: none; color: var(--text-2); border-radius: 10px; padding: 6px 0; font-size: 12px; min-height: 52px; }
+  .week a b { display: block; font-size: 17px; color: var(--text); }
+  .week a.on { background: var(--brand); color: #fff; } .week a.on b { color: #fff; }
+  .week a i { display: block; height: 6px; } .week a i::after { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--brand); }
+  .week a.on i::after { background: #fff; } .week a.none i::after { display: none; }
+
+  /* Group detail */
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .facts > div { background: var(--card); padding: 12px 14px; }
+  .facts .k { font-size: 12px; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; }
+  .facts .v { font-size: 16px; font-weight: 600; margin-top: 2px; }
+  .locked { font-size: 13px; color: var(--text-3); margin-top: 14px; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 10px; }
+
+  nav { position: sticky; bottom: 0; margin-top: 16px; background: var(--card); border-top: 1px solid var(--line); display: flex; padding: 6px 8px 10px; z-index: 3; }
+  nav a { flex: 1; text-align: center; text-decoration: none; color: var(--text-3); font-size: 12px; font-weight: 600; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 10px; }
+  nav a .g { font-size: 20px; line-height: 1; }
+  nav a.on { color: var(--brand); background: var(--brand-2); }
+</style>
+</head>
+<body>
+
+<!-- ============ TODAY (shared home) ============ -->
+<section class="screen" id="today">
+  <div class="concept">Proposed concept · fictional data · not built yet</div>
+  <header>
+    <div class="top">
+      <div><div class="date">Friday, Nov 20</div><h1>Today at camp</h1></div>
+      <button class="role" type="button">Kitchen ▾</button>
+    </div>
+    <div class="fresh"><span class="dot"></span>Up to date · checked 10:15 AM</div>
+  </header>
+  <main>
+    <h2>On site now <span class="count">1 group · 16 guests</span></h2>
+    <div class="list">
+      <a class="row" href="#group"><div class="icon i-out">↗</div><div class="main"><div class="t">Maple Grove Quilting Circle</div><div class="s">Dothan · leaves today 1:00 PM after lunch</div></div><div class="n">16</div></a>
+    </div>
+
+    <h2>Arriving <span class="count">today & tomorrow</span></h2>
+    <div class="list">
+      <a class="row" href="#group"><div class="icon i-in">↘</div><div class="main"><div class="t">Cedar Hill Church Men's Retreat</div><div class="s">Today 5:30 PM · Bethel, Dothan</div></div><div class="n">42<small><span class="tag ok">Confirmed</span></small></div></a>
+      <a class="row" href="#calendar"><div class="icon i-in">↘</div><div class="main"><div class="t">Northfield Youth Group</div><div class="s">Sat 11:30 AM · Hebron Bunks</div></div><div class="n">~28<small><span class="tag est">Estimate</span></small></div></a>
+    </div>
+
+    <h2>Changed since yesterday <span class="count">2</span></h2>
+    <div class="list">
+      <a class="row" href="#kitchen"><div class="main"><div class="t">Cedar Hill dinner moved to 6:30 PM</div><div class="s">Was 6:00 PM · group arriving late · Office, 9:40 AM</div></div><span class="tag chg">Changed</span></a>
+      <a class="row" href="#group"><div class="main"><div class="t">Cedar Hill final count: 42</div><div class="s">Was 40 (estimate) · confirmed by group leader Wed</div></div><span class="tag ok">Confirmed</span></a>
+    </div>
+
+    <h2>Still waiting on <span class="count">2</span></h2>
+    <div class="list">
+      <a class="row" href="#calendar"><div class="main"><div class="t">Northfield final guest count</div><div class="s">Was due Thu · using 28 as an estimate</div></div><span class="tag open">Missing</span></a>
+      <a class="row" href="#kitchen"><div class="main"><div class="t">Cedar Hill tree nut allergy details</div><div class="s">Severity not yet confirmed with group leader</div></div><span class="tag open">Missing</span></a>
+    </div>
+
+    <a class="work" href="#kitchen"><div class="icon" style="background:rgba(255,255,255,.18);color:#fff">🍽</div><div class="main" style="flex:1"><div class="t">My work: Kitchen</div><div class="s">Next: Lunch 12:00 PM · 16 people</div></div><span class="chev" style="color:#fff">›</span></a>
+  </main>
+  <nav><a class="on" href="#today"><span class="g">⌂</span>Today</a><a href="#calendar"><span class="g">▦</span>Calendar</a><a href="#kitchen"><span class="g">✓</span>My work</a></nav>
+</section>
+
+<!-- ============ KITCHEN ============ -->
+<section class="screen" id="kitchen">
+  <div class="concept">Proposed concept · fictional data · not built yet</div>
+  <header>
+    <div class="top">
+      <div><div class="date">Friday, Nov 20</div><h1>Kitchen</h1></div>
+      <button class="role" type="button">Kitchen ▾</button>
+    </div>
+    <div class="fresh"><span class="dot"></span>Up to date · checked 10:15 AM</div>
+    <div class="seg"><a class="on" href="#kitchen">Today</a><a href="#kitchen">Sat 21</a><a href="#kitchen">Sun 22</a></div>
+  </header>
+  <main>
+    <div class="meal done">
+      <div class="head"><div><div class="name">Breakfast</div><div class="time">8:00 AM · served</div></div><div class="big">16</div></div>
+    </div>
+
+    <div class="meal">
+      <div class="head"><div><div class="name">Lunch</div><div class="time">12:00 PM</div></div><div class="big">16<small><span class="tag ok">Confirmed</span></small></div></div>
+      <div class="grp"><span>Maple Grove Quilting Circle</span><b>16</b></div>
+      <div class="diet"><span>1 dairy free</span></div>
+      <div class="s" style="font-size:14px;color:var(--text-2);margin-top:8px">Last meal for this group. They leave at 1:00 PM.</div>
+    </div>
+
+    <div class="meal">
+      <div class="head"><div><div class="name">Dinner <span class="tag chg">Changed</span></div><div class="time"><b>6:30 PM</b> · <s>6:00 PM</s></div></div><div class="big">42<small><span class="tag ok">Confirmed</span></small></div></div>
+      <div class="grp"><span>Cedar Hill Church Men's Retreat</span><b>42</b></div>
+      <div class="diet"><span>3 gluten free</span><span>1 vegetarian</span><span class="alert">1 tree nut allergy</span></div>
+      <div class="note change"><b>Dinner moved to 6:30 PM</b>The group expects to arrive after 5:30 PM.<div class="who">Updated by Office · today 9:40 AM</div></div>
+      <div class="note missing"><b>Not confirmed yet: tree nut allergy severity</b>Office has asked the group leader. Plan for strict nut-free prep until confirmed.<div class="who">Open since Wed · Office</div></div>
+      <button class="ack" type="button"><span class="box"></span>Dinner prep started<em>Kitchen checklist only.<br>Doesn't change the booking.</em></button>
+    </div>
+
+    <h2>Tomorrow at a glance</h2>
+    <div class="list">
+      <div class="row"><div class="main"><div class="t">Breakfast 8:00 AM</div><div class="s">Cedar Hill</div></div><div class="n">42</div></div>
+      <div class="row"><div class="main"><div class="t">Lunch 12:00 PM</div><div class="s">Cedar Hill 42 · Northfield ~28 <span class="tag est">Estimate</span></div><div class="s">+ Staff training lunch 8 <span class="tag int">Internal</span></div></div><div class="n">~78</div></div>
+      <div class="row"><div class="main"><div class="t">Dinner</div><div class="s">Cedar Hill 42 at 6:30 · Northfield ~28 at 6:00</div></div><div class="n">~70</div></div>
+    </div>
+    <div class="note missing"><b>Northfield count is an estimate</b>Final count was due Thursday. Dietary needs not provided yet.<div class="who">Office is following up</div></div>
+  </main>
+  <nav><a href="#today"><span class="g">⌂</span>Today</a><a href="#calendar"><span class="g">▦</span>Calendar</a><a class="on" href="#kitchen"><span class="g">✓</span>My work</a></nav>
+</section>
+
+<!-- ============ CALENDAR / AGENDA ============ -->
+<section class="screen" id="calendar">
+  <div class="concept">Proposed concept · fictional data · not built yet</div>
+  <header>
+    <div class="top">
+      <div><div class="date">November 2026</div><h1>Calendar</h1></div>
+      <button class="role" type="button">Kitchen ▾</button>
+    </div>
+    <div class="week">
+      <a class="none" href="#calendar">Mon<b>16</b><i></i></a><a class="none" href="#calendar">Tue<b>17</b><i></i></a><a href="#calendar">Wed<b>18</b><i></i></a><a class="none" href="#calendar">Thu<b>19</b><i></i></a><a class="on" href="#calendar">Fri<b>20</b><i></i></a><a href="#calendar">Sat<b>21</b><i></i></a><a href="#calendar">Sun<b>22</b><i></i></a>
+    </div>
+  </header>
+  <main>
+    <div class="day">Fri, Nov 20 <span class="today-pill">Today</span></div>
+    <div class="list">
+      <a class="row" href="#group"><div class="icon i-out">↗</div><div class="main"><div class="t">Maple Grove Quilting Circle</div><div class="s">Departs 1:00 PM · Dothan</div></div><div class="n">16</div><span class="chev">›</span></a>
+      <a class="row" href="#group"><div class="icon i-in">↘</div><div class="main"><div class="t">Cedar Hill Church Men's Retreat</div><div class="s">Arrives 5:30 PM · Bethel, Dothan</div></div><div class="n">42</div><span class="chev">›</span></a>
+    </div>
+    <div class="day">Sat, Nov 21</div>
+    <div class="list">
+      <a class="row" href="#group"><div class="icon i-in">↘</div><div class="main"><div class="t">Northfield Youth Group</div><div class="s">Arrives 11:30 AM · Hebron Bunks</div></div><div class="n">~28<small><span class="tag est">Estimate</span></small></div><span class="chev">›</span></a>
+      <div class="row"><div class="icon i-int">◆</div><div class="main"><div class="t">Staff training lunch</div><div class="s">12:00 PM · Internal use, not a guest group</div></div><div class="n">8<small><span class="tag int">Internal</span></small></div></div>
+      <a class="row" href="#group"><div class="icon i-here">●</div><div class="main"><div class="t">Cedar Hill Church Men's Retreat</div><div class="s">On site all day</div></div><div class="n">42</div><span class="chev">›</span></a>
+    </div>
+    <div class="day">Sun, Nov 22</div>
+    <div class="list">
+      <a class="row" href="#group"><div class="icon i-out">↗</div><div class="main"><div class="t">Northfield Youth Group</div><div class="s">Departs 10:00 AM · after breakfast</div></div><div class="n">~28</div><span class="chev">›</span></a>
+      <a class="row" href="#group"><div class="icon i-out">↗</div><div class="main"><div class="t">Cedar Hill Church Men's Retreat</div><div class="s">Departs 1:00 PM · after lunch</div></div><div class="n">42</div><span class="chev">›</span></a>
+    </div>
+    <div class="day">Fri, Nov 27</div>
+    <div class="list">
+      <a class="row" href="#calendar"><div class="icon i-in">↘</div><div class="main"><div class="t">Riverside Family Camp</div><div class="s">Arrives · Guest House, Ajalon · time not set</div></div><div class="n">35</div><span class="chev">›</span></a>
+    </div>
+  </main>
+  <nav><a href="#today"><span class="g">⌂</span>Today</a><a class="on" href="#calendar"><span class="g">▦</span>Calendar</a><a href="#kitchen"><span class="g">✓</span>My work</a></nav>
+</section>
+
+<!-- ============ GROUP DETAIL (staff-safe) ============ -->
+<section class="screen" id="group">
+  <div class="concept">Proposed concept · fictional data · not built yet</div>
+  <header>
+    <a class="back" href="#calendar">‹ Calendar</a>
+    <h1>Cedar Hill Church Men's Retreat</h1>
+    <div class="fresh"><span class="dot"></span>Booking last updated today 9:40 AM by Office</div>
+  </header>
+  <main>
+    <div class="facts">
+      <div><div class="k">Arrives</div><div class="v">Fri 5:30 PM</div></div>
+      <div><div class="k">Departs</div><div class="v">Sun 1:00 PM</div></div>
+      <div><div class="k">Guests</div><div class="v">42 <span class="tag ok">Confirmed</span></div></div>
+      <div><div class="k">Lodging</div><div class="v">Bethel, Dothan</div></div>
+    </div>
+    <h2>Meals</h2>
+    <div class="list">
+      <div class="row"><div class="main"><div class="t">Fri</div><div class="s">Dinner 6:30 PM <span class="tag chg">Changed</span></div></div></div>
+      <div class="row"><div class="main"><div class="t">Sat</div><div class="s">Breakfast 8:00 · Lunch 12:00 · Dinner 6:30</div></div></div>
+      <div class="row"><div class="main"><div class="t">Sun</div><div class="s">Breakfast 8:00 · Lunch 12:00</div></div></div>
+    </div>
+    <h2>Activities & setup</h2>
+    <div class="list">
+      <div class="row"><div class="main"><div class="t">Projector in Bethel meeting room</div><div class="s">Setup · Maintenance</div></div></div>
+      <div class="row"><div class="main"><div class="t">Saturday activities</div><div class="s">Not provided yet</div></div><span class="tag open">Missing</span></div>
+    </div>
+    <div class="locked">Contact details, payments and the contract are visible to office staff only.</div>
+  </main>
+  <nav><a href="#today"><span class="g">⌂</span>Today</a><a class="on" href="#calendar"><span class="g">▦</span>Calendar</a><a href="#kitchen"><span class="g">✓</span>My work</a></nav>
+</section>
+
+<!-- ============ HOUSEKEEPING (later phase) ============ -->
+<section class="screen" id="housekeeping">
+  <div class="concept">Later-phase concept · fictional data · not built yet</div>
+  <header>
+    <div class="top">
+      <div><div class="date">Friday, Nov 20</div><h1>Housekeeping</h1></div>
+      <button class="role" type="button">Housekeeping ▾</button>
+    </div>
+    <div class="fresh"><span class="dot"></span>Up to date · checked 10:15 AM</div>
+    <div class="seg"><a class="on" href="#housekeeping">Today</a><a href="#housekeeping">Sat 21</a><a href="#housekeeping">Sun 22</a></div>
+  </header>
+  <main>
+    <h2>Turnovers today <span class="count">2 buildings</span></h2>
+    <div class="meal">
+      <div class="head"><div><div class="name">Dothan <span class="tag open">Tight turnover</span></div><div class="time">Out 1:00 PM → in 5:30 PM · 4½ hours</div></div></div>
+      <div class="grp"><span>Leaving: Maple Grove Quilting Circle</span><b>16</b></div>
+      <div class="grp"><span>Arriving: Cedar Hill (part of group)</span><b>?</b></div>
+      <div class="note missing"><b>Not set yet: how Cedar Hill splits between Bethel and Dothan</b>Room-level counts aren't in the booking. Linens: not recorded.<div class="who">Ask Office before making up beds</div></div>
+      <button class="ack" type="button"><span class="box"></span>Dothan ready<em>Housekeeping status only.<br>Doesn't change the booking.</em></button>
+    </div>
+    <div class="meal">
+      <div class="head"><div><div class="name">Bethel</div><div class="time">Empty since Mon → in 5:30 PM</div></div></div>
+      <div class="grp"><span>Arriving: Cedar Hill (part of group)</span><b>?</b></div>
+      <button class="ack" type="button"><span class="box"></span>Bethel ready<em>Housekeeping status only.</em></button>
+    </div>
+    <h2>Coming up</h2>
+    <div class="list">
+      <div class="row"><div class="main"><div class="t">Hebron Bunks · Sat 11:30 AM</div><div class="s">Northfield Youth Group · linens not recorded</div></div><div class="n">~28<small><span class="tag est">Estimate</span></small></div></div>
+      <div class="row"><div class="main"><div class="t">Bethel, Dothan, Hebron Bunks · Sun</div><div class="s">All three empty after 1:00 PM · next guests Fri Nov 27 (other buildings)</div></div></div>
+    </div>
+  </main>
+  <nav><a href="#today"><span class="g">⌂</span>Today</a><a href="#calendar"><span class="g">▦</span>Calendar</a><a class="on" href="#housekeeping"><span class="g">✓</span>My work</a></nav>
+</section>
+
+</body>
+</html>

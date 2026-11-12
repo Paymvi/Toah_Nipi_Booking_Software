@@ -761,16 +761,16 @@ const PORTAL_OVERVIEW_MAX_PAGES = 1000;
 /*
   Online signing columns exist only after the portal signing migration.
   Until then the overview is read without them, so Portal Admin keeps
-  working and the signing controls stay hidden.
+  working and an explanation replaces the signing dropdown.
 */
-let portalSigningColumnsAvailable = true;
-
 function isMissingSigningSchema(error) {
   return ["42703", "42P01", "PGRST200", "PGRST204", "PGRST205"].includes(error?.code);
 }
 
 async function fetchPortalOverviewRecords() {
   const rows = [];
+  // Retry schema discovery after migrations rather than caching failure forever.
+  let portalSigningColumnsAvailable = true;
 
   for (
     let page = 0;
@@ -801,13 +801,12 @@ async function fetchPortalOverviewRecords() {
       !data ||
       data.length === 0
     ) {
-      return rows
-        .filter(
-          isPortalEligibleBookingRow
-        )
-        .map(
-          normalizePortalOverviewRecord
-        );
+      return {
+        signingAvailable: portalSigningColumnsAvailable,
+        records: rows
+          .filter(isPortalEligibleBookingRow)
+          .map(normalizePortalOverviewRecord),
+      };
     }
 
     rows.push(
@@ -1257,6 +1256,13 @@ function PortalSignDocumentChoice({ item, signing, onCorrectItem }) {
       {choices.length === 0 && (
         <small>Upload the PDF under Assign Documents (custom upload) first. Only PDFs can be signed online.</small>
       )}
+      <small role="status">{!signing.settings
+        ? "Signing settings could not be read. You can prepare this task, but guest availability is unknown. Reload; if this persists, ask an administrator to check active staff access and the signing settings row."
+        : !signing.isOn
+          ? "Online signing is off for this booking. You can save a PDF choice now; guests still use paper upload."
+          : !signing.settings.agreementApproved
+            ? "This booking is eligible for a signing test. Agreement wording is not approved for real guest use."
+            : "Online signing is available for this booking when the task is open."}</small>
       <small>Paper upload stays available either way. Changing this never affects copies already signed.</small>
       <button
         className="secondary-dashboard-button"
@@ -1280,8 +1286,10 @@ function PortalItemCorrections({ item, onCorrectItem, signing }) {
       <summary data-tutorial-target={CORRECT_TARGETS[item.status] || "portal-correct"}>Correct…</summary>
 
       <div className="portal-item-corrections-body">
-        {signing?.available && item.guestAction === "upload_file" && (
-          <PortalSignDocumentChoice item={item} signing={signing} onCorrectItem={onCorrectItem} />
+        {item.guestAction === "upload_file" && (
+          signing?.available
+            ? <PortalSignDocumentChoice item={item} signing={signing} onCorrectItem={onCorrectItem} />
+            : <p role="status">Sign online with: unavailable because signing fields could not be loaded. Reload this page. If this persists, ask an administrator to check the signing migration, database API schema cache and staff read permissions.</p>
         )}
 
         <label>
@@ -3386,6 +3394,7 @@ function PortalRecordCard({
   const signing = signingAvailable
     ? {
         available: true,
+        settings: signingSettings,
         isOn: isSigningOnForBooking(signingSettings, record.id),
         documents: getSignableDocuments(record.documents),
         allDocuments: record.documents,
@@ -3908,7 +3917,7 @@ function PortalAdminScreen({
   const latestLoadRequestRef =
     useRef(0);
 
-  // Online signing: hidden until the signing migration has been run.
+  // Staff preparation is independent of the guest signing switch.
   const [signingAvailable, setSigningAvailable] = useState(false);
   const [signingSettings, setSigningSettings] = useState(null);
 
@@ -3943,7 +3952,7 @@ function PortalAdminScreen({
         ""
       );
 
-      const [records, settings] =
+      const [overview, settings] =
         await Promise.all([
           fetchPortalOverviewRecords(),
           fetchPortalSigningSettings(),
@@ -3957,9 +3966,9 @@ function PortalAdminScreen({
       }
 
       setPortalRecords(
-        records
+        overview.records
       );
-      setSigningAvailable(portalSigningColumnsAvailable && Boolean(settings));
+      setSigningAvailable(overview.signingAvailable);
       setSigningSettings(settings);
     } catch (error) {
       if (

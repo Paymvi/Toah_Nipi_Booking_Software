@@ -40,6 +40,7 @@ function seed() {
 }
 
 let bookings = seed(), role = "staff", delay = 0, emailMissing = false, writes = [];
+let signing = null;
 
 function send(res, status, body, headers = {}) {
   res.writeHead(status, {
@@ -65,7 +66,11 @@ createServer((req, res) => {
 
     if (path === "/__ctl") {
       const p = url.searchParams;
-      if (p.get("reset")) { bookings = seed(); role = "staff"; delay = 0; emailMissing = false; writes = []; }
+      if (p.get("reset")) { bookings = seed(); role = "staff"; delay = 0; emailMissing = false; writes = []; signing = null; }
+      if (p.has("signing")) {
+        signing = p.get("signing");
+        bookings[0].portal_documents[0].storage_path = signing === "noPdf" ? null : "fictional/staff-documents/sample.pdf";
+      }
       if (p.get("empty")) bookings = [];
       if (p.get("noportal")) bookings = bookings.map((booking) => ({ ...booking, portal_checklist_items: [], portal_documents: [] }));
       if (p.get("emailMissing")) emailMissing = true;
@@ -89,8 +94,20 @@ createServer((req, res) => {
     if (path.startsWith("/storage/v1/object/sign/")) return send(res, 200, { signedURL: "/mock-file.pdf" });
 
     if (path === "/rest/v1/bookings" && req.method === "GET") {
+      if (signing === "schema" && url.searchParams.get("select")?.includes("sign_document_id")) return send(res, 400, { code: "42703", message: "missing signing column" });
       const offset = Number(url.searchParams.get("offset") || 0);
       return setTimeout(() => send(res, 200, offset > 0 ? [] : bookings, { "content-range": `0-${Math.max(bookings.length - 1, 0)}/${bookings.length}` }), delay);
+    }
+
+    if (path === "/rest/v1/portal_signing_settings") {
+      if (signing === "error") return send(res, 403, { code: "42501", message: "fictional denied" });
+      return send(res, 200, signing ? { enabled: false, test_booking_ids: signing === "test" ? ["b1"] : [], agreement_approved: false } : null);
+    }
+    if (path === "/rest/v1/portal_checklist_items" && req.method === "PATCH" && signing) {
+      const id = url.searchParams.get("id")?.replace(/^eq\./, "");
+      const row = allItems().find((item) => item.id === id);
+      if (row) Object.assign(row, JSON.parse(body));
+      return send(res, 200, row ? [{ id }] : []);
     }
 
     if (req.method === "GET" && path.startsWith("/rest/v1/portal_email")) {

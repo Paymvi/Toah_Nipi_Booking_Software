@@ -2,7 +2,7 @@
 
 Guests can sign a staff-uploaded PDF in the portal instead of printing, signing and uploading it. Plan and legal notes: [ONLINE_SIGNATURE_DECISION_AND_IMPLEMENTATION_PLAN.md](../audit/ONLINE_SIGNATURE_DECISION_AND_IMPLEMENTATION_PLAN.md).
 
-**Status (2026-11-08): built and tested locally with fictional documents. Not deployed. Off for every booking.** The signing wording is a draft and has not been approved by a lawyer. Nothing here makes an agreement enforceable; it records what happened.
+**Status (2026-11-11): signing migration and `portal-sign` deployment to project `atcyjnzbrzezxrcxnqky` reported complete by the operator. Staff and portal production builds have NOT been verified.** Operator-reported settings remain `enabled=false`, `test_booking_ids={}`, `agreement_approved=false`. The signing wording is a draft and has not been approved by a lawyer. Nothing here makes an agreement enforceable; it records what happened.
 
 ## How it works
 
@@ -15,6 +15,19 @@ Guests can sign a staff-uploaded PDF in the portal instead of printing, signing 
 5. Staff see **Signed online by …**, **Open Signed PDF** and **Signing Details**, and click the usual **Confirm**. **Send back for changes** and **Reopen** work as before; every earlier signed copy is kept.
 
 Booking status and the contract-returned date are never changed by signing.
+
+### Finding the staff control and diagnosing absence
+
+Click **Portals** in the staff sidebar (`/portal-admin`; page heading **Portal View**), find the booking, and expand **Correct…** on its upload task (for example **Sign and return contract**). **Sign online with** is a dropdown inside that menu; it is not in Assign Documents. Upload the booking's PDF under **Assign Documents** first, then choose it and click **Save signing choice**.
+
+- Global signing being off does **not** hide or prevent staff preparation. Neither does `agreement_approved=false`. The control explains that guests still use paper upload. A booking on the test list is eligible for testing while the global switch remains off; draft agreement approval does not block those tests in the current server implementation.
+- Task status does not hide the staff control, including Needs Review and completed tasks. Guests can only start signing while their upload task is open. Reopen completed tasks through the usual correction flow if another submission is needed.
+- Non-upload tasks have no signing dropdown. Eligible documents are staff-shared files with a Storage path and a filename ending in `.pdf` (case insensitive). Catalog links, guest uploads and other file types are excluded. No matching PDFs leaves the dropdown visible with upload instructions.
+- Saving requires an active `admin` or `staff` account (`can_manage_bookings()` database policy). The dropdown itself has no role-specific hiding rule. An account without edit permission gets a failed-save message; it does not silently succeed. The tutorial demo does not save real signing choices.
+- The overview requests `sign_document_id`, document `storage_path` and signature metadata. An older schema falls back to a basic overview. The updated app explains unavailable signing fields and retries discovery on **Refresh**. A settings read error or missing settings row now shows an explanation while leaving staff preparation available when the signing fields loaded.
+- Before this fix, a failed or empty settings read silently hid the control. A schema fallback also stayed cached until a full page reload. These are confirmed code issues; they do not establish which condition occurred in production. An older deployed staff build can also lack the feature entirely.
+
+Production verification during this investigation was unavailable: the documented public portal URL could not be fetched from this environment, and no staff hosting URL or deployment metadata was available. Both local repositories contain signing code. No production version match is claimed.
 
 ## What protects the records
 
@@ -69,12 +82,14 @@ Needs Docker Desktop running.
 7. Automated checks: `npm test`; `node supabase/tests/portal-sign.local.mjs`; `node supabase/tests/security-access.local.mjs` (access matrix, see `docs/audit/SECURITY_AUDIT_2026-11-10.md`); `node supabase/tests/portal-sign-restore.local.mjs` (also needs `LOCAL_SUPABASE_WORKDIR` and `LOCAL_DRILL_DIR` set; it **wipes the local database**).
 8. Stop: `npx supabase stop --workdir %USERPROFILE%\toah-signing-local`
 
-## Deploy (after review; not done)
+For the staff UI without Docker, follow [tests/browser/README.md](../../tests/browser/README.md) to start the fictional mock and local Vite, then run `node tests/browser/portalSigning.browser.mjs`. External browser requests are blocked. It covers PDF linking with signing off, an eligible test booking, settings read failure, and recovery from missing signing fields on Refresh. It never calls the live signing function.
+
+## Deploy (after review; database and function reported complete)
 
 1. Run `supabase/migrations/20261107000100_portal_signing.sql` in the Supabase SQL editor. It is safe to run twice. It replaces `get_portal_record` with the live definition read on 2026-11-07 plus signing fields. If that function has been changed since, merge first (the live definition is in [ONLINE_SIGNATURE_LIVE_SCHEMA_2026-11-07.sql](../audit/ONLINE_SIGNATURE_LIVE_SCHEMA_2026-11-07.sql)).
 2. Deploy the function: `npx supabase functions deploy portal-sign --no-verify-jwt --use-api` (`--use-api` bundles the shared `src/utils` classification it imports).
-3. Deploy the staff app and the portal (both builds are needed; the order does not matter while signing is off).
-4. Check: Portal Admin loads and shows **Sign online with** under Correct… on upload tasks; a guest portal still loads; `select enabled, test_booking_ids from portal_signing_settings;` shows `false` and `{}`.
+3. Verify the production deployment's source commit in each hosting project's deployment details against the reviewed commit in its repository. If absent or older, deploy the staff app and the portal (both builds are needed; the order does not matter while signing is off). Run `npm ci` and `npm run build` in each repository with its existing production build variables, and publish its `dist/` through its existing host. Staff build variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_GUEST_PORTAL_BASE_URL`; portal: the first two. See the main README's Deployment section for SPA fallback requirements. Database and Edge Function deployment does not publish either frontend.
+4. Hard refresh the deployed staff app, open **Portals → booking → upload task → Correct…**, and check for **Sign online with** and the off-for-guests explanation. Check that the guest portal still loads and offers paper upload. Read-only SQL: `select enabled, test_booking_ids, agreement_approved from portal_signing_settings;` must remain `false`, `{}`, `false` for the current investigation. No additional SQL change or function deployment is required just to show the staff control.
 5. Trial on a **fictional booking** made in the live system:
    `update portal_signing_settings set test_booking_ids = array['<fictional booking id>'], updated_at = now();`
    Sign it in the portal, confirm it in Portal Admin, download the signed copy, make a JSON backup and a signed-documents export. The fictional booking and its signature then stay permanently (they cannot be deleted); mark the booking cancelled.
