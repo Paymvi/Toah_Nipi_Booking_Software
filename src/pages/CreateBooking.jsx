@@ -2815,7 +2815,7 @@ export default function CreateBooking({
               GROUP INFORMATION
           =================================================== */}
 
-          <section className="rental-form-section">
+          <section className="rental-form-section" data-tutorial-target="booking-form-details">
             <header className="rental-section-header">
               <div className="rental-section-icon">
                 <FaUsers />

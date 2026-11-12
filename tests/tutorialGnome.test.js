@@ -125,9 +125,10 @@ test("demo examples follow one fictional booking and use values the screens acce
   const formSource = readFileSync("src/pages/CreateBooking.jsx", "utf8");
   const retreatOptions = formSource.match(/const retreatTypes = \[([\s\S]*?)\];/)[1];
 
-  assert.ok(retreatOptions.includes(`"${example("create-booking", "retreat-type")}"`), "Retreat Type example is not an option");
-  assert.equal(example("open-booking", "search"), example("create-booking", "group-name"));
-  assert.equal(example("contacts", "search"), example("create-booking", "contact"));
+  const [groupName, contact, retreatType] = example("create-booking", "details").split(" · ");
+  assert.ok(retreatOptions.includes(`"${retreatType}"`), "Retreat Type example is not an option");
+  assert.equal(example("open-booking", "search"), groupName);
+  assert.equal(example("contacts", "search"), contact);
 });
 
 test("both save buttons are guarded during practice", () => {

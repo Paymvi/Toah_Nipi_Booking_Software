@@ -51,6 +51,7 @@ export const TUTORIAL_TARGETS = {
   "nav-portals": "Portals in the sidebar",
 
 
+  "booking-form-details": "Guest Group section of the form",
   "booking-form-group-name": "Guest Group Name field",
   "booking-form-contact": "Primary Contact field",
   "booking-form-retreat-type": "Retreat Type list",
@@ -211,50 +212,23 @@ export const TUTORIALS = [
         demoClick: true,
       },
       {
-        id: "group-name",
-        target: "booking-form-group-name",
-        say: "Perfect! Type the guest group's name here. Any practice name is fine.",
-        show: "The Guest Group Name is how the booking appears everywhere: calendars, spreadsheets and reports.",
-        example: "Community Bible Church",
-        done: (ctx) => ctx.filled("booking-form-group-name"),
-      },
-      {
-        id: "contact",
-        target: "booking-form-contact",
-        say: "Now add the main person you'll be talking to.",
-        show: "The Primary Contact is the group leader staff will talk to.",
-        example: "Jordan Smith",
-        done: (ctx) => ctx.filled("booking-form-contact"),
-      },
-      {
-        id: "retreat-type",
-        target: "booking-form-retreat-type",
-        say: "Pick the kind of retreat from this list.",
-        show: "Retreat Type groups bookings in reports and on the calendar.",
-        example: "Church",
-        done: (ctx) => ctx.hasValue("booking-form-retreat-type"),
-      },
-      {
-        id: "arrival",
-        target: "booking-form-arrival",
-        say: "When does the group arrive? Choose the arrival date.",
-        show: "The arrival date puts the booking on the calendar. Times can be added next to it.",
-        example: "June 5",
-        done: (ctx) => ctx.hasValue("booking-form-arrival"),
-      },
-      {
-        id: "departure",
-        target: "booking-form-departure",
-        say: "And when do they leave? Choose the departure date.",
-        show: "The departure date can't be before the arrival date. The form checks this when you save.",
-        example: "June 7 (two nights later)",
-        done: (ctx) => ctx.hasValue("booking-form-departure"),
+        id: "details",
+        target: "booking-form-details",
+        say: "Fill in the starred fields here: the group's name, the primary contact, the retreat type, and the arrival and departure dates. Any practice details are fine. I'll carry on once they're all in.",
+        show: "These starred fields are required: the group's name (how it appears everywhere), the primary contact staff will talk to, the retreat type, and the arrival and departure dates. Departure can't be before arrival.",
+        example: "Community Bible Church · Jordan Smith · Church · June 5 to June 7",
+        done: (ctx) =>
+          ctx.filled("booking-form-group-name") &&
+          ctx.filled("booking-form-contact") &&
+          ctx.hasValue("booking-form-retreat-type") &&
+          ctx.hasValue("booking-form-arrival") &&
+          ctx.hasValue("booking-form-departure"),
       },
       {
         id: "guests",
         target: "booking-form-guests",
-        say: "Enter roughly how many guests are coming: a total, or adults and children.",
-        show: "An estimated guest count is required. Use the total, or split it into adults and children.",
+        say: "One more required field: roughly how many guests are coming. Enter a total, or split it into adults and children.",
+        show: "An estimated guest count is also required. Use the total, or split it into adults and children.",
         example: "45 total guests",
         done: (ctx) => ctx.filled("booking-form-guests"),
       },
