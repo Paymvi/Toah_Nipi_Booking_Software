@@ -87,7 +87,7 @@ test("every tutorial is complete and uses registered targets", () => {
       const where = `${tutorial.id}/${step.id}`;
       const targets = Array.isArray(step.target) ? step.target : [step.target];
 
-      assert.ok((step.say || step.demoOnly) && step.show, `${where} needs guided and demo text`);
+      assert.ok(step.show, `${where} needs text`);
       targets.forEach((id) => assert.ok(TUTORIAL_TARGETS[id], `${where} uses unregistered target ${id}`));
       if (step.done) assert.equal(typeof step.done, "function", where);
       if (step.capture) assert.ok(step.done, `${where} captures without a done check`);
@@ -95,10 +95,22 @@ test("every tutorial is complete and uses registered targets", () => {
   }
 });
 
-test("every tutorial has at least one real interaction", () => {
+test("every tutorial shows at least one real click", () => {
   for (const tutorial of TUTORIALS) {
-    assert.ok(tutorial.steps.some((step) => step.done), `${tutorial.id} never waits for the person`);
+    assert.ok(tutorial.steps.some((step) => step.demoClick), `${tutorial.id} never clicks anything`);
   }
+});
+
+test("no tutorial has a second mode left over", () => {
+  for (const tutorial of [...ALL_TUTORIALS, PORTAL_WALKTHROUGH]) {
+    assert.equal(tutorial.finished, undefined, tutorial.id);
+    for (const step of tutorial.steps) {
+      for (const field of ["say", "explore", "needs", "demoOnly"]) assert.equal(step[field], undefined, `${tutorial.id}/${step.id}.${field}`);
+      if (step.done) assert.ok(step.demoClick || step.pickScope, `${tutorial.id}/${step.id} has a done check nothing uses`);
+    }
+  }
+  const ui = readFileSync("src/tutorial/TutorialGnome.jsx", "utf8") + readFileSync("src/tutorial/TutorialRunner.jsx", "utf8");
+  assert.doesNotMatch(ui, /Walk me through|Show me how|guided/i);
 });
 
 test("every registered target exists in the application source", () => {
@@ -131,7 +143,7 @@ test("demo examples follow one fictional booking and use values the screens acce
   assert.equal(example("contacts", "search"), contact);
 });
 
-test("both save buttons are guarded during practice", () => {
+test("both save buttons are guarded during demonstrations", () => {
   const guarded = appSource.match(/data-tutorial-guard/g) || [];
   assert.ok(guarded.length >= 2);
   assert.match(appSource, /data-tutorial-target="booking-form-save">\s*<button\s+type="submit"\s+disabled=\{isSubmitting\}\s+data-tutorial-guard/);
@@ -181,24 +193,15 @@ test("demo steps stay up long enough to read, but not forever", () => {
   assert.equal(getDemoStepDuration("word ".repeat(200)), 9000);
 });
 
-/* ---------- Practice safety ---------- */
+/* ---------- Demonstration safety ---------- */
 
 const findStep = (tutorialId, stepId) =>
   TUTORIALS.find((tutorial) => tutorial.id === tutorialId).steps.find((step) => step.id === stepId);
 
-test("steps that highlight real actions stay look-only", () => {
+test("steps that highlight real actions are never clicked", () => {
   // Incident Notes saves from inside the Overview sections; other tabs hold their own saves; Open Booking leaves the tutorial.
   for (const [tutorialId, stepId] of [["open-booking", "sections"], ["open-booking", "tabs"], ["contacts", "history"]]) {
-    const step = findStep(tutorialId, stepId);
-    assert.ok(!step.done && !step.explore, `${tutorialId}/${stepId} would let clicks through`);
-  }
-});
-
-test("explore is only for steps that would otherwise be look-only", () => {
-  for (const tutorial of TUTORIALS) {
-    for (const step of tutorial.steps.filter((item) => item.explore)) {
-      assert.ok(!step.done, `${tutorial.id}/${step.id}`);
-    }
+    assert.ok(!findStep(tutorialId, stepId).demoClick, `${tutorialId}/${stepId} would click a real action`);
   }
 });
 
@@ -212,12 +215,6 @@ test("when a target is missing, only ways back are usable", () => {
   assert.ok(!isWayBack(nodeInside("booking-overview-main")), "a highlighted area is not a way back");
   assert.ok(!isWayBack({ closest: () => null }));
   assert.ok(!isWayBack(null));
-});
-
-test("guided runs that leave practice input behind say so when they end", () => {
-  for (const id of ["create-booking", "edit-booking"]) {
-    assert.match(TUTORIALS.find((tutorial) => tutorial.id === id).finished, /Saving is back on/);
-  }
 });
 
 test("an open booking only counts as a head start for Edit a booking", () => {
@@ -263,32 +260,24 @@ test("rapid Next clicks run one transition: the first hurries the demo, the rest
   // Phase after each click, as TutorialRunner sets it synchronously (phaseRef).
   const afterClick = { hurry: "working", advance: "seeking", retry: "seeking", ignore: null };
 
-  for (const isDemo of [true, false]) {
-    let phase = "active";
-    const actions = [];
-    for (let click = 0; click < 5; click += 1) {
-      const action = getNextAction(phase, isDemo);
-      actions.push(action);
-      phase = afterClick[action] ?? phase;
-    }
-    assert.deepEqual(actions, [isDemo ? "hurry" : "advance", "ignore", "ignore", "ignore", "ignore"]);
+  let phase = "active";
+  const actions = [];
+  for (let click = 0; click < 5; click += 1) {
+    const action = getNextAction(phase);
+    actions.push(action);
+    phase = afterClick[action] ?? phase;
   }
+  assert.deepEqual(actions, ["hurry", "ignore", "ignore", "ignore", "ignore"]);
 
-  for (const phase of ["seeking", "working", "success"]) {
-    assert.equal(getNextAction(phase, true), "ignore", phase);
-    assert.equal(getNextAction(phase, false), "ignore", phase);
-  }
-  assert.equal(getNextAction("failed", true), "retry");
-  assert.equal(getNextAction("missing", true), "advance", "Skip stays available when a target can't be found");
+  for (const phase of ["seeking", "working"]) assert.equal(getNextAction(phase), "ignore", phase);
+  assert.equal(getNextAction("failed"), "retry");
+  assert.equal(getNextAction("missing"), "advance", "Skip stays available when a target can't be found");
 });
 
 test("a step the rest depends on can't be skipped until it has happened", () => {
-  assert.equal(getNextAction("active", false, true), "wait", "guided: waiting on a navigation step");
-  assert.equal(getNextAction("missing", false, true), "wait", "guided: its target can't be found");
-  assert.equal(getNextAction("missing", true, true), "wait", "demo: its target can't be found");
-  assert.equal(getNextAction("active", false, false), "advance", "a field step can still be skipped");
-  assert.equal(getNextAction("active", true, true), "hurry", "demo: Next still only shortens the reading time");
-  assert.equal(getNextAction("seeking", false, true), "ignore");
+  assert.equal(getNextAction("missing", true), "wait", "its target can't be found");
+  assert.equal(getNextAction("active", true), "hurry", "Next still only shortens the reading time");
+  assert.equal(getNextAction("seeking", true), "ignore");
 });
 
 test("a demo action only completes once the page shows its result", async () => {
@@ -398,14 +387,14 @@ test("progress survives broken or missing storage", () => {
   assert.doesNotThrow(() => saveTutorialProgress({ setItem: () => { throw new Error("full"); } }, emptyProgress()));
 });
 
-test("progress stores only tutorial ids, step numbers and mode", () => {
+test("progress stores only tutorial ids and step numbers", () => {
   const storage = memoryStorage();
-  let progress = withUnfinished(emptyProgress(), "edit-booking", 3, "guided");
+  let progress = withUnfinished(emptyProgress(), "edit-booking", 3);
   saveTutorialProgress(storage, progress);
 
   assert.deepEqual(JSON.parse(storage.values[TUTORIAL_PROGRESS_STORAGE_KEY]), {
     completed: {},
-    unfinished: { id: "edit-booking", step: 3, mode: "guided" },
+    unfinished: { id: "edit-booking", step: 3 },
   });
 
   progress = withCompleted(progress, "edit-booking", new Date("2026-11-02T10:00:00Z"));
@@ -413,8 +402,8 @@ test("progress stores only tutorial ids, step numbers and mode", () => {
 });
 
 test("completing one tutorial keeps a different unfinished one", () => {
-  const progress = withCompleted(withUnfinished(emptyProgress(), "calendar", 2, "demo"), "contacts");
-  assert.deepEqual(progress.unfinished, { id: "calendar", step: 2, mode: "demo" });
+  const progress = withCompleted(withUnfinished(emptyProgress(), "calendar", 2), "contacts");
+  assert.deepEqual(progress.unfinished, { id: "calendar", step: 2 });
 });
 
 test("loaded progress drops unexpected fields", () => {
@@ -425,12 +414,12 @@ test("loaded progress drops unexpected fields", () => {
     }),
   });
 
-  assert.deepEqual(loadTutorialProgress(storage).unfinished, { id: "calendar", step: 1, mode: "guided" });
+  assert.deepEqual(loadTutorialProgress(storage).unfinished, { id: "calendar", step: 1 });
 });
 
 /* ---------- Walkthroughs and topics ---------- */
 
-const stepText = (step) => [step.target, step.say, step.show];
+const stepText = (step) => [step.target, step.show];
 const textOf = (steps) => steps.map(stepText);
 
 test("every portal topic is the same steps as its part of the walkthrough", () => {
@@ -453,7 +442,7 @@ test("portal topics and the walkthrough all use registered targets and unique id
 
     for (const step of tutorial.steps) {
       [step.target].flat().forEach((id) => assert.ok(TUTORIAL_TARGETS[id], `${tutorial.id}/${step.id}: ${id}`));
-      assert.ok(step.show && (step.say || step.demoOnly), `${tutorial.id}/${step.id}`);
+      assert.ok(step.show, `${tutorial.id}/${step.id}`);
       (step.opens ?? []).forEach((opener) => assert.ok(TUTORIAL_TARGETS[opener.click], opener.click));
     }
   }
@@ -481,7 +470,7 @@ test("section helpers find sections, resume points and the next topic", () => {
     intro: [{ id: "intro", target: "a" }],
     recap: [{ id: "recap", target: "a" }],
     sections: [
-      { id: "one", title: "One", keywords: ["x"], steps: [{ id: "p", prep: true }, { id: "a" }, { id: "b", demoOnly: true }] },
+      { id: "one", title: "One", keywords: ["x"], steps: [{ id: "p", prep: true }, { id: "a" }, { id: "b" }] },
       { id: "two", title: "Two", keywords: [], steps: [{ id: "p", prep: true }, { id: "a" }] },
     ],
   });
@@ -498,11 +487,10 @@ test("section helpers find sections, resume points and the next topic", () => {
   assert.equal(getResumeStep({ steps: [] }, 7), 7, "an ordinary tutorial keeps its saved step");
 });
 
-test("step numbers skip setup steps and steps for the other mode", () => {
-  const steps = [{ prep: true }, { id: "a" }, { demoOnly: true }, { id: "b" }];
-  assert.deepEqual(getStepPosition(steps, 0, false), { current: 1, total: 2 });
-  assert.deepEqual(getStepPosition(steps, 3, false), { current: 2, total: 2 });
-  assert.deepEqual(getStepPosition(steps, 3, true), { current: 3, total: 3 });
+test("step numbers skip setup steps", () => {
+  const steps = [{ prep: true }, { id: "a" }, { id: "b" }];
+  assert.deepEqual(getStepPosition(steps, 0), { current: 1, total: 2 });
+  assert.deepEqual(getStepPosition(steps, 2), { current: 2, total: 2 });
 });
 
 test("finishing a topic does not finish the walkthrough, and old progress still loads", () => {
@@ -510,7 +498,7 @@ test("finishing a topic does not finish the walkthrough, and old progress still 
   assert.ok(done.completed[PORTAL_TOPICS[0].id]);
   assert.equal(done.completed[PORTAL_WALKTHROUGH.id], undefined);
 
-  const unfinished = withUnfinished(emptyProgress(), PORTAL_WALKTHROUGH.id, 5, "guided");
+  const unfinished = withUnfinished(emptyProgress(), PORTAL_WALKTHROUGH.id, 5);
   assert.equal(withCompleted(unfinished, PORTAL_TOPICS[0].id).unfinished.id, PORTAL_WALKTHROUGH.id);
 
   const old = JSON.stringify({ completed: { "create-booking": "2026-01-01" }, unfinished: { id: "calendar", step: 2, mode: "demo" } });
@@ -526,7 +514,7 @@ test("searching finds a topic by what it teaches", () => {
   assert.ok(ids("due date").includes("portal/due-dates"));
 });
 
-/* ---------- Portal practice is honest and can't write ---------- */
+/* ---------- Portal demos are honest and can't write ---------- */
 
 const portalSteps = PORTAL_TOPICS.flatMap((topic) => topic.steps);
 
@@ -534,19 +522,11 @@ test("a step on a control that saves never clicks it and never claims it happene
   for (const step of portalSteps.filter((entry) => entry.writes)) {
     assert.ok(!step.demoClick, step.id);
     assert.ok(!(step.opens ?? []).some((opener) => opener.click === step.target), step.id);
-    assert.doesNotMatch(step.say, /\b(saved|assigned|sent|confirmed|done)!/i, step.id);
+    assert.doesNotMatch(step.show, /\b(saved|assigned|sent|confirmed|done)!/i, step.id);
   }
 });
 
-test("guided steps on real actions say they are switched off", () => {
-  const actions = ["portal-task-assign", "portal-doc-assign", "portal-save-due", "portal-send-back", "portal-reopen", "portal-remove-task", "portal-copy-link", "portal-email-send-now"];
-
-  for (const step of portalSteps.filter((entry) => actions.includes([entry.target].flat()[0]))) {
-    assert.match(step.say, /switched off/, step.id);
-  }
-});
-
-test("every control that saves or sends carries the practice guard", () => {
+test("every control that saves or sends carries the tutorial guard", () => {
   const portal = readFileSync("src/pages/PortalAdminView.jsx", "utf8");
   const guarded = ["portal-save-due", "portal-send-back", "portal-reopen", "portal-remove-task", "portal-confirm", "portal-task-assign", "portal-doc-assign", "portal-doc-remove", "portal-copy-link", "portal-open-portal"];
 
@@ -563,10 +543,10 @@ test("every control that saves or sends carries the practice guard", () => {
 });
 
 test("the email steps use the app's real labels and timings", () => {
-  const items = portalSteps.find((step) => step.id === "group-emails.items").say.toLowerCase();
+  const items = portalSteps.find((step) => step.id === "group-emails.items").show.toLowerCase();
   REMINDER_OPTIONS.forEach((option) => assert.ok(items.includes(option.label.toLowerCase()), option.label));
 
-  const timing = portalSteps.find((step) => step.id === "sending.timing").say;
+  const timing = portalSteps.find((step) => step.id === "sending.timing").show;
   assert.match(timing, /9:00 New York time/);
 });
 

@@ -1,7 +1,8 @@
 /*
   The tutorial gnome: floating launcher (bottom-right of the staff app), the
-    help panel that opens above it, and the hand-off to TutorialRunner. A
-  demonstration puts the screen back afterwards, unless the person paused it
+    help panel that opens above it, and the hand-off to TutorialRunner. Picking
+  a tutorial starts its demonstration straight away. A demonstration puts the
+  screen back afterwards, unless the person paused it
   and took over. Starting anything that would leave unsaved work behind asks
   first, however it was started.
 
@@ -13,7 +14,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  FaArrowLeft,
   FaBook,
   FaCalendarAlt,
   FaChartBar,
@@ -21,8 +21,6 @@ import {
   FaChevronRight,
   FaClipboardList,
   FaEnvelope,
-  FaEye,
-    FaHandPointer,
   FaKey,
   FaSearch,
   FaTimes,
@@ -38,7 +36,6 @@ import {
   getResumeStep,
   getStepPosition,
   getUnsavedWork,
-  isShown,
   loadTutorialProgress,
   saveTutorialProgress,
   searchTutorials,
@@ -89,18 +86,8 @@ function captureScreen() {
   };
 }
 
-// The group someone is already working on, so a portal tutorial needn't ask: an open booking, an open card, or a list searched down to one.
-function getCurrentGroup() {
-  const booking = document.querySelector("[data-tutorial-booking-id]");
-  if (booking && isShown(booking)) return booking.dataset.tutorialBookingId;
-
-  const cards = Array.from(document.querySelectorAll("[data-tutorial-scope]")).filter(isShown);
-  const card = cards.find((entry) => "tutorialActive" in entry.dataset) ?? (cards.length === 1 ? cards[0] : null);
-  return card?.dataset.tutorialScope ?? null;
-}
-
 function getStepCount(tutorial) {
-  return getStepPosition(tutorial.steps, 0, false).total;
+  return getStepPosition(tutorial.steps, 0).total;
 }
 
 // One library row. A completed row keeps its check and says it can be replayed.
@@ -125,20 +112,18 @@ export default function TutorialGnome() {
   // closed | panel | running | complete
   const [view, setView] = useState("closed");
   const [query, setQuery] = useState("");
-  const [detail, setDetail] = useState(null);
   const [run, setRun] = useState(null);
   const [progress, setProgress] = useState(readProgress);
   const [isLauncherHovered, setIsLauncherHovered] = useState(false);
   const [hopCount, setHopCount] = useState(0);
-    const [launcherMessage, setLauncherMessage] = useState("");
+  const [launcherMessage, setLauncherMessage] = useState("");
   const [pendingStart, setPendingStart] = useState(null);
-
 
   const launcherRef = useRef(null);
   const messageTimerRef = useRef(0);
   const screenToRestoreRef = useRef(null);
 
-    const tutorialsById = Object.fromEntries(ALL_TUTORIALS.map((tutorial) => [tutorial.id, tutorial]));
+  const tutorialsById = Object.fromEntries(ALL_TUTORIALS.map((tutorial) => [tutorial.id, tutorial]));
   const matchedIds = new Set(searchTutorials(ALL_TUTORIALS, query).map((tutorial) => tutorial.id));
   const getShownTopics = (tutorial) => (tutorial.topics ?? []).filter((topic) => matchedIds.has(topic.id));
   const visibleTutorials = TUTORIALS.filter((tutorial) => matchedIds.has(tutorial.id) || getShownTopics(tutorial).length > 0);
@@ -157,8 +142,7 @@ export default function TutorialGnome() {
 
   function openPanel() {
     setHopCount((count) => count + 1);
-        setLauncherMessage("");
-    setDetail(null);
+    setLauncherMessage("");
     setPendingStart(null);
     setView("panel");
   }
@@ -168,25 +152,20 @@ export default function TutorialGnome() {
     launcherRef.current?.focus();
   }
 
-  function openDetail(tutorial) {
-        setDetail({ id: tutorial.id });
-  }
-
-  function beginRun(tutorial, mode, startStep, scope, screen) {
+  function beginRun(tutorial, startStep, screen) {
     screenToRestoreRef.current = null;
-    updateProgress(withUnfinished(progress, tutorial.id, startStep, mode));
-    setRun({ tutorial, mode, startStep, scope, key: Date.now(), screen });
+    updateProgress(withUnfinished(progress, tutorial.id, startStep));
+    setRun({ tutorial, startStep, key: Date.now(), screen });
     setPendingStart(null);
     setView("running");
   }
 
-  function startTutorial(tutorial, mode, startStep = 0) {
-    const scope = tutorial.scenario ? getCurrentGroup() : null;
+  function startTutorial(tutorial, startStep = 0) {
     const screen = screenToRestoreRef.current ?? captureScreen();
-    const begin = () => beginRun(tutorial, mode, startStep, scope, screen);
+    const begin = () => beginRun(tutorial, startStep, screen);
 
     // A fictional demo on its own page leaves the real screen, drafts included, hidden underneath.
-    const staysOnScreen = mode === "demo" && window.location.pathname === tutorial.scenario?.home;
+    const staysOnScreen = window.location.pathname === tutorial.scenario?.home;
     const unsaved = staysOnScreen ? [] : getUnsavedWork();
 
     if (unsaved.length > 0) {
@@ -200,47 +179,32 @@ export default function TutorialGnome() {
 
   function continueWalkthrough() {
     const walkthrough = tutorialsById[run?.tutorial.parentId];
-    beginRun(
-      walkthrough,
-      run?.mode,
-      getContinueStep(walkthrough, run?.tutorial.sectionId),
-      run?.scope,
-      screenToRestoreRef.current ?? run?.screen
-    );
+    beginRun(walkthrough, getContinueStep(walkthrough, run?.tutorial.sectionId), screenToRestoreRef.current ?? run?.screen);
   }
 
   // Never after a pause: anything on screen by then is the person's own work.
   function queueRestore(leaveAsIs) {
-    if (run?.mode === "demo" && !leaveAsIs) screenToRestoreRef.current = run?.screen;
+    if (!leaveAsIs) screenToRestoreRef.current = run?.screen;
   }
-
 
   // run?. throughout: the React Compiler reads these closures' dependencies during render, while run can be null.
-    function handleExit(stepIndex, leaveAsIs) {
-    updateProgress(withUnfinished(progress, run?.tutorial.id, stepIndex, run?.mode));
+  function handleExit(stepIndex, leaveAsIs) {
+    updateProgress(withUnfinished(progress, run?.tutorial.id, stepIndex));
     queueRestore(leaveAsIs);
-    const note = run?.mode === "guided" ? run?.tutorial.finished : run?.tutorial.scenario ? FICTIONAL_GONE : "";
     setRun(null);
     setView("closed");
-    showLauncherMessage(note || "No problem! Click me anytime to pick up where you left off.");
+    showLauncherMessage(run?.tutorial.scenario ? FICTIONAL_GONE : "No problem! Click me anytime to pick up where you left off.");
   }
 
-    function handleComplete(leaveAsIs, scope) {
+  function handleComplete(leaveAsIs) {
     updateProgress(withCompleted(progress, run?.tutorial.id));
     queueRestore(leaveAsIs);
-    setRun({ ...run, scope });
     setView("complete");
-  }
-
-  // Back in the running tutorial, on a fictional screen, with the same restore point.
-  function watchDemo(stepIndex) {
-    const start = getResumeStep(run?.tutorial, stepIndex);
-    beginRun(run?.tutorial, "demo", start, null, run?.screen);
   }
 
   // After the runner has gone, so its click guard can't stop these. Uses the app's own controls, so views reset as they do for a person.
   useEffect(() => {
-        const screen = screenToRestoreRef.current;
+    const screen = screenToRestoreRef.current;
     // A finished topic may continue into the walkthrough, so it waits for the person's answer.
     if (!screen || view === "running" || (view === "complete" && run?.tutorial.parentId)) return;
     screenToRestoreRef.current = null;
@@ -255,7 +219,7 @@ export default function TutorialGnome() {
 
     if (openBookingName) findTarget("booking-back")?.click();
     navigate(screen.path);
-    }, [view, navigate, run]);
+  }, [view, navigate, run]);
 
   // Close the panel on Escape or a click elsewhere on the page.
   useEffect(() => {
@@ -286,20 +250,13 @@ export default function TutorialGnome() {
       <TutorialRunner
         key={run.key}
         tutorial={run.tutorial}
-        mode={run.mode}
-                startStep={run.startStep}
-        startScope={run.scope}
-        onWatchDemo={watchDemo}
-        onStepChange={(stepIndex) =>
-          updateProgress(withUnfinished(progress, run?.tutorial.id, stepIndex, run?.mode))
-        }
+        startStep={run.startStep}
+        onStepChange={(stepIndex) => updateProgress(withUnfinished(progress, run?.tutorial.id, stepIndex))}
         onExit={handleExit}
         onComplete={handleComplete}
       />
     );
   }
-
-  const detailTutorial = detail && tutorialsById[detail.id];
 
   return (
     <div className="tg-root" data-tutorial-ui>
@@ -318,9 +275,9 @@ export default function TutorialGnome() {
             You finished <strong>{run.tutorial.title}</strong>. Replay it anytime from my help station.
           </p>
 
-                    {(run.mode === "guided" ? run.tutorial.finished : run.tutorial.scenario && FICTIONAL_GONE) && (
+          {run.tutorial.scenario && (
             <p className="tg-warning" role="note">
-              {run.mode === "guided" ? run.tutorial.finished : FICTIONAL_GONE}
+              {FICTIONAL_GONE}
             </p>
           )}
 
@@ -330,7 +287,7 @@ export default function TutorialGnome() {
                 Continue the full walkthrough
               </button>
             ) : (
-              <button className="tg-button" type="button" onClick={() => startTutorial(run?.tutorial, run?.mode)}>
+              <button className="tg-button" type="button" onClick={() => startTutorial(run?.tutorial)}>
                 Replay
               </button>
             )}
@@ -367,7 +324,7 @@ export default function TutorialGnome() {
             </button>
           </header>
 
-                    {pendingStart ? (
+          {pendingStart ? (
             <div className="tg-detail">
               <h3>Before we start</h3>
               <p className="tg-warning" role="alert">
@@ -383,61 +340,6 @@ export default function TutorialGnome() {
                 </button>
               </div>
             </div>
-          ) : detailTutorial ? (
-            <div className="tg-detail">
-              <button className="tg-back-link" type="button" onClick={() => setDetail(null)}>
-                <FaArrowLeft aria-hidden="true" /> All tutorials
-              </button>
-
-              <h3>{detailTutorial.title}</h3>
-                            <p>{detailTutorial.description}</p>
-
-              <p className="tg-meta">
-                {getStepCount(detailTutorial)} steps
-                {progress.completed[detailTutorial.id] && (
-                  <span className="tg-done-badge">
-                    <FaCheckCircle aria-hidden="true" /> Completed · replay anytime
-                  </span>
-                )}
-              </p>
-
-              
-
-              <div className="tg-mode-options">
-                <button
-                  className="tg-mode-option"
-                  type="button"
-                  onClick={() => startTutorial(detailTutorial, "guided")}
-                  autoFocus
-                >
-                  <FaHandPointer aria-hidden="true" />
-                  <span>
-                    <strong>Walk me through it</strong>
-                    <small>
-                      {detailTutorial.scenario
-                        ? "You use the real screens and I guide you. Saving and sending are switched off."
-                        : "You do each step and I'll guide you. Saving is switched off."}
-                    </small>
-                  </span>
-                </button>
-
-                <button
-                  className="tg-mode-option"
-                  type="button"
-                  onClick={() => startTutorial(detailTutorial, "demo")}
-                >
-                  <FaEye aria-hidden="true" />
-                  <span>
-                    <strong>Show me how</strong>
-                    <small>
-                      {detailTutorial.scenario
-                        ? "Watch it on a fictional group. Nothing real is touched, and I'll bring you back here after."
-                        : "Sit back and watch. Nothing is typed or saved, and I'll bring you back here after."}
-                    </small>
-                  </span>
-                </button>
-              </div>
-            </div>
           ) : (
             <div className="tg-library">
               {unfinished && (
@@ -446,8 +348,8 @@ export default function TutorialGnome() {
                   <div>
                     <strong>Pick up where you left off?</strong>
                     <span>
-                                            {tutorialsById[unfinished.id].title}, step{" "}
-                      {getStepPosition(tutorialsById[unfinished.id].steps, unfinished.step, unfinished.mode === "demo").current} of{" "}
+                      {tutorialsById[unfinished.id].title}, step{" "}
+                      {getStepPosition(tutorialsById[unfinished.id].steps, unfinished.step).current} of{" "}
                       {getStepCount(tutorialsById[unfinished.id])}
                     </span>
                   </div>
@@ -455,11 +357,7 @@ export default function TutorialGnome() {
                     className="tg-button tg-button-primary"
                     type="button"
                     onClick={() =>
-                      startTutorial(
-                        tutorialsById[unfinished.id],
-                        unfinished.mode,
-                        getResumeStep(tutorialsById[unfinished.id], unfinished.step)
-                      )
+                      startTutorial(tutorialsById[unfinished.id], getResumeStep(tutorialsById[unfinished.id], unfinished.step))
                     }
                   >
                     Resume
@@ -467,7 +365,7 @@ export default function TutorialGnome() {
                   <button
                     className="tg-button"
                     type="button"
-                    onClick={() => startTutorial(tutorialsById[unfinished.id], unfinished.mode)}
+                    onClick={() => startTutorial(tutorialsById[unfinished.id])}
                   >
                     Start over
                   </button>
@@ -496,7 +394,7 @@ export default function TutorialGnome() {
 
                     return (
                       <li key={tutorial.id}>
-                        <TutorialItem tutorial={tutorial} icon={Icon} isDone={progress.completed[tutorial.id]} onOpen={openDetail} />
+                        <TutorialItem tutorial={tutorial} icon={Icon} isDone={progress.completed[tutorial.id]} onOpen={startTutorial} />
 
                         {topics.length > 0 && (
                           <details
@@ -510,7 +408,7 @@ export default function TutorialGnome() {
                             <ul>
                               {topics.map((topic) => (
                                 <li key={topic.id}>
-                                  <TutorialItem tutorial={topic} isDone={progress.completed[topic.id]} onOpen={openDetail} />
+                                  <TutorialItem tutorial={topic} isDone={progress.completed[topic.id]} onOpen={startTutorial} />
                                 </li>
                               ))}
                             </ul>

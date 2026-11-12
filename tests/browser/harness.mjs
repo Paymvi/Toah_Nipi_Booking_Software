@@ -59,14 +59,13 @@ export async function openLibrary(page) {
   await page.waitForSelector(".tg-library");
 }
 
-// Starts a tutorial from the library. Topics live under the walkthrough's disclosure.
-export async function start(page, title, mode) {
+// Starts a tutorial's demonstration from the library. Topics live under the walkthrough's disclosure.
+export async function start(page, title) {
   await openLibrary(page);
   const summary = page.locator(".tg-topics summary");
   const item = page.locator(".tg-tutorial-item", { hasText: title }).first();
   if (!(await item.isVisible()) && (await summary.count())) await summary.click();
   await item.click();
-  await page.getByRole("button", { name: mode === "demo" ? /Show me how/ : /Walk me through it/ }).click();
 }
 
 export const stepId = (page) => page.locator(".tg-dialog").getAttribute("data-tutorial-step", { timeout: 2000 }).catch(() => "");

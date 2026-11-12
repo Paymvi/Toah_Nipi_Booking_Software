@@ -42,7 +42,7 @@ await page.waitForSelector(".season-tabs");
 
 // The tutorial reaches every step, starting elsewhere so it has to open Reports.
 await open(session, "/dashboard");
-await start(page, "Read your reports", "demo");
+await start(page, "Read your reports");
 for (const id of ["open-reports", "layout", "views", "figures"]) {
   await waitForStep(page, id);
   while (!(await isReady(page))) await sleep(100);

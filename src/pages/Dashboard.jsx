@@ -6933,7 +6933,6 @@ function BookingDetailView({
         .filter(Boolean)
         .join(" ")}
             data-tutorial-target="booking-profile"
-      data-tutorial-booking-id={booking.id}
     >
       <header className="booking-profile-header">
         <button

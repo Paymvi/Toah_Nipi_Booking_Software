@@ -3440,7 +3440,6 @@ function PortalRecordCard({
       className={`portal-record-card portal-record-card-${portalStatusClass}`}
       data-tutorial-target="portal-card"
       data-tutorial-scope={record.id}
-      data-tutorial-active={openManager ? "" : undefined}
     >
       <div className="portal-record-main">
         <div className="portal-record-title-row" data-tutorial-target="portal-progress">

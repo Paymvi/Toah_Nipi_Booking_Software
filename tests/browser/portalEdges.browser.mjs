@@ -1,6 +1,6 @@
 /*
-  Portal tutorial edge cases: starting points, missing state, roles, loading,
-  safety, demo cleanup, unsaved work, continuing and progress.
+  Portal tutorial edge cases: starting points, roles, safety, demo cleanup,
+  unsaved work, continuing and progress.
   See tests/browser/README.md.
 
   node tests/browser/portalEdges.browser.mjs [name filter]
@@ -16,7 +16,6 @@ const END = '.tg-dialog button[aria-label="End tutorial"]';
 const PAUSE = '.tg-controls button:has-text("Pause")';
 const BACK = '.tg-controls button:has-text("Back")';
 const RESTART = '.tg-controls button[aria-label="Restart tutorial"]';
-const pick = (page, name) => page.locator(".tg-choices-list .tg-button", { hasText: name }).click();
 const visible = (page, id) => page.locator(`${target(id)} >> visible=true`).first();
 const next = (page) => page.locator(NEXT).click({ force: true });
 const tick = (page) => visible(page, "portal-task-table").locator("input[type=checkbox]").first().evaluate((box) => box.click());
@@ -47,16 +46,10 @@ async function test(name, run, { path = "/dashboard", size } = {}) {
   await session.browser.close();
 }
 
-// To the Assign Tasks panel, in practice, on the first group.
-async function practiseToPanel(page) {
-  await start(page, "Assign tasks", "guided");
-  await waitForStep(page, "tasks.open-portals");
-  await visible(page, "nav-portals").click();
-  await waitForStep(page, "tasks.choose-group");
-  await pick(page, "Community Bible Church");
-  await waitForStep(page, "tasks.open-tasks");
-  await visible(page, "portal-assign-tasks").click();
-  await waitForStep(page, "tasks.catalog");
+// To the Assign Tasks panel of the fictional group.
+async function demoToPanel(page) {
+  await start(page, "Assign tasks");
+  await waitForStep(page, "tasks.catalog", 30000);
 }
 
 // Runs a request through the app's own Supabase client, as a bug that bypassed the screens would.
@@ -77,7 +70,7 @@ const tryWrites = (page) =>
 /* ---------- Starting points ---------- */
 
 await test("starts outside Portal Admin, demo returns there", async ({ page }) => {
-  await start(page, "Set or change a due date", "demo");
+  await start(page, "Set or change a due date");
   await page.waitForSelector(DEMO_BANNER);
   assert((await page.evaluate(() => location.pathname)) === "/portal-admin", "did not open Portals");
   await page.locator(END).click();
@@ -85,124 +78,7 @@ await test("starts outside Portal Admin, demo returns there", async ({ page }) =
   assert((await page.locator(DEMO_BANNER).count()) === 0, "demo left behind");
 }, { path: "/contacts" });
 
-await test("reuses the booking already open", async ({ page }) => {
-  await page.locator(target("nav-master-spreadsheet")).first().click();
-  await page.locator(`${target("spreadsheet-open-booking")} >> visible=true`).first().click();
-  await page.waitForSelector(target("booking-profile"));
-  await start(page, "Assign tasks", "guided");
-  await waitForStep(page, "tasks.open-portals");
-  await visible(page, "nav-portals").click();
-  await waitForStep(page, "tasks.open-tasks");
-  assert((await dialog(page)).includes("Community Bible Church, the group you already had open"), "did not say which group");
-}, { path: "/master-spreadsheet" });
-
-await test("reuses the group whose panel is open, and a list searched to one", async ({ page }) => {
-  await page.locator(`[data-tutorial-scope="b2"] ${target("portal-assign-documents")}`).click();
-  await start(page, "Assign tasks", "guided");
-    await waitForStep(page, "tasks.open-tasks");
-  await page.locator(inGroup("portal-assign-tasks", "b2")).click();
-  await waitForStep(page, "tasks.catalog");
-  const inB2 = await page.locator(`[data-tutorial-scope="b2"] ${target("portal-task-panel")}`).count();
-  assert(inB2 === 1, "worked on the wrong group");
-  await page.locator(END).click();
-
-  await page.locator(`[data-tutorial-scope="b2"] ${target("portal-assign-tasks")}`).click();
-  await page.locator(`${target("portal-search")} input`).fill("Lakeside");
-  await sleep(300);
-  await start(page, "Assign tasks", "guided");
-  await waitForStep(page, "tasks.open-tasks");
-  assert((await dialog(page)).includes("Lakeside"), "did not reuse the only group listed");
-}, { path: "/portal-admin" });
-
-await test("with no selection it asks, and never picks a group by itself", async ({ page }) => {
-  await start(page, "Assign tasks", "guided");
-  await waitForStep(page, "tasks.choose-group");
-  await sleep(1500);
-  assert((await stepId(page)) === "tasks.choose-group", "moved on without a choice");
-  assert((await page.locator(NEXT).getAttribute("aria-disabled")) === "true", "Next can skip the choice");
-  assert((await page.locator(".tg-choices-list .tg-button").count()) === 3, "did not list the groups");
-}, { path: "/portal-admin" });
-
-await test("other groups' controls stay blocked once one is chosen", async ({ page }) => {
-  await start(page, "Assign tasks", "guided");
-  await waitForStep(page, "tasks.choose-group");
-  await pick(page, "Community Bible Church");
-  await waitForStep(page, "tasks.open-tasks");
-  await page.locator(`[data-tutorial-scope="b3"] ${target("portal-assign-tasks")}`).click({ force: true });
-  await sleep(500);
-  assert((await page.locator(target("portal-task-panel")).count()) === 0, "opened another group's panel");
-  assert((await dialog(page)).includes("highlighted"), "no hint");
-}, { path: "/portal-admin" });
-
 /* ---------- Missing state ---------- */
-
-await test("a filter hiding every group is explained and can be fixed in place", async ({ page }) => {
-  await page.locator(`${target("portal-search")} input`).fill("zzz");
-  await start(page, "Assign tasks", "guided");
-  await page.waitForSelector(".tg-choices");
-  assert((await dialog(page)).includes("Clear Search"), "no explanation");
-  await page.locator(`${target("portal-search")} input`).fill("");
-  await waitForStep(page, "tasks.choose-group");
-  await page.waitForSelector(".tg-choices-list");
-}, { path: "/portal-admin" });
-
-await test("no portal groups at all offers the demo", async ({ page }) => {
-  await ctl("empty=1");
-  await page.reload();
-  await page.waitForSelector(".tg-launcher");
-  await start(page, "Review and approve a submission", "guided");
-  await page.getByRole("button", { name: "Watch the demo instead" }).click();
-  await page.waitForSelector(DEMO_BANNER);
-  await waitForStep(page, "review.item");
-  assert((await page.locator(".tg-mode-chip").innerText()).toLowerCase().includes("fictional"), "not labelled");
-}, { path: "/portal-admin" });
-
-await test("a group with nothing to review explains and offers each way on", async ({ page }) => {
-  await start(page, "Review and approve a submission", "guided");
-  await waitForStep(page, "review.choose-group");
-  await pick(page, "Grace Fellowship Youth");
-  await page.getByRole("button", { name: "Choose another group" }).waitFor();
-  assert((await dialog(page)).includes("Nothing from this group is waiting for review"), "no reason given");
-  await page.getByRole("button", { name: "Choose another group" }).click();
-  await waitForStep(page, "review.choose-group");
-  await pick(page, "Community Bible Church");
-  await waitForStep(page, "review.item");
-}, { path: "/portal-admin" });
-
-await test("a completed portal can be reopened but not reviewed", async ({ page }) => {
-  await start(page, "Reopen or remove a task", "guided");
-  await waitForStep(page, "corrections.choose-group");
-  await pick(page, "Lakeside");
-  await waitForStep(page, "corrections.correct");
-    await page.locator(inGroup("portal-correct-completed", "b3")).click();
-  await waitForStep(page, "corrections.reopen");
-  assert((await dialog(page)).includes("switched off"), "doesn't say it's off");
-}, { path: "/portal-admin" });
-
-await test("in the full walkthrough an unmet topic can be skipped", async ({ page }) => {
-  await page.evaluate(([key, step]) => localStorage.setItem(key, JSON.stringify({ completed: {}, unfinished: { id: "portal", step, mode: "guided" } })),
-    [TUTORIAL_PROGRESS_STORAGE_KEY, PORTAL_WALKTHROUGH.sections.find((section) => section.id === "review").start + 3]);
-  await page.reload();
-  await page.waitForSelector(".tg-launcher");
-  await openLibrary(page);
-  await page.locator(".tg-resume .tg-button-primary").click();
-  await waitForStep(page, "review.choose-group");
-  await pick(page, "Grace Fellowship Youth");
-  await page.getByRole("button", { name: "Skip this topic" }).click();
-  await waitForStep(page, "send-back.correct").catch(async () => {
-    await page.getByRole("button", { name: "Skip this topic" }).waitFor();
-  });
-  assert((await page.locator(".tg-section-label").innerText()).includes("Send a submission back"), "didn't move on");
-}, { path: "/portal-admin" });
-
-await test("email topics explain when emails aren't set up", async ({ page }) => {
-  await ctl("emailMissing=1");
-  await page.reload();
-  await page.waitForSelector(".tg-launcher");
-  await start(page, "Check the sending mode and reminders", "guided");
-  await page.getByRole("button", { name: "Watch the demo instead" }).waitFor({ timeout: 8000 });
-  assert((await dialog(page)).includes("aren't set up"), "no reason given");
-}, { path: "/portal-admin" });
 
 /* ---------- Roles ---------- */
 
@@ -215,58 +91,20 @@ for (const [role, text, expected] of [
     await ctl(`role=${role}`);
     await page.reload();
     await page.waitForSelector(".tg-launcher");
-    await start(page, "Check the sending mode and reminders", "guided");
-    await waitForStep(page, "sending.open-card");
-    await visible(page, "portal-email-summary").click();
-    await waitForStep(page, "sending.mode");
+    await start(page, "Check the sending mode and reminders");
+    await waitForStep(page, "sending.mode", 30000);
     assert((await dialog(page)).includes(text) === expected, `note ${expected ? "missing" : "shown"}`);
   }, { path: "/portal-admin" });
 }
-
-/* ---------- Loading and refresh ---------- */
-
-await test("a slow list waits, and the choice appears when it loads", async ({ page }) => {
-  await ctl("delay=3500");
-  await start(page, "Assign tasks", "guided");
-  await waitForStep(page, "tasks.open-portals");
-  await visible(page, "nav-portals").click();
-  await page.waitForSelector(target("portal-loading"));
-  assert((await page.locator(".tg-choices").count()) === 0, "said there were no groups while loading");
-  await page.waitForSelector(".tg-choices-list .tg-button", { timeout: 12000 });
-});
-
-await test("a target that disappears is explained and comes back", async ({ page }) => {
-  await practiseToPanel(page);
-  await page.locator(PAUSE).click();
-  await visible(page, "portal-assign-tasks").click();
-  await page.waitForSelector(target("portal-task-panel"), { state: "detached" });
-  await page.locator(".tg-paused .tg-button-primary").click();
-  await waitForStep(page, "tasks.catalog");
-  await page.waitForSelector(target("portal-task-panel"));
-}, { path: "/portal-admin" });
-
-await test("typing is not interrupted by the step moving on", async ({ page }) => {
-  await start(page, "Find a group and read its progress", "guided");
-  await waitForStep(page, "find.summary");
-  await next(page);
-  await waitForStep(page, "find.search");
-  const box = page.locator(`${target("portal-search")} input`);
-  await box.click();
-  await box.pressSequentially("Comm", { delay: 200 });
-  assert((await stepId(page)) === "find.search", "moved on mid-word");
-  await box.pressSequentially("unity", { delay: 200 });
-  assert((await box.inputValue()) === "Community", "letters were lost");
-}, { path: "/portal-admin" });
 
 /* ---------- Nothing reaches the services ---------- */
 
 const GUARDED_IN_CARD = ["portal-confirm", "portal-copy-link", "portal-open-portal"];
 
-await test("every guarded control refuses click, keyboard and script in practice", async ({ context, page }) => {
-  await practiseToPanel(page);
-    await page.locator(NEXT).click({ force: true });
-  await waitForStep(page, "tasks.tick");
-  await tick(page);
+await test("every guarded control refuses click, keyboard and script in a demo", async ({ context, page }) => {
+  await demoToPanel(page);
+  await page.locator(PAUSE).click();
+  await page.locator(".tg-paused .tg-button-primary").click();
   await sleep(1200);
 
   const pagesBefore = context.pages().length;
@@ -296,11 +134,11 @@ await test("every guarded control refuses click, keyboard and script in practice
   for (const id of GUARDED_IN_CARD) assert((await page.locator(target(id)).count()) > 0, `${id} not exercised`);
 }, { path: "/portal-admin" });
 
-await test("mode, automatic emails and enable can't be changed in practice", async ({ page }) => {
-  await start(page, "Check the sending mode and reminders", "guided");
-  await waitForStep(page, "sending.open-card");
-  await visible(page, "portal-email-summary").click();
-  await waitForStep(page, "sending.mode");
+await test("mode, automatic emails and enable can't be changed in a demo", async ({ page }) => {
+  await start(page, "Check the sending mode and reminders");
+  await waitForStep(page, "sending.mode", 30000);
+  const modeBefore = await page.locator(`${target("portal-email-mode")} input:checked`).inputValue();
+  const automaticBefore = await page.getByRole("checkbox", { name: /Automatic emails/ }).isChecked();
 
   await page.getByRole("radio", { name: /Live/ }).click({ force: true });
   await page.locator(`${target("portal-email-mode")} input`).first().focus();
@@ -308,44 +146,12 @@ await test("mode, automatic emails and enable can't be changed in practice", asy
   await page.keyboard.press("Space");
   await page.getByRole("checkbox", { name: /Automatic emails/ }).click({ force: true });
   await sleep(400);
-  assert(await page.getByRole("radio", { name: /Test/ }).isChecked(), "mode moved");
-  assert(!(await page.getByRole("checkbox", { name: /Automatic emails/ }).isChecked()), "automatic emails ticked");
-}, { path: "/portal-admin" });
-
-await test("no email goes out from the group's Emails panel in practice", async ({ page }) => {
-  await start(page, "Set up a group's emails", "guided");
-  await waitForStep(page, "group-emails.choose-group");
-  await pick(page, "Community Bible Church");
-  await waitForStep(page, "group-emails.open-emails");
-  await visible(page, "portal-emails").click();
-  await waitForStep(page, "group-emails.state");
-
-  const panel = page.locator(target("portal-email-panel"));
-  await panel.getByRole("button", { name: "Save", exact: true }).click({ force: true });
-  await panel.getByRole("button", { name: /Resend welcome/ }).click({ force: true });
-  await panel.getByRole("button", { name: /Send reminder now/ }).click({ force: true });
-  await panel.locator('form input[type="email"]').fill("x@example.org", { force: true }).catch(() => {});
-  await page.keyboard.press("Enter");
-  await sleep(500);
-  assert((await panel.getByText("x@example.org").count()) === 0, "the add form ran");
-}, { path: "/portal-admin" });
-
-await test("the network lock refuses writes in practice, and lifts on Pause", async (session) => {
-  const { page } = session;
-  await practiseToPanel(page);
-  const locked = await tryWrites(page);
-  assert(locked.every((entry) => entry.endsWith("refused")), locked.join(" "));
-  assert((await writes()).length === 0, "reached the mock");
-
-  await page.locator(PAUSE).click();
-  assert((await page.locator(".tg-paused").innerText()).includes("Anything you save now is real"), "pause doesn't say it's real");
-  const paused = await tryWrites(page);
-  assert(paused.every((entry) => entry.endsWith("SENT")), `pause should give control back: ${paused.join(" ")}`);
-  session.allowWrites = true;
+  assert((await page.locator(`${target("portal-email-mode")} input:checked`).inputValue()) === modeBefore, "mode moved");
+  assert((await page.getByRole("checkbox", { name: /Automatic emails/ }).isChecked()) === automaticBefore, "automatic emails changed");
 }, { path: "/portal-admin" });
 
 await test("the fictional demo refuses writes, even paused, and only reads", async ({ page, requests }) => {
-    await start(page, "Set up a group's emails", "demo");
+    await start(page, "Set up a group's emails");
   await page.waitForSelector(DEMO_BANNER);
   requests.length = 0; // The real page's own load came before the demo.
   await waitForStep(page, "group-emails.state", 30000);
@@ -381,7 +187,7 @@ await test("demo cleans up on End and keeps the real filter and panel", async ({
     await tick(page);
   await sleep(300);
 
-  await start(page, "Review and approve a submission", "demo");
+  await start(page, "Review and approve a submission");
   await page.waitForSelector(DEMO_BANNER);
   assert((await page.getByText("Riverside Youth Fellowship").count()) > 0, "scene not shown");
   await waitForStep(page, "review.item");
@@ -395,7 +201,7 @@ await test("demo cleans up on End and keeps the real filter and panel", async ({
 }, { path: "/portal-admin" });
 
 await test("demo cleans up on completion and on Restart", async ({ page }) => {
-  await start(page, "Copy the portal link or open the portal", "demo");
+  await start(page, "Copy the portal link or open the portal");
   await waitForStep(page, "link.token", 30000);
   await page.locator(RESTART).click();
   await waitForStep(page, "link.token", 30000);
@@ -413,7 +219,7 @@ await test("demo cleans up on completion and on Restart", async ({ page }) => {
 }, { path: "/contacts" });
 
 await test("leaving the page during a paused demo ends it", async ({ page }) => {
-  await start(page, "Assign tasks", "demo");
+  await start(page, "Assign tasks");
   await waitForStep(page, "tasks.open-tasks", 30000);
   await page.locator(PAUSE).click();
   await page.locator(target("nav-contacts")).first().click();
@@ -431,7 +237,7 @@ await test("leaving the page during a paused demo ends it", async ({ page }) => 
 await test("browser Back during a demo ends it", async ({ page }) => {
   await page.locator(target("nav-portals")).click();
   await page.waitForSelector(target("portal-card"));
-  await start(page, "Assign tasks", "demo");
+  await start(page, "Assign tasks");
   await waitForStep(page, "tasks.open-tasks", 30000);
   await page.goBack();
   await page.waitForSelector(".tg-runner", { state: "detached" });
@@ -439,7 +245,7 @@ await test("browser Back during a demo ends it", async ({ page }) => {
 });
 
 await test("a reload forgets the demo and resumes at the topic's start", async ({ page }) => {
-  await start(page, "Assign tasks", "demo");
+  await start(page, "Assign tasks");
   await waitForStep(page, "tasks.assign", 60000);
   await page.reload();
   await page.waitForSelector(target("portal-card"));
@@ -452,7 +258,7 @@ await test("a reload forgets the demo and resumes at the topic's start", async (
 }, { path: "/portal-admin" });
 
 await test("fictional groups never reach real lists", async ({ page }) => {
-  await start(page, "Assign tasks", "demo");
+  await start(page, "Assign tasks");
   await waitForStep(page, "tasks.open-tasks", 30000);
   await page.locator(END).click();
   for (const path of ["/master-spreadsheet", "/contacts", "/calendar", "/reports"]) {
@@ -466,7 +272,7 @@ await test("fictional groups never reach real lists", async ({ page }) => {
 /* ---------- Unsaved work ---------- */
 
 async function expectWarning(page, title, text) {
-  await start(page, title, "guided");
+  await start(page, title);
   await page.getByRole("alert").waitFor();
   assert((await page.getByRole("alert").innerText()).includes(text), "wrong work named");
 }
@@ -492,7 +298,7 @@ await test("Checklist edits are detected", async ({ page }) => {
 }, { path: "/master-spreadsheet" });
 
 await test("the Form is only flagged once something is typed, in every tutorial", async ({ page }) => {
-  await start(page, "Use the calendar", "guided");
+  await start(page, "Use the calendar");
   await waitForStep(page, "open-calendar");
   await page.locator(END).click();
   await sleep(300);
@@ -504,20 +310,18 @@ await test("the Form is only flagged once something is typed, in every tutorial"
   await waitForStep(page, "open-calendar");
 });
 
-await test("Portal choices are detected for practice but stay safe under a demo", async ({ page }) => {
-    await visible(page, "portal-assign-tasks").click();
+await test("Portal choices stay safe under a demo on the same page", async ({ page }) => {
+  await visible(page, "portal-assign-tasks").click();
   await tick(page);
   await sleep(300);
-  await expectWarning(page, "Assign tasks", "task choices");
-  await page.getByRole("button", { name: "Go back and save it" }).click();
-  await start(page, "Assign tasks", "demo");
+  await start(page, "Assign tasks");
   await page.waitForSelector(DEMO_BANNER);
   assert((await page.getByRole("alert").count()) === 0, "needless warning");
 }, { path: "/portal-admin" });
 
 await test("work begun during a pause stops Resume until it's dealt with", async ({ page }) => {
-  await start(page, "Find a group and read its progress", "guided");
-  await waitForStep(page, "find.summary");
+  await start(page, "Use the calendar");
+  await waitForStep(page, "month-view", 30000);
   await page.locator(PAUSE).click();
   await page.locator(target("nav-form")).first().click();
   await page.locator(`${target("booking-form-group-name")} input, input${target("booking-form-group-name")}`).first().fill("Real work");
@@ -529,41 +333,29 @@ await test("work begun during a pause stops Resume until it's dealt with", async
 /* ---------- Navigation and progress ---------- */
 
 await test("Back in a topic never reaches another topic", async ({ page }) => {
-  await start(page, "Share documents", "guided");
-  await waitForStep(page, "documents.choose-group");
-  await pick(page, "Community Bible Church");
-  await waitForStep(page, "documents.open-documents");
+  await start(page, "Share documents");
+  await waitForStep(page, "documents.open-documents", 30000);
+  await sleep(800);
   assert((await page.locator(BACK).getAttribute("aria-disabled")) === "true", "Back leaves the topic");
 }, { path: "/portal-admin" });
 
-await test("Next can't skip a required navigation step", async ({ page }) => {
-  await start(page, "Assign tasks", "guided");
-  await waitForStep(page, "tasks.open-portals");
-  await next(page);
-  await sleep(400);
-  assert((await stepId(page)) === "tasks.open-portals", "skipped");
-  assert((await dialog(page)).includes("Portals in the sidebar"), "no hint");
-});
-
-await test("Restart returns to the chosen topic and forgets the group", async ({ page }) => {
-  await practiseToPanel(page);
+await test("Restart returns to the start of the topic", async ({ page }) => {
+  await demoToPanel(page);
   await page.locator(RESTART).click();
-  await waitForStep(page, "tasks.choose-group");
+  await waitForStep(page, "tasks.open-tasks", 30000);
   assert((await page.locator(".tg-section-label").count()) === 0, "standalone topic shows walkthrough position");
 }, { path: "/portal-admin" });
 
 await test("topic finishes with Done or Continue, and continues without restarting", async ({ page }) => {
-  await start(page, "Copy the portal link or open the portal", "guided");
-  await waitForStep(page, "link.choose-group");
-  await pick(page, "Community Bible Church");
+  await start(page, "Copy the portal link or open the portal");
   for (const id of ["link.token", "link.copy", "link.open"]) {
-    await waitForStep(page, id);
+    await waitForStep(page, id, 30000);
     await next(page);
   }
   await page.waitForSelector(".tg-complete");
   await page.getByRole("button", { name: "Done" }).waitFor();
   await page.getByRole("button", { name: "Continue the full walkthrough" }).click();
-  await waitForStep(page, "group-emails.open-emails");
+  await waitForStep(page, "group-emails.open-emails", 30000);
   const label = await page.locator(".tg-section-label").innerText();
   assert(label.includes("Topic 6 of 10"), label);
 
@@ -574,12 +366,12 @@ await test("topic finishes with Done or Continue, and continues without restarti
 
   await page.waitForFunction((back) => document.querySelector(".tg-controls button")?.getAttribute("aria-disabled") !== "true", BACK);
   await page.locator(BACK).click();
-  await waitForStep(page, "link.open");
+  await waitForStep(page, "link.open", 30000);
   assert((await page.locator(".tg-section-label").innerText()).includes("Topic 5 of 10"), "Back didn't cross into the topic before");
 }, { path: "/portal-admin" });
 
 await test("Back crosses into a closed panel in the demo and the outcome rewinds", async ({ page }) => {
-  await page.evaluate(([key, step]) => localStorage.setItem(key, JSON.stringify({ completed: {}, unfinished: { id: "portal", step, mode: "demo" } })),
+  await page.evaluate(([key, step]) => localStorage.setItem(key, JSON.stringify({ completed: {}, unfinished: { id: "portal", step } })),
     [TUTORIAL_PROGRESS_STORAGE_KEY, PORTAL_WALKTHROUGH.sections.find((section) => section.id === "documents").start]);
   await page.reload();
   await page.waitForSelector(".tg-launcher");
@@ -603,7 +395,7 @@ await test("Back crosses into a closed panel in the demo and the outcome rewinds
 }, { path: "/portal-admin" });
 
 await test("an outdated saved step resumes safely", async ({ page }) => {
-  await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({ completed: {}, unfinished: { id: "portal", step: 9999, mode: "guided" } })), TUTORIAL_PROGRESS_STORAGE_KEY);
+  await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({ completed: {}, unfinished: { id: "portal", step: 9999 } })), TUTORIAL_PROGRESS_STORAGE_KEY);
   await page.reload();
   await page.waitForSelector(".tg-launcher");
   await openLibrary(page);
@@ -611,39 +403,34 @@ await test("an outdated saved step resumes safely", async ({ page }) => {
   await waitForStep(page, "recap");
 }, { path: "/portal-admin" });
 
-await test("the library shows the walkthrough with grouped topics, and search finds one", async ({ page }) => {
+await test("the library shows the walkthrough with its topics tucked away, and search finds one", async ({ page }) => {
   await openLibrary(page);
   await page.locator(".tg-tutorial-item", { hasText: "Manage a group's portal" }).waitFor();
   assert(!(await page.locator(".tg-tutorial-item", { hasText: "Assign tasks" }).isVisible()), "topics aren't tucked away");
   await page.locator(".tg-topics summary").click();
-  for (const group of ["Set up a portal", "Reach the guest", "Review what comes back"]) {
-    await page.locator(".tg-topics h4", { hasText: group }).waitFor();
-  }
+  await page.locator(".tg-topics .tg-tutorial-item", { hasText: "Assign tasks" }).waitFor();
   await page.locator(".tg-search input").fill("send back");
   await page.locator(".tg-tutorial-item", { hasText: "Send a submission back" }).waitFor();
   assert((await page.locator(".tg-topics .tg-tutorial-item").count()) === 1, "search didn't narrow the topics");
 });
 
-await test("keyboard alone can pick a group and move on", async ({ page }) => {
-  await start(page, "Copy the portal link or open the portal", "guided");
-  await waitForStep(page, "link.choose-group");
-  await page.locator(".tg-choices-list .tg-button").first().focus();
-  await page.keyboard.press("Enter");
-  await waitForStep(page, "link.token");
+await test("keyboard alone can move on and pause", async ({ page }) => {
+  await start(page, "Copy the portal link or open the portal");
+  await waitForStep(page, "link.token", 30000);
   await page.locator(NEXT).focus();
   await page.keyboard.press("Enter");
-  await waitForStep(page, "link.copy");
+  await waitForStep(page, "link.copy", 30000);
   await page.keyboard.press("Escape");
   await page.waitForSelector(".tg-paused");
 }, { path: "/portal-admin" });
 
 await test("reduced motion runs the demo", async ({ page }) => {
-  await start(page, "Copy the portal link or open the portal", "demo");
+  await start(page, "Copy the portal link or open the portal");
   await waitForStep(page, "link.token", 30000);
 }, { path: "/portal-admin", size: { reducedMotion: "reduce" } });
 
 await test("a narrow screen keeps the panel and dialogue usable", async ({ page }) => {
-  await start(page, "Assign tasks", "demo");
+  await start(page, "Assign tasks");
   await waitForStep(page, "tasks.catalog", 40000);
   const fits = await page.evaluate(() => {
     const dialog = document.querySelector(".tg-dialog").getBoundingClientRect();

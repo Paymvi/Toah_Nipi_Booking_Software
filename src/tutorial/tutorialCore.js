@@ -4,16 +4,15 @@
   - Targets: elements opt in with data-tutorial-target="<id>" (several ids
     may be space-separated). Ids are listed in TUTORIAL_TARGETS
     (tutorials.js); nothing here relies on class names or DOM depth.
-  - Step context: the small set of state checks tutorial steps use to
-    decide that the person actually did the step.
+  - Step context: the small set of state checks a demonstration uses to
+    see that its click worked.
   - Placement maths for the dialogue and pointer (pure, unit tested).
   - Progress storage: completed tutorial ids and the one unfinished
-    tutorial (id, step, mode). No booking or guest data is ever stored.
+    tutorial (id, step). No booking or guest data is ever stored.
 
   Importing this file never touches the DOM, so tests can load it in Node.
 */
 
-export const TEXT_FIELD_IDLE_MS = 1500;
 export const MOBILE_BREAKPOINT = 640;
 
 /* =========================================================
@@ -90,40 +89,16 @@ export function getUnsavedWork() {
   return [...new Set(Array.from(marked, (element) => element.dataset.tutorialUnsaved))];
 }
 
-function getFields(element) {
-  if (!element) return [];
-  if (element.matches("input, select, textarea")) return [element];
-  return Array.from(element.querySelectorAll("input, select, textarea"));
-}
-
 /*
   What a step's done(ctx, start) and capture(ctx) receive. Every check reads
   the live page, so a step completes because the page is in the expected
   state, not because something was clicked.
 */
-export function createStepContext(lastInputAtRef) {
-  const fieldValues = (id) =>
-    getFields(findTarget(id)).map((field) =>
-      field.type === "checkbox" || field.type === "radio"
-        ? String(field.checked)
-        : String(field.value ?? "").trim()
-    );
-
+export function createStepContext() {
   return {
     path: () => window.location.pathname,
     visible: (id) => Boolean(findTarget(id)),
     text: (id) => findTarget(id)?.textContent.trim() ?? "",
-    // Selects and date inputs: a value is a finished choice.
-    hasValue: (id) => fieldValues(id).some(Boolean),
-    // Text inputs: a value, and the person has left the field or paused typing.
-    filled: (id) => {
-      const element = findTarget(id);
-      if (!element || !fieldValues(id).some(Boolean)) return false;
-      const isFocused = element.contains(document.activeElement);
-      return !isFocused || Date.now() - lastInputAtRef.current > TEXT_FIELD_IDLE_MS;
-    },
-    // A signature of every field under the target, to detect "changed since the step began".
-        fields: (id) => fieldValues(id).join("\u0001"),
     hasScope: () => Boolean(targetScope),
   };
 }
@@ -146,14 +121,14 @@ export const DEMO_ACTION_TIMEOUT_MS = 8000;
   What Next does in each phase. One transition runs at a time: while a step
   is getting ready, doing its demo action or celebrating, extra clicks are
   ignored so they can't skip a step or the action that leads to it.
-  In demonstrations Next ends the reading time early; the action still runs.
+  Next ends the reading time early; the action still runs.
   needsAction: the step opens the screen the next steps are on and hasn't
   happened yet, so skipping it would strand them ("wait").
 */
-export function getNextAction(phase, isDemo, needsAction = false) {
-  if (phase === "seeking" || phase === "working" || phase === "success" || phase === "unmet") return "ignore";
+export function getNextAction(phase, needsAction = false) {
+  if (phase === "seeking" || phase === "working") return "ignore";
   if (phase === "failed") return "retry";
-  if (isDemo && phase === "active") return "hurry";
+  if (phase === "active") return "hurry";
   return needsAction ? "wait" : "advance";
 }
 
@@ -347,13 +322,9 @@ export function getContinueStep(walkthrough, sectionId) {
   return walkthrough.sections.find((section) => section.id === sectionId).end + 1;
 }
 
-export function isStepInMode(step, isDemo) {
-  return isDemo || !step.demoOnly;
-}
-
-// "Step 3 of 7" without setup steps, or steps for the other mode, so the numbers only count teaching.
-export function getStepPosition(steps, index, isDemo) {
-  const counts = (step) => isStepInMode(step, isDemo) && !step.prep;
+// "Step 3 of 7" without setup steps, so the numbers only count teaching.
+export function getStepPosition(steps, index) {
+  const counts = (step) => !step.prep;
   return {
     current: Math.max(steps.slice(0, index + 1).filter(counts).length, 1),
     total: steps.filter(counts).length,
@@ -385,7 +356,7 @@ export function loadTutorialProgress(storage) {
       completed: saved.completed && typeof saved.completed === "object" ? saved.completed : {},
       unfinished:
         unfinished && typeof unfinished.id === "string" && Number.isInteger(unfinished.step)
-          ? { id: unfinished.id, step: unfinished.step, mode: unfinished.mode === "demo" ? "demo" : "guided" }
+          ? { id: unfinished.id, step: unfinished.step }
           : null,
     };
   } catch {
@@ -401,8 +372,8 @@ export function saveTutorialProgress(storage, progress) {
   }
 }
 
-export function withUnfinished(progress, id, step, mode) {
-  return { ...progress, unfinished: { id, step, mode } };
+export function withUnfinished(progress, id, step) {
+  return { ...progress, unfinished: { id, step } };
 }
 
 export function withCompleted(progress, id, date = new Date()) {

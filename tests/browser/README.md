@@ -24,10 +24,10 @@ Run `portalEdges` on its own, because it changes the mock's state. Several `port
 
 ## What they cover
 
-- `portalRuns` runs the walkthrough and every topic, in both modes, generated from the registry, so a new section is covered without changing the script. It checks the step count, placement, console errors, and that nothing reached the mock.
+- `portalRuns` runs the walkthrough and every topic, generated from the registry, so a new section is covered without changing the script. It checks the step count, placement, console errors, and that nothing reached the mock.
 - `reports` covers the New and Original toggle, the three views, drill-down, and returning from a booking.
 - `backups` covers the Minimal and Detailed toggle, its saved preference, state kept while toggling, warnings, and role and Dev Mode limits. It never presses Full Replace.
-- `portalEdges` covers starting points, missing state, roles, loading, every guarded control, the network lock, demo cleanup, unsaved work, continuing, Back and progress.
+- `portalEdges` covers starting points, roles, every guarded control, the network lock, demo cleanup, unsaved work, continuing, Back and progress.
 - `portalSigning` saves staff PDF choices with guest signing off, a fictional test booking, and a failed settings read; checks missing schema explanations and recovery on Refresh; and explains when there are no eligible PDFs.
 
 `mockSupabase.mjs` records every attempted change. `/__ctl?writes` isn't needed: any call to `/__ctl` returns the list.
