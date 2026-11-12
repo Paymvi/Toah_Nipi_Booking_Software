@@ -40,8 +40,16 @@ export const LODGING_BUILDINGS = Object.freeze([
     aliases: ["bethel"],
     floors: [
       { key: "Upper", label: "Upper Floor", rooms: rooms("lodgingBethel", "Upper", "Upper Floor", [1, 2]) },
-      { key: "Middle", label: "Middle Floor", rooms: rooms("lodgingBethel", "Middle", "Middle Floor", [3, 4, 5, 6]) },
-      { key: "Lower", label: "Lower Floor", rooms: rooms("lodgingBethel", "Lower", "Lower Floor", [7, 8, 9, 10, 11]) },
+      {
+        key: "Middle",
+        label: "Middle Floor",
+        rooms: [
+          ...rooms("lodgingBethel", "Middle", "Middle Floor", [3, 4, 5, 6]),
+          // Room 11 moved here from the Lower Floor; it keeps its saved key so existing assignments still load.
+          { ...rooms("lodgingBethel", "Middle", "Middle Floor", [11])[0], key: "lodgingBethelLowerRoom11" },
+        ],
+      },
+      { key: "Lower", label: "Lower Floor", rooms: rooms("lodgingBethel", "Lower", "Lower Floor", [7, 8, 9, 10]) },
     ],
   },
   {
@@ -54,6 +62,9 @@ export const LODGING_BUILDINGS = Object.freeze([
     image: "/lodges/May-2025-Hebron.jpg",
     calendarGroup: "hebron",
     aliases: ["hebron 3rd floor", "hebron third floor", "hebron 3rd", "hebron third"],
+    floors: [
+      { key: "Third", label: "Third Floor", rooms: rooms("lodgingHebron", "Third", "Third Floor", [1, 2, 3, 4]) },
+    ],
   },
   {
     id: "hebron-bunks",

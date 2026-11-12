@@ -28,6 +28,20 @@ test("one summary format, camping written once", () => {
   assert.equal(summary.match(/Tent/g).length, 1);
 });
 
+test("Bethel Room 11 is on the Middle Floor once, under its saved key; Hebron 3rd has Rooms 1–4", () => {
+  const values = {
+    lodgingBethelLowerRoom11: "2",
+    lodgingHebronThirdRoom1: "3",
+    lodgingHebronThirdRoom4: "1",
+  };
+  assert.equal(
+    buildLodgingSummary(values),
+    "Bethel: Middle Floor - Room 11: 2; Hebron 3rd Floor: Third Floor - Room 1: 3, Room 4: 1"
+  );
+  const bethelRooms = LODGING_BUILDINGS.find((b) => b.id === "bethel").floors.flatMap((f) => f.rooms);
+  assert.equal(bethelRooms.filter((room) => room.label === "Room 11").length, 1);
+});
+
 test("an edited total is not hidden behind stale room numbers", () => {
   const values = { lodgingBethel: "10", lodgingBethelUpperRoom1: "3", lodgingBethelUpperRoom2: "4" };
   assert.equal(buildLodgingSummary(values), "Bethel: 10");

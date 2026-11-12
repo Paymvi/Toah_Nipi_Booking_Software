@@ -813,6 +813,14 @@ export default function BookingHousingTab({
             housingValues.lodgingBethelLowerRoom11 || "",
       lodgingHebronThird:
         housingValues.lodgingHebronThird || "",
+          lodgingHebronThirdRoom1:
+            housingValues.lodgingHebronThirdRoom1 || "",
+          lodgingHebronThirdRoom2:
+            housingValues.lodgingHebronThirdRoom2 || "",
+          lodgingHebronThirdRoom3:
+            housingValues.lodgingHebronThirdRoom3 || "",
+          lodgingHebronThirdRoom4:
+            housingValues.lodgingHebronThirdRoom4 || "",
       lodgingHebronBunks:
         housingValues.lodgingHebronBunks || "",
       lodgingHebronBunksMens:
