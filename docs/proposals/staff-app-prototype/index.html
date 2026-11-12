@@ -99,6 +99,82 @@
   .facts .v { font-size: 16px; font-weight: 600; margin-top: 2px; }
   .locked { font-size: 13px; color: var(--text-3); margin-top: 14px; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 10px; }
 
+  /* Kitchen view switch: By Day | By Booking */
+  .viewtog { display: flex; gap: 4px; margin-top: 12px; border-bottom: 1px solid var(--line); }
+  .viewtog a { flex: 1; text-align: center; min-height: 44px; display: grid; place-items: center; font-weight: 700; font-size: 15px;
+    color: var(--text-3); text-decoration: none; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+  .viewtog a.on { color: var(--brand); border-bottom-color: var(--brand); }
+
+  /* Kitchen By Booking: reuses Booking Overview's Meals layout (Meal Service Plan table + Dietary Alerts) */
+  .pick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pick a { display: block; text-decoration: none; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-height: 64px; }
+  .pick a .t { font-weight: 700; font-size: 15px; line-height: 1.25; }
+  .pick a .s { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+  .pick a.on { border: 2px solid var(--brand); background: var(--brand-2); padding: 9px 11px; }
+  .gcard { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-top: 14px; }
+  .gcard h3 { font-size: 20px; line-height: 1.25; margin: 0; }
+  .gcard .stay { font-size: 17px; font-weight: 700; margin-top: 6px; }
+  .gcard .sub { font-size: 14px; color: var(--text-2); margin-top: 2px; }
+  .gcard .kv { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 14px; color: var(--text-2); }
+  .gcard .kv b { color: var(--text); }
+  .bo-summary { display: none; }
+  .bo-row { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+  .bo-panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+  .bo-panel h4 { margin: 0; font-size: 17px; }
+  .bo-panel .p { margin: 2px 0 10px; font-size: 13px; color: var(--text-3); }
+  .bo-diet { order: -1; border: 2px solid #e6c46f; background: #fffcf5; }
+  .bo-head, .bo-drow { display: grid; grid-template-columns: minmax(0,1fr) 4.5rem; gap: 10px; align-items: center; }
+  .bo-head { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #7a8597; padding-bottom: 6px; border-bottom: 1px solid #e8edf3; }
+  .bo-head span:last-child, .bo-drow strong { justify-self: end; }
+  .bo-drow { padding: 10px 0; border-bottom: 1px solid #edf1f5; font-size: 17px; }
+  .bo-drow strong { font-size: 19px; }
+  .bo-drow.allergy { background: var(--red-bg); color: var(--red); font-weight: 700; margin: 0 -8px; padding: 10px 8px; border-radius: 8px; border-bottom: 0; }
+  .bo-drow.allergy .tag { background: var(--red); color: #fff; margin-left: 6px; }
+  .bo-dnote { margin-top: 12px; padding: 10px 12px; border-left: 4px solid #d5a63f; background: #fbf8f1; border-radius: 8px; }
+  .bo-dnote strong { display: block; color: #94681f; font-size: 15px; margin-bottom: 2px; }
+  .bo-dnote p { margin: 0; font-size: 15px; line-height: 1.45; }
+  .bo-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .bo-table th { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: #7a8597; text-align: center; padding: 6px 2px 8px; border-bottom: 1px solid #e8edf3; vertical-align: bottom; }
+  .bo-table th small { display: block; text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--text); font-weight: 700; margin-top: 2px; }
+  .bo-table th .tag { text-transform: none; letter-spacing: 0; margin-top: 3px; }
+  .bo-table th:first-child, .bo-table td:first-child { text-align: left; width: 26%; }
+  .bo-table td { text-align: center; padding: 10px 2px; border-bottom: 1px solid #edf1f5; font-size: 15px; }
+  .bo-table td:first-child { font-weight: 700; line-height: 1.25; }
+  .bo-table td:first-child .dm span { display: block; font-weight: 500; color: var(--text-2); font-size: 14px; }
+  .bo-table .dd { display: none; }
+  .bo-table tr.today td { background: var(--brand-2); }
+  .chip { display: inline-flex; align-items: center; justify-content: center; min-height: 32px; min-width: 40px; padding: 0 10px; border-radius: 999px; background: #edf3e8; color: #415235; font-weight: 700; font-size: 16px; }
+  .chip.din { background: #f6eddc; color: #8a6622; }
+  .chip .w { display: none; }
+  .dash { color: #9aa3b2; font-weight: 600; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .bo-foot { font-size: 14px; color: var(--text-2); margin-top: 10px; }
+  .bo-notes p { margin: 0; font-size: 15px; }
+  .source { font-size: 13px; color: var(--text-3); margin-top: 14px; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 10px; }
+
+  @media (min-width: 900px) {
+    #kitchen-booking header .inner, #kitchen-booking main { max-width: 1240px; margin: 0 auto; }
+    #kitchen-booking .viewtog { max-width: 360px; }
+    #kitchen-booking header .inner { padding: 0 8px; }
+    #kitchen-booking main { display: grid; grid-template-columns: 280px minmax(0,1fr); gap: 20px; padding: 16px 24px 24px; align-items: start; }
+    #kitchen-booking .pick { grid-template-columns: 1fr; }
+    #kitchen-booking .gcard { margin-top: 0; }
+    #kitchen-booking nav { display: none; }
+    .bo-summary { display: grid; grid-template-columns: 1fr 1fr 1fr 2.2fr; margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+    .bo-summary > div { padding: 12px 16px; border-left: 1px solid var(--line); }
+    .bo-summary > div:first-child { border-left: 0; }
+    .bo-summary small { display: block; font-size: 13px; font-weight: 600; color: var(--text-3); }
+    .bo-summary strong { font-size: 20px; }
+    .bo-summary span { display: block; font-size: 13px; color: var(--text-2); }
+    .bo-row { display: grid; grid-template-columns: 1.15fr 1fr; align-items: start; }
+    .bo-diet { order: 0; }
+    .bo-table td:first-child { width: 30%; }
+    .bo-table .dm { display: none; } .bo-table .dd { display: inline; }
+    .chip .w { display: inline; } .chip .c { display: none; }
+    .chip { font-size: 14px; }
+    .bo-mobile-only { display: none; }
+  }
+
   nav { position: sticky; bottom: 0; margin-top: 16px; background: var(--card); border-top: 1px solid var(--line); display: flex; padding: 6px 8px 10px; z-index: 3; }
   nav a { flex: 1; text-align: center; text-decoration: none; color: var(--text-3); font-size: 12px; font-weight: 600; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 10px; }
   nav a .g { font-size: 20px; line-height: 1; }
@@ -155,6 +231,7 @@
       <button class="role" type="button">Kitchen ▾</button>
     </div>
     <div class="fresh"><span class="dot"></span>Up to date · checked 10:15 AM</div>
+    <div class="viewtog" role="tablist" aria-label="Kitchen view"><a class="on" href="#kitchen" role="tab" aria-selected="true">By Day</a><a href="#kitchen-booking" role="tab" aria-selected="false">By Booking</a></div>
     <div class="seg"><a class="on" href="#kitchen">Today</a><a href="#kitchen">Sat 21</a><a href="#kitchen">Sun 22</a></div>
   </header>
   <main>
@@ -185,6 +262,98 @@
       <div class="row"><div class="main"><div class="t">Dinner</div><div class="s">Cedar Hill 42 at 6:30 · Northfield ~28 at 6:00</div></div><div class="n">~70</div></div>
     </div>
     <div class="note missing"><b>Northfield count is an estimate</b>Final count was due Thursday. Dietary needs not provided yet.<div class="who">Office is following up</div></div>
+  </main>
+  <nav><a href="#today"><span class="g">⌂</span>Today</a><a href="#calendar"><span class="g">▦</span>Calendar</a><a class="on" href="#kitchen"><span class="g">✓</span>My work</a></nav>
+</section>
+
+<!-- ============ KITCHEN: BY BOOKING ============ -->
+<!-- Same booking record as By Day. Layout follows Booking Overview > Meals (Dashboard.jsx BookingMealsProgramOverview). -->
+<section class="screen" id="kitchen-booking">
+  <div class="concept">Proposed concept · fictional data · not built yet</div>
+  <header>
+    <div class="inner">
+      <div class="top">
+        <div><div class="date">Friday, Nov 20</div><h1>Kitchen</h1></div>
+        <button class="role" type="button">Kitchen ▾</button>
+      </div>
+      <div class="fresh"><span class="dot"></span>Up to date · checked 10:15 AM</div>
+      <div class="viewtog" role="tablist" aria-label="Kitchen view"><a href="#kitchen" role="tab" aria-selected="false">By Day</a><a class="on" href="#kitchen-booking" role="tab" aria-selected="true">By Booking</a></div>
+    </div>
+  </header>
+  <main>
+    <div>
+      <h2 style="margin-top:4px">Upcoming groups</h2>
+      <div class="pick" aria-label="Choose a group">
+        <a href="#kitchen-booking"><div class="t">Maple Grove Quilting Circle</div><div class="s">Wed Nov 18 – Fri Nov 20</div></a>
+        <a class="on" href="#kitchen-booking" aria-current="true"><div class="t">Cedar Hill Church Men's Retreat</div><div class="s">Fri Nov 20 – Sun Nov 22</div></a>
+        <a href="#kitchen-booking"><div class="t">Northfield Youth Group</div><div class="s">Sat Nov 21 – Sun Nov 22</div></a>
+        <a href="#kitchen-booking"><div class="t">Riverside Family Camp</div><div class="s">Fri Nov 27 – Sun Nov 29</div></a>
+      </div>
+    </div>
+
+    <div>
+      <div class="gcard">
+        <h3>Cedar Hill Church Men's Retreat</h3>
+        <div class="stay">Fri, Nov 20 – Sun, Nov 22, 2026</div>
+        <div class="sub">Arrival 5:30 PM · Departure 1:00 PM</div>
+        <div class="kv"><span>Guests <b>42</b> <span class="tag ok">Confirmed</span></span><span>Lodging <b>Bethel, Dothan</b></span></div>
+      </div>
+
+      <div class="bo-summary">
+        <div><small>Total Meals</small><strong>6</strong><span>(Breakfast: 2, Lunch: 2, Dinner: 2)</span></div>
+        <div><small>First Meal</small><strong>Dinner</strong><span>Fri, Nov 20</span></div>
+        <div><small>Last Meal</small><strong>Lunch</strong><span>Sun, Nov 22</span></div>
+        <div><small>Service Times</small><strong style="font-size:18px;white-space:nowrap">8:00 AM · 12:00 PM · 6:30 PM</strong><span>Breakfast · Lunch · Dinner</span></div>
+      </div>
+
+      <div class="bo-row">
+        <div class="bo-panel">
+          <h4>Meal Service Plan</h4>
+          <p class="p">Detailed meal plan for this retreat.</p>
+          <table class="bo-table">
+            <thead><tr>
+              <th>Date</th>
+              <th>Breakfast<small>8:00 AM</small></th>
+              <th>Lunch<small>12:00 PM</small></th>
+              <th>Dinner<small>6:30 PM</small><span class="tag chg">Changed</span></th>
+            </tr></thead>
+            <tbody>
+              <tr class="today"><td><span class="dm">Fri<span>Nov 20</span></span><span class="dd">Fri, Nov 20, 2026</span> <span class="today-pill">Today</span></td>
+                <td><span class="dash" aria-label="No breakfast">—</span></td><td><span class="dash" aria-label="No lunch">—</span></td>
+                <td><span class="chip din"><span class="c" aria-hidden="true">✓</span><span class="w">Dinner</span><span class="vh">Dinner served</span></span></td></tr>
+              <tr><td><span class="dm">Sat<span>Nov 21</span></span><span class="dd">Sat, Nov 21, 2026</span></td>
+                <td><span class="chip"><span class="c" aria-hidden="true">✓</span><span class="w">Breakfast</span><span class="vh">Breakfast served</span></span></td>
+                <td><span class="chip"><span class="c" aria-hidden="true">✓</span><span class="w">Lunch</span><span class="vh">Lunch served</span></span></td>
+                <td><span class="chip din"><span class="c" aria-hidden="true">✓</span><span class="w">Dinner</span><span class="vh">Dinner served</span></span></td></tr>
+              <tr><td><span class="dm">Sun<span>Nov 22</span></span><span class="dd">Sun, Nov 22, 2026</span></td>
+                <td><span class="chip"><span class="c" aria-hidden="true">✓</span><span class="w">Breakfast</span><span class="vh">Breakfast served</span></span></td>
+                <td><span class="chip"><span class="c" aria-hidden="true">✓</span><span class="w">Lunch</span><span class="vh">Lunch served</span></span></td>
+                <td><span class="dash" aria-label="No dinner">—</span></td></tr>
+            </tbody>
+          </table>
+          <div class="bo-foot">Every meal is for <b>42 guests</b> <span class="tag ok">Confirmed</span>. Dinner was 6:00 PM before Office changed it today at 9:40 AM.</div>
+          <div class="bo-foot bo-mobile-only">6 meals · first: Fri dinner · last: Sun lunch</div>
+        </div>
+
+        <div class="bo-panel bo-diet">
+          <h4>Dietary Alerts</h4>
+          <p class="p">Allergen and dietary information for this group.</p>
+          <div class="bo-head"><span>Dietary Item</span><span>Quantity</span></div>
+          <div class="bo-drow allergy"><span>Tree nut allergy <span class="tag">Allergy</span></span><strong>1</strong></div>
+          <div class="bo-drow"><span>Gluten free</span><strong>3</strong></div>
+          <div class="bo-drow"><span>Vegetarian</span><strong>1</strong></div>
+          <div class="bo-dnote"><strong>Additional Dietary Note</strong><p>Tree nut allergy severity not yet confirmed with the group leader. Plan for strict nut-free prep until confirmed.</p></div>
+        </div>
+      </div>
+
+      <div class="bo-panel bo-notes" style="margin-top:12px">
+        <h4>Meal Notes</h4>
+        <p class="p">Important details for food-service coordination.</p>
+        <p>Coffee and tea out by 7:30 AM Saturday. Group will eat Sunday lunch in the dining hall before leaving.</p>
+      </div>
+
+      <div class="source">Read from the Cedar Hill booking: the same record as <b>By Day</b> and the office Booking Overview. Booking last updated today 9:40 AM by Office. Kitchen staff can view this but not edit it.</div>
+    </div>
   </main>
   <nav><a href="#today"><span class="g">⌂</span>Today</a><a href="#calendar"><span class="g">▦</span>Calendar</a><a class="on" href="#kitchen"><span class="g">✓</span>My work</a></nav>
 </section>

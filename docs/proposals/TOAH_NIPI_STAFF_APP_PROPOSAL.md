@@ -2,7 +2,7 @@
 
 *Proposal for discussion. Prepared November 2026.*
 
-In this document, **Available now** means the booking software already does it today. **Proposed** means it is not built yet. **Needs staff input** marks a question for the people who would use it. Every phone screen below is a mockup with fictional data, and the four screenshots of today's software also use fictional data.
+In this document, **Available now** means the booking software already does it today. **Proposed** means it is not built yet. **Needs staff input** marks a question for the people who would use it. Every proposed screen below, on phone or desktop, is a mockup with fictional data, and the four screenshots of today's software also use fictional data.
 
 ---
 
@@ -80,7 +80,7 @@ These responsibility groups are **suggestions to check with staff**, not a descr
 
 | Responsibility | Key information | Useful actions | Practical benefit |
 |---|---|---|---|
-| **Kitchen / cook** | Each meal's time and count, confirmed or estimate; dietary needs as counts; changes | Mark prep started or done (kitchen checklist only) | Next meal count without asking the office |
+| **Kitchen / cook** | Each meal's time and count, confirmed or estimate; dietary needs as counts; changes. Two tabs: **By Day** (every group for a day) and **By Booking** (one group's whole stay, in the Booking Overview layout) | Mark prep started or done (kitchen checklist only) | Next meal count without asking the office |
 | **Housekeeping / turnover** *(later)* | Buildings emptying and filling, turnover window, linens, room split | Mark a building ready | Know which beds to make, and when |
 | **Hosting / program support** | Arrival times, activity times, group leader's needs | Note that something was handled | Fewer last-minute surprises |
 | **Maintenance / setup** | Setup requests by building and time | Mark setup done | Requests found in one place |
@@ -104,7 +104,35 @@ Here is a fictional weekend that runs through every mockup in this document.
 
 <img src="assets/staff-app/proposed-phone-kitchen.png" alt="Proposed phone kitchen view: today's breakfast, lunch and dinner with counts, dietary tags, a changed dinner time, an unconfirmed allergy note, a prep checkbox, and tomorrow at a glance" width="320">
 
-***Proposed concept, not built yet.*** *Fictional data. Meal times and counts come first. Dietary needs appear as counts only. The dinner change and the unconfirmed allergy are hard to miss. "Dinner prep started" is a kitchen checklist item and does not change the booking.*
+***Proposed concept, not built yet.*** *Fictional data. This is the **By Day** kitchen view. Meal times and counts come first. Dietary needs appear as counts only. The dinner change and the unconfirmed allergy are hard to miss. "Dinner prep started" is a kitchen checklist item and does not change the booking. The **By Day | By Booking** switch at the top opens the second kitchen view, described next.*
+
+**The same weekend, one group at a time.** Some cooks plan a whole retreat at once, not one day at a time. For them, the kitchen view has a second tab, **By Booking**. The cook picks an upcoming group and sees its meals in the layout the office already uses in the Booking Overview: a **Meal Service Plan** table (Date, Breakfast, Lunch, Dinner) next to a **Dietary Alerts** panel (Dietary Item, Quantity, and an Additional Dietary Note). Compare it with the Booking Overview screenshot near the top of this document.
+
+- **Choosing a group.** Upcoming groups are listed with their dates. Tapping one shows that group's meals.
+- **Who and when.** A header shows the group name, the retreat dates written out ("Fri, Nov 20 – Sun, Nov 22, 2026"), arrival and departure times, the guest count labelled **Confirmed** or **Estimate**, and the lodging.
+- **The same fields as the office.** Total Meals, First Meal, Last Meal, Service Times, the meal table, Dietary Alerts and Meal Notes all use the same labels, and the same parts of the booking, as the Booking Overview.
+- **Small additions for the kitchen.** Each meal column shows its service time, and today's row is highlighted. A changed time is marked **Changed**, just as in By Day.
+
+<img src="assets/staff-app/proposed-desktop-kitchen-by-booking.png" alt="Proposed desktop kitchen By Booking view: upcoming groups listed on the left; Cedar Hill selected, with retreat dates, a meal summary, the Meal Service Plan table, Dietary Alerts with the tree nut allergy highlighted, and Meal Notes">
+
+***Proposed concept, not built yet.*** *Fictional data, desktop width. By Booking uses the Booking Overview's Meals layout: a summary row, then the Meal Service Plan table and Dietary Alerts side by side, then Meal Notes. Upcoming groups are listed on the left.*
+
+**Adapting the table for a phone.** The office table doesn't fit a 360 px phone without sideways scrolling. The phone version changes how it looks but keeps the same information:
+
+- **Dietary Alerts move above the meal table.** Allergies are the first thing the cook sees after the group's name and dates. The text is larger, and the panel keeps the amber border it has in the Booking Overview.
+- **Allergies stand out.** An allergy row moves to the top of the list and is shown in red with an **Allergy** tag. This is new: today the Booking Overview lists every dietary item the same way. The Additional Dietary Note (for example, "severity not yet confirmed") is always shown in full.
+- **The table keeps its rows and columns.** There is still one row per date and one column per meal. Dates are shortened to two lines ("Sat / Nov 21"). Each column header shows the meal name and its time. A tick means that meal is served and a dash means it isn't, so you can read across a row (one day) or down a column (one meal).
+- **Counts stay connected to meals.** Under the table it says: "Every meal is for 42 guests, Confirmed." The booking stores one guest count for the whole stay, not one for each meal, so the view says that plainly instead of repeating 42 in every cell.
+
+![Proposed kitchen By Booking view shown on three phones: 1, choosing Cedar Hill and seeing its dates, guest count and lodging; 2, Dietary Alerts with the tree nut allergy in red and the additional dietary note in full; 3, the meal table with times in the column headers and today's row highlighted](assets/staff-app/proposed-phone-kitchen-by-booking-framed.png)
+
+***Proposed concept, not built yet.*** *Fictional data. How By Booking would look on a phone as the cook scrolls down: choose the group, read the allergies, then check the meal table. The header and bottom bar stay on screen while scrolling. The full-length screen is below.*
+
+<img src="assets/staff-app/proposed-phone-kitchen-by-booking.png" alt="Proposed phone kitchen By Booking view: By Day and By Booking tabs, four upcoming group cards with Cedar Hill selected, group dates and guest count, Dietary Alerts first with the tree nut allergy in red, then the meal table with ticks, then Meal Notes" width="320">
+
+***Proposed concept, not built yet.*** *Fictional data, 390 px wide, the whole screen from top to bottom. The same Cedar Hill booking as the desktop mockup and the By Day view. A note at the bottom says where the information comes from and that the kitchen can view it but not edit it.*
+
+**One source of truth for both views.** By Day and By Booking are two ways of reading the same booking records, as is the office Booking Overview. Neither view keeps its own copy of meals or dietary needs. When the office moved Cedar Hill's dinner to 6:30 PM, the change appeared in By Day (the dinner card), in By Booking (the Dinner column) and in the office Booking Overview, because all three read the same record. *Needs staff input:* which view should the kitchen open on, and is By Booking more useful on a phone or at a desk?
 
 **Looking ahead to Saturday.** Northfield Youth Group arrives at 11:30 AM. Their final count was due Thursday and hasn't come in, so Saturday lunch shows **~78, estimate** (Cedar Hill 42, Northfield about 28, and a staff training lunch for 8 marked **Internal**).
 
@@ -140,7 +168,7 @@ Here is a fictional weekend that runs through every mockup in this document.
 
 1. The shared *Today at camp* home screen.
 2. A phone-friendly calendar list with group details.
-3. The kitchen view, built from the existing meal plan, meal times, guest counts and dietary information.
+3. The kitchen view, with **By Day** and **By Booking** tabs, built from the existing meal plan, meal times, guest counts and dietary information.
 4. Individual staff accounts with limited access for non-office staff.
 5. Confirmed, Estimate, Missing and Changed labels, plus "last updated" times.
 
@@ -203,7 +231,7 @@ Ways to collect feedback: a two-minute check-in after each pilot weekend, a shar
 1. **The idea (1 min).** One booking, read by everyone. Read the opening section.
 2. **What exists (1 min).** Show the Dashboard and Booking Overview: the information is already there.
 3. **The gap (1 min).** Show the current app on a phone; go through the likely scenarios.
-4. **The weekend story (2 min).** Home, then kitchen (the change and the unconfirmed allergy), then calendar and group details.
+4. **The weekend story (2 min).** Home, then kitchen By Day (the change and the unconfirmed allergy), then By Booking (the familiar meal table), then calendar and group details.
 5. **Safeguards (1 min).** The office owns the booking, staff see only what they need, ticks don't change the booking.
 6. **The ask (1 min).** Discovery, pilot roles, who maintains information and who tests.
 
@@ -216,7 +244,8 @@ Ways to collect feedback: a two-minute check-in after each pilot weekend, a shar
 **Likely new work.**
 
 - A phone layout and routes inside the existing app. The current layout puts the sidebar first on phones.
-- A kitchen aggregation step that combines meal plans and guest counts across groups for each service. Imported bookings keep meals as text, so they need parsing or cleanup.
+- A kitchen aggregation step that combines meal plans and guest counts across groups for each service (By Day). Imported bookings keep meals as text, so they need parsing or cleanup.
+- By Booking can reuse the Booking Overview's Meals code: `BookingMealsProgramOverview` and its parsers `parseBookingMealSummary` and `parseBookingDietarySummary` in `src/pages/Dashboard.jsx`. They read the `meals` and `food_allergies` text plus `raw_data.rentalFormDetails` (meal times, first and last meal, meal notes). Moving them into a shared module, a small refactor, would let both kitchen tabs and the office page use one parser. Dietary items are free text ("3 - Gluten free"), so marking a row as an **Allergy** would depend on its wording or need a new allergy flag in the booking form. That needs a decision before it is built.
 - A change log with who and when.
 - A separate acknowledgment table for department ticks. Today, marking a facility job done saves into the booking record itself (`setFacilityCompletion`), which is the coupling this proposal wants to avoid.
 
