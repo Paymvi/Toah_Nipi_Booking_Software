@@ -12,9 +12,10 @@ export const writes = async () => (await ctl("x=1")).writes;
 export const NEXT = ".tg-controls .tg-button:last-child";
 export const target = (id) => `[data-tutorial-target~="${id}"]`;
 
-export async function launch({ width = 1440, height = 900, reducedMotion = "no-preference" } = {}) {
+// touch: a phone (coarse pointer, touch events, mobile viewport rules).
+export async function launch({ width = 1440, height = 900, reducedMotion = "no-preference", touch = false } = {}) {
   const browser = await chromium.launch({ executablePath: CHROME });
-  const context = await browser.newContext({ viewport: { width, height }, reducedMotion });
+  const context = await browser.newContext({ viewport: { width, height }, reducedMotion, ...(touch && { isMobile: true, hasTouch: true }) });
 
   const requests = [];
   await context.route("**/*", (route) => {

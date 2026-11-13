@@ -1204,7 +1204,7 @@
    Keeps the left sidebar area white even when the sidebar content ends.
 ========================================================= */
 
-@media (min-width: 761px) {
+@media (min-width: 941px) {
   .dashboard-shell {
     background: linear-gradient(
         to right,
@@ -1288,7 +1288,7 @@
    Tightens sidebar spacing so all sections fit on normal screens.
 ========================================================= */
 
-@media (min-width: 761px) {
+@media (min-width: 941px) {
   .dashboard-sidebar {
     height: 100vh;
     min-height: 100vh;
@@ -1569,25 +1569,173 @@
   border-top: 1px solid var(--n-line, #edf0f4);
 }
 
-/* Mobile: stack the app instead of using icon rail */
+/* =========================================================
+   Phones and tablets: compact header + navigation drawer
+   The page opens on its content; the sidebar slides in from the
+   left. Breakpoint matches COMPACT_NAV_QUERY in Dashboard.jsx.
+========================================================= */
 
-@media (max-width: 760px) {
+.mobile-app-header,
+.sidebar-close-button,
+.dashboard-nav-backdrop {
+  display: none;
+}
+
+@media (max-width: 940px) {
+  /* clip, not hidden: hidden makes body a scroll container, which stops the sticky header sticking. */
+  html,
+  body,
+  #root {
+    overflow-x: clip;
+  }
+
+  /* Anchored scrolling (tutorial targets, scrollIntoView) lands below the sticky header. */
+  html {
+    scroll-padding-top: 4.25rem;
+  }
+
   .dashboard-shell,
   .dashboard-shell-sidebar-collapsed {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    /* Short pages: don't stretch the header row to fill the screen. */
+    align-content: start;
+    background: var(--n-page, #f5f6f8);
+  }
+
+  .mobile-app-header {
+    position: sticky;
+    top: 0;
+    z-index: 850;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 3.5rem;
+    padding: 0.375rem 0.75rem;
+    background: var(--n-surface, #ffffff);
+    border-bottom: 1px solid var(--n-line-2, #dfe4ec);
+  }
+
+  .mobile-app-menu-button,
+  .sidebar-close-button {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--n-line-2, #dfe4ec);
+    border-radius: 0.625rem;
+    background: var(--n-surface, #ffffff);
+    color: var(--n-text, #2f3240);
+    font-size: 1.15rem;
+    cursor: pointer;
+  }
+
+  .sidebar-close-button {
+    margin-left: auto;
+  }
+
+  .mobile-app-menu-button:focus-visible,
+  .sidebar-close-button:focus-visible,
+  .sidebar-link:focus-visible {
+    outline: 2px solid var(--n-violet-text, #443a9c);
+    outline-offset: 2px;
+  }
+
+  .mobile-app-header-mark {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    background: var(--n-accent-solid, #443a9c);
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+  }
+
+  .mobile-app-header-title {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--n-text, #2f3240);
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 650;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .dashboard-sidebar,
   .dashboard-sidebar-collapsed {
-    position: static;
-    width: auto;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1100;
+    width: min(19rem, 86vw);
     min-width: 0;
     max-width: none;
     height: auto;
     min-height: 0;
-    padding: 0.875rem 0;
-    border-right: 0;
-    border-bottom: 1px solid var(--n-line-2, #dfe4ec);
+    padding: 0.625rem 0 1.5rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-right: 1px solid var(--n-line-2, #dfe4ec);
+    box-shadow: 0 1rem 2.5rem var(--n-shadow-3, rgba(15, 23, 42, 0.22));
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition: transform 200ms ease, visibility 0s linear 200ms;
+  }
+
+  .dashboard-sidebar-open {
+    transform: none;
+    visibility: visible;
+    transition: transform 200ms ease;
+  }
+
+  .dashboard-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1090;
+    padding: 0;
+    border: 0;
+    background: var(--n-scrim, rgba(15, 23, 42, 0.45));
+    cursor: pointer;
+  }
+
+  .dashboard-logo {
+    padding: 0 0.75rem 0.625rem 1.125rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .sidebar-collapse-button {
+    display: none;
+  }
+
+  .dashboard-sidebar-signout,
+  .dashboard-sidebar-theme {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .sidebar-section {
+    padding-top: 0.625rem;
+  }
+
+  .sidebar-link {
+    min-height: 44px;
+    padding: 0 1.125rem;
+    font-size: 1.05rem;
+  }
+}
+
+@media (max-width: 940px) and (prefers-reduced-motion: reduce) {
+  .dashboard-sidebar,
+  .dashboard-sidebar-open {
+    transition: none;
   }
 }
 

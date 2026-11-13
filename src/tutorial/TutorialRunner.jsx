@@ -42,6 +42,7 @@ import {
   getDemoStepDuration,
   getNextAction,
   getSectionAt,
+  getStepOpeners,
   getStepPosition,
   getUnsavedWork,
   isWayBack,
@@ -255,7 +256,7 @@ export default function TutorialRunner({ tutorial, startStep = 0, onStepChange, 
     if (skipIfDone()) return;
 
     // Puts the screen the way this step needs it, however it was reached. Panels only, never saves.
-    for (const opener of step.opens ?? []) {
+    for (const opener of getStepOpeners(step)) {
       const openStartedAt = Date.now();
       let hasClicked = false;
 
@@ -425,7 +426,7 @@ export default function TutorialRunner({ tutorial, startStep = 0, onStepChange, 
       pointer: pointer && { ...pointer, x: Math.round(pointer.x), y: Math.round(pointer.y) },
       isMoving: Date.now() - stepEnteredAtRef.current < 700,
       // The previous step's control is on an earlier screen (e.g. the spreadsheet behind an open booking), unless it can reopen it.
-      canGoBack: getPreviousIndex() >= 0 && Boolean(steps[getPreviousIndex()].opens || findTarget(steps[getPreviousIndex()].target)),
+      canGoBack: getPreviousIndex() >= 0 && Boolean(getStepOpeners(steps[getPreviousIndex()]).length || findTarget(steps[getPreviousIndex()].target)),
     };
   });
 

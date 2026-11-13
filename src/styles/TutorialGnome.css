@@ -28,8 +28,18 @@
 
 /* Small screens: the docked dialogue covers up to half the screen, so leave room to scroll the last controls above it. */
 @media (max-width: 639.98px) {
-  body:has(.tg-runner) .dashboard-main {
+  body:has(.tg-runner) .dashboard-main,
+  body:has(.tg-runner) .dashboard-sidebar {
     padding-bottom: 55vh;
+  }
+
+  /* The docked dialogue already takes the lower half; the phone header scrolls away so targets get the rest. */
+  body:has(.tg-runner) .mobile-app-header {
+    position: static;
+  }
+
+  html:has(.tg-runner) {
+    scroll-padding-top: 0;
   }
 }
 

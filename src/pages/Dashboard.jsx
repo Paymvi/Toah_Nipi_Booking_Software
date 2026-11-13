@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { FaBars } from "react-icons/fa";
 
 import {
   FaHome,
@@ -7772,6 +7773,20 @@ function DashboardHomeScheduleRow({ booking, isArrival, onOpen }) {
 }
 
 
+// Phones and tablets get the navigation as a drawer; keep in step with the 940px rules in Dashboard.css.
+const COMPACT_NAV_QUERY = "(max-width: 940px)";
+
+function useIsCompactNav() {
+  return useSyncExternalStore(
+    (onChange) => {
+      const query = window.matchMedia(COMPACT_NAV_QUERY);
+      query.addEventListener("change", onChange);
+      return () => query.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia(COMPACT_NAV_QUERY).matches
+  );
+}
+
 export default function Dashboard() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -7824,6 +7839,33 @@ export default function Dashboard() {
   if (activeView === SPREADSHEET_VIEW_NAME && !hasOpenedSpreadsheetView) setHasOpenedSpreadsheetView(true);
   const [isSpreadsheetRevealLoading, setIsSpreadsheetRevealLoading] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const isCompactNav = useIsCompactNav();
+  const [isNavDrawerOpen, setIsNavDrawerOpen] = useState(false);
+  const isNavDrawerShown = isCompactNav && isNavDrawerOpen;
+  // The drawer always shows labels; the icon rail is a desktop choice.
+  const isRailCollapsed = isSidebarCollapsed && !isCompactNav;
+  const navMenuButtonRef = useRef(null);
+  const navDrawerCloseRef = useRef(null);
+
+  useEffect(() => {
+    if (!isNavDrawerShown) return undefined;
+
+    navDrawerCloseRef.current?.focus();
+    const menuButton = navMenuButtonRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setIsNavDrawerOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+      menuButton?.focus({ preventScroll: true });
+    };
+  }, [isNavDrawerShown]);
 
   const spreadsheetRevealTimerRef = useRef(null);
   const spreadsheetRevealFrameRef = useRef(0);
@@ -10101,16 +10143,60 @@ export default function Dashboard() {
   ];
 
 
+  const currentNavLabel =
+    { "Portal View": "Portals" }[activeView] ||
+    reorganizedSidebarSections
+      .flatMap((section) => section.items)
+      .find((item) => (item.view || item.label) === activeView)?.label ||
+    activeView;
+
   return (
     <main
       className={`dashboard-shell ${
-        isSidebarCollapsed ? "dashboard-shell-sidebar-collapsed" : ""
+        isRailCollapsed ? "dashboard-shell-sidebar-collapsed" : ""
       }`}
     >
+      {/* Phones and tablets only (CSS). data-tutorial-ui: the menu must open during a tutorial. */}
+      <header className="mobile-app-header" inert={isNavDrawerShown}>
+        <button
+          ref={navMenuButtonRef}
+          className="mobile-app-menu-button"
+          type="button"
+          aria-label="Open menu"
+          aria-expanded={isNavDrawerShown}
+          aria-controls="dashboard-navigation"
+          data-tutorial-ui
+          data-tutorial-target="nav-menu"
+          onClick={() => setIsNavDrawerOpen(true)}
+        >
+          <FaBars aria-hidden="true" />
+        </button>
+
+        <span className="mobile-app-header-mark" aria-hidden="true">TN</span>
+        <strong className="mobile-app-header-title">{currentNavLabel}</strong>
+      </header>
+
+      {isNavDrawerShown && (
+        <button
+          className="dashboard-nav-backdrop"
+          type="button"
+          aria-label="Close menu"
+          tabIndex={-1}
+          data-tutorial-ui
+          onClick={() => setIsNavDrawerOpen(false)}
+        />
+      )}
+
       <aside
+        id="dashboard-navigation"
+        aria-label="Main navigation"
         className={`dashboard-sidebar ${
-          isSidebarCollapsed ? "dashboard-sidebar-collapsed" : ""
-        }`}
+          isRailCollapsed ? "dashboard-sidebar-collapsed" : ""
+        } ${isNavDrawerShown ? "dashboard-sidebar-open" : ""}`}
+        onClick={(event) => {
+          // Choosing a page closes the drawer, even when it is the page already open.
+          if (event.target.closest(".sidebar-link")) setIsNavDrawerOpen(false);
+        }}
       >
         <div className="dashboard-logo">
           <span>TN</span>
@@ -10119,6 +10205,17 @@ export default function Dashboard() {
             <strong>Toah Nipi</strong>
             <small>Staff Dashboard</small>
           </div>
+
+          <button
+            ref={navDrawerCloseRef}
+            className="sidebar-close-button"
+            type="button"
+            aria-label="Close menu"
+            data-tutorial-ui
+            onClick={() => setIsNavDrawerOpen(false)}
+          >
+            <FaTimes aria-hidden="true" />
+          </button>
 
           <button
             className="sidebar-collapse-button"
@@ -10281,7 +10378,7 @@ export default function Dashboard() {
         ))}
       </aside>
 
-      <section className="dashboard-main">
+      <section className="dashboard-main" inert={isNavDrawerShown}>
 
         {activeView !== "Form" && (
           <>

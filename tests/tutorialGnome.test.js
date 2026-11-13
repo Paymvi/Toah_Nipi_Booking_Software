@@ -21,6 +21,7 @@ import {
   getNextAction,
   getResumeStep,
   getSectionAt,
+  getStepOpeners,
   getStepPosition,
   groupTutorialsByCategory,
   isWayBack,
@@ -669,4 +670,24 @@ test("only Portal Admin's screen reads the fictional scene", () => {
   const readers = readSourceFiles("src").filter((source) => source.includes("getPortalDemo"));
   assert.equal(readers.length, 1);
   assert.match(readers[0], /useSyncExternalStore\(subscribePortalDemo, getPortalDemo\)/);
+});
+
+test("sidebar steps open the phone menu first, other steps keep their own openers", () => {
+  const panel = { click: "panel-toggle", until: () => true };
+  const [menu, ...rest] = getStepOpeners({ target: "nav-reports", opens: [panel] });
+  assert.equal(menu.click, "nav-menu");
+  assert.deepEqual(rest, [panel]);
+  assert.equal(getStepOpeners({ target: ["booking-back", "nav-calendar"] })[0].click, "nav-menu");
+
+  // Done once the item shows, or straight away where there is no menu button (desktop).
+  const shown = new Set();
+  const ctx = { visible: (id) => [id].flat().some((one) => shown.has(one)) };
+  assert.equal(menu.until(ctx), true);
+  shown.add("nav-menu");
+  assert.equal(menu.until(ctx), false);
+  shown.add("nav-reports");
+  assert.equal(menu.until(ctx), true);
+
+  assert.deepEqual(getStepOpeners({ target: "booking-tabs", opens: [panel] }), [panel]);
+  assert.deepEqual(getStepOpeners({ target: "booking-tabs" }), []);
 });

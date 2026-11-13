@@ -75,6 +75,18 @@ export function matchesTarget(node, target) {
   });
 }
 
+/*
+  On phones and tablets the sidebar is a closed drawer, so a step that points
+  at a sidebar item (nav-*) first opens it with the menu button. Where the
+  menu button isn't shown (desktop) the opener is already satisfied.
+*/
+export function getStepOpeners(step) {
+  const opens = step?.opens ?? [];
+  const isNavStep = [step?.target].flat().some((id) => typeof id === "string" && id.startsWith("nav-"));
+  if (!isNavStep) return opens;
+  return [{ click: "nav-menu", until: (ctx) => ctx.visible(step.target) || !ctx.visible("nav-menu") }, ...opens];
+}
+
 // What a person may use to find their way back when a step's target is missing. Nothing here saves.
 export function isWayBack(node) {
   return (

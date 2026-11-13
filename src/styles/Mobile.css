@@ -1,0 +1,370 @@
+/* =========================================================
+   Phones and tablets
+   Responsive fixes for the existing screens, kept together so
+   they are easy to review. Imported last (before theme.css) so
+   these rules win over the per-screen stylesheets. The navigation
+   drawer and compact header live in Dashboard.css.
+   Breakpoints follow the app's own: 940px (drawer), 720px (phone).
+========================================================= */
+
+/* ---------------------------------------------------------
+   Shared page topbar
+   The sticky header already names the page, so the title block
+   is hidden visually but kept as the page's h1 for screen readers.
+--------------------------------------------------------- */
+
+@media (max-width: 940px) {
+  .dashboard-topbar > div:first-child:has(> h1) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .dashboard-topbar {
+    margin-bottom: 0.875rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard-main {
+    padding-top: 0.75rem;
+  }
+
+  .dashboard-actions {
+    gap: 0.5rem;
+  }
+
+  .dashboard-actions > * {
+    flex: 1 1 auto;
+  }
+}
+
+/* ---------------------------------------------------------
+   Long real content (group names, emails, links, notes) wraps
+   instead of pushing the layout wider.
+--------------------------------------------------------- */
+
+@media (max-width: 940px) {
+  /* Not in tables: "anywhere" lets columns shrink to one letter wide. */
+  .dashboard-main :is(h1, h2, h3, h4, p, dd, li, strong, a):not(table *) {
+    overflow-wrap: anywhere;
+  }
+}
+
+/* ---------------------------------------------------------
+   Summary cards: two per row instead of one tall column.
+--------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .admin-summary-grid,
+  .jobs-summary-grid,
+  .inquiry-spreadsheet-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .spreadsheet-view-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* ---------------------------------------------------------
+   Booking details
+--------------------------------------------------------- */
+
+/* A single column that can't be widened by a wide table inside it (Housing). */
+.booking-detail-page {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 720px) {
+  /* Every tab stays visible: wrap onto a second line instead of scrolling out of sight. */
+  .booking-profile-page .booking-detail-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    row-gap: 0;
+  }
+
+  .booking-profile-page .booking-detail-tabs button {
+    min-height: 44px;
+    padding: 0 0.75rem;
+  }
+
+  .booking-profile-header-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* ---------------------------------------------------------
+   Booking form: arrival and departure stack, date gets the room.
+--------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .rental-stay-schedule {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .rental-stay-schedule-fields {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+
+  .rental-stay-schedule-fields input {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+/* ---------------------------------------------------------
+   Main calendar month grid: fits the screen instead of a 900px
+   strip that showed three days at a time.
+--------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .calendar-grid-span-mode,
+  .calendar-view-card .calendar-grid-span-mode {
+    width: auto;
+    min-width: 0;
+    max-width: 100%;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .calendar-week-row {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  /* The month now fits, so nothing here needs sideways scrolling; clip stops a hidden tooltip on the
+     last column from making the card scroll. (Touch opens the booking on tap; the tooltip is hover-only.) */
+  .calendar-view-card {
+    overflow: clip;
+  }
+}
+
+@media (max-width: 720px) {
+  .calendar-grid-span-mode,
+  .calendar-view-card .calendar-grid-span-mode {
+    padding: 0.25rem 0.375rem 0.75rem;
+  }
+
+  .calendar-grid-span-mode > .calendar-weekday {
+    padding: 0 0 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .calendar-week-row .calendar-cell {
+    padding: 1.5rem 2px 2px;
+  }
+
+  .calendar-week-row .calendar-day-number {
+    top: 0.25rem;
+    right: 0.25rem;
+    font-size: 0.85rem;
+  }
+
+  .calendar-span-event {
+    left: calc((var(--event-start-column) - 1) * (100% / 7) + 2px);
+    width: calc(var(--event-span-days) * (100% / 7) - 4px);
+    gap: 0.25rem;
+    padding: 0 0.25rem;
+    border-left-width: 3px;
+    font-size: 0.8rem;
+    /* Taller bars are easier to tap; lanes and rows grow to match. */
+    top: calc(1.75rem + (var(--event-lane) * 2.375rem));
+    height: 2rem;
+  }
+
+  .calendar-week-row {
+    min-height: calc(5.75rem + ((var(--calendar-event-row-count, 1) - 1) * 2.375rem));
+  }
+}
+
+/* ---------------------------------------------------------
+   Touch screens: comfortable tap targets (about 44px).
+--------------------------------------------------------- */
+
+@media (max-width: 940px) and (pointer: coarse) {
+  /* Scoped under .dashboard-shell so these win over screen-specific min-heights; they only ever grow a target. */
+  .dashboard-shell .primary-dashboard-button,
+  .dashboard-shell .secondary-dashboard-button,
+  .dashboard-shell .danger-dashboard-button,
+  .dashboard-shell .import-dropdown-button,
+  .dashboard-shell .dev-mode-toggle,
+  .dashboard-shell .dashboard-main input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(td input),
+  .dashboard-shell .dashboard-main select:not(td select),
+  .dashboard-shell .calendar-controls button,
+  .dashboard-shell .calendar-view-switcher button,
+  .dashboard-shell .spreadsheet-year-view-toggle button,
+  .dashboard-shell .inquiry-spreadsheet-year-toggle button,
+  .dashboard-shell .spreadsheet-building-filter-options button,
+  .dashboard-shell .backup-view-toggle button,
+  .dashboard-shell .season-segment button,
+  .dashboard-shell .contacts-view-name-sort button,
+  .dashboard-shell .contacts-view-deleted-toggle,
+  .dashboard-shell .home-dashboard-text-action,
+  .dashboard-shell .guest-request-workflow-note button,
+  .dashboard-shell .portal-checklist-preview-actions button,
+  .dashboard-shell .portal-checklist-preview-toggle,
+  .dashboard-shell .portal-item-remove-button,
+  .dashboard-shell .portal-item-corrections summary,
+  .dashboard-shell .booking-profile-page .booking-profile-header :is(button, a),
+  .dashboard-shell .booking-overview-density button {
+    min-height: 44px;
+  }
+
+  .calendar-controls button {
+    min-width: 44px;
+  }
+
+  /* Small icon buttons keep their look but get a bigger invisible hit area. */
+  .copy-value-button,
+  .home-dashboard-metric-settings {
+    position: relative;
+  }
+
+  .copy-value-button::after,
+  .home-dashboard-metric-settings::after {
+    content: "";
+    position: absolute;
+    inset: -0.625rem;
+  }
+}
+
+/* ---------------------------------------------------------
+   Calendar week view: days stack into a list on phones instead
+   of a 7-column strip that showed two and a half days.
+--------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .calendar-week-grid {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-x: visible;
+  }
+
+  .calendar-week-day {
+    min-height: 0;
+  }
+
+  .calendar-week-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calendar-week-controls strong {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 940px) and (pointer: coarse) {
+  .calendar-week-controls button {
+    min-height: 44px;
+  }
+}
+
+/* ---------------------------------------------------------
+   Wide tables keep every column and scroll inside their own box.
+   The right edge fades while more columns are off to the side and
+   clears at the end. Needs scroll-driven animations; browsers
+   without them simply show no fade.
+--------------------------------------------------------- */
+
+@property --scroll-fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@keyframes scroll-fade-end {
+  from {
+    --scroll-fade-end: 2.5rem;
+  }
+
+  92% {
+    --scroll-fade-end: 2.5rem;
+  }
+
+  to {
+    --scroll-fade-end: 0px;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (max-width: 940px) {
+    :is(
+      .spreadsheet-table-wrap,
+      .contacts-view-table-wrap,
+      .admin-table-wrap,
+      .season-table-wrap,
+      .season-map-scroll,
+      .reports-table-wrap,
+      .booking-housing-table-wrap,
+      .booking-checklist-table-wrap,
+      .booking-checklist-items-table-wrap,
+      .booking-overview-program-table-wrap,
+      .booking-overview-schedule-table-wrap,
+      .activity-table-wrap,
+      .rental-meal-table-wrap,
+      .availability-scroll,
+      .portal-task-assignment-table,
+      .portal-document-assignment-table
+    ) {
+      mask-image: linear-gradient(to left, transparent 0, #000 var(--scroll-fade-end));
+      animation: scroll-fade-end linear both;
+      animation-timeline: scroll(self inline);
+    }
+  }
+}
+
+/* ---------------------------------------------------------
+   Dialogs on phones: size to the visible screen (dvh), not the
+   full layout height that runs behind the browser's toolbars and
+   keyboard, so the footer actions stay reachable.
+--------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .booking-date-settings-modal,
+  .spreadsheet-settings-modal {
+    height: calc(100dvh - 1.5rem);
+  }
+
+  .booking-checklist-modal {
+    max-height: calc(100dvh - 1.5rem);
+  }
+
+  .dev-mode-dialog {
+    max-height: calc(100dvh - 1.5rem);
+    overflow-y: auto;
+  }
+}
+
+/* ---------------------------------------------------------
+   Smaller per-screen fixes
+--------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  /* Portals: "Correct…" wraps to its own line instead of being squeezed past the screen edge. */
+  .portal-checklist-preview-actions .portal-item-corrections {
+    flex-shrink: 0;
+  }
+
+  .portal-checklist-preview-actions .portal-item-corrections[open] {
+    flex-basis: 100%;
+  }
+
+  .portal-item-corrections-body {
+    min-width: 0;
+  }
+
+  /* Backup: the date field can shrink to the card on the narrowest phones. */
+  .signed-documents-since,
+  .signed-documents-file {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .signed-documents-since input,
+  .signed-documents-file input {
+    min-width: 0;
+    width: 100%;
+  }
+}
