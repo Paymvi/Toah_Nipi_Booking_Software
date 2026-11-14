@@ -20,7 +20,9 @@ function toStaffAppError(error) {
     return new StaffAppError("The staff app database update has not been installed yet.", "setup");
   }
   if (code === "42501") {
-    return new StaffAppError("This account does not have staff app access. Ask an administrator.", "access");
+    // Orders refusals ("You can only change your own requests.") say why; keep their wording.
+    const generic = !message || /staff app access|permission denied/i.test(message);
+    return new StaffAppError(generic ? "This account does not have staff app access. Ask an administrator." : message, "access");
   }
   if (code === "PGRST301" || code === "PGRST303" || /jwt|token.*expired|not authenticated/i.test(message)) {
     return new StaffAppError("Your session has ended. Sign in again.", "session");
@@ -66,6 +68,35 @@ export function setStaffAccess({ email, fullName, role, departments, isActive })
     p_role: role,
     p_departments: role === "limited" ? departments : [],
     p_is_active: isActive,
+  });
+}
+
+// Orders (supabase/migrations/20261114000100_staff_orders.sql).
+// { generatedAt, canRequest, canPurchase, nameRequired, requests: [...] }
+export function fetchStaffOrders(history) {
+  return call("staff_app_orders", { p_history: Boolean(history) });
+}
+
+// `id` is made once per form, so sending the same form twice cannot create two requests.
+export function saveStaffOrder({ id, department, neededBy, notes, productLink, urgent, items }, actorName) {
+  return call("staff_app_order_save", {
+    p_id: id,
+    p_department: department,
+    p_needed_by: neededBy || null,
+    p_notes: notes || "",
+    p_product_link: productLink || "",
+    p_urgent: Boolean(urgent),
+    p_items: items.map(({ name, quantity }) => ({ name, quantity })),
+    p_actor_name: actorName || "",
+  });
+}
+
+export function setStaffOrderStatus(itemIds, status, note, actorName) {
+  return call("staff_app_order_set_status", {
+    p_item_ids: itemIds,
+    p_status: status,
+    p_note: note || "",
+    p_actor_name: actorName || "",
   });
 }
 

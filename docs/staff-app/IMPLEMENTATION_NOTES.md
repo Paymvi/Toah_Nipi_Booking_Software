@@ -11,6 +11,7 @@ Built 2026-11-13 from [the proposal](../proposals/TOAH_NIPI_STAFF_APP_PROPOSAL.m
 | Group details | `/staff/group/:bookingId` | every staff account; dietary section for kitchen and office only |
 | Kitchen, By Day | `/staff/kitchen?date=YYYY-MM-DD` | kitchen and office accounts |
 | Kitchen, By Booking | `/staff/kitchen?view=booking&booking=:id` | kitchen and office accounts |
+| Orders (supplies and equipment requests) | `/staff/orders`, `/staff/orders/new`, `/staff/orders/:id/edit` | every staff account; see [Orders](#orders) |
 | User Admin → Sign-in access | office app, User Admin | admins |
 | Hosting → "Kitchen should plan for this" | office app, Hosting detail | office staff |
 
@@ -124,6 +125,46 @@ Pre-existing, not changed: `staff_directory` has no table grants in its migratio
    - Then in the office app, **User Admin → Sign-in access**: email, name, **Limited staff**, tick **Kitchen**, **Active**, Save.
    - SQL alternative: `select public.staff_app_admin_set_access('cook@…', 'Name', 'limited', array['kitchen'], true);` signed in as an admin. The SQL editor has no signed-in user, so there insert into `staff_profiles` directly with `role = 'limited'` and `departments = '{kitchen}'`.
 4. Offboarding is unchanged: untick Active (or `is_active = false`) and ban the Auth user.
+
+## Orders
+
+Added 2026-11-14. Staff ask for supplies or equipment; purchasing tracks each item. A request records the need only and buys nothing.
+
+- **Files:**
+  - `supabase/migrations/20261114000100_staff_orders.sql` (tables, functions, grants; read its header)
+  - `src/pages/StaffOrders.jsx`
+  - `src/utils/staffOrders.js` (labels, progress text, form checks; `tests/staffOrders.test.js`)
+  - the `staff_app_order*` calls in `src/services/staffAppService.js`
+  - the "Orders" section of `src/styles/StaffApp.css`
+- **Data:**
+  - `staff_order_requests`: department (Kitchen, Turnover, Maintenance, Other), optional needed-by date, notes, product link, urgent, requester.
+  - `staff_order_items`: name, quantity as typed ("2 cases"), status, last status note, who changed it and when.
+  - `staff_order_events`: every request, edit and status change.
+  - Nothing is ever deleted; finished requests stay under **Finished** (the 200 most recent).
+- **Status:** each item is Requested, Ordered, Received or Cancelled. The request's status is derived from its items:
+  - **Cancelled** when every item is cancelled.
+  - **Received** when no item is still open.
+  - **Ordered** when every open item has been ordered.
+  - **Requested** otherwise.
+
+  A line such as "1 of 3 received · 1 ordered" shows part-way progress. A request stays under **Open** until its last item is received or cancelled.
+- **Permissions (enforced in the functions):**
+  - Read: any active staff app account.
+  - Request: every role except `viewer`.
+  - Edit or cancel: the requester, only while every item is still Requested. Purchasing may also edit unprocessed requests.
+  - Status changes: `admin` and `staff` office accounts (`can_manage_bookings()`), on any item, with an optional note.
+  - The tables have no API grants at all, so the guest portal key and direct table calls read and write nothing.
+- **Who did it:**
+  - The account (`auth.uid()`) is always stored.
+  - Limited accounts are individual, so their profile name is recorded and any typed name is ignored.
+  - Office accounts may be the shared login, so the page asks for **Your name**. It is remembered per device, like "Working as", and it is required before sending or updating.
+- **Duplicates:** the form makes the request id once. Sending again after a lost response, or a double tap, changes nothing. The button also locks while sending, and a failed send keeps everything typed.
+- **Freshness:** the same as the other screens (`useStaffData` in `StaffApp.jsx`): on wake, focus, network return, every 5 minutes, after each change and with **Refresh**. There is no realtime.
+- **Local checks:**
+  - `node supabase/tests/staff-orders.local.mjs`: 16 direct-API checks covering anon and no-access accounts, direct table access, validation, idempotent resend, other sessions, ownership, purchasing names, per-item progress, the edit lock, history and cancelling.
+  - `APP_URL=http://localhost:5333 node tests/browser/staffOrders.browser.mjs`: 60 checks covering the whole workflow across four sessions, failed send and double tap, the viewer, signed out, and layout at 360, 390, 820 and 1440 px.
+- **Deploy:** run `20261114000100_staff_orders.sql` in the SQL editor after `20261113000100_staff_app.sql`, then deploy the frontend. Without the migration, the page says "The staff app database update has not been installed yet."
+- **Not built (on purpose):** inventory, prices, vendors, budgets, approvals, notifications, attachments. A `purchasing` department for limited accounts could let a non-office person update status. Today that needs an office `staff` or `admin` account.
 
 ## Known limits and next steps
 

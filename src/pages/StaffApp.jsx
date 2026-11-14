@@ -16,6 +16,7 @@ import {
   FaCalendarAlt,
   FaChevronLeft,
   FaChevronRight,
+  FaClipboardList,
   FaHome,
   FaSignOutAlt,
   FaUtensils,
@@ -23,7 +24,7 @@ import {
 
 import { useStaffAccess } from "../auth/staffAccess";
 import { ChangeList, Chip, CountStatus, DietaryChips, LoadProblem } from "../components/StaffAppParts";
-import { fetchStaffAppBooking, fetchStaffAppBookings, signOut } from "../services/staffAppService";
+import { fetchStaffAppBooking, fetchStaffAppBookings, fetchStaffOrders, signOut } from "../services/staffAppService";
 import { usePropertyToday } from "../utils/propertyToday";
 import {
   MEAL_KEYS,
@@ -54,6 +55,7 @@ import {
   weekStart,
 } from "../utils/staffAppFormat";
 import StaffKitchen from "./StaffKitchen";
+import StaffOrders from "./StaffOrders";
 
 const REFRESH_AFTER_MS = 60_000;
 const POLL_MS = 5 * 60_000;
@@ -99,15 +101,16 @@ function withDisplayNames(data) {
   return { ...data, ...(data.bookings && { bookings: data.bookings.map(clean) }), ...(data.booking && { booking: clean(data.booking) }) };
 }
 
-function useStaffBookings(range) {
-  const rangeKey = `${range.from}:${range.to}`;
+// Loads `load()` for `key` and keeps it fresh. An empty key loads nothing (screen not open).
+function useStaffData(key, load) {
+  const rangeKey = key;
   const [tick, setTick] = useState(0);
   const [result, setResult] = useState({ key: "", tick: -1, data: null, error: null, loadedAt: 0, failedAt: 0 });
 
   useEffect(() => {
+    if (!rangeKey) return undefined;
     let current = true;
-    fetchStaffAppBookings(range.from, range.to)
-      .then(withDisplayNames)
+    load()
       .then((data) => {
         if (current) setResult({ key: rangeKey, tick, data, error: null, loadedAt: Date.now(), failedAt: 0 });
       })
@@ -117,13 +120,14 @@ function useStaffBookings(range) {
     return () => {
       current = false;
     };
-  }, [range.from, range.to, rangeKey, tick]);
+  }, [load, rangeKey, tick]);
 
   const refresh = useCallback(() => setTick((value) => value + 1), []);
   const loadedAt = result.key === rangeKey ? result.loadedAt : 0;
 
   // Re-check when the phone wakes, the tab returns, the network returns, and every few minutes while open.
   useEffect(() => {
+    if (!rangeKey) return undefined;
     const refreshIfOld = () => {
       if (document.visibilityState === "visible" && Date.now() - loadedAt > REFRESH_AFTER_MS) refresh();
     };
@@ -137,16 +141,21 @@ function useStaffBookings(range) {
       window.removeEventListener("focus", refreshIfOld);
       window.removeEventListener("online", refresh);
     };
-  }, [loadedAt, refresh]);
+  }, [loadedAt, rangeKey, refresh]);
 
   return {
     data: result.key === rangeKey ? result.data : null,
     error: result.key === rangeKey ? result.error : null,
     loadedAt,
     failedAt: result.key === rangeKey ? result.failedAt : 0,
-    isLoading: result.key !== rangeKey || result.tick !== tick,
+    isLoading: Boolean(rangeKey) && (result.key !== rangeKey || result.tick !== tick),
     refresh,
   };
+}
+
+function useStaffBookings(range) {
+  const load = useCallback(() => fetchStaffAppBookings(range.from, range.to).then(withDisplayNames), [range.from, range.to]);
+  return useStaffData(`${range.from}:${range.to}`, load);
 }
 
 function Freshness({ state, online }) {
@@ -199,6 +208,7 @@ function StaffShell({ me, eyebrow, title, state, online, children }) {
     { to: "/staff", label: "Today", icon: FaHome, end: true },
     { to: "/staff/calendar", label: "Calendar", icon: FaCalendarAlt },
     ...(kitchen ? [{ to: "/staff/kitchen", label: "Kitchen", icon: FaUtensils }] : []),
+    { to: "/staff/orders", label: "Orders", icon: FaClipboardList },
   ];
 
   return (
@@ -788,12 +798,16 @@ export default function StaffApp() {
   const focus = isCalendar ? week : isKitchen ? kitchenDate : todayKey;
   const range = useMemo(() => getWindow(focus, todayKey), [focus, todayKey]);
   const state = useStaffBookings(range);
+  const isOrders = location.pathname.startsWith("/staff/orders");
+  const ordersHistory = searchParams.get("view") === "history";
+  const loadOrders = useCallback(() => fetchStaffOrders(ordersHistory), [ordersHistory]);
+  const ordersState = useStaffData(isOrders ? `orders:${ordersHistory}` : "", loadOrders);
 
   if (!me || me.access === null) return <NoAccess me={me} />;
 
   const todayEyebrow = formatDay(todayKey, { weekday: "long", month: "short", day: "numeric" });
-  const shell = (title, children, eyebrow = todayEyebrow) => (
-    <StaffShell me={me} eyebrow={eyebrow} title={title} state={state} online={online}>
+  const shell = (title, children, eyebrow = todayEyebrow, shellState = state) => (
+    <StaffShell me={me} eyebrow={eyebrow} title={title} state={shellState} online={online}>
       {children}
     </StaffShell>
   );
@@ -821,6 +835,9 @@ export default function StaffApp() {
           )
         )}
       />
+      {["orders", "orders/new", "orders/:requestId/edit"].map((path) => (
+        <Route key={path} path={path} element={shell("Orders", <StaffOrders me={me} state={ordersState} todayKey={todayKey} />, "Supplies & equipment", ordersState)} />
+      ))}
       <Route path="*" element={shell("Today at camp", <TodayView me={me} state={state} todayKey={todayKey} />)} />
     </Routes>
   );
