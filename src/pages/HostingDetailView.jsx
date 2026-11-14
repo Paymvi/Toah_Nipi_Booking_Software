@@ -29,6 +29,7 @@ const FIELDS = [
   { key: "email", label: "Contact email", type: "email" },
   { key: "phone", label: "Contact phone", type: "tel" },
   { key: "attendeeCount", label: "Guests" },
+  { key: "meals", label: "Meals for the kitchen", multiline: true },
   { key: "notes", label: "Notes", multiline: true },
 ];
 const FIELD_KEYS = FIELDS.map((field) => field.key);
@@ -50,6 +51,11 @@ function newHostingRecord() {
     organizationName: "",
     rentalFormDetails: {},
   };
+}
+
+// Off unless the office ticks it: hosting stays out of the staff app and kitchen counts by default.
+function isKitchenPlanned(record) {
+  return record?.rentalFormDetails?.kitchenInternalMeals === true;
 }
 
 function toText(value) {
@@ -74,6 +80,7 @@ export default function HostingDetailView({
   const [form, setForm] = useState(() => ({
     ...Object.fromEntries(FIELD_KEYS.map((key) => [key, toText(base[key])])),
     cancelled: isClearlyCancelled(base),
+    kitchen: isKitchenPlanned(base),
   }));
 
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
@@ -94,6 +101,12 @@ export default function HostingDetailView({
     // Status changes only when the box changes, so legacy status text is kept.
     if (form.cancelled !== isClearlyCancelled(base)) {
       next = applyBookingClassification(next, form.cancelled ? "cancelled" : "booked");
+    }
+    if (form.kitchen !== isKitchenPlanned(base)) {
+      const details = { ...(next.rentalFormDetails || {}) };
+      if (form.kitchen) details.kitchenInternalMeals = true;
+      else delete details.kitchenInternalMeals;
+      next = { ...next, rentalFormDetails: details };
     }
     next = mirrorTopLevelIntoDetails(next, [...FIELD_KEYS, "retreatType"]);
     if (!isNew) next = recordStaffEdits(base, next, FIELD_KEYS);
@@ -194,6 +207,21 @@ export default function HostingDetailView({
                 </label>
               ) : (
                 <span className="hosting-value">{isClearlyCancelled(base) ? "Cancelled" : "Active"}</span>
+              )}
+            </dd>
+          </div>
+          <div className="hosting-field-wide">
+            <dt>Staff app</dt>
+            <dd>
+              {isEditing ? (
+                <label className="hosting-check">
+                  <input type="checkbox" checked={form.kitchen} onChange={(event) => update("kitchen", event.target.checked)} />
+                  Kitchen should plan for this (shows as Internal in the staff app and kitchen view)
+                </label>
+              ) : (
+                <span className="hosting-value">
+                  {isKitchenPlanned(base) ? "Shown to staff and the kitchen as Internal" : "Not shown in the staff app"}
+                </span>
               )}
             </dd>
           </div>

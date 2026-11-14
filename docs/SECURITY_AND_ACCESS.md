@@ -37,6 +37,9 @@ Access is controlled by `public.staff_profiles`, one row per Auth user, with a r
 | `viewer` | Read allowed data |
 | `staff` | Read, plus create and edit bookings |
 | `admin` | Everything `staff` can, plus destructive actions such as deleting bookings |
+| `limited` | Staff app only, after [20261113000100_staff_app.sql](../supabase/migrations/20261113000100_staff_app.sql) runs. No direct table reads; staff-safe booking fields through the `staff_app_*` functions. Department `kitchen` adds the kitchen view and dietary information. See [staff-app/IMPLEMENTATION_NOTES.md](staff-app/IMPLEMENTATION_NOTES.md) |
+
+Once that migration runs, `is_active_staff()` means an office account (`admin`, `staff` or `viewer`), so every existing read policy excludes `limited`. Admins assign roles to individual accounts in **User Admin → Sign-in access**.
 
 Database helper functions used by policies:
 

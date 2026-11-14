@@ -124,6 +124,7 @@ import GuestInquiriesView from "../pages/GuestInquiriesView";
 import StaffSignOutButton from "../components/StaffSignOutButton";
 import ThemeToggle from "../components/ThemeToggle";
 import CopyButton from "../components/CopyButton";
+import StaffAccessPanel from "../components/StaffAccessPanel";
 
 import PortalAdminView from "../pages/PortalAdminView";
 import HostingView from "../pages/HostingView";
@@ -217,6 +218,11 @@ const SPREADSHEET_REVEAL_LOADING_MS = 160;
 
 
 import InquiryRecordDetailView from "../pages/InquiryRecordDetailView";
+import {
+  formatMealTime as formatBookingOverviewTime,
+  parseBookingDietarySummary,
+  parseBookingMealSummary,
+} from "../utils/mealPlan";
 
 
 function hasOverviewDisplayValue(value) {
@@ -239,119 +245,6 @@ function getOverviewDisplayValue(...values) {
   }
 
   return "";
-}
-
-function getFirstSelectedMeal(dateRows = []) {
-  for (const row of dateRows) {
-    if (row.breakfast) return "Breakfast";
-    if (row.lunch) return "Lunch";
-    if (row.dinner) return "Dinner";
-  }
-
-  return "";
-}
-
-function getLastSelectedMeal(dateRows = []) {
-  for (let index = dateRows.length - 1; index >= 0; index -= 1) {
-    const row = dateRows[index];
-
-    if (row.dinner) return "Dinner";
-    if (row.lunch) return "Lunch";
-    if (row.breakfast) return "Breakfast";
-  }
-
-  return "";
-}
-
-function parseBookingMealSummary(summary = "") {
-  const text = typeof summary === "string" ? summary : "";
-
-  const segments = text
-    .split(";")
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  const dateRows = segments
-    .filter((part) =>
-      /^[A-Za-z]{3},\s[A-Za-z]{3}\s\d{1,2},\s\d{4}\s*:/i.test(part)
-    )
-    .map((part) => {
-      const [dateLabelPart, mealsPart = ""] = part.split(/:(.+)/);
-
-      const selections = mealsPart
-        .split(",")
-        .map((item) => item.trim().toLowerCase())
-        .filter(Boolean);
-
-      return {
-        dateLabel: dateLabelPart.trim(),
-        breakfast: selections.includes("breakfast"),
-        lunch: selections.includes("lunch"),
-        dinner: selections.includes("dinner"),
-      };
-    });
-
-  const totalMatch = text.match(/Total meals:\s*(\d+)/i);
-  const breakfastCountMatch = text.match(/Breakfast:\s*(\d+)/i);
-  const lunchCountMatch = text.match(/Lunch:\s*(\d+)/i);
-  const dinnerCountMatch = text.match(/Dinner:\s*(\d+)/i);
-  const breakfastTimeMatch = text.match(/Breakfast time:\s*([^;]+)/i);
-  const lunchTimeMatch = text.match(/Lunch time:\s*([^;]+)/i);
-  const dinnerTimeMatch = text.match(/Dinner time:\s*([^;]+)/i);
-
-  return {
-    totalMeals: totalMatch ? totalMatch[1] : "",
-    breakfastCount: breakfastCountMatch ? breakfastCountMatch[1] : "0",
-    lunchCount: lunchCountMatch ? lunchCountMatch[1] : "0",
-    dinnerCount: dinnerCountMatch ? dinnerCountMatch[1] : "0",
-    breakfastTime: breakfastTimeMatch ? breakfastTimeMatch[1].trim() : "",
-    lunchTime: lunchTimeMatch ? lunchTimeMatch[1].trim() : "",
-    dinnerTime: dinnerTimeMatch ? dinnerTimeMatch[1].trim() : "",
-    dateRows,
-    firstMeal: getFirstSelectedMeal(dateRows),
-    lastMeal: getLastSelectedMeal(dateRows),
-  };
-}
-
-function parseBookingDietarySummary(summary = "") {
-  const text = typeof summary === "string" ? summary : "";
-
-  const parts = text
-    .split(";")
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  const items = [];
-  let additionalNotes = "";
-
-  parts.forEach((part) => {
-    const noteMatch = part.match(/^Additional notes:\s*(.+)$/i);
-
-    if (noteMatch) {
-      additionalNotes = noteMatch[1].trim();
-      return;
-    }
-
-    const quantityMatch = part.match(/^(\d+)\s*-\s*(.+)$/);
-
-    if (quantityMatch) {
-      items.push({
-        quantity: quantityMatch[1],
-        label: quantityMatch[2].trim(),
-      });
-      return;
-    }
-
-    items.push({
-      quantity: "—",
-      label: part,
-    });
-  });
-
-  return {
-    items,
-    additionalNotes,
-  };
 }
 
 function BookingMealsProgramOverview({
@@ -3755,47 +3648,6 @@ function formatBookingOverviewValue(value) {
   return String(value);
 }
 
-function formatBookingOverviewTime(value) {
-  if (!value) return "—";
-
-  const time = String(value).trim();
-
-  // Already formatted
-  if (
-    time.toLowerCase().includes("am") ||
-    time.toLowerCase().includes("pm")
-  ) {
-    return time;
-  }
-
-  const parts = time.split(":");
-
-  if (parts.length < 2) {
-    return time;
-  }
-
-  const hours = Number(parts[0]);
-  const minutes = Number(parts[1]);
-
-  if (
-    Number.isNaN(hours) ||
-    Number.isNaN(minutes)
-  ) {
-    return time;
-  }
-
-  const date = new Date();
-
-  date.setHours(hours);
-  date.setMinutes(minutes);
-
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-
 function formatBookingOverviewMoney(value) {
   if (!hasBookingOverviewValue(value)) {
     return "";
@@ -7142,6 +6994,7 @@ function UserAdminView({
   staffDirectoryStatus = { checked: false, shared: false, reason: "" },
   unlistedStaffNames = [],
   onCopyBrowserListToShared,
+  isAdmin = false,
 }) {
   const [newUserForm, setNewUserForm] = useState({
     name: "",
@@ -7520,6 +7373,8 @@ function UserAdminView({
           </table>
         </div>
       </article>
+
+      {isAdmin && <StaffAccessPanel />}
     </section>
   );
 }
@@ -10376,6 +10231,19 @@ export default function Dashboard() {
             })}
           </div>
         ))}
+
+        <div className="sidebar-section">
+          <p>Staff</p>
+          <button
+            className="sidebar-link"
+            type="button"
+            title="Staff app"
+            onClick={() => navigate("/staff")}
+          >
+            <FaConciergeBell />
+            <span>Staff app</span>
+          </button>
+        </div>
       </aside>
 
       <section className="dashboard-main" inert={isNavDrawerShown}>
@@ -10694,6 +10562,7 @@ export default function Dashboard() {
             setCurrentStaffUserId={setCurrentStaffUserId}
             staffDirectoryStatus={staffDirectoryStatus}
             unlistedStaffNames={unlistedStaffNames}
+            isAdmin={staffRole === "admin"}
             onCopyBrowserListToShared={
               getSavedStaffUsers().length > 0
                 ? copyBrowserStaffListToSharedDirectory

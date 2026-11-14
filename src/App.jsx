@@ -37,13 +37,16 @@ import "./styles/StaffBookingDetails.css";
 import "./styles/DashboardBackups.css";
 import "./styles/TutorialGnome.css";
 import "./styles/Mobile.css";
+import "./styles/StaffApp.css";
 import "./styles/theme.css";
 
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import StaffAuthGate from "./auth/StaffAuthGate";
 import TutorialGnome from "./tutorial/TutorialGnome";
+import StaffApp from "./pages/StaffApp";
+import { useStaffAccess } from "./auth/staffAccess";
 
 
 export default function App() {
@@ -51,8 +54,32 @@ export default function App() {
     <BrowserRouter>
 
       <StaffAuthGate>
+        <AppRoutes />
+      </StaffAuthGate>
 
+    </BrowserRouter>
+  );
+}
+
+function AppRoutes() {
+  const { access } = useStaffAccess();
+  const isStaffApp = useLocation().pathname.startsWith("/staff");
+
+  // Limited accounts only ever get the staff app (the database would refuse office data anyway).
+  if (access === "limited" || access === null) {
+    return (
+      <Routes>
+        <Route path="/staff/*" element={<StaffApp />} />
+        <Route path="*" element={<Navigate to="/staff" replace />} />
+      </Routes>
+    );
+  }
+
+  return (
+    <>
         <Routes>
+
+          <Route path="/staff/*" element={<StaffApp />} />
 
           <Route 
             path="/" 
@@ -143,11 +170,8 @@ export default function App() {
 
         </Routes>
 
-        {/* Staff-only help; outside Routes so it stays put across views. */}
-        <TutorialGnome />
-
-      </StaffAuthGate>
-
-    </BrowserRouter>
+        {/* Office help; outside Routes so it stays put across views. Not over the staff app's bottom bar. */}
+        {!isStaffApp && <TutorialGnome />}
+    </>
   );
 }

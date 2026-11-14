@@ -78,24 +78,61 @@
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
-  /* Stat cards: icon above the text so the label and value get the card's full width. */
+  /* An odd card out takes the whole last row instead of leaving half of it empty. */
+  :is(.admin-summary-grid, .jobs-summary-grid, .inquiry-spreadsheet-summary, .home-dashboard-metrics, .portal-summary-grid-admin, .backup-snapshot-summary, .backup-preview-grid, .backup-comparison-grid, .spreadsheet-view-summary) > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  /* Contacts: the three counts share one row. */
+  .contacts-view-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .contacts-view-summary span {
+    min-width: 0;
+  }
+
+  /* Stat cards: a small icon sits beside the label; the value and notes take the full card width below. */
   .home-dashboard-metric,
   .backup-metric-card,
   .backups-page-minimal .backup-metric-card,
   .portal-summary-tile {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    display: grid;
+    grid-template-columns: 1.75rem minmax(0, 1fr);
+    align-content: start;
+    align-items: center;
+    gap: 0.5rem 0.5rem;
     min-height: 0;
-    padding: 0.875rem;
+    padding: 0.75rem 0.875rem;
+  }
+
+  /* The text wrapper's children join the card grid: label beside the icon, the rest on full rows. */
+  :is(.home-dashboard-metric, .backup-metric-card, .portal-summary-tile) > div {
+    display: contents;
+  }
+
+  :is(.home-dashboard-metric, .backup-metric-card, .portal-summary-tile) > div > :not(:first-child) {
+    grid-column: 1 / -1;
+    margin-top: 0;
+  }
+
+  :is(.home-dashboard-metric, .backup-metric-card, .portal-summary-tile) > div > :first-child {
+    margin-bottom: 0;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
   }
 
   .home-dashboard-metric-icon,
   .backup-metric-icon,
   .portal-summary-tile-icon {
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 1.75rem;
+    height: 1.75rem;
     flex-basis: auto;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
   }
 
   /* Room for the period settings button in the corner. */
@@ -110,8 +147,6 @@
   /* The date range is the one long value: it keeps a full row. */
   .backup-overview-grid .backup-metric-card:last-child {
     grid-column: 1 / -1;
-    flex-direction: row;
-    align-items: center;
   }
 
   /* Dashboard: New Booking and Open Calendar side by side; quick actions two per row. */
@@ -451,8 +486,8 @@
   }
 
   /* Small icon buttons keep their look but get a bigger invisible hit area. */
-  .copy-value-button,
-  .home-dashboard-metric-settings {
+  /* The settings button is already absolute in its card corner; making it relative dropped it to the card's bottom. */
+  .copy-value-button {
     position: relative;
   }
 
@@ -599,5 +634,12 @@
   .signed-documents-file input {
     min-width: 0;
     width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  /* Calendar "Also show" filters: same side gutter as the Month/Week/Year switcher below. */
+  .calendar-exception-toggles {
+    padding: 0 1rem;
   }
 }
