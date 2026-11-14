@@ -23,7 +23,6 @@ import {
   checkOrderForm,
   emptyOrderItem,
   isUnprocessed,
-  itemsSummary,
   newOrderId,
   orderProgress,
 } from "../utils/staffOrders";
@@ -73,7 +72,7 @@ function NameField({ value, onChange, error, id = "sa-order-actor" }) {
         }}
       />
       <span id={`${id}-help`} className="sa-field-help">
-        {error || "This sign-in can be shared, so requests and updates record the name you enter. Remembered on this device."}
+        {error || "Shared sign-in: your name is recorded with requests and updates. Saved on this device."}
       </span>
     </div>
   );
@@ -392,14 +391,14 @@ function OrderList({ state, todayKey, actorName, setActorName }) {
 
       <div className="sa-orders-filters">
         <label className="sa-field">
-          <span>Department</span>
+          <span className="sa-visually-hidden">Department</span>
           <select value={department} onChange={(event) => setParam("dept", event.target.value)}>
             <option value="">All departments</option>
             {ORDER_DEPARTMENTS.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
           </select>
         </label>
         <label className="sa-field">
-          <span>Status</span>
+          <span className="sa-visually-hidden">Status</span>
           <select value={status} onChange={(event) => setParam("status", event.target.value)}>
             {statusOptions.map(([key, label]) => <option key={key} value={key}>{label}</option>)}
           </select>
@@ -420,13 +419,20 @@ function OrderList({ state, todayKey, actorName, setActorName }) {
                   <span className="sa-row-main">
                     <span className="sa-row-title">
                       {request.urgent && <Chip tone="urgent">Urgent</Chip>}
-                      <span>{itemsSummary(request)}</span>
+                      <span className="sa-order-lines">
+                        {request.items.slice(0, 3).map((item) => (
+                          <span key={item.id}>
+                            {item.name} <span className="sa-order-qty">× {item.quantity}</span>
+                          </span>
+                        ))}
+                        {request.items.length > 3 && <span className="sa-order-qty">+{request.items.length - 3} more</span>}
+                      </span>
                     </span>
                     <span className="sa-row-sub">
-                      {DEPARTMENT_LABELS[request.department]} · {request.requestedByName}
+                      <strong className="sa-order-dept">{DEPARTMENT_LABELS[request.department]}</strong> · {request.requestedByName}
                       {request.neededBy ? ` · ${neededByText(request.neededBy, todayKey, view === "active")}` : ""}
+                      {progress && <span className="sa-order-progress"> · {progress}</span>}
                     </span>
-                    {progress && <span className="sa-row-sub sa-order-progress">{progress}</span>}
                   </span>
                   <StatusChip status={request.status} />
                 </button>

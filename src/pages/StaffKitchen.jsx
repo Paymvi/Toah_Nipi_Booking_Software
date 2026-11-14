@@ -13,7 +13,7 @@
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { Chip, CountStatus, DietaryChips, LoadProblem } from "../components/StaffAppParts";
+import { Buildings, Chip, CountStatus, DietaryChips, LoadProblem } from "../components/StaffAppParts";
 import { getStayDates } from "../utils/dateUtils";
 import { getLegacyBookingNotes } from "../utils/legacyBookingNotes";
 import {
@@ -39,7 +39,6 @@ import {
   KITCHEN_CHANGE_FIELDS,
   lastChangeLine,
   latestChange,
-  lodgingText,
   relativeDayLabel,
   shiftDate,
 } from "../utils/staffAppFormat";
@@ -163,7 +162,7 @@ function MealCard({ meal, canSeeDietary, todayKey, firstMealOf }) {
                   <TimeChange booking={service.groups[0].booking} mealKey={meal.key} todayKey={todayKey} />
                 )}
               </strong>
-              <Total summary={service} />
+              {service.groups.length > 1 && <Total summary={service} />}
             </div>
           )}
           <ul className="sa-meal-groups">
@@ -342,7 +341,6 @@ function DietaryAlertsPanel({ booking }) {
   return (
     <section className="sa-card sa-diet-panel" aria-labelledby="sa-diet-title">
       <h3 id="sa-diet-title">Dietary Alerts</h3>
-      <p className="sa-muted">Allergen and dietary information for this group.</p>
       {alerts.hasAny ? (
         <>
           {alerts.items.length > 0 && (
@@ -388,7 +386,6 @@ function BookingMeals({ booking, canSeeDietary, todayKey }) {
   const count = getGuestCount(booking);
   const legacy = getLegacyBookingNotes(booking).meals;
   const dayCampers = parseWholeCount(details.dayCamperCount);
-  const lodging = lodgingText(booking);
 
   return (
     <div className="sa-kb-detail">
@@ -404,7 +401,7 @@ function BookingMeals({ booking, canSeeDietary, todayKey }) {
         </p>
         <p className="sa-kb-facts">
           <span>Guests <CountStatus count={count} compact /></span>
-          <span>Lodging <strong>{lodging || "not set"}</strong></span>
+          <Buildings booking={booking} />
         </p>
       </section>
 
@@ -445,7 +442,6 @@ function BookingMeals({ booking, canSeeDietary, todayKey }) {
       <div className="sa-kb-grid">
         <section className="sa-card sa-kb-plan" aria-labelledby="sa-plan-title">
           <h3 id="sa-plan-title">Meal Service Plan</h3>
-          <p className="sa-muted">Detailed meal plan for this retreat.</p>
           {plan.status === "planned" ? (
             <>
               <MealPlanTable booking={booking} plan={plan} todayKey={todayKey} />
@@ -475,7 +471,6 @@ function BookingMeals({ booking, canSeeDietary, todayKey }) {
       {(details.mealNotes || legacy.length > 0) && (
         <section className="sa-card" aria-labelledby="sa-notes-title">
           <h3 id="sa-notes-title">Meal Notes</h3>
-          <p className="sa-muted">Important details for food-service coordination.</p>
           {details.mealNotes && <p className="sa-prewrap">{details.mealNotes}</p>}
           {legacy.map((note) => (
             <div key={note.label}>

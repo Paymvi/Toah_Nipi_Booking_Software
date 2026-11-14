@@ -23,7 +23,7 @@ import {
 } from "react-icons/fa";
 
 import { useStaffAccess } from "../auth/staffAccess";
-import { ChangeList, Chip, CountStatus, DietaryChips, LoadProblem } from "../components/StaffAppParts";
+import { Buildings, ChangeList, Chip, CountStatus, DietaryChips, LoadProblem } from "../components/StaffAppParts";
 import { fetchStaffAppBooking, fetchStaffAppBookings, fetchStaffOrders, signOut } from "../services/staffAppService";
 import { usePropertyToday } from "../utils/propertyToday";
 import {
@@ -49,6 +49,7 @@ import {
   formatDay,
   formatStay,
   formatWhen,
+  getStaffBuildings,
   isDateKey,
   relativeDayLabel,
   shiftDate,
@@ -168,7 +169,7 @@ function Freshness({ state, online }) {
   const { loadedAt, error, isLoading, refresh } = state;
   const checked = loadedAt ? formatClock(loadedAt) : "";
   let tone = "ok";
-  let text = checked ? `Up to date · checked ${checked}` : "Loading…";
+  let text = checked ? `Up to date · ${checked}` : "Loading…";
   if (!online) {
     tone = "warn";
     text = checked ? `Offline · showing ${checked}; may be out of date` : "Offline · nothing loaded yet";
@@ -255,36 +256,47 @@ function StaffShell({ me, eyebrow, title, state, online, children }) {
    Group rows
 --------------------------------------------------------- */
 
+// "Nov 14 – 16", "Nov 30 – Dec 2", or one day; day headings already give the weekday.
+function stayDates(booking) {
+  const end = booking.endDate || booking.startDate;
+  const short = { month: "short", day: "numeric" };
+  if (end === booking.startDate) return formatDay(booking.startDate, short);
+  const sameMonth = end.slice(0, 7) === booking.startDate.slice(0, 7);
+  return `${formatDay(booking.startDate, short)} – ${sameMonth ? formatDay(end, { day: "numeric" }) : formatDay(end, short)}`;
+}
+
 function stayLine(booking, dateKey) {
   const details = booking.rentalFormDetails || {};
-  if (booking.kind === "internal") return { kind: "stay", text: "Internal use, not a guest group" };
+  if (booking.kind === "internal") return { kind: "stay", text: "Internal use" };
   if (booking.startDate === dateKey) {
     return { kind: "arrive", text: details.arrivalTime ? `Arrives ${formatMealTime(details.arrivalTime)}` : "Arrives · time not set" };
   }
   if ((booking.endDate || booking.startDate) === dateKey) {
     return { kind: "leave", text: details.departureTime ? `Leaves ${formatMealTime(details.departureTime)}` : "Leaves · time not set" };
   }
-  return { kind: "stay", text: `Here until ${formatDay(booking.endDate)}` };
+  return { kind: "stay", text: "" };
 }
 
 const STAY_ICONS = { arrive: "↘", leave: "↗", stay: "•" };
+const STAY_LABELS = { arrive: "Arriving", leave: "Leaving", stay: "On site" };
 
-function GroupRow({ booking, dateKey, line }) {
-  const stay = line || stayLine(booking, dateKey);
-  const lodging = lodgingText(booking);
+function GroupRow({ booking, dateKey }) {
+  const stay = stayLine(booking, dateKey);
   return (
     <li>
       <Link className="sa-row" to={`/staff/group/${encodeURIComponent(booking.id)}`}>
-        <span className={`sa-row-icon sa-row-icon-${stay.kind}`} aria-hidden="true">{STAY_ICONS[stay.kind]}</span>
+        <span className={`sa-row-icon sa-row-icon-${stay.kind}`} role="img" aria-label={STAY_LABELS[stay.kind]}>{STAY_ICONS[stay.kind]}</span>
         <span className="sa-row-main">
           <span className="sa-row-title">
             {booking.organizationName}
             {booking.kind === "internal" && <Chip tone="internal">Internal</Chip>}
           </span>
           <span className="sa-row-sub">
-            {stay.text}
-            {lodging ? ` · ${lodging}` : ""}
+            {stay.text && <strong>{stay.text}</strong>}
+            {stay.text && " · "}
+            {stayDates(booking)}
           </span>
+          <Buildings booking={booking} />
         </span>
         <CountStatus count={getGuestCount(booking)} compact />
       </Link>
@@ -314,9 +326,7 @@ function missingItems(booking, todayKey) {
   if (plan.status === "missing") items.push({ tone: "missing", text: "No meal plan recorded" });
   if (booking.kind === "internal") return items;
   if (booking.startDate >= todayKey && !details.arrivalTime) items.push({ tone: "missing", text: "Arrival time not set" });
-  if (!lodgingText(booking) && parseWholeCount(details.numberOfNights) !== 0) {
-    items.push({ tone: "missing", text: "Lodging not set" });
-  }
+  if (getStaffBuildings(booking).status === "unassigned") items.push({ tone: "missing", text: "Housing not assigned" });
   return items;
 }
 
@@ -345,20 +355,38 @@ function nextKitchenService(bookings, todayKey) {
   return null;
 }
 
+// Who arrives and leaves on a day, and how many groups are on site.
+function dayMovement(bookings, dateKey) {
+  return {
+    arriving: bookings.filter((booking) => booking.startDate === dateKey),
+    leaving: bookings.filter((booking) => (booking.endDate || booking.startDate) === dateKey && booking.startDate !== dateKey),
+    staying: bookings.filter((booking) => booking.startDate < dateKey && (booking.endDate || booking.startDate) > dateKey),
+  };
+}
+
+function plural(count, word, many = `${word}s`) {
+  return `${count} ${count === 1 ? word : many}`;
+}
+
 function TodayView({ me, state, todayKey }) {
   const bookings = useMemo(() => state.data?.bookings || [], [state.data]);
-  const tomorrowKey = shiftDate(todayKey, 1);
   const yesterdayKey = shiftDate(todayKey, -1);
 
   const onSite = bookings.filter((booking) => overlaps(booking, todayKey));
-  const arrivingTomorrow = bookings.filter((booking) => booking.startDate === tomorrowKey);
-  const leavingTomorrow = bookings.filter(
-    (booking) => (booking.endDate || booking.startDate) === tomorrowKey && booking.startDate !== tomorrowKey
-  );
+  const week = Array.from({ length: 7 }, (_, index) => shiftDate(todayKey, index + 1))
+    .map((dateKey) => ({ dateKey, ...dayMovement(bookings, dateKey) }))
+    .filter((day) => day.arriving.length || day.leaving.length);
+  // One row per group, newest change first, so a busy group's name is not repeated.
   const changes = bookings
     .flatMap((booking) => (booking.changes || []).map((change) => ({ ...change, booking })))
     .filter((change) => campDateOf(new Date(change.at)) >= yesterdayKey)
     .sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  const changesByGroup = [];
+  changes.slice(0, 12).forEach((change) => {
+    const entry = changesByGroup.find((item) => item.booking.id === change.booking.id);
+    if (entry) entry.changes.push(change);
+    else changesByGroup.push({ booking: change.booking, changes: [change] });
+  });
   const waiting = bookings
     .filter((booking) => (booking.endDate || booking.startDate) >= todayKey && booking.startDate <= shiftDate(todayKey, 7))
     .map((booking) => ({ booking, items: missingItems(booking, todayKey) }))
@@ -368,101 +396,126 @@ function TodayView({ me, state, todayKey }) {
   if (!state.data) return state.error ? <LoadProblem state={state} /> : <p className="sa-empty">Loading…</p>;
 
   return (
-    <div className="sa-today-grid">
+    <>
       <LoadProblem state={state} />
-      <section className="sa-section" aria-labelledby="sa-onsite">
-        <div className="sa-section-head">
-          <h2 id="sa-onsite">On site today</h2>
-          <span>{onSite.length ? `${onSite.length} group${onSite.length === 1 ? "" : "s"} · ${summarizeGuests(onSite)}` : ""}</span>
-        </div>
-        {onSite.length ? (
-          <ul className="sa-list">{onSite.map((booking) => <GroupRow key={booking.id} booking={booking} dateKey={todayKey} />)}</ul>
-        ) : (
-          <p className="sa-empty">No groups on site today.</p>
-        )}
-      </section>
-
-      <section className="sa-section" aria-labelledby="sa-tomorrow">
-        <div className="sa-section-head">
-          <h2 id="sa-tomorrow">Tomorrow · {formatDay(tomorrowKey)}</h2>
-        </div>
-        {arrivingTomorrow.length || leavingTomorrow.length ? (
-          <ul className="sa-list">
-            {arrivingTomorrow.map((booking) => <GroupRow key={`a-${booking.id}`} booking={booking} dateKey={tomorrowKey} />)}
-            {leavingTomorrow.map((booking) => <GroupRow key={`l-${booking.id}`} booking={booking} dateKey={tomorrowKey} />)}
-          </ul>
-        ) : (
-          <p className="sa-empty">No arrivals or departures tomorrow.</p>
-        )}
-      </section>
-
       {next && (
         <Link className="sa-mywork" to={`/staff/kitchen?date=${next.dateKey}`}>
           <FaUtensils aria-hidden="true" />
           <span>
-            <strong>My work: Kitchen</strong>
-            <span>Next: {next.text}</span>
+            <strong>Kitchen next:</strong> {next.text}
           </span>
           <FaChevronRight aria-hidden="true" />
         </Link>
       )}
+      <div className="sa-today-grid">
+        <div className="sa-column">
+          <section className="sa-section" aria-labelledby="sa-onsite">
+            <div className="sa-section-head">
+              <h2 id="sa-onsite">On site today</h2>
+              <span>{onSite.length ? `${plural(onSite.length, "group")} · ${summarizeGuests(onSite)}` : ""}</span>
+            </div>
+            {onSite.length ? (
+              <ul className="sa-list">{onSite.map((booking) => <GroupRow key={booking.id} booking={booking} dateKey={todayKey} />)}</ul>
+            ) : (
+              <p className="sa-empty">No groups on site today.</p>
+            )}
+          </section>
 
-      <section className="sa-section" aria-labelledby="sa-changes">
-        <div className="sa-section-head">
-          <h2 id="sa-changes">Changed since yesterday</h2>
-          <span>{changes.length || ""}</span>
+          <section className="sa-section" aria-labelledby="sa-week">
+            <div className="sa-section-head">
+              <h2 id="sa-week">Next 7 days</h2>
+              <Link to="/staff/calendar">Calendar</Link>
+            </div>
+            {week.length ? (
+              <div className="sa-list sa-days">
+                {week.map((day) => (
+                  <section key={day.dateKey} className="sa-day-block" aria-label={formatDay(day.dateKey)}>
+                    <h3 className="sa-day-head">
+                      <span>{relativeDayLabel(day.dateKey, todayKey) === "Tomorrow" ? `Tomorrow · ${formatDay(day.dateKey)}` : formatDay(day.dateKey)}</span>
+                      <small>
+                        {[
+                          day.arriving.length && `${day.arriving.length} arriving`,
+                          day.leaving.length && `${day.leaving.length} leaving`,
+                          `${plural(day.arriving.length + day.staying.length, "group")} on site`,
+                        ].filter(Boolean).join(" · ")}
+                      </small>
+                    </h3>
+                    <ul>
+                      {day.leaving.map((booking) => <GroupRow key={`l-${booking.id}`} booking={booking} dateKey={day.dateKey} />)}
+                      {day.arriving.map((booking) => <GroupRow key={`a-${booking.id}`} booking={booking} dateKey={day.dateKey} />)}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <p className="sa-empty">No arrivals or departures in the next 7 days.</p>
+            )}
+          </section>
         </div>
-        {changes.length ? (
-          <ul className="sa-list sa-list-plain">
-            {changes.slice(0, 12).map((change, index) => {
-              const description = describeChange(change);
-              return (
-                <li key={`${change.booking.id}-${change.field}-${change.at}-${index}`}>
-                  <Link className="sa-row sa-row-text" to={`/staff/group/${encodeURIComponent(change.booking.id)}`}>
-                    <span className="sa-row-main">
-                      <span className="sa-row-title">{change.booking.organizationName}: {description.label.toLowerCase()} {description.text}</span>
-                      <span className="sa-row-sub">{formatWhen(change.at, todayKey)} · by {describeActor(change)}</span>
-                    </span>
-                    <Chip tone="changed">Changed</Chip>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="sa-empty">
-            No recorded changes since yesterday.
-            {me?.historySince ? ` Change history started ${formatWhen(me.historySince, todayKey)}.` : " Change history starts once the office saves a booking after this update."}
-          </p>
-        )}
-      </section>
 
-      <section className="sa-section" aria-labelledby="sa-waiting">
-        <div className="sa-section-head">
-          <h2 id="sa-waiting">Still waiting on</h2>
-          <span>next 7 days</span>
+        <div className="sa-column">
+          <section className="sa-section" aria-labelledby="sa-changes">
+            <div className="sa-section-head">
+              <h2 id="sa-changes">Changed since yesterday</h2>
+              <span>{changes.length || ""}</span>
+            </div>
+            {changesByGroup.length ? (
+              <ul className="sa-list">
+                {changesByGroup.map(({ booking, changes: groupChanges }) => (
+                  <li key={booking.id}>
+                    <Link className="sa-row sa-row-text" to={`/staff/group/${encodeURIComponent(booking.id)}`}>
+                      <span className="sa-row-main">
+                        <span className="sa-row-title">{booking.organizationName}</span>
+                        {groupChanges.map((change, index) => {
+                          const description = describeChange(change);
+                          return (
+                            <span key={`${change.field}-${change.at}-${index}`} className="sa-row-sub">
+                              <strong>{description.label}</strong> {description.text}
+                              <span className="sa-muted"> · {formatWhen(change.at, todayKey)} · {describeActor(change)}</span>
+                            </span>
+                          );
+                        })}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="sa-empty">
+                No recorded changes since yesterday.
+                {me?.historySince ? ` Change history started ${formatWhen(me.historySince, todayKey)}.` : " Change history starts once the office saves a booking after this update."}
+              </p>
+            )}
+          </section>
+
+          <section className="sa-section" aria-labelledby="sa-waiting">
+            <div className="sa-section-head">
+              <h2 id="sa-waiting">Still waiting on</h2>
+              <span>next 7 days</span>
+            </div>
+            {waiting.length ? (
+              <ul className="sa-list">
+                {waiting.map(({ booking, items }) => (
+                  <li key={booking.id}>
+                    <Link className="sa-row sa-row-text" to={`/staff/group/${encodeURIComponent(booking.id)}`}>
+                      <span className="sa-row-main">
+                        <span className="sa-row-title">{booking.organizationName}</span>
+                        <span className="sa-row-sub">{relativeDayLabel(booking.startDate, todayKey)} – {formatDay(booking.endDate || booking.startDate)}</span>
+                        <span className="sa-chip-row">
+                          {items.map((item) => <Chip key={item.text} tone={item.tone}>{item.text}</Chip>)}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="sa-empty">Nothing missing for the next 7 days.</p>
+            )}
+          </section>
         </div>
-        {waiting.length ? (
-          <ul className="sa-list sa-list-plain">
-            {waiting.map(({ booking, items }) => (
-              <li key={booking.id}>
-                <Link className="sa-row sa-row-text" to={`/staff/group/${encodeURIComponent(booking.id)}`}>
-                  <span className="sa-row-main">
-                    <span className="sa-row-title">{booking.organizationName}</span>
-                    <span className="sa-row-sub">{relativeDayLabel(booking.startDate, todayKey)} – {formatDay(booking.endDate || booking.startDate)}</span>
-                    <span className="sa-chip-row">
-                      {items.map((item) => <Chip key={item.text} tone={item.tone}>{item.text}</Chip>)}
-                    </span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="sa-empty">Nothing missing for the next 7 days.</p>
-        )}
-      </section>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -473,11 +526,7 @@ function TodayView({ me, state, todayKey }) {
 function CalendarAgenda({ state, todayKey, week, onWeek }) {
   const bookings = useMemo(() => state.data?.bookings || [], [state.data]);
   const days = Array.from({ length: 7 }, (_, index) => shiftDate(week, index));
-  const movement = (dateKey) => ({
-    arriving: bookings.filter((booking) => booking.startDate === dateKey),
-    leaving: bookings.filter((booking) => (booking.endDate || booking.startDate) === dateKey && booking.startDate !== dateKey),
-    staying: bookings.filter((booking) => booking.startDate < dateKey && (booking.endDate || booking.startDate) > dateKey),
-  });
+  const movement = (dateKey) => dayMovement(bookings, dateKey);
 
   return (
     <>
@@ -506,7 +555,9 @@ function CalendarAgenda({ state, todayKey, week, onWeek }) {
         </button>
       </div>
       <div className="sa-toolbar">
-        <button type="button" className="sa-button sa-button-quiet" onClick={() => onWeek(weekStart(todayKey))}>This week</button>
+        {week !== weekStart(todayKey) && (
+          <button type="button" className="sa-button sa-button-quiet" onClick={() => onWeek(weekStart(todayKey))}>This week</button>
+        )}
         <label className="sa-date-field">
           <span>Go to date</span>
           <input type="date" value={week} onChange={(event) => isDateKey(event.target.value) && onWeek(weekStart(event.target.value))} />
@@ -520,21 +571,30 @@ function CalendarAgenda({ state, todayKey, week, onWeek }) {
         <div className="sa-agenda">
         {days.map((dateKey) => {
           const { arriving, leaving, staying } = movement(dateKey);
+          const quiet = !arriving.length && !leaving.length;
           return (
-            <section key={dateKey} id={`day-${dateKey}`} className="sa-section sa-day" aria-label={formatDay(dateKey)}>
-              <div className="sa-section-head">
-                <h2>
+            <section
+              key={dateKey}
+              id={`day-${dateKey}`}
+              className={`sa-list sa-day-block sa-day${dateKey === todayKey ? " is-today" : ""}${quiet ? " is-quiet" : ""}`}
+              aria-label={formatDay(dateKey)}
+            >
+              <h2 className="sa-day-head">
+                <span>
                   {formatDay(dateKey)}
                   {dateKey === todayKey && <Chip tone="today">Today</Chip>}
-                </h2>
-              </div>
-              {arriving.length || leaving.length ? (
-                <ul className="sa-list">
+                </span>
+                <small>
+                  {quiet
+                    ? "No arrivals or departures"
+                    : [arriving.length && `${arriving.length} arriving`, leaving.length && `${leaving.length} leaving`].filter(Boolean).join(" · ")}
+                </small>
+              </h2>
+              {!quiet && (
+                <ul>
                   {leaving.map((booking) => <GroupRow key={`l-${booking.id}`} booking={booking} dateKey={dateKey} />)}
                   {arriving.map((booking) => <GroupRow key={`a-${booking.id}`} booking={booking} dateKey={dateKey} />)}
                 </ul>
-              ) : (
-                <p className="sa-empty sa-empty-small">No arrivals or departures.</p>
               )}
               {staying.length > 0 && (
                 <p className="sa-staying">
@@ -714,10 +774,17 @@ function GroupView({ me, state, todayKey }) {
         </div>
         <div>
           <dt>Lodging</dt>
-          <dd>{lodgingText(booking) || <Chip tone="missing">Not set</Chip>}</dd>
+          <dd>
+            <Buildings booking={booking} />
+            {getStaffBuildings(booking).status === "assigned" && lodgingText(booking) && (
+              <span className="sa-muted sa-small sa-block">{lodgingText(booking)}</span>
+            )}
+            {getStaffBuildings(booking).status === "none" && <span className="sa-muted">None recorded</span>}
+          </dd>
         </div>
       </dl>
 
+      <div className="sa-group-grid">
       <section className="sa-section" aria-labelledby="sa-group-meals">
         <div className="sa-section-head">
           <h2 id="sa-group-meals">Meals</h2>
@@ -752,6 +819,7 @@ function GroupView({ me, state, todayKey }) {
           <ChangeList changes={booking.changes || []} todayKey={todayKey} emptyText="No changes recorded in the last 60 days." />
         </div>
       </section>
+      </div>
 
       <p className="sa-footnote">Contacts, payments, rates, contracts and private notes stay in the office app.</p>
     </>

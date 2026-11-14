@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { checkOrderForm, isUnprocessed, itemsSummary, newOrderId, orderProgress } from "../src/utils/staffOrders.js";
+import { checkOrderForm, isUnprocessed, newOrderId, orderProgress } from "../src/utils/staffOrders.js";
 
 const item = (status, name = "Soap", quantity = "2") => ({ status, name, quantity });
 
@@ -16,11 +16,6 @@ test("unprocessed means every item is still requested", () => {
   assert.equal(isUnprocessed({ items: [item("requested"), item("requested")] }), true);
   assert.equal(isUnprocessed({ items: [item("requested"), item("ordered")] }), false);
   assert.equal(isUnprocessed({ items: [item("cancelled")] }), false);
-});
-
-test("summary names the first items and counts the rest", () => {
-  const request = { items: [item("requested", "Soap", "6 bottles"), item("requested", "Gloves", "2 boxes"), item("requested", "Mop", "1")] };
-  assert.equal(itemsSummary(request), "Soap (6 bottles), Gloves (2 boxes) +1 more");
 });
 
 test("form check: blank rows are dropped, half-filled rows and missing department are flagged", () => {

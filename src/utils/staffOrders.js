@@ -41,12 +41,6 @@ export function isUnprocessed(request) {
   return (request?.items || []).every((item) => item.status === "requested");
 }
 
-export function itemsSummary(request, max = 2) {
-  const items = request?.items || [];
-  const shown = items.slice(0, max).map((item) => `${item.name} (${item.quantity})`);
-  return items.length > max ? `${shown.join(", ")} +${items.length - max} more` : shown.join(", ");
-}
-
 export function isWebLink(value) {
   return /^https?:\/\/\S+$/i.test(String(value || "").trim());
 }

@@ -4,8 +4,8 @@
   whatever the device's timezone.
 */
 import { EMAIL_TIME_ZONE, getLocalDate } from "./portalEmail.js";
-import { formatMealTime, getGuestCount } from "./mealPlan.js";
-import { getBookingLodgingDisplayText } from "./lodgingUtils.js";
+import { formatMealTime, getGuestCount, parseWholeCount } from "./mealPlan.js";
+import { getBookingLodgingAssignments, getBookingLodgingDisplayText } from "./lodgingUtils.js";
 
 export const CAMP_TIME_ZONE = EMAIL_TIME_ZONE;
 
@@ -174,6 +174,30 @@ export function canUseKitchen(me) {
 export function lodgingText(booking) {
   const text = getBookingLodgingDisplayText(booking);
   return text === "Unassigned" ? "" : text;
+}
+
+/*
+  Buildings a group stays in, read the way the office dashboard and the
+  Lodging Calendar read them (getBookingLodgingAssignments). Every building
+  is returned, never truncated. `group` is the Lodging Calendar colour key.
+    { buildings: [{ key, label, group }], status }
+  status: "assigned" | "text" (recorded text naming no known building, shown
+  as is) | "unassigned" (overnight stay, nothing recorded) | "none" (day use
+  or internal use with nothing recorded: no label needed).
+*/
+export function getStaffBuildings(booking) {
+  const assignments = getBookingLodgingAssignments(booking);
+  if (assignments.length) {
+    return {
+      status: "assigned",
+      buildings: assignments.map((entry) => ({ key: entry.buildingId, label: entry.label, group: entry.calendarGroup })),
+    };
+  }
+  const text = lodgingText(booking);
+  if (text) return { status: "text", buildings: [{ key: "text", label: text, group: "other" }] };
+  const nights = parseWholeCount(booking?.rentalFormDetails?.numberOfNights);
+  const needsHousing = booking?.kind !== "internal" && nights !== 0;
+  return { status: needsHousing ? "unassigned" : "none", buildings: [] };
 }
 
 // "Sum of known counts", labelled honestly.

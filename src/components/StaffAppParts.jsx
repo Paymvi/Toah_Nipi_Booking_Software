@@ -6,7 +6,24 @@ import { FaSignInAlt } from "react-icons/fa";
 
 import { signOut } from "../services/staffAppService";
 import { COUNT_STATUS_LABELS, getDietaryAlerts } from "../utils/mealPlan";
-import { describeActor, describeChange, formatWhen } from "../utils/staffAppFormat";
+import { describeActor, describeChange, formatWhen, getStaffBuildings } from "../utils/staffAppFormat";
+
+// Every building a group stays in, as wrapping pills in the dashboard's building colours.
+export function Buildings({ booking }) {
+  const { status, buildings } = getStaffBuildings(booking);
+  if (status === "none") return null;
+  if (status === "unassigned") {
+    return <span className="sa-buildings"><span className="sa-building sa-building-unassigned">Housing not assigned</span></span>;
+  }
+  return (
+    <span className="sa-buildings">
+      <span className="sa-visually-hidden">Staying in: </span>
+      {buildings.map((entry) => (
+        <span key={entry.key} className={`sa-building sa-building-${entry.group}`}>{entry.label}</span>
+      ))}
+    </span>
+  );
+}
 
 export function CountStatus({ count, compact = false }) {
   const label = COUNT_STATUS_LABELS[count.status];

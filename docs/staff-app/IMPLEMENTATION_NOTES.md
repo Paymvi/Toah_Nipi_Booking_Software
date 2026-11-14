@@ -54,6 +54,13 @@ Screenshots (fictional data, local stack): [screenshots/](screenshots/). Names e
   - Hosting meals typed in "Meals for the kitchen" are free text, so they show as needs review and are not counted; a structured schedule (for example from a converted booking) is counted.
 - **Time zone:** every "today", meal date and timestamp uses America/New_York (`usePropertyToday`, `staffAppFormat.js`).
 
+## Buildings (src/utils/staffAppFormat.js `getStaffBuildings`)
+
+- Today, Calendar, Group details and Kitchen By Booking show every building a group stays in, as pills in the office dashboard's building colours. Nothing is truncated; long lists wrap.
+- They are read by `getBookingLodgingAssignments`, the same reader as the dashboard and the Lodging Calendar: Housing tab values once saved, otherwise imported text. Recorded text naming no known building is shown as written.
+- Nothing recorded on an overnight stay shows **Housing not assigned** (also listed under "Still waiting on"). Day use (`numberOfNights` 0) and internal use show no label.
+- No database change was needed: the lodging counts, `housingUsage`, `housingSavedAt`, `staffEditedFields.lodging`, `buildingsRooms` and `roomName` were already in the allowlist. Tests: `tests/staffBuildings.test.js`.
+
 ## Permissions (supabase/migrations/20261113000100_staff_app.sql)
 
 - New role `limited` plus `staff_profiles.departments` (only `kitchen` for now). `viewer` keeps its meaning (office, read-only).
@@ -87,7 +94,7 @@ Pre-existing, not changed: `staff_directory` has no table grants in its migratio
 
 ## Freshness and session
 
-- Each screen shows "Up to date · checked 9:47 PM" (screen refresh time), separate from "Last recorded change … by …" (source change time).
+- Each screen shows "Up to date · 9:47 PM" (screen refresh time), separate from "Last recorded change … by …" (source change time).
 - It re-checks when the tab or phone wakes after 60 s, when the network returns, and every 5 minutes while visible.
 - Offline, a failed refresh, or data older than 15 minutes switches to an amber "may be out of date" line that still names the time of the shown data.
 - An expired session shows "Your session has ended" with **Sign in again**.

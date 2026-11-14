@@ -120,6 +120,20 @@ const rows = [
     meals: "Meals: Fri dinner thru Sun lunch, maybe cookout Sat? confirm w/ leader",
     meal_count: "6",
   }, {}),
+  // Long name and many buildings: checks that names and building lists wrap instead of being cut.
+  base("harvest", {
+    organization_name: "Greater Lakes Regional Fellowship of Congregations Fall Family Harvest Weekend",
+    start_date: day(-1), end_date: day(1), attendee_count: "96",
+    buildings_rooms: "Bethel: 24; Hebron 3rd Floor: 14; Hebron Bunks: 30; Ajalon: 10; Capernaum: 8; Camping: Tent: 10",
+  }, {
+    actualAdultGuests: "96", arrivalTime: "15:00", departureTime: "11:00",
+    breakfastTime: "07:30", lunchTime: "12:00", dinnerTime: "17:30",
+    lodgingBethel: "24", lodgingHebronThird: "14", lodgingHebronBunks: "30", lodgingAjalon: "10", lodgingCapernaum: "8",
+    lodgingCamping: "10", lodgingCampingTent: "10",
+    housingUsage: { lodgingBethel: true, lodgingHebronThird: true, lodgingHebronBunks: true, lodgingAjalon: true, lodgingCapernaum: true, lodgingCamping: true },
+    housingSavedAt: "2026-11-01T00:00:00Z",
+    mealSchedule: schedule([[-1, "D"], [0, "BLD"], [1, "B"]]),
+  }),
   base("training", {
     organization_name: "Host: Staff Training Lunch",
     retreat_type: "Hosting",
