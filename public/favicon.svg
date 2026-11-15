@@ -1,1 +1,93 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="48" height="46" fill="none" viewBox="0 0 48 46"><path fill="#863bff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z" style="fill:#863bff;fill:color(display-p3 .5252 .23 1);fill-opacity:1"/><mask id="a" width="48" height="46" x="0" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M25.842 44.938c-.664.844-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.183c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.498 0-3.579-1.842-3.579H1.133c-.92 0-1.456-1.04-.92-1.787L9.91.473c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.578 1.842 3.578h11.377c.943 0 1.473 1.088.89 1.832L25.843 44.94z" style="fill:#000;fill-opacity:1"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#ede6ff" rx="5.508" ry="14.704" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -4.47 31.516)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#ede6ff" rx="10.399" ry="29.851" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -39.328 7.883)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#7e14ff" rx="5.508" ry="30.487" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -25.913 -14.639)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -32.644 -3.334)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -34.34 30.47)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#ede6ff" rx="14.072" ry="22.078" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="rotate(93.35 24.506 48.493)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx=".387" cy="8.972" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(39.51 .387 8.972)"/></g><g filter="url(#k)"><ellipse cx="47.523" cy="-6.092" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 47.523 -6.092)"/></g><g filter="url(#l)"><ellipse cx="41.412" cy="6.333" fill="#47bfff" rx="5.971" ry="9.665" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 41.412 6.333)"/></g><g filter="url(#m)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#n)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#o)"><ellipse cx="35.651" cy="29.907" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 35.651 29.907)"/></g><g filter="url(#p)"><ellipse cx="38.418" cy="32.4" fill="#47bfff" rx="5.971" ry="15.297" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 38.418 32.4)"/></g></g><defs><filter id="b" width="60.045" height="41.654" x="-19.77" y="16.149" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-54.613" y="-7.533" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-49.64" y="2.03" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-45.045" y="20.029" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-43.513" y="21.178" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="15.756" y="-17.901" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-27.636" y="-22.853" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="20.116" y="-38.415" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="24.641" y="-11.323" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="8.244" y="-2.416" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="18.713" y="10.588" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter></defs></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="6 10 112 116">
+  <!-- The tutorial gnome's head (src/tutorial/GnomeMascot.jsx, same palette and face), with a floppy hat tip and curled beard for the app icon. -->
+  <defs>
+    <linearGradient id="hat" x1="0" y1="0" x2="1" y2="0.3">
+      <stop offset="0" stop-color="#F07A5E"/>
+      <stop offset="0.45" stop-color="#E4573F"/>
+      <stop offset="1" stop-color="#BF3F2C"/>
+    </linearGradient>
+    <linearGradient id="brim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EE6D53"/>
+      <stop offset="0.55" stop-color="#DE523C"/>
+      <stop offset="1" stop-color="#B93D2A"/>
+    </linearGradient>
+    <radialGradient id="skin" cx="0.45" cy="0.4" r="0.65">
+      <stop offset="0" stop-color="#FCDCC2"/>
+      <stop offset="0.6" stop-color="#F7C9A5"/>
+      <stop offset="1" stop-color="#EBB089"/>
+    </radialGradient>
+    <radialGradient id="beard" cx="0.45" cy="0.25" r="0.85">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.5" stop-color="#F7F3EA"/>
+      <stop offset="1" stop-color="#E2D6C2"/>
+    </radialGradient>
+    <radialGradient id="nose" cx="0.4" cy="0.35" r="0.7">
+      <stop offset="0" stop-color="#F8AE8C"/>
+      <stop offset="1" stop-color="#E9825F"/>
+    </radialGradient>
+    <path id="hat-shape" d="M33.5 60 C33 44 39.5 29 51 20.5 C61.5 12.8 77 13.4 87.5 23.5 C92 27.8 95.2 33.5 96.2 39.4 C96.6 42 94 43.2 92.4 41.4 C89.4 37.6 85.6 34.4 81 33.8 C76.2 33.2 73.4 36.6 74 42 C74.8 48.6 79.6 54.4 86.5 60 Z"/>
+    <path id="beard-shape" d="M37.5 78 C31.5 86 31 97 35.5 104.5 Q34.6 112.6 41.5 113 Q42.6 119.8 49 119.4 Q52 125.4 60 124.6 Q68 125.4 71 119.4 Q77.4 119.8 78.5 113 Q85.4 112.6 84.5 104.5 C89 97 88.5 86 82.5 78 C80.5 83 77.5 86.8 73 88 C69.5 89.3 65 88.3 60 88.3 C55 88.3 50.5 89.3 47 88 C42.5 86.8 39.5 83 37.5 78 Z"/>
+    <path id="brim-shape" d="M30.5 61 C42 52.5 78 52.5 89.5 61 C92.5 63 92 69.5 88.5 70.5 C77 63.5 43 63.5 31.5 70.5 C28 69.5 27.5 63 30.5 61 Z"/>
+  </defs>
+
+  <!-- Soft outline behind the whole head so the white beard still reads on a white tab -->
+  <g fill="#7A3A2C" stroke="#7A3A2C" stroke-width="4" stroke-linejoin="round" opacity="0.9">
+    <use href="#hat-shape"/>
+    <use href="#brim-shape"/>
+    <ellipse cx="35.2" cy="76" rx="4.6" ry="6"/>
+    <ellipse cx="84.8" cy="76" rx="4.6" ry="6"/>
+    <ellipse cx="60" cy="77" rx="24" ry="20.5"/>
+    <use href="#beard-shape"/>
+  </g>
+
+  <!-- Ears and face -->
+  <ellipse cx="35.2" cy="76" rx="4.6" ry="6" fill="url(#skin)"/>
+  <ellipse cx="84.8" cy="76" rx="4.6" ry="6" fill="url(#skin)"/>
+  <path d="M36.2 72.5 Q33.2 76 35.7 79.5 M83.8 72.5 Q86.8 76 84.3 79.5" stroke="#E3A07F" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+  <ellipse cx="60" cy="77" rx="24" ry="20.5" fill="url(#skin)"/>
+  <path d="M38 68.4 C48 63.6 72 63.6 82 68.4 L81 70 C72 66.6 48 66.6 39 70 Z" fill="#D99A78" opacity="0.45"/>
+
+  <!-- Brows -->
+  <g stroke-linecap="round" fill="none">
+    <path d="M47.5 71.7 Q51.5 69.5 55.5 71.3 M64.5 71.3 Q68.5 69.5 72.5 71.7" stroke="#D9A98A" stroke-width="2.8" opacity="0.45"/>
+    <path d="M47.5 71 Q51.5 68.8 55.5 70.6 M64.5 70.6 Q68.5 68.8 72.5 71" stroke="#FFFBF3" stroke-width="2.2"/>
+  </g>
+
+  <!-- Eyes -->
+  <ellipse cx="51.5" cy="77" rx="3" ry="4" fill="#2A2321"/>
+  <ellipse cx="68.5" cy="77" rx="3" ry="4" fill="#2A2321"/>
+  <circle cx="52.6" cy="75.5" r="1.15" fill="#fff"/>
+  <circle cx="69.6" cy="75.5" r="1.15" fill="#fff"/>
+  <circle cx="50.6" cy="78.5" r="0.5" fill="#fff" opacity="0.8"/>
+  <circle cx="67.6" cy="78.5" r="0.5" fill="#fff" opacity="0.8"/>
+
+  <!-- Cheeks -->
+  <ellipse cx="46" cy="84.5" rx="4.8" ry="3" fill="#F29A85" opacity="0.55"/>
+  <ellipse cx="74" cy="84.5" rx="4.8" ry="3" fill="#F29A85" opacity="0.55"/>
+
+  <!-- Beard, with a few curls -->
+  <use href="#beard-shape" fill="url(#beard)"/>
+  <path d="M43.5 96 C42 101.5 44.5 107.5 50 111 M76.5 96 C78 101.5 75.5 107.5 70 111 M60 110.5 Q59.2 114.5 60 118.5 M39.5 106.5 Q41.5 110 45 110.4 M80.5 106.5 Q78.5 110 75 110.4 M51 114.5 Q53.5 117.6 56.5 117.2 M69 114.5 Q66.5 117.6 63.5 117.2" stroke="#E0D3BE" stroke-width="1.1" stroke-linecap="round" fill="none"/>
+
+  <!-- Smile -->
+  <path d="M55.8 92.4 Q60 98.4 64.2 92.4 Q60 93.8 55.8 92.4 Z" fill="#8E3B2E"/>
+  <ellipse cx="60" cy="95.4" rx="2.2" ry="1.1" fill="#E27D6B"/>
+
+  <!-- Moustache -->
+  <path d="M60 88 C56 85.6 50.5 86 47.2 90.6 C51 93.4 56.5 92.8 60 90.2 C63.5 92.8 69 93.4 72.8 90.6 C69.5 86 64 85.6 60 88 Z" fill="#E0D3BE"/>
+  <path d="M60 87 C56 84.6 50.5 85 47.2 89.6 C51 92.4 56.5 91.8 60 89.2 C63.5 91.8 69 92.4 72.8 89.6 C69.5 85 64 84.6 60 87 Z" fill="url(#beard)"/>
+
+  <!-- Nose -->
+  <ellipse cx="60" cy="84" rx="5.2" ry="4.4" fill="url(#nose)"/>
+  <ellipse cx="58.3" cy="82.4" rx="1.5" ry="1" fill="#fff" opacity="0.6"/>
+
+  <!-- Hat: the cone flops over to the right, then the folded brim -->
+  <use href="#hat-shape" fill="url(#hat)"/>
+  <path d="M74 42 C74.8 48.6 79.6 54.4 86.5 60 L77 60 C73.2 54 71.4 47.6 72 41.6 C72.6 36.4 76 33.4 81 33.8 C76.2 33.2 73.4 36.6 74 42 Z" fill="#B73C29" opacity="0.35"/>
+  <path d="M81 33.8 C85.6 34.4 89.4 37.6 92.4 41.4 C94 43.2 96.6 42 96.2 39.4 C93 36.6 87.6 33.4 81 33.8 Z" fill="#B73C29" opacity="0.45"/>
+  <path d="M40 53 C40.5 41 45.5 30.5 53.5 23.5 C59.5 18.5 67 16.8 74 18 C64 19.6 55.5 25 50 33 C46.5 38.5 45 45.5 45 53 Z" fill="#fff" opacity="0.16"/>
+  <circle cx="94.6" cy="40.6" r="3.1" fill="#F3B562"/>
+  <circle cx="93.8" cy="39.7" r="1" fill="#fff" opacity="0.55"/>
+  <use href="#brim-shape" fill="url(#brim)"/>
+  <path d="M35 60.5 C46 54.5 74 54.5 85 60.5" stroke="#F59A80" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.55"/>
+</svg>

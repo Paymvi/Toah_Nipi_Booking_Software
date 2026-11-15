@@ -10027,7 +10027,7 @@ export default function Dashboard() {
           <FaBars aria-hidden="true" />
         </button>
 
-        <span className="mobile-app-header-mark" aria-hidden="true">TN</span>
+        <span className="mobile-app-header-mark" aria-hidden="true"><img src="/favicon.svg" alt="" /></span>
         <strong className="mobile-app-header-title">{currentNavLabel}</strong>
       </header>
 
@@ -10054,7 +10054,7 @@ export default function Dashboard() {
         }}
       >
         <div className="dashboard-logo">
-          <span>TN</span>
+          <span aria-hidden="true"><img src="/favicon.svg" alt="" /></span>
 
           <div>
             <strong>Toah Nipi</strong>

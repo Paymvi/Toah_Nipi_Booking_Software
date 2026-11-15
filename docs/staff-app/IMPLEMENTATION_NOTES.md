@@ -183,7 +183,7 @@ Added 2026-11-14. Staff ask for supplies or equipment; purchasing tracks each it
 ## Known limits and next steps
 
 - Kitchen prep ticks and department acknowledgments are **not built**: no new tables, nothing writes from the staff app.
-- The icon is the existing favicon. Replace `public/staff-icon-*.png` and `apple-touch-icon.png` with a real camp mark.
+- The icon is the gnome from `public/favicon.svg` (the tutorial gnome's head) on the app purple, rendered to `public/staff-icon-*.png` and `apple-touch-icon.png`.
 - By Booking lists groups in the loaded window (about 9 weeks ahead). A group further out shows "not in the current list".
 - Housing room splits, linens and turnover belong to the housekeeping phase.
 - The live data quality (how many bookings have structured meal plans) is still unverified. Expect "needs review" for older imports.
