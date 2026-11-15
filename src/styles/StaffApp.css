@@ -776,8 +776,7 @@ dd .sa-count,
 }
 
 .sa-today-grid,
-.sa-column,
-.sa-agenda {
+.sa-column {
   display: flex;
   flex-direction: column;
   gap: 22px;
@@ -825,93 +824,242 @@ dd .sa-count,
   font-weight: 500;
 }
 
-/* ---------- Calendar ---------- */
+/* ---------- Calendar ----------
+   Month grid laid out like the office calendar (BookingCalendar's lanes):
+   one bar per stay per week, at most three lanes, then "+N more" on the day.
+   Phones show thin bars and the selected day's groups underneath. */
 
-.sa-week-bar {
+.sa-cal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sa-cal-bar {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.sa-week-strip {
+.sa-cal-bar h2 {
   flex: 1;
   min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 2px;
+  text-align: center;
+  font-size: 17px;
+  white-space: nowrap;
 }
 
-.sa-week-day {
+@media (max-width: 360px) {
+  .sa-cal-bar h2 {
+    font-size: 15.5px;
+  }
+
+  .sa-cal-today {
+    padding-inline: 12px;
+  }
+}
+
+.sa-cal-today:disabled {
+  opacity: 0.55;
+}
+
+.sa-cal-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.sa-cal-month {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--n-line-2, #e3e6ee);
+  border-radius: 12px;
+  background: var(--n-surface, #ffffff);
+}
+
+.sa-cal-weekdays,
+.sa-cal-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.sa-cal-weekdays span {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--n-line-2, #e3e6ee);
+  color: var(--n-text-3, #5f6675);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.sa-cal-week {
+  --sa-cal-bar: 6px;
+  grid-template-rows: 26px repeat(3, var(--sa-cal-bar)) minmax(16px, auto);
+  row-gap: 2px;
+  padding-bottom: 2px;
+}
+
+.sa-cal-week + .sa-cal-week {
+  border-top: 1px solid var(--n-line, #eceef3);
+}
+
+/* The day button covers the whole cell; bars sit on top of it. */
+.sa-cal-cell {
+  grid-row: 1 / -1;
+  min-width: 0;
+  min-height: 56px;
+  margin: 0;
+  padding: 3px 0 2px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 52px;
-  padding: 3px 0;
-  border-radius: 10px;
-  color: var(--n-text-2, #4b5262) !important;
-  font-size: 13px;
-  text-decoration: none;
-}
-
-.sa-week-day strong {
-  color: var(--n-text, #1f2330);
-  font-size: 17px;
-  line-height: 1.15;
-}
-
-.sa-week-day.is-today {
-  background: #4f46c7;
-  color: #ffffff !important;
-}
-
-.sa-week-day.is-today strong {
-  color: #ffffff;
-}
-
-.sa-week-mark {
-  min-height: 10px;
-  line-height: 0.6;
-  color: var(--n-violet-text, #4f46c7);
-  font-size: 18px;
-}
-
-.sa-week-day.is-today .sa-week-mark {
-  color: #ffffff;
-}
-
-.sa-staying {
-  padding: 10px 16px 12px;
-  border-top: 1px solid var(--n-line, #eceef3);
-  color: var(--n-text-2, #4b5262);
-  font-size: 13px;
-}
-
-.sa-day.is-quiet .sa-day-head {
-  border-bottom: 0;
+  justify-content: space-between;
+  border: 0;
+  border-left: 1px solid var(--n-line, #eceef3);
   background: none;
+  color: var(--n-text, #1f2330);
+  font: inherit;
+  cursor: pointer;
 }
 
-.sa-day.is-today {
-  border-color: var(--n-violet-line, #c9c3f0);
+.sa-cal-week > :first-child {
+  border-left: 0;
 }
 
-.sa-day.is-today .sa-day-head {
+.sa-cal-cell.is-blank {
+  background: var(--n-surface-2, #f8f9fb);
+  cursor: default;
+}
+
+.sa-cal-num {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.sa-cal-cell:not(.has-groups) .sa-cal-num {
+  color: var(--n-text-3, #5f6675);
+  font-weight: 500;
+}
+
+.sa-cal-cell.is-today .sa-cal-num {
+  background: var(--n-accent-solid, #443a9c);
+  color: #ffffff;
+}
+
+.sa-cal-cell.is-selected {
   background: var(--n-violet-bg, #f1effb);
+  box-shadow: inset 0 0 0 2px var(--n-violet-text, #4f46c7);
 }
 
-.sa-agenda {
-  gap: 14px;
+.sa-cal-more {
+  color: var(--n-violet-text, #443a9c);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
 }
 
-.sa-day {
-  scroll-margin-top: 12px;
+.sa-cal-more-word {
+  display: none;
+}
+
+.sa-cal-bar-event {
+  z-index: 1;
+  min-width: 0;
+  margin: 0 1px;
+  overflow: hidden;
+  border-left: 3px solid transparent;
+  background: var(--n-teal-text, #2f6f5f);
+  color: transparent !important;
+  font-size: 0;
+  text-decoration: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none; /* phones: the tap selects the day */
+}
+
+.sa-cal-bar-event.is-internal {
+  background: var(--n-plum-text, #6b2f8a);
+}
+
+.sa-cal-bar-event.starts {
+  margin-left: 4px;
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.sa-cal-bar-event.ends {
+  margin-right: 4px;
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.sa-cal-none {
+  padding: 14px 16px;
+  color: var(--n-text-2, #4b5262);
+  font-size: 14px;
+}
+
+/* Wider screens: labelled bars that open the group, as in the office calendar. */
+@media (min-width: 700px) {
+  .sa-cal-week {
+    --sa-cal-bar: 22px;
+    grid-template-rows: 28px repeat(3, var(--sa-cal-bar)) minmax(18px, auto);
+  }
+
+  .sa-cal-cell {
+    min-height: 104px;
+    align-items: flex-end;
+    padding: 4px 6px 2px;
+  }
+
+  .sa-cal-more-word {
+    display: inline;
+  }
+
+  .sa-cal-more {
+    align-self: flex-start;
+    font-size: 12px;
+  }
+
+  .sa-cal-bar-event {
+    padding: 0 6px;
+    border-left-color: var(--n-teal-text, #2f6f5f);
+    background: var(--n-teal-bg, #e3f1ec);
+    color: var(--n-text, #1f2330) !important;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: var(--sa-cal-bar);
+    pointer-events: auto;
+  }
+
+  .sa-cal-bar-event:not(.starts) {
+    border-left-color: transparent;
+  }
+
+  .sa-cal-bar-event.is-internal {
+    border-left-color: var(--n-plum-text, #6b2f8a);
+    background: var(--n-plum-bg, #f4ebfa);
+  }
+
+  .sa-cal-bar-event:hover {
+    filter: brightness(0.96);
+  }
 }
 
 @media (min-width: 1000px) {
-  .sa-agenda {
+  .sa-cal-layout {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px 24px;
+    grid-template-columns: minmax(0, 5fr) minmax(300px, 2fr);
+    gap: 24px;
     align-items: start;
   }
 }

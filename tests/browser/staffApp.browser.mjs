@@ -161,7 +161,8 @@ for (const size of SIZES) {
     "Private": false,
     "Changed since yesterday": true,
   });
-  await visit(s, size, "/staff/calendar", "calendar", { "Northfield Youth Group": true, "Staff Training Lunch": true });
+  // Month grid; the day panel lists every group on the chosen day, including any behind "+N more".
+  await visit(s, size, `/staff/calendar?date=${tomorrow}`, "calendar", { "Northfield Youth Group": true, "Staff Training Lunch": true, "Board Dinner": false });
   await visit(s, size, "/staff/group/demo-cedar", "group", {
     "Tree nut allergy": true,
     "Projector in Bethel meeting room": true,

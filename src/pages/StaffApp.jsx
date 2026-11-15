@@ -23,6 +23,7 @@ import {
 } from "react-icons/fa";
 
 import { useStaffAccess } from "../auth/staffAccess";
+import { getWeekEventSegments } from "../utils/calendarLanes";
 import { Buildings, ChangeList, Chip, CountStatus, DietaryChips, LoadProblem } from "../components/StaffAppParts";
 import { fetchStaffAppBooking, fetchStaffAppBookings, fetchStaffOrders, signOut } from "../services/staffAppService";
 import { usePropertyToday } from "../utils/propertyToday";
@@ -432,13 +433,7 @@ function TodayView({ me, state, todayKey }) {
                   <section key={day.dateKey} className="sa-day-block" aria-label={formatDay(day.dateKey)}>
                     <h3 className="sa-day-head">
                       <span>{relativeDayLabel(day.dateKey, todayKey) === "Tomorrow" ? `Tomorrow · ${formatDay(day.dateKey)}` : formatDay(day.dateKey)}</span>
-                      <small>
-                        {[
-                          day.arriving.length && `${day.arriving.length} arriving`,
-                          day.leaving.length && `${day.leaving.length} leaving`,
-                          `${plural(day.arriving.length + day.staying.length, "group")} on site`,
-                        ].filter(Boolean).join(" · ")}
-                      </small>
+                      <small>{daySummary(day)}</small>
                     </h3>
                     <ul>
                       {day.leaving.map((booking) => <GroupRow key={`l-${booking.id}`} booking={booking} dateKey={day.dateKey} />)}
@@ -523,96 +518,138 @@ function TodayView({ me, state, todayKey }) {
    Calendar
 --------------------------------------------------------- */
 
-function CalendarAgenda({ state, todayKey, week, onWeek }) {
+const CAL_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const CAL_LANES = 3; // bars shown per week before a day says "+N more"
+
+// First day of the month `delta` months from dateKey's month.
+function monthStart(dateKey, delta = 0) {
+  const date = new Date(Date.UTC(Number(dateKey.slice(0, 4)), Number(dateKey.slice(5, 7)) - 1 + delta, 1));
+  return date.toISOString().slice(0, 10);
+}
+
+// The month on screen: the whole month, since bars stop at the month edge as in the office calendar.
+function monthRange(dateKey) {
+  return { from: monthStart(dateKey), to: shiftDate(monthStart(dateKey, 1), -1) };
+}
+
+// Same cells as the office calendar: blanks before the 1st and after the last day.
+function monthCells(dateKey) {
+  const first = monthStart(dateKey);
+  const days = Number(monthRange(dateKey).to.slice(8));
+  const cells = Array(new Date(`${first}T00:00:00Z`).getUTCDay()).fill(null);
+  for (let day = 1; day <= days; day += 1) cells.push(`${first.slice(0, 8)}${String(day).padStart(2, "0")}`);
+  while (cells.length % 7) cells.push(null);
+  return cells;
+}
+
+function daySummary(day) {
+  return [
+    day.arriving.length && `${day.arriving.length} arriving`,
+    day.leaving.length && `${day.leaving.length} leaving`,
+    `${plural(day.arriving.length + day.staying.length, "group")} on site`,
+  ].filter(Boolean).join(" · ");
+}
+
+function CalendarMonth({ state, todayKey, selected, onSelect }) {
   const bookings = useMemo(() => state.data?.bookings || [], [state.data]);
-  const days = Array.from({ length: 7 }, (_, index) => shiftDate(week, index));
-  const movement = (dateKey) => dayMovement(bookings, dateKey);
+  const cells = monthCells(selected);
+  const year = Number(selected.slice(0, 4));
+  const month = Number(selected.slice(5, 7)) - 1;
+  const weeks = Array.from({ length: cells.length / 7 }, (_, index) => cells.slice(index * 7, index * 7 + 7));
+  // Moving month selects the 1st, or today when today is in that month.
+  const goMonth = (delta) => {
+    const first = monthStart(selected, delta);
+    onSelect(first.slice(0, 7) === todayKey.slice(0, 7) ? todayKey : first);
+  };
+  const day = dayMovement(bookings, selected);
+  const dayGroups = [...day.leaving, ...day.arriving, ...day.staying];
 
   return (
-    <>
-      <div className="sa-week-bar">
-        <button type="button" className="sa-icon-button" onClick={() => onWeek(shiftDate(week, -7))} aria-label="Previous week">
+    <div className="sa-cal">
+      <div className="sa-cal-bar">
+        <button type="button" className="sa-icon-button" onClick={() => goMonth(-1)} aria-label="Previous month">
           <FaChevronLeft aria-hidden="true" />
         </button>
-        <ol className="sa-week-strip">
-          {days.map((dateKey) => {
-            const { arriving, leaving } = movement(dateKey);
-            return (
-              <li key={dateKey}>
-                <a href={`#day-${dateKey}`} className={`sa-week-day${dateKey === todayKey ? " is-today" : ""}`}>
-                  <span>{formatDay(dateKey, { weekday: "short" })}</span>
-                  <strong>{formatDay(dateKey, { day: "numeric" })}</strong>
-                  <span className="sa-week-mark" aria-label={arriving.length + leaving.length ? `${arriving.length} arriving, ${leaving.length} leaving` : "No movement"}>
-                    {arriving.length + leaving.length ? "•" : ""}
-                  </span>
-                </a>
-              </li>
-            );
-          })}
-        </ol>
-        <button type="button" className="sa-icon-button" onClick={() => onWeek(shiftDate(week, 7))} aria-label="Next week">
+        <h2 aria-live="polite">{formatDay(selected, { month: "long", year: "numeric" })}</h2>
+        <button type="button" className="sa-icon-button" onClick={() => goMonth(1)} aria-label="Next month">
           <FaChevronRight aria-hidden="true" />
         </button>
-      </div>
-      <div className="sa-toolbar">
-        {week !== weekStart(todayKey) && (
-          <button type="button" className="sa-button sa-button-quiet" onClick={() => onWeek(weekStart(todayKey))}>This week</button>
-        )}
-        <label className="sa-date-field">
-          <span>Go to date</span>
-          <input type="date" value={week} onChange={(event) => isDateKey(event.target.value) && onWeek(weekStart(event.target.value))} />
-        </label>
+        <button type="button" className="sa-button sa-button-quiet sa-cal-today" onClick={() => onSelect(todayKey)} disabled={selected === todayKey}>
+          Today
+        </button>
       </div>
 
       <LoadProblem state={state} />
       {!state.data ? (
         state.error ? null : <p className="sa-empty">Loading…</p>
       ) : (
-        <div className="sa-agenda">
-        {days.map((dateKey) => {
-          const { arriving, leaving, staying } = movement(dateKey);
-          const quiet = !arriving.length && !leaving.length;
-          return (
-            <section
-              key={dateKey}
-              id={`day-${dateKey}`}
-              className={`sa-list sa-day-block sa-day${dateKey === todayKey ? " is-today" : ""}${quiet ? " is-quiet" : ""}`}
-              aria-label={formatDay(dateKey)}
-            >
-              <h2 className="sa-day-head">
-                <span>
-                  {formatDay(dateKey)}
-                  {dateKey === todayKey && <Chip tone="today">Today</Chip>}
-                </span>
-                <small>
-                  {quiet
-                    ? "No arrivals or departures"
-                    : [arriving.length && `${arriving.length} arriving`, leaving.length && `${leaving.length} leaving`].filter(Boolean).join(" · ")}
-                </small>
-              </h2>
-              {!quiet && (
-                <ul>
-                  {leaving.map((booking) => <GroupRow key={`l-${booking.id}`} booking={booking} dateKey={dateKey} />)}
-                  {arriving.map((booking) => <GroupRow key={`a-${booking.id}`} booking={booking} dateKey={dateKey} />)}
-                </ul>
-              )}
-              {staying.length > 0 && (
-                <p className="sa-staying">
-                  Also on site:{" "}
-                  {staying.map((booking, index) => (
-                    <span key={booking.id}>
-                      {index > 0 && ", "}
-                      <Link to={`/staff/group/${encodeURIComponent(booking.id)}`}>{booking.organizationName}</Link>
-                    </span>
+        <div className="sa-cal-layout">
+          <div className="sa-cal-month">
+            <div className="sa-cal-weekdays" aria-hidden="true">
+              {CAL_WEEKDAYS.map((label) => <span key={label}>{label}</span>)}
+            </div>
+            {weeks.map((week, weekIndex) => {
+              const segments = getWeekEventSegments({ weekIndex, datedInquiries: bookings, selectedYear: year, selectedMonth: month });
+              const hidden = (column) => segments.filter((segment) => segment.lane >= CAL_LANES && segment.startColumn <= column && segment.endColumn >= column).length;
+              return (
+                <div className="sa-cal-week" key={weekIndex}>
+                  {week.map((dateKey, index) => {
+                    if (!dateKey) return <span key={index} className="sa-cal-cell is-blank" style={{ gridColumn: index + 1 }} />;
+                    const groups = bookings.filter((booking) => overlaps(booking, dateKey)).length;
+                    const more = hidden(index + 1);
+                    return (
+                      <button
+                        key={dateKey}
+                        type="button"
+                        className={`sa-cal-cell${dateKey === todayKey ? " is-today" : ""}${dateKey === selected ? " is-selected" : ""}${groups ? " has-groups" : ""}`}
+                        style={{ gridColumn: index + 1 }}
+                        onClick={() => onSelect(dateKey)}
+                        aria-pressed={dateKey === selected}
+                        aria-current={dateKey === todayKey ? "date" : undefined}
+                        aria-label={`${formatDay(dateKey, { weekday: "long", month: "long", day: "numeric" })}${dateKey === todayKey ? ", today" : ""}: ${groups ? plural(groups, "group") : "no groups"}`}
+                      >
+                        <span className="sa-cal-num">{Number(dateKey.slice(8))}</span>
+                        {more > 0 && (
+                          <span className="sa-cal-more">
+                            +{more}<span className="sa-cal-more-word"> more</span>
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {segments.filter((segment) => segment.lane < CAL_LANES).map((segment) => (
+                    <Link
+                      key={segment.inquiry.id}
+                      to={`/staff/group/${encodeURIComponent(segment.inquiry.id)}`}
+                      className={`sa-cal-bar-event${segment.inquiry.kind === "internal" ? " is-internal" : ""}${segment.startsHere ? " starts" : ""}${segment.endsHere ? " ends" : ""}`}
+                      style={{ gridColumn: `${segment.startColumn} / span ${segment.spanDays}`, gridRow: segment.lane + 2 }}
+                      title={`${segment.inquiry.organizationName} · ${stayDates(segment.inquiry)}`}
+                    >
+                      {segment.inquiry.organizationName}
+                    </Link>
                   ))}
-                </p>
-              )}
-            </section>
-          );
-        })}
+                </div>
+              );
+            })}
+          </div>
+
+          <section className="sa-list sa-day-block sa-cal-day" aria-label={`Groups on ${formatDay(selected)}`}>
+            <h3 className="sa-day-head">
+              <span>
+                {formatDay(selected, { weekday: "long", month: "short", day: "numeric" })}
+                {selected === todayKey && <Chip tone="today">Today</Chip>}
+              </span>
+              {dayGroups.length > 0 && <small>{daySummary(day)}</small>}
+            </h3>
+            {dayGroups.length ? (
+              <ul>{dayGroups.map((booking) => <GroupRow key={booking.id} booking={booking} dateKey={selected} />)}</ul>
+            ) : (
+              <p className="sa-cal-none">No groups booked.</p>
+            )}
+          </section>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -859,12 +896,12 @@ export default function StaffApp() {
 
   const isCalendar = location.pathname.startsWith("/staff/calendar");
   const isKitchen = location.pathname.startsWith("/staff/kitchen");
-  const requestedWeek = searchParams.get("week");
-  const week = isCalendar && isDateKey(requestedWeek) ? weekStart(requestedWeek) : weekStart(todayKey);
   const requestedDate = searchParams.get("date");
-  const kitchenDate = isDateKey(requestedDate) ? requestedDate : todayKey;
-  const focus = isCalendar ? week : isKitchen ? kitchenDate : todayKey;
-  const range = useMemo(() => getWindow(focus, todayKey), [focus, todayKey]);
+  const pickedDate = isDateKey(requestedDate) ? requestedDate : todayKey;
+  // Calendar loads its month; picking another day in the same month reuses it.
+  const calendarMonth = isCalendar ? monthStart(pickedDate) : "";
+  const focus = isKitchen ? pickedDate : todayKey;
+  const range = useMemo(() => (calendarMonth ? monthRange(calendarMonth) : getWindow(focus, todayKey)), [calendarMonth, focus, todayKey]);
   const state = useStaffBookings(range);
   const isOrders = location.pathname.startsWith("/staff/orders");
   const ordersHistory = searchParams.get("view") === "history";
@@ -887,8 +924,7 @@ export default function StaffApp() {
         path="calendar"
         element={shell(
           "Calendar",
-          <CalendarAgenda state={state} todayKey={todayKey} week={week} onWeek={(next) => setSearchParams({ week: next }, { replace: true })} />,
-          formatDay(week, { month: "long", year: "numeric" })
+          <CalendarMonth state={state} todayKey={todayKey} selected={pickedDate} onSelect={(next) => setSearchParams({ date: next }, { replace: true })} />
         )}
       />
       <Route path="group/:bookingId" element={shell("Group", <GroupView me={me} state={state} todayKey={todayKey} />)} />

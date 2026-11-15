@@ -7,7 +7,7 @@ Built 2026-11-13 from [the proposal](../proposals/TOAH_NIPI_STAFF_APP_PROPOSAL.m
 | Screen | Route | Who |
 |---|---|---|
 | Today at camp | `/staff` | every staff account |
-| Calendar (week agenda) | `/staff/calendar?week=YYYY-MM-DD` | every staff account |
+| Calendar (month grid + selected day) | `/staff/calendar?date=YYYY-MM-DD` | every staff account; see [Calendar](#calendar) |
 | Group details | `/staff/group/:bookingId` | every staff account; dietary section for kitchen and office only |
 | Kitchen, By Day | `/staff/kitchen?date=YYYY-MM-DD` | kitchen and office accounts |
 | Kitchen, By Booking | `/staff/kitchen?view=booking&booking=:id` | kitchen and office accounts |
@@ -53,6 +53,13 @@ Screenshots (fictional data, local stack): [screenshots/](screenshots/). Names e
   - Hosting is excluded unless the office ticks **Kitchen should plan for this** (`rentalFormDetails.kitchenInternalMeals = true`); it then shows as **Internal**, its "Host:" prefix dropped.
   - Hosting meals typed in "Meals for the kitchen" are free text, so they show as needs review and are not counted; a structured schedule (for example from a converted booking) is counted.
 - **Time zone:** every "today", meal date and timestamp uses America/New_York (`usePropertyToday`, `staffAppFormat.js`).
+
+## Calendar
+
+- A month grid laid out like the office Calendar: `src/utils/calendarLanes.js` (`getWeekEventSegments`) is shared with `BookingCalendar`, so stays are one bar per week, clipped to the month, packed into lanes. Guest stays use the office green; internal use is plum.
+- At most three bars per week row; a day with more shows **+N more**. The panel under the grid (beside it from 1000 px) lists every group on the selected day with the Today rows (arriving, leaving, on site, buildings, count).
+- Phones (under 700 px) draw thin unlabelled bars and any tap selects the day; wider screens label the bars and a bar opens the group.
+- It loads only the month on screen through `staff_app_bookings`. The selected day is in the URL, so Back from a group returns to it. There are no cancelled/waitlist/archive toggles: those bookings never reach the staff app.
 
 ## Buildings (src/utils/staffAppFormat.js `getStaffBuildings`)
 
