@@ -3864,6 +3864,7 @@ function BookingSpreadsheetView({
             <div
               className="spreadsheet-year-view-toggle"
               aria-label="Spreadsheet year view"
+              data-tutorial-target="spreadsheet-years"
             >
               <button
                 className={spreadsheetYearView === "all" ? "active" : ""}
@@ -3928,7 +3929,7 @@ function BookingSpreadsheetView({
                 </div>
               )}
 
-              <div className="spreadsheet-building-filter">
+              <div className="spreadsheet-building-filter" data-tutorial-target="spreadsheet-buildings">
                 <div className="spreadsheet-building-filter-header">
                   <div>
                     <span>Building Type</span>
@@ -3999,7 +4000,7 @@ function BookingSpreadsheetView({
                 Settings
               </button> */}
 
-              <div className="spreadsheet-date-range-filter">
+              <div className="spreadsheet-date-range-filter" data-tutorial-target="spreadsheet-dates">
                 <label>
                   <span>Start date</span>
                   <input
@@ -4068,7 +4069,7 @@ function BookingSpreadsheetView({
               {/* =========================================================
                   QUICK SORT
               ========================================================= */}
-              <div className="spreadsheet-header-sort">
+              <div className="spreadsheet-header-sort" data-tutorial-target="spreadsheet-sort">
                 <label htmlFor="spreadsheet-header-sort-select">
                   Sort By
                 </label>
@@ -4136,7 +4137,7 @@ function BookingSpreadsheetView({
 
         {masterSpreadsheetBookings.length > 0 ? (
           <>
-            <div className="spreadsheet-active-settings-bar">
+            <div className="spreadsheet-active-settings-bar" data-tutorial-target="spreadsheet-settings-bar">
               <span>
                 Search:{" "}
                 <strong>

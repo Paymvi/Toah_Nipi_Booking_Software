@@ -996,6 +996,40 @@
   font-size: 0.95rem;
 }
 
+/* A group of tutorials (Mini Tutorials) looks like one library row; its chevron turns when open. */
+.tg-group summary {
+  gap: 0.65rem;
+  min-height: 3.4rem;
+  padding: 0.4rem 0.6rem;
+  color: var(--tg-ink);
+  font-size: 1rem;
+}
+
+.tg-group summary strong {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.tg-group summary .tg-item-icon {
+  font-size: 1rem;
+  transform: none;
+}
+
+.tg-group-count {
+  color: var(--tg-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.tg-group summary .tg-group-chevron {
+  color: var(--n-text-3, #9aa1ab);
+}
+
+.tg-group[open] summary .tg-item-icon {
+  transform: none;
+}
+
 .tg-topics .tg-tutorial-item strong {
   font-size: 0.95rem;
   font-weight: 500;

@@ -307,6 +307,8 @@ export function getDemoStepDuration(text) {
   Builds one walkthrough and one standalone topic per section from the same
   step objects. Step ids get the section's id in front, because the setup
   steps appear once per section. See portalTutorial.js.
+  A section's topicId keeps the id it had as a tutorial of its own, so
+  saved progress and related links still find it.
 */
 export function composeWalkthrough({ sections, intro, recap, ...shared }) {
   const stepsOf = (section) =>
@@ -323,7 +325,7 @@ export function composeWalkthrough({ sections, intro, recap, ...shared }) {
 
   const topics = sections.map((section) => ({
     ...shared,
-    id: `${shared.id}/${section.id}`,
+    id: section.topicId ?? `${shared.id}/${section.id}`,
     title: section.title,
     description: section.description,
     group: section.group,

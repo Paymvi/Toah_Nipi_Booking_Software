@@ -478,6 +478,7 @@ export default function InquiryRecordDetailView({
           type="button"
           onClick={onBack}
           disabled={isSaving}
+          data-tutorial-target="booking-back"
         >
           <FaArrowLeft />
           Back

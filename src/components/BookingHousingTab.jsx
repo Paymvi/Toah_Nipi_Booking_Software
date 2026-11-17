@@ -933,9 +933,9 @@ export default function BookingHousingTab({
         ""
       ).trim();
   return (
-    <div className="booking-housing-tab" data-tutorial-unsaved={isEditing ? "Housing edits" : undefined}>
+    <div className="booking-housing-tab" data-tutorial-target="housing-tab" data-tutorial-unsaved={isEditing ? "Housing edits" : undefined}>
       {lodgingConflicts.length > 0 && (
-        <section className="dashboard-card booking-housing-conflicts" role="status">
+        <section className="dashboard-card booking-housing-conflicts" role="status" data-tutorial-target="housing-clashes">
           <strong>Lodging clashes on these dates</strong>
           <ul>
             {lodgingConflicts.map((conflict, index) => (
@@ -975,7 +975,7 @@ export default function BookingHousingTab({
               </p>
             </div>
           </div>
-          <div className="booking-housing-tab-actions">
+          <div className="booking-housing-tab-actions" data-tutorial-target="housing-actions">
             {isEditing ? (
               <>
                 <button
@@ -990,6 +990,7 @@ export default function BookingHousingTab({
                   className="primary-dashboard-button"
                   type="button"
                   onClick={handleSave}
+                  data-tutorial-guard
                 >
                   <FaSave />
                   Save Changes
@@ -1009,7 +1010,7 @@ export default function BookingHousingTab({
             )}
           </div>
         </div>
-        <div className="booking-housing-summary">
+        <div className="booking-housing-summary" data-tutorial-target="housing-summary">
           <div className="booking-housing-summary-item">
             <span>
               <FaUsers />
@@ -1070,7 +1071,7 @@ export default function BookingHousingTab({
         {/* =================================================
             LODGING TABLE
         ================================================= */}
-        <div className="booking-housing-table-wrap">
+        <div className="booking-housing-table-wrap" data-tutorial-target="housing-table">
           <table className="booking-housing-table">
             <thead>
               <tr>
@@ -1154,6 +1155,7 @@ export default function BookingHousingTab({
                           <button
                             className="housing-room-expand-button"
                             type="button"
+                            data-tutorial-target="housing-expand"
                             onClick={() =>
                               toggleExpandedRow(
                                 row.id
@@ -1332,7 +1334,7 @@ export default function BookingHousingTab({
                           colSpan="5"
                           className="booking-housing-floor-detail-cell"
                         >
-                          <div className="booking-housing-floor-panel">
+                          <div className="booking-housing-floor-panel" data-tutorial-target="housing-breakdown">
                             <div
                               className="booking-housing-floor-grid"
                               style={{
@@ -1512,7 +1514,7 @@ export default function BookingHousingTab({
 
           LINENS
       =================================================== */}
-      <section className="dashboard-card booking-housing-linens-card">
+      <section className="dashboard-card booking-housing-linens-card" data-tutorial-target="housing-linens">
         <div className="booking-housing-linens-header">
           <span className="booking-housing-tab-title-icon">
             <FaBed />

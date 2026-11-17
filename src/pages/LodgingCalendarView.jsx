@@ -728,7 +728,7 @@ export default function LodgingCalendarView({
 
 
   return (
-    <section className="calendar-view-page lodging-calendar-page">
+    <section className="calendar-view-page lodging-calendar-page" data-tutorial-target="lodging-page">
       <article className="dashboard-card calendar-view-card lodging-calendar-card">
 
         <div className="calendar-view-header">
@@ -761,6 +761,7 @@ export default function LodgingCalendarView({
         <div
           className="calendar-view-switcher"
           aria-label="Calendar views"
+          data-tutorial-target="lodging-views"
         >
           {calendarViewOptions.map((option) => (
             <button
@@ -771,6 +772,7 @@ export default function LodgingCalendarView({
               }
               type="button"
               key={option.value}
+              data-tutorial-target={option.value === "month" ? "lodging-view-month" : undefined}
               onClick={() =>
                 setCalendarView(option.value)
               }
@@ -781,7 +783,7 @@ export default function LodgingCalendarView({
         </div>
 
 
-        <section className="lodging-availability-generator">
+        <section className="lodging-availability-generator" data-tutorial-target="lodging-availability">
           <div className="lodging-availability-generator-header">
             <div>
               <span className="lodging-availability-kicker">
@@ -1066,6 +1068,7 @@ export default function LodgingCalendarView({
         <div
           className="lodging-calendar-building-switcher"
           aria-label="Lodging building filters"
+          data-tutorial-target="lodging-buildings"
         >
           {buildingOptions.map((building) => {
             const isActive =
@@ -1082,6 +1085,7 @@ export default function LodgingCalendarView({
                   .join(" ")}
                 type="button"
                 key={building.id}
+                data-tutorial-target={{ all: "lodging-building-all", bethel: "lodging-building-bethel" }[building.id]}
                 onClick={() =>
                   setSelectedBuilding(building.id)
                 }
@@ -1174,6 +1178,7 @@ export default function LodgingCalendarView({
 
         {calendarView === "month" && (
           <BookingCalendar
+            tutorialTarget="lodging-grid"
             calendarCells={calendarCells}
             datedInquiries={filteredDatedInquiries}
             selectedYear={selectedYear}
@@ -1438,10 +1443,10 @@ export default function LodgingCalendarView({
       </article>
 
 
-      <aside className="dashboard-card calendar-view-agenda lodging-calendar-agenda">
+      <aside className="dashboard-card calendar-view-agenda lodging-calendar-agenda" data-tutorial-target="lodging-agenda">
         <div className="dashboard-card-header">
           <div>
-            <h2>
+            <h2 data-tutorial-target="lodging-agenda-title">
               {selectedBuildingLabel}
             </h2>
 

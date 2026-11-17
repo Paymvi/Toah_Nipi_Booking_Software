@@ -6886,7 +6886,7 @@ function BookingDetailView({
             type="button"
             key={tab}
             onClick={() => setActiveTab(tab)}
-            data-tutorial-target={tab === "Details" ? "booking-tab-edit" : undefined}
+            data-tutorial-target={{ Details: "booking-tab-edit", Housing: "booking-tab-housing" }[tab]}
           >
             {tab === "Details" ? "Edit" : tab}
           </button>
@@ -9892,9 +9892,14 @@ export default function Dashboard() {
   // Tutorial gnome anchors (src/tutorial/tutorials.js); add views as tutorials need them.
   const sidebarTutorialTargets = {
     "Calendar View": "nav-calendar",
+    "Lodging Calendar": "nav-lodging-calendar",
     [SPREADSHEET_VIEW_NAME]: "nav-master-spreadsheet",
+    [INQUIRY_SPREADSHEET_VIEW_NAME]: "nav-inquiry-spreadsheet",
     "Contacts View": "nav-contacts",
+    Hosting: "nav-hosting",
     Reports: "nav-reports",
+    Jobs: "nav-jobs",
+    Backup: "nav-backup",
   };
 
   const sidebarItemLookup = Object.fromEntries(

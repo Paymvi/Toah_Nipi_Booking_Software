@@ -6,6 +6,7 @@ import { join } from "node:path";
 import {
     ALL_TUTORIALS,
   getCurrentMonthLabel,
+  MINI_CATEGORY,
   TUTORIAL_DIFFICULTIES,
   TUTORIAL_TARGETS,
   TUTORIALS,
@@ -38,6 +39,9 @@ import {
   withUnfinished,
 } from "../src/tutorial/tutorialCore.js";
 import { PORTAL_TOPICS, PORTAL_WALKTHROUGH } from "../src/tutorial/portalTutorial.js";
+import { BOOKING_TOPICS, BOOKING_WALKTHROUGH } from "../src/tutorial/bookingTutorial.js";
+import { CALENDAR_TOPICS, CALENDAR_WALKTHROUGH } from "../src/tutorial/calendarTutorial.js";
+import { MINI_TUTORIALS } from "../src/tutorial/miniTutorials.js";
 import { GUEST_JOURNEY_TOPICS, GUEST_JOURNEY_TUTORIAL } from "../src/tutorial/inquiryJourneyTutorial.js";
 import {
   buildInquiryDemoScene,
@@ -82,6 +86,12 @@ const rect = (top, left, width, height) => ({ top, left, width, height, right: l
 const overlaps = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
 
 /* ---------- Library ---------- */
+
+// A step of any tutorial or topic, by its id with or without the section in front ("read.search" or "search").
+const findStep = (tutorialId, stepId) =>
+  ALL_TUTORIALS.find((tutorial) => tutorial.id === tutorialId).steps.find(
+    (step) => step.id === stepId || step.id.endsWith(`.${stepId}`)
+  );
 
 test("every tutorial is complete and uses registered targets", () => {
   const ids = new Set();
@@ -145,8 +155,7 @@ test("demonstrations never click a save button", () => {
 });
 
 test("demo examples follow one fictional booking and use values the screens accept", () => {
-  const example = (tutorialId, stepId) =>
-    TUTORIALS.find((tutorial) => tutorial.id === tutorialId).steps.find((step) => step.id === stepId).example;
+  const example = (tutorialId, stepId) => findStep(tutorialId, stepId).example;
   const formSource = readFileSync("src/pages/CreateBooking.jsx", "utf8");
   const retreatOptions = formSource.match(/const retreatTypes = \[([\s\S]*?)\];/)[1];
 
@@ -174,7 +183,8 @@ test("search matches title, description, category and keywords", () => {
   const ids = (query) => searchTutorials(TUTORIALS, query).map((tutorial) => tutorial.id);
 
   assert.equal(searchTutorials(TUTORIALS, "  ").length, TUTORIALS.length);
-  assert.deepEqual(ids("calendar"), ["calendar"]);
+  assert.equal(ids("calendar")[0], "calendar");
+  assert.ok(ids("lodging").includes("calendar"));
   assert.ok(ids("new booking").includes("create-booking"));
   assert.ok(ids("EMAIL").includes("contacts"));
   assert.deepEqual(ids("zzz nothing"), []);
@@ -193,7 +203,7 @@ test("a step check that throws counts as not done", () => {
 });
 
 test("relative steps compare against the state captured when they began", () => {
-  const step = TUTORIALS.find((tutorial) => tutorial.id === "calendar").steps.find((item) => item.id === "next-month");
+  const step = findStep("calendar", "next-month");
   const ctx = { text: () => "December 2026" };
 
   assert.equal(step.done(ctx, step.capture({ text: () => "December 2026" })), false);
@@ -207,9 +217,6 @@ test("demo steps stay up long enough to read, but not forever", () => {
 });
 
 /* ---------- Demonstration safety ---------- */
-
-const findStep = (tutorialId, stepId) =>
-  TUTORIALS.find((tutorial) => tutorial.id === tutorialId).steps.find((step) => step.id === stepId);
 
 test("steps that highlight real actions are never clicked", () => {
   // Incident Notes saves from inside the Overview sections; other tabs hold their own saves; Open Booking leaves the tutorial.
@@ -718,7 +725,7 @@ const previewSource = readFileSync("src/tutorial/JourneyPreview.jsx", "utf8");
 const previewKinds = [...previewSource.match(/const PREVIEWS = \{([\s\S]*?)\};/)[1].matchAll(/^\s*"?([\w-]+)"?:/gm)].map((match) => match[1]);
 
 test("the guest journey is easy to find in the library", () => {
-  assert.equal(TUTORIALS[0].id, "guest-journey");
+  assert.equal(TUTORIALS.at(-1).id, "guest-journey");
   assert.equal(journey.title, "From Guest Inquiry to Guest Portal");
   for (const query of ["inquiry", "group leader", "guest portal"]) {
     assert.ok(searchTutorials(TUTORIALS, query).some((tutorial) => tutorial.id === "guest-journey"), query);
@@ -868,4 +875,116 @@ test("previews are plain markup: nothing in them can be clicked, typed into or s
   assert.doesNotMatch(previewSource, /<(button|input|textarea|select|form|a|iframe)[\s>]/);
   assert.doesNotMatch(previewSource, /onClick|fetch\(|supabase|href=/);
   assert.match(previewSource, /Preview · fictional/);
+});
+
+/* ---------- Mini tutorials, calendars and housing ---------- */
+
+test("Contacts, Reports, both spreadsheets and Hosting are mini tutorials, grouped together", () => {
+  assert.equal(MINI_CATEGORY, "Mini Tutorials (other views)");
+  const minis = TUTORIALS.filter((tutorial) => tutorial.category === MINI_CATEGORY).map((tutorial) => tutorial.id);
+  for (const id of ["contacts", "reports", "master-spreadsheet", "inquiry-spreadsheet", "hosting"]) assert.ok(minis.includes(id), id);
+
+  // One unbroken run, so the library can show them as one row.
+  const first = TUTORIALS.findIndex((tutorial) => tutorial.category === MINI_CATEGORY);
+  assert.deepEqual(TUTORIALS.slice(first, first + minis.length).map((tutorial) => tutorial.id), minis);
+  assert.deepEqual(MINI_TUTORIALS.map((tutorial) => tutorial.id), minis);
+});
+
+test("each mini tutorial opens its own page first and can't save", () => {
+  for (const tutorial of MINI_TUTORIALS) {
+    const [first] = tutorial.steps;
+    assert.match(first.target, /^nav-/, tutorial.id);
+    assert.equal(first.demoClick, true, tutorial.id);
+    assert.ok(tutorial.writeLock, tutorial.id);
+    assert.ok(tutorial.steps.length <= 8, `${tutorial.id} should stay short`);
+  }
+  // The Hosting page reuses the calendar components, so "on the page" is checked by address too.
+  const hosting = MINI_TUTORIALS.find((tutorial) => tutorial.id === "hosting");
+  assert.equal(hosting.steps[0].done({ path: () => "/calendar", visible: () => true }), false);
+  assert.equal(hosting.steps[0].done({ path: () => "/hosting", visible: () => true }), true);
+});
+
+test("hosting is explained as separate from guest bookings wherever it matters", () => {
+  const text = (id) =>
+    MINI_TUTORIALS.find((tutorial) => tutorial.id === id).steps.map((step) => `${step.show} ${step.learnMore ?? ""}`).join(" ");
+  assert.match(text("hosting"), /not a guest booking/);
+  assert.match(text("master-spreadsheet"), /Hosting isn't here/);
+  assert.match(text("reports"), /Hosting is internal/);
+});
+
+test("the calendar walkthrough covers both calendars, and every part starts on its own screen", () => {
+  assert.deepEqual(CALENDAR_WALKTHROUGH.sections.map((section) => section.id), ["move", "read", "lodging", "availability"]);
+  assert.equal(CALENDAR_TOPICS.length, CALENDAR_WALKTHROUGH.sections.length);
+
+  for (const topic of CALENDAR_TOPICS) {
+    assert.equal(topic.parentId, "calendar");
+    const first = topic.steps[0];
+    assert.match(first.target, /^nav-(calendar|lodging-calendar)$/, topic.id);
+    assert.equal(first.demoClick, true, topic.id);
+    const section = CALENDAR_WALKTHROUGH.sections.find((entry) => entry.id === topic.sectionId);
+    assert.deepEqual(textOf(topic.steps), textOf(CALENDAR_WALKTHROUGH.steps.slice(section.start, section.end + 1)), topic.id);
+  }
+
+  const lodging = CALENDAR_TOPICS.find((topic) => topic.sectionId === "lodging");
+  assert.equal(lodging.steps[0].target, "nav-lodging-calendar");
+  // On the Hosting page's lodging calendar, the Lodging Calendar isn't open yet.
+  assert.equal(lodging.steps[0].done({ path: () => "/hosting", visible: () => true }), false);
+  assert.equal(lodging.steps[0].done({ path: () => "/lodging-calendar", visible: () => true }), true);
+});
+
+test("opening a booking from the calendar only runs when the month has a group to open", () => {
+  const read = CALENDAR_TOPICS.find((topic) => topic.sectionId === "read").steps;
+  const noGroups = read.find((step) => step.id === "read.no-groups");
+  const open = read.find((step) => step.id === "read.open-booking");
+  const back = read.find((step) => step.id === "read.back");
+
+  const month = (hasGroup) => ({ visible: (id) => id === "calendar-agenda-booking" && hasGroup });
+  assert.equal(open.when(month(true)), true);
+  assert.equal(noGroups.when(month(true)), false);
+  assert.equal(open.when(month(false)), false);
+  assert.equal(noGroups.when(month(false)), true);
+  assert.ok(noGroups.prep, "the explanation stands in for the demo, so it isn't counted twice");
+  assert.ok(open.demoClick && back.demoClick);
+  assert.equal(back.when({ visible: () => false }), false, "nothing to go back from");
+});
+
+test("a section can keep the id it had as its own tutorial", () => {
+  const { topics } = composeWalkthrough({
+    id: "w",
+    keywords: [],
+    intro: [],
+    recap: [],
+    sections: [
+      { id: "one", topicId: "old-one", title: "One", keywords: [], steps: [{ id: "a" }] },
+      { id: "two", title: "Two", keywords: [], steps: [{ id: "a" }] },
+    ],
+  });
+  assert.deepEqual(topics.map((topic) => topic.id), ["old-one", "w/two"]);
+
+  // Open and Edit kept their ids inside the booking walkthrough, so old progress still finds them.
+  assert.deepEqual(BOOKING_TOPICS.map((topic) => topic.id), ["open-booking", "edit-booking", "booking-housing"]);
+  BOOKING_TOPICS.forEach((topic) => assert.equal(topic.parentId, BOOKING_WALKTHROUGH.id));
+});
+
+test("the Housing topic opens a booking's Housing tab and never saves", () => {
+  const housing = ALL_TUTORIALS.find((tutorial) => tutorial.id === "booking-housing");
+  assert.ok(searchTutorials(ALL_TUTORIALS, "housing").includes(housing));
+  assert.ok(housing.writeLock);
+
+  const teaching = housing.steps.filter((step) => !step.prep);
+  assert.equal(teaching[0].target, "booking-tab-housing");
+  assert.equal(teaching[0].demoClick, true);
+  for (const step of housing.steps.filter((entry) => entry.demoClick)) {
+    assert.ok(!["housing-actions", "housing-clashes"].includes(step.target), `${step.id} would click a save`);
+  }
+
+  // Save Changes on the Housing tab is guarded, so a demonstration can never press it.
+  const tab = readFileSync("src/components/BookingHousingTab.jsx", "utf8");
+  assert.match(tab, /onClick=\{handleSave\}\s+data-tutorial-guard/);
+});
+
+test("steps on controls that save are never clicked, in any tutorial", () => {
+  for (const tutorial of ALL_TUTORIALS) {
+    for (const step of tutorial.steps.filter((entry) => entry.writes)) assert.ok(!step.demoClick, `${tutorial.id}/${step.id}`);
+  }
 });

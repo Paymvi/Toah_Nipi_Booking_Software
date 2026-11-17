@@ -30,18 +30,30 @@
   A long tutorial made of sections, each also offered as a topic of its own,
   is built by composeWalkthrough: see portalTutorial.js.
 
+  The booking, calendar and mini tutorials live in bookingTutorial.js,
+  calendarTutorial.js and miniTutorials.js; a step's `when` is explained
+  in calendarTutorial.js.
+
   role marks whose action a step shows ("staff", "leader" for the group
   leader, "system"), and a step with no target shows a fictional preview
   instead of highlighting: see inquiryJourneyTutorial.js.
 */
 
+import { BOOKING_TOPICS, BOOKING_WALKTHROUGH } from "./bookingTutorial.js";
+import { CALENDAR_TOPICS, CALENDAR_WALKTHROUGH } from "./calendarTutorial.js";
 import { GUEST_JOURNEY_TOPICS, GUEST_JOURNEY_TUTORIAL } from "./inquiryJourneyTutorial.js";
+import { MINI_TUTORIALS } from "./miniTutorials.js";
 import { AUTOMATED_EMAILS_TUTORIAL, PORTAL_TOPICS, PORTAL_WALKTHROUGH } from "./portalTutorial.js";
 
 export const TUTORIAL_TARGETS = {
   "nav-form": "Form button in the sidebar",
   "nav-master-spreadsheet": "Master Spreadsheet in the sidebar",
   "nav-calendar": "Main Calendar in the sidebar",
+  "nav-lodging-calendar": "Lodging Calendar in the sidebar",
+  "nav-inquiry-spreadsheet": "Inquiry Spreadsheet in the sidebar",
+  "nav-hosting": "Hosting in the sidebar",
+  "nav-jobs": "Jobs in the sidebar",
+  "nav-backup": "Backup in the sidebar",
   "nav-contacts": "Contacts in the sidebar",
   "nav-reports": "Reports in the sidebar",
   "nav-portals": "Portals in the sidebar",
@@ -74,11 +86,23 @@ export const TUTORIAL_TARGETS = {
 
   "spreadsheet-search": "Search Everything box",
   "spreadsheet-open-booking": "group name in the spreadsheet",
+  "spreadsheet-years": "All, 2025, 2026 and 2027 buttons",
+  "spreadsheet-buildings": "Building Type filter",
+  "spreadsheet-dates": "Start and End date boxes",
+  "spreadsheet-sort": "Sort By list",
+  "spreadsheet-settings-bar": "summary line above the table",
+
+  "inquiry-sheet-intro": "Inquiry Spreadsheet heading",
+  "inquiry-sheet-search": "inquiry search box",
+  "inquiry-sheet-years": "year buttons",
+  "inquiry-sheet-actions": "Book and bin buttons on a row",
+  "inquiry-sheet-deleted": "Deleted button",
 
   "booking-profile": "Booking Profile page",
   "booking-back": "Back button",
   "booking-tabs": "booking tabs",
   "booking-tab-edit": "Edit tab",
+  "booking-tab-housing": "Housing tab",
   "booking-overview-summary": "booking summary",
   "booking-overview-stats": "guest and stay counts",
   "booking-overview-edit": "Edit Booking button",
@@ -88,6 +112,15 @@ export const TUTORIAL_TARGETS = {
   "booking-edit-entry": "Edit Entry button",
   "booking-edit-ready": "booking editor in edit mode",
   "booking-edit-actions": "Cancel and Save Changes buttons",
+
+  "housing-tab": "Housing tab",
+  "housing-summary": "Booking Guests, Known Assigned and Unassigned Guests",
+  "housing-table": "list of buildings",
+  "housing-expand": "building you can open for a room breakdown",
+  "housing-breakdown": "room breakdown",
+  "housing-actions": "Edit Housing button",
+  "housing-clashes": "Lodging clashes list",
+  "housing-linens": "Linens section",
 
   "calendar-view": "Main Calendar",
   "calendar-title": "calendar heading",
@@ -101,16 +134,47 @@ export const TUTORIAL_TARGETS = {
   "calendar-year-view": "year overview",
   "calendar-exceptions": "Also show options",
   "calendar-agenda": "agenda list",
+  "calendar-agenda-booking": "group in the agenda",
+  "calendar-grid": "month calendar",
+
+  "lodging-page": "Lodging Calendar",
+  "lodging-views": "Month, Week and Year buttons",
+  "lodging-view-month": "Month button",
+  "lodging-availability": "Availability lookup",
+  "lodging-buildings": "building buttons",
+  "lodging-building-all": "All Lodging button",
+  "lodging-building-bethel": "Bethel button",
+  "lodging-grid": "lodging calendar",
+  "lodging-agenda": "list of groups beside the calendar",
+  "lodging-agenda-title": "building name above the list",
 
   "contacts-search": "contact search box",
   "contacts-sort": "First Name / Last Name sort",
   "contacts-view-bookings": "View Bookings button",
   "contacts-history": "booking history",
-    "contacts-deleted": "Deleted contacts button",
+  "contacts-deleted": "Deleted contacts button",
 
   "reports-layout": "New and Original layout switch",
   "reports-tabs": "Season Brief, Season Map and Data Check tabs",
   "reports-figures": "key figures",
+
+  "hosting-page": "Hosting page",
+  "hosting-intro": "Hosting heading",
+  "hosting-add": "Add hosting button",
+  "hosting-modes": "Calendar, Lodging calendar and Spreadsheet buttons",
+  "hosting-mode-sheet": "Spreadsheet button",
+  "hosting-sheet": "hosting spreadsheet",
+  "hosting-sheet-controls": "Search, date and Export controls",
+  "hosting-open-record": "entry's name",
+
+  "jobs-filters": "Show list and the cancelled and waitlisted tick box",
+  "jobs-summary": "Open, Overdue, Completed and Unassigned counts",
+  "jobs-mine": "My Work list",
+  "jobs-team": "Team Workload list",
+
+  "backup-actions": "Create Backup Now and the page view buttons",
+  "backup-overview": "Live Records and Last Manual Backup",
+  "backup-restore": "Restore from a backup section",
 
   "portal-page": "Portal Progress page",
   "portal-summary": "summary tiles",
@@ -178,327 +242,55 @@ export const TUTORIAL_TARGETS = {
 
 export const TUTORIAL_DIFFICULTIES = ["Beginner", "Intermediate", "Advanced"];
 
-// "November 2026", matching the Main Calendar heading for the current month.
-export function getCurrentMonthLabel(date = new Date()) {
-  return `${date.toLocaleString("en-US", { month: "long" })} ${date.getFullYear()}`;
-}
+export { getCurrentMonthLabel } from "./calendarTutorial.js";
+export { MINI_CATEGORY } from "./miniTutorials.js";
 
-const openMasterSpreadsheetStep = {
-  id: "open-spreadsheet",
-  target: "nav-master-spreadsheet",
-  show: "Every booking lives in the Master Spreadsheet, so that's where we start.",
-  done: (ctx) => ctx.visible("spreadsheet-search"),
-  demoClick: true,
+const CREATE_BOOKING_TUTORIAL = {
+  id: "create-booking",
+  title: "Create a booking",
+  description: "Open the booking form, fill in the required details, and learn how saving works.",
+  category: "Bookings",
+  difficulty: "Beginner",
+  keywords: ["new", "form", "add", "group", "reservation"],
+  steps: [
+    {
+      id: "open-form",
+      target: "nav-form",
+      show: "New bookings start from Form in the sidebar. You can also use New Booking on the Dashboard.",
+      done: (ctx) => ctx.path() === "/form",
+      demoClick: true,
+    },
+    {
+      id: "details",
+      target: "booking-form-details",
+      show: "These starred fields are required: the group's name (how it appears everywhere), the primary contact staff will talk to, the retreat type, and the arrival and departure dates. Departure can't be before arrival.",
+      example: "Community Bible Church · Jordan Smith · Church · June 5 to June 7",
+    },
+    {
+      id: "guests",
+      target: "booking-form-guests",
+      show: "An estimated guest count is also required. Use the total, or split it into adults and children.",
+      example: "45 total guests",
+    },
+    {
+      id: "save",
+      target: "booking-form-save",
+      show:
+        "Once the required fields are in, Save Guest Group adds the booking to the dashboard. If anything is missing, the form lists it at the top. In this demo nothing is saved.",
+    },
+  ],
 };
 
-const openBookingStep = {
-  id: "open-booking",
-  target: "spreadsheet-open-booking",
-  show: "Clicking a group's name opens that booking's profile. This is only a demo, so I'll open the first group on the list.",
-  done: (ctx) => ctx.visible("booking-profile"),
-  demoClick: true,
-  missing:
-    "If the list is empty, clear the search box. If there are no bookings yet, create one first.",
-};
-
-const OVERVIEW_MISSING = "This is on the Overview tab. Click Overview in the booking's tabs to bring it back.";
-
+// Library order. The mini tutorials are shown as one group; the guest journey stays last.
 export const TUTORIALS = [
-  GUEST_JOURNEY_TUTORIAL,
-
-  {
-    id: "create-booking",
-    title: "Create a booking",
-    description: "Open the booking form, fill in the required details, and learn how saving works.",
-    category: "Bookings",
-    difficulty: "Beginner",
-    keywords: ["new", "form", "add", "group", "reservation"],
-    steps: [
-      {
-        id: "open-form",
-        target: "nav-form",
-        show: "New bookings start from Form in the sidebar. You can also use New Booking on the Dashboard.",
-        done: (ctx) => ctx.path() === "/form",
-        demoClick: true,
-      },
-      {
-        id: "details",
-        target: "booking-form-details",
-        show: "These starred fields are required: the group's name (how it appears everywhere), the primary contact staff will talk to, the retreat type, and the arrival and departure dates. Departure can't be before arrival.",
-        example: "Community Bible Church · Jordan Smith · Church · June 5 to June 7",
-      },
-      {
-        id: "guests",
-        target: "booking-form-guests",
-        show: "An estimated guest count is also required. Use the total, or split it into adults and children.",
-        example: "45 total guests",
-      },
-      {
-        id: "save",
-        target: "booking-form-save",
-        show:
-          "Once the required fields are in, Save Guest Group adds the booking to the dashboard. If anything is missing, the form lists it at the top. In this demo nothing is saved.",
-      },
-    ],
-  },
-
-  {
-    id: "open-booking",
-    title: "Open and read a booking",
-    description: "Find a booking in the Master Spreadsheet, open it, and tour the Overview tab.",
-    category: "Bookings",
-    difficulty: "Beginner",
-    keywords: ["view", "find", "search", "overview", "profile", "existing"],
-    steps: [
-      openMasterSpreadsheetStep,
-      {
-        id: "search",
-        target: "spreadsheet-search",
-        show: "Search Everything finds bookings by group name, contact, email, phone, rooms and notes. Type a group's name to narrow the list.",
-        example: "Community Bible Church",
-        missing: "If a booking is open, click its Back button to return to the spreadsheet. Otherwise, open Master Spreadsheet in the sidebar.",
-      },
-      openBookingStep,
-      {
-        id: "tabs",
-        target: "booking-tabs",
-        show: "Each booking has these tabs: Overview, Edit, Housing, Staff Assignments and Checklists.",
-      },
-      {
-        id: "summary",
-        target: "booking-overview-summary",
-        show: "This is the at-a-glance summary: stay dates, retreat type and contacts.",
-        missing: OVERVIEW_MISSING,
-      },
-      {
-        id: "stats",
-        target: "booking-overview-stats",
-        show: "These counts show what's recorded on the booking. A dash means nothing has been entered yet.",
-        missing: OVERVIEW_MISSING,
-      },
-      {
-        id: "sections",
-        target: "booking-overview-main",
-        show: "This page has guests, meals, activities, facilities, housing and linens, payments, timeline and notes.",
-        missing: OVERVIEW_MISSING,
-      },
-      {
-        id: "density",
-        target: "booking-overview-density",
-        show: "Compact fits more on screen and Large spreads it out. It's the same booking either way, and this browser remembers the choice.",
-        missing: OVERVIEW_MISSING,
-      },
-      {
-        id: "edit-shortcut",
-        target: "booking-overview-edit",
-        show: "Edit Booking jumps straight to the Edit tab.",
-        missing: OVERVIEW_MISSING,
-      },
-      {
-        id: "back",
-        target: "booking-back",
-        show: "Back leaves the booking: to the spreadsheet here, or to the calendar if you opened it from one. A search stays in the box until you clear it (×). That's how you find and read a booking.",
-      },
-    ],
-  },
-
-  {
-    id: "edit-booking",
-    title: "Edit a booking",
-    description: "Open a booking's Edit tab, make a change, and learn how to save or discard it.",
-    category: "Bookings",
-    difficulty: "Intermediate",
-    keywords: ["change", "update", "modify", "details", "save"],
-    steps: [
-      // A booking that's already open is a fine place to start.
-      { ...openMasterSpreadsheetStep, done: (ctx) => ctx.visible("spreadsheet-search") || ctx.visible("booking-profile") },
-      openBookingStep,
-      {
-        id: "edit-tab",
-        target: "booking-tab-edit",
-        show: "Changes are made on the Edit tab.",
-        done: (ctx) => ctx.visible("booking-edit-panel"),
-        demoClick: true,
-      },
-      {
-        id: "edit-entry",
-        target: "booking-edit-entry",
-        show: "For imported bookings, Edit Entry unlocks the fields. Bookings made with the Form are editable straight away.",
-        done: (ctx) => ctx.visible("booking-edit-ready"),
-        demoClick: true,
-      },
-      {
-        id: "change-field",
-        target: "booking-edit-panel",
-        show: "Change any field here: dates, guest count, contacts, notes and more.",
-        example: "Phone: the leader's new number, 555-010-2234",
-      },
-      {
-        id: "save-or-discard",
-        target: ["booking-edit-actions", "booking-form-save"],
-        show:
-          "Save Changes stores the edit for everyone. If someone else saved this booking first, you'll be asked to reload so nothing is overwritten. Leaving the tab, or Cancel where shown, discards changes.",
-      },
-    ],
-  },
-
-  {
-    id: "calendar",
-    title: "Use the calendar",
-    description: "Move between months, jump back to today, and switch between Month, Week and Year views.",
-    category: "Calendar",
-    difficulty: "Beginner",
-    keywords: ["month", "week", "year", "dates", "schedule", "agenda"],
-    steps: [
-      {
-        id: "open-calendar",
-        target: "nav-calendar",
-        show: "The Main Calendar shows your dated bookings at a glance.",
-        done: (ctx) => ctx.visible("calendar-view"),
-        demoClick: true,
-      },
-      {
-        id: "month-view",
-        target: "calendar-view-month",
-        show: "Month view is the starting point.",
-        done: (ctx) => ctx.visible("calendar-next"),
-        demoClick: true,
-      },
-      {
-        id: "next-month",
-        target: "calendar-next",
-        show: "» moves forward a month and « goes back. The dropdowns jump to any month or year.",
-        capture: (ctx) => ctx.text("calendar-title"),
-        done: (ctx, start) => ctx.text("calendar-title") !== start,
-        demoClick: true,
-      },
-      {
-        id: "this-month",
-        target: "calendar-today",
-        show: "This Month jumps back to the current month. In Week view it says Today.",
-        done: (ctx) => ctx.text("calendar-title") === getCurrentMonthLabel(),
-        demoClick: true,
-      },
-      {
-        id: "week-view",
-        target: "calendar-view-week",
-        show: "Week view shows one week in detail.",
-        done: (ctx) => ctx.visible("calendar-week-controls"),
-        demoClick: true,
-      },
-      {
-        id: "year-view",
-        target: "calendar-view-year",
-        show: "Year view shows the whole year. Click any month there to open it.",
-        done: (ctx) => ctx.visible("calendar-year-view"),
-        demoClick: true,
-      },
-      {
-        id: "back-to-month",
-        target: "calendar-view-month",
-        show: "And Month brings back the monthly calendar.",
-        done: (ctx) => ctx.visible("calendar-next"),
-        demoClick: true,
-      },
-      {
-        id: "exceptions",
-        target: "calendar-exceptions",
-        show: "Also show adds cancelled, waitlisted or archived records. The count shows how many there are this month.",
-      },
-      {
-        id: "agenda",
-        target: "calendar-agenda",
-        show: "The agenda lists every group shown, with dates, status and guest counts. Clicking a group here or on the calendar opens its booking, and Back returns to this view.",
-      },
-    ],
-  },
-
-  {
-    id: "contacts",
-    title: "Find and manage contacts",
-    description: "Search contacts, sort them, and open a contact's booking history.",
-    category: "Contacts",
-    difficulty: "Beginner",
-    keywords: ["people", "email", "phone", "leader", "search", "history"],
-    steps: [
-      {
-        id: "open-contacts",
-        target: "nav-contacts",
-        show: "Contacts are built automatically from every booking.",
-        done: (ctx) => ctx.visible("contacts-search"),
-        demoClick: true,
-      },
-      {
-        id: "search",
-        target: "contacts-search",
-        show: "Search by a person's name to find them. Groups, addresses, emails, phone numbers and status work too.",
-        example: "Jordan Smith",
-      },
-      {
-        id: "sort",
-        target: "contacts-sort",
-        show: "Sort by first or last name. Tick Show starred contacts first to keep starred people at the top.",
-      },
-      {
-        id: "view-bookings",
-        target: "contacts-view-bookings",
-        show: "View Bookings opens a contact's full booking history. I'll open the first contact on the list.",
-        done: (ctx) => ctx.visible("contacts-history"),
-        demoClick: true,
-        missing: "No contacts match the search, so clear the search box to see everyone. If it's still empty, contacts appear once bookings exist.",
-      },
-      {
-        id: "history",
-        target: "contacts-history",
-        show: "Each past and upcoming booking is listed, and Open Booking jumps to it. Clicking an email or phone in the contact's row copies it.",
-        missing: "The history is closed. Click View Bookings in the contact's row to open it again.",
-      },
-      {
-        id: "deleted",
-        target: "contacts-deleted",
-                show: "Deleted contacts are only hidden. They can be restored from here at any time.",
-      },
-    ],
-  },
-
-  {
-    id: "reports",
-    title: "Read your reports",
-    description: "Find your way around Reports and open the records behind any number.",
-    category: "Reports",
-    difficulty: "Beginner",
-    keywords: ["season", "map", "data check", "weekends", "camper days", "compare", "brief"],
-    steps: [
-      {
-        id: "open-reports",
-        target: "nav-reports",
-        show: "Reports shows how the season is going, where there is room, and which records need fixing.",
-        done: (ctx) => ctx.path() === "/reports",
-        demoClick: true,
-      },
-      {
-        id: "layout",
-        target: "reports-layout",
-        show: "New and Original switch between the two layouts. Your choice is remembered in this browser.",
-      },
-      {
-        id: "views",
-        target: "reports-tabs",
-        show: "Three views: Season Brief for the summary, Season Map for buildings and open weekends, Data Check for records to fix.",
-        missing: "Choose New in the Layout switch at the top of the page to see these tabs.",
-      },
-      {
-        id: "figures",
-        target: "reports-figures",
-        show: "Figures compare the same dates last year. Selecting one lists its records, and Back from a booking returns here.",
-        missing: "Open Season Brief with the New layout. These figures appear once stays match your settings.",
-      },
-    ],
-  },
-
+  CREATE_BOOKING_TUTORIAL,
+  BOOKING_WALKTHROUGH,
+  CALENDAR_WALKTHROUGH,
   PORTAL_WALKTHROUGH,
   AUTOMATED_EMAILS_TUTORIAL,
+  ...MINI_TUTORIALS,
+  GUEST_JOURNEY_TUTORIAL,
 ];
 
 // Everything that can be started, including topics, which the library shows under their walkthrough.
-export const ALL_TUTORIALS = [...TUTORIALS, ...GUEST_JOURNEY_TOPICS, ...PORTAL_TOPICS];
+export const ALL_TUTORIALS = [...TUTORIALS, ...BOOKING_TOPICS, ...CALENDAR_TOPICS, ...GUEST_JOURNEY_TOPICS, ...PORTAL_TOPICS];

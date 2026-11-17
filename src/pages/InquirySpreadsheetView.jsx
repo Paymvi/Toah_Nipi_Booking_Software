@@ -553,7 +553,7 @@ export default function InquirySpreadsheetView({
     <section className="spreadsheet-view-page">
       <article className="dashboard-card spreadsheet-view-card">
 
-        <header className="inquiry-spreadsheet-header">
+        <header className="inquiry-spreadsheet-header" data-tutorial-target="inquiry-sheet-intro">
           <div className="inquiry-spreadsheet-title">
             <span className="section-icon">
               <FaTable />
@@ -571,7 +571,7 @@ export default function InquirySpreadsheetView({
             </div>
           </div>
 
-          <div className="inquiry-spreadsheet-search">
+          <div className="inquiry-spreadsheet-search" data-tutorial-target="inquiry-sheet-search">
             <FaSearch />
 
             <input
@@ -587,6 +587,7 @@ export default function InquirySpreadsheetView({
           <div
             className="inquiry-spreadsheet-year-toggle"
             aria-label="Inquiry spreadsheet year"
+            data-tutorial-target="inquiry-sheet-years"
           >
             <button
               className={yearView === "all" ? "active" : ""}
@@ -627,7 +628,8 @@ export default function InquirySpreadsheetView({
             </span>
 
             <button
-              className={`contacts-view-deleted-toggle inquiry-spreadsheet-deleted-toggle ${
+              data-tutorial-target="inquiry-sheet-deleted"
+            className={`contacts-view-deleted-toggle inquiry-spreadsheet-deleted-toggle ${
                 showDeletedInquiries ? "active" : ""
               }`}
               type="button"
@@ -751,7 +753,7 @@ export default function InquirySpreadsheetView({
                     return (
                     <tr key={booking.id}>
 
-                      <td className="inquiry-booking-action-cell">
+                      <td className="inquiry-booking-action-cell" data-tutorial-target="inquiry-sheet-actions">
                         {convertedBooking ? (
                           <button
                             className="inquiry-create-booking-button"

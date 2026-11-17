@@ -81,9 +81,9 @@ export default function HostingView({
   const undatedCount = hostingRecords.length - datedHosting.length;
 
   return (
-    <section className="hosting-page">
+    <section className="hosting-page" data-tutorial-target="hosting-page">
       <header className="dashboard-card hosting-header">
-        <div className="dashboard-heading-with-icon">
+        <div className="dashboard-heading-with-icon" data-tutorial-target="hosting-intro">
           <span className="section-icon">
             <FaConciergeBell />
           </span>
@@ -102,19 +102,20 @@ export default function HostingView({
             {hostingRecords.length} entr{hostingRecords.length === 1 ? "y" : "ies"}
             {undatedCount > 0 && ` · ${undatedCount} without dates`}
           </span>
-          <button className="primary-dashboard-button" type="button" onClick={onAddHosting}>
+          <button className="primary-dashboard-button" type="button" onClick={onAddHosting} data-tutorial-target="hosting-add">
             <FaPlus aria-hidden="true" />
             Add hosting
           </button>
         </div>
 
-        <div className="calendar-view-switcher hosting-mode-switcher" aria-label="Hosting views">
+        <div className="calendar-view-switcher hosting-mode-switcher" aria-label="Hosting views" data-tutorial-target="hosting-modes">
           {MODES.map((option) => (
             <button
               key={option.value}
               type="button"
               className={mode === option.value ? "active" : ""}
               aria-pressed={mode === option.value}
+              data-tutorial-target={option.value === "sheet" ? "hosting-mode-sheet" : undefined}
               onClick={() => chooseMode(option.value)}
             >
               {option.label}
@@ -282,8 +283,8 @@ function HostingSheet({ records, onOpenRecord }) {
   };
 
   return (
-    <article className="dashboard-card hosting-sheet">
-      <div className="hosting-sheet-controls">
+    <article className="dashboard-card hosting-sheet" data-tutorial-target="hosting-sheet">
+      <div className="hosting-sheet-controls" data-tutorial-target="hosting-sheet-controls">
         <label>
           <span>Search</span>
           <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, contact, notes, lodging" />
@@ -328,7 +329,7 @@ function HostingSheet({ records, onOpenRecord }) {
             {rows.map((record) => (
               <tr key={record.id}>
                 <td>
-                  <button className="table-link" type="button" onClick={() => onOpenRecord(record)}>
+                  <button className="table-link" type="button" onClick={() => onOpenRecord(record)} data-tutorial-target="hosting-open-record">
                     {record.organizationName || "Unnamed Organization"}
                   </button>
                   {isClearlyCancelled(record) && <span className="hosting-tag">Cancelled</span>}

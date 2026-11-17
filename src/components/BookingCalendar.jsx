@@ -42,6 +42,7 @@ export default function BookingCalendar({
   getRoomText,
   onOpenBooking,
   isLarge = false,
+  tutorialTarget,
 }) {
   const calendarWeeks =
     getCalendarWeeks(calendarCells);
@@ -50,6 +51,7 @@ export default function BookingCalendar({
 
   return (
     <div
+      data-tutorial-target={tutorialTarget}
       className={`calendar-grid-span-mode ${
         isLarge
           ? "calendar-grid-large"

@@ -597,6 +597,7 @@ export default function CalendarView({
             </div>
 
             <BookingCalendar
+              tutorialTarget="calendar-grid"
               calendarCells={calendarCells}
               datedInquiries={safeDatedInquiries}
               selectedYear={selectedYear}
@@ -877,6 +878,7 @@ export default function CalendarView({
               <div
                 className="calendar-agenda-card"
                 key={inquiry.id}
+                data-tutorial-target="calendar-agenda-booking"
                 {...getBookingOpenProps(inquiry, onOpenBooking)}
               >
                 <div>

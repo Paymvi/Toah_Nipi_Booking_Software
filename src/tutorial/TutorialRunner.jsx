@@ -265,6 +265,14 @@ export default function TutorialRunner({ tutorial, startStep = 0, onStepChange, 
       return true;
     };
 
+    // step.when: the step only applies to some screens (e.g. a month with groups to open); otherwise pass it by.
+    if (step.when && !checkStep(step.when, ctx)) {
+      skippedStepsRef.current.add(stepIndex);
+      if (enteredForward) goTo(stepIndex + 1);
+      else goTo(getPreviousIndex(), "back");
+      return;
+    }
+
     if (skipIfDone()) return;
 
     // Puts the screen the way this step needs it, however it was reached. Panels only, never saves.

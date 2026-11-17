@@ -20,17 +20,22 @@ import {
   FaCheckCircle,
   FaChevronRight,
   FaClipboardList,
+  FaConciergeBell,
   FaEnvelope,
   FaKey,
+  FaLayerGroup,
   FaRoute,
   FaSearch,
+  FaShieldAlt,
+  FaTable,
+  FaTasks,
   FaTimes,
   FaUsers,
 } from "react-icons/fa";
 
 import GnomeMascot from "./GnomeMascot";
 import TutorialRunner from "./TutorialRunner";
-import { ALL_TUTORIALS, TUTORIALS } from "./tutorials";
+import { ALL_TUTORIALS, MINI_CATEGORY, TUTORIALS } from "./tutorials";
 import {
     findTarget,
   getContinueStep,
@@ -52,6 +57,17 @@ const CATEGORY_ICONS = {
   Portals: FaKey,
   Emails: FaEnvelope,
   "Guest journey": FaRoute,
+};
+
+// Mini tutorials share one category, so each gets its page's own icon.
+const MINI_ICONS = {
+  "master-spreadsheet": FaTable,
+  "inquiry-spreadsheet": FaClipboardList,
+  contacts: FaUsers,
+  hosting: FaConciergeBell,
+  reports: FaChartBar,
+  jobs: FaTasks,
+  backup: FaShieldAlt,
 };
 
 const EXIT_MESSAGE_MS = 4500;
@@ -121,6 +137,31 @@ function RelatedTutorials({ tutorials, completed, onOpen }) {
   );
 }
 
+// The mini tutorials, folded into one row of the library. Open while searching, like topics.
+function MiniTutorialGroup({ tutorials, completed, isOpen, onOpen }) {
+  return (
+    <details
+      className="tg-topics tg-group"
+      open={isOpen}
+      onToggle={(event) => event.currentTarget.open && event.currentTarget.scrollIntoView({ block: "nearest" })}
+    >
+      <summary>
+        <FaLayerGroup className="tg-item-icon" aria-hidden="true" />
+        <strong>{MINI_CATEGORY}</strong>
+        <span className="tg-group-count">{tutorials.length}</span>
+        <FaChevronRight className="tg-group-chevron" aria-hidden="true" />
+      </summary>
+      <ul>
+        {tutorials.map((tutorial) => (
+          <li key={tutorial.id}>
+            <TutorialItem tutorial={tutorial} icon={MINI_ICONS[tutorial.id]} isDone={completed[tutorial.id]} onOpen={onOpen} />
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 export default function TutorialGnome() {
   const navigate = useNavigate();
   // closed | panel | running | complete
@@ -141,6 +182,8 @@ export default function TutorialGnome() {
   const matchedIds = new Set(searchTutorials(ALL_TUTORIALS, query).map((tutorial) => tutorial.id));
   const getShownTopics = (tutorial) => (tutorial.topics ?? []).filter((topic) => matchedIds.has(topic.id));
   const visibleTutorials = TUTORIALS.filter((tutorial) => matchedIds.has(tutorial.id) || getShownTopics(tutorial).length > 0);
+  const isMini = (tutorial) => tutorial.category === MINI_CATEGORY;
+  const visibleMinis = visibleTutorials.filter(isMini);
   const unfinished = progress.unfinished && tutorialsById[progress.unfinished.id] ? progress.unfinished : null;
   const relatedTutorials = (run?.tutorial.related ?? []).map((id) => tutorialsById[id]).filter(Boolean);
 
@@ -408,6 +451,20 @@ export default function TutorialGnome() {
               ) : (
                 <ul className="tg-list">
                   {visibleTutorials.map((tutorial) => {
+                    // The group stands where its first mini tutorial is in the list.
+                    if (isMini(tutorial)) {
+                      return tutorial === visibleMinis[0] ? (
+                        <li key={MINI_CATEGORY}>
+                          <MiniTutorialGroup
+                            tutorials={visibleMinis}
+                            completed={progress.completed}
+                            isOpen={Boolean(query)}
+                            onOpen={startTutorial}
+                          />
+                        </li>
+                      ) : null;
+                    }
+
                     const Icon = CATEGORY_ICONS[tutorial.category] || FaBook;
                     const topics = getShownTopics(tutorial);
 

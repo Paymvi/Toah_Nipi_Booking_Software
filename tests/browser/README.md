@@ -18,6 +18,8 @@ node tests/browser/backups.browser.mjs
 node tests/browser/portalSigning.browser.mjs
 node tests/browser/journeyRuns.browser.mjs            # or --only=guest-journey/portal --sizes=390x800 --theme=night --reduced --touch --slow
 node tests/browser/journeyEdges.browser.mjs           # or a name filter: "Back"
+node tests/browser/libraryRuns.browser.mjs            # or --only=calendar/lodging --sizes=390x800
+node tests/browser/libraryEdges.browser.mjs           # or a name filter: "Housing"
 ```
 
 Run the mock and Vite in their own terminals. On a machine without Chrome at the Windows default path, set `CHROME_PATH`.
@@ -32,6 +34,8 @@ Run `portalEdges` and `journeyEdges` on their own, because they change the mock'
 - `portalEdges` covers starting points, roles, every guarded control, the network lock, demo cleanup, unsaved work, continuing, Back and progress.
 - `journeyRuns` runs "From Guest Inquiry to Guest Portal" and each of its topics. For every step it checks the role label, the gnome's outfit, that previews have no controls, and placement. Afterwards it checks that nothing reached the mock and the booking form is blank again.
 - `journeyEdges` covers pausing on the fictional request (Confirm Decline and Save Guest Group stay locked), ending part-way, Back across a role change, Restart, rapid clicks, leaving the demo's pages, resuming after a reload, and the group leader steps on a phone.
+- `libraryRuns` runs "Work with a booking" (with Housing), "Use the calendars" (with the Lodging Calendar), each of their topics, and every mini tutorial, generated from the registry. Some topics also start from a screen that isn't theirs, such as the Lodging Calendar topic from the Hosting page. It checks the library shows the mini tutorials as one group, that a topic finishes at its own end, placement, console errors, and that nothing reached the mock.
+- `libraryEdges` covers Back onto a step whose click already happened (a picked building, an open room breakdown), Restart in a topic, opening a booking from the calendar agenda and returning to the same month, and the person's own click being stopped on the Housing tab.
 - `portalSigning` saves staff PDF choices with guest signing off, a fictional test booking, and a failed settings read; checks missing schema explanations and recovery on Refresh; and explains when there are no eligible PDFs.
 
 `mockSupabase.mjs` records every attempted change. `/__ctl?writes` isn't needed: any call to `/__ctl` returns the list.

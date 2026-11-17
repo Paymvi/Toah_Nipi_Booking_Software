@@ -1059,7 +1059,7 @@ export default function DashboardBackups({
           )}
         </div>
 
-        <div className="backups-hero-actions">
+        <div className="backups-hero-actions" data-tutorial-target="backup-actions">
           {/* data-tutorial-ui: during a tutorial the click guard must let this through. */}
           <div
             className="backup-view-toggle"
@@ -1121,7 +1121,7 @@ export default function DashboardBackups({
         </BackupNotice>
       )}
 
-      <section className="backup-overview-grid">
+      <section className="backup-overview-grid" data-tutorial-target="backup-overview">
         <BackupMetric
           icon={FaDatabase}
           label="Live Records"
@@ -1217,7 +1217,7 @@ export default function DashboardBackups({
         </section>
       )}
 
-      <section className="backup-restore-section">
+      <section className="backup-restore-section" data-tutorial-target="backup-restore">
         <header className="backup-section-heading">
           <div>
             <span className="backup-section-heading-icon">

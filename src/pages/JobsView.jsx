@@ -239,7 +239,7 @@ export default function JobsView({
   return (
     <section className="jobs-page">
       <article className="dashboard-card jobs-hero-card">
-        <div className="jobs-hero-header">
+        <div className="jobs-hero-header" data-tutorial-target="jobs-filters">
           <div className="dashboard-heading-with-icon">
             <span className="section-icon">
               <FaTasks />
@@ -282,7 +282,7 @@ export default function JobsView({
           </label>
         </div>
 
-        <div className="jobs-summary-grid">
+        <div className="jobs-summary-grid" data-tutorial-target="jobs-summary">
           <div>
             <small>Open</small>
             <strong>{openJobCount}</strong>
@@ -306,7 +306,7 @@ export default function JobsView({
       </article>
 
       <section className="jobs-two-column-layout">
-        <article className="dashboard-card jobs-panel">
+        <article className="dashboard-card jobs-panel" data-tutorial-target="jobs-mine">
           <div className="jobs-panel-header">
             <div>
               <p className="dashboard-eyebrow">My Work</p>
@@ -341,7 +341,7 @@ export default function JobsView({
           </div>
         </article>
 
-        <article className="dashboard-card jobs-panel">
+        <article className="dashboard-card jobs-panel" data-tutorial-target="jobs-team">
           <div className="jobs-panel-header">
             <div>
               <p className="dashboard-eyebrow">Team Workload</p>
