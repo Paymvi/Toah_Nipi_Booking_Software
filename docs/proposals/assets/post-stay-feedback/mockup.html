@@ -1,0 +1,131 @@
+<!doctype html>
+<!-- Static mockup for POST_STAY_FEEDBACK_PROPOSAL.md. Fictional data. Screenshot #email at 680, #portal at 390, #office at 1100 wide. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Feedback Mockup</title>
+<style>
+  :root { --page:#f3f4f8; --card:#fff; --line:#e3e5ec; --text:#1f2330; --text2:#5f6675; --violet:#443a9c; --violet-bg:#eeecfb;
+    --green:#2f6f4f; --green-bg:#e7f4ec; --amber-bg:#fff6e0; --amber-text:#6b5b2e; --forest:#2f5d46; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--text); font:16px/1.5 "Segoe UI", system-ui, sans-serif; }
+  .banner { background:#262a36; color:#fff; text-align:center; font-size:13px; padding:6px; }
+  .btn { display:inline-block; background:var(--forest); color:#fff; font-weight:600; padding:12px 22px; border-radius:8px; text-decoration:none; }
+
+  /* ---------- email as the group leader receives it ---------- */
+  #email { width:680px; background:#e9ebef; padding:0 0 24px; }
+  .mail-meta { background:#fff; border-bottom:1px solid var(--line); padding:12px 20px; font-size:14px; color:var(--text2); }
+  .mail-meta b { color:var(--text); }
+  .mail { width:560px; margin:20px auto 0; background:#fff; border-radius:10px; overflow:hidden; border:1px solid var(--line); }
+  .mail-top { background:var(--forest); color:#fff; padding:18px 28px; font-size:20px; font-weight:600; }
+  .mail-body { padding:22px 28px; font-size:15px; }
+  .mail-body p { margin:0 0 14px; }
+  .mail-foot { padding:14px 28px; font-size:12px; color:var(--text2); border-top:1px solid var(--line); }
+
+  /* ---------- guest portal feedback form ---------- */
+  #portal { width:390px; background:var(--page); padding-bottom:16px; }
+  .pt-head { background:var(--forest); color:#fff; padding:14px 16px; }
+  .pt-head small { opacity:.85; }
+  .pt-head h1 { margin:2px 0 0; font-size:20px; }
+  .q { background:#fff; border:1px solid var(--line); border-radius:12px; margin:12px 12px 0; padding:14px; }
+  .q h3 { margin:0 0 8px; font-size:15px; }
+  .scale { display:flex; gap:6px; }
+  .scale span { flex:1; text-align:center; padding:8px 0; border:1px solid var(--line); border-radius:8px; font-weight:600; color:var(--text2); }
+  .scale .on { background:var(--forest); color:#fff; border-color:var(--forest); }
+  .ends { display:flex; justify-content:space-between; font-size:12px; color:var(--text2); margin-top:4px; }
+  .area { display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:14px; border-top:1px dashed var(--line); }
+  .area:first-of-type { border-top:0; }
+  .mini { display:flex; gap:4px; } .mini span { width:28px; text-align:center; border:1px solid var(--line); border-radius:6px; font-size:13px; padding:2px 0; color:var(--text2);} .mini .on { background:var(--forest); color:#fff; border-color:var(--forest); }
+  .ta { border:1px solid #c9ccd6; border-radius:8px; padding:8px 10px; font-size:14px; min-height:64px; color:var(--text); }
+  .check { display:flex; gap:10px; font-size:14px; align-items:flex-start; }
+  .cb { flex:none; width:20px; height:20px; border:2px solid var(--forest); border-radius:4px; background:var(--forest); color:#fff; font-size:13px; text-align:center; line-height:16px; }
+  .submit { margin:14px 12px 0; } .submit .btn { width:100%; text-align:center; }
+
+  /* ---------- office: Booking Overview card ---------- */
+  #office { width:1100px; padding:20px; background:var(--page); }
+  .o-card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px 20px; }
+  .o-head { display:flex; justify-content:space-between; align-items:center; }
+  .o-head h2 { margin:0; font-size:18px; }
+  .o-head .sub { font-size:13px; color:var(--text2); }
+  .grid { display:grid; grid-template-columns: repeat(6, 1fr); gap:10px; margin:14px 0; }
+  .stat { border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+  .stat small { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--text2); }
+  .stat b { font-size:22px; }
+  .stat .yes { color:var(--green); }
+  .quote { border-left:3px solid var(--forest); background:#f8faf9; padding:8px 12px; margin:8px 0; font-size:14px; }
+  .quote small { display:block; color:var(--text2); font-size:12px; margin-top:2px; }
+  .chip { font-size:12px; font-weight:600; padding:2px 8px; border-radius:6px; background:var(--green-bg); color:var(--green); }
+  .chip.warn { background:var(--amber-bg); color:var(--amber-text); }
+  .log { font-size:13px; color:var(--text2); margin-top:12px; border-top:1px solid var(--line); padding-top:10px; }
+</style>
+</head>
+<body>
+
+<!-- ======================= EMAIL ======================= -->
+<section id="email">
+  <div class="banner">Proposed · mockup · fictional data</div>
+  <div class="mail-meta"><b>From:</b> Toah Nipi Retreat Center &nbsp;·&nbsp; <b>To:</b> Jordan Smith<br><b>Subject:</b> Thank you for coming to Toah Nipi — how did it go?</div>
+  <div class="mail">
+    <div class="mail-top">Thank you, Community Bible Church</div>
+    <div class="mail-body">
+      <p>Hi Jordan,</p>
+      <p>Thank you for bringing your group to Toah Nipi for your retreat on November 20–22. We hope it was a good weekend.</p>
+      <p>Would you tell us how it went? It takes about two minutes, and every answer is read by our team. Your comments help us prepare better for your next visit.</p>
+      <p style="text-align:center;margin:22px 0"><a class="btn" href="#">Share your feedback</a></p>
+      <p>If something went wrong during your stay, you can also reply to this email and it will reach the office directly.</p>
+      <p>With thanks,<br>The Toah Nipi team</p>
+    </div>
+    <div class="mail-foot">You received this because you were the contact for a retreat at Toah Nipi. This is the only follow-up we send about this stay.</div>
+  </div>
+</section>
+
+<!-- ======================= PORTAL FORM ======================= -->
+<section id="portal">
+  <div class="banner">Proposed · mockup · fictional data</div>
+  <div class="pt-head"><small>Community Bible Church · Nov 20–22</small><h1>How was your stay?</h1></div>
+
+  <div class="q"><h3>Overall, how was your retreat?</h3>
+    <div class="scale"><span>1</span><span>2</span><span>3</span><span>4</span><span class="on">5</span></div>
+    <div class="ends"><span>Poor</span><span>Excellent</span></div>
+  </div>
+
+  <div class="q"><h3>How were these? <span style="font-weight:400;color:var(--text2);font-size:13px">(optional)</span></h3>
+    <div class="area"><span>Food</span><span class="mini"><span>1</span><span>2</span><span>3</span><span>4</span><span class="on">5</span></span></div>
+    <div class="area"><span>Lodging</span><span class="mini"><span>1</span><span>2</span><span>3</span><span class="on">4</span><span>5</span></span></div>
+    <div class="area"><span>Meeting spaces</span><span class="mini"><span>1</span><span>2</span><span>3</span><span>4</span><span class="on">5</span></span></div>
+    <div class="area"><span>Staff help</span><span class="mini"><span>1</span><span>2</span><span>3</span><span>4</span><span class="on">5</span></span></div>
+  </div>
+
+  <div class="q"><h3>Would you like to come back next year?</h3>
+    <div class="scale"><span class="on">Yes</span><span>Maybe</span><span>No</span></div>
+  </div>
+
+  <div class="q"><h3>What could we do better?</h3>
+    <div class="ta">The Dothan showers ran cold on Saturday morning. Otherwise wonderful!</div>
+  </div>
+
+  <div class="q"><div class="check"><span class="cb">✓</span><span>Toah Nipi may quote my comments (first name and group only) on its website.</span></div></div>
+
+  <div class="submit"><a class="btn" href="#">Send feedback</a></div>
+</section>
+
+<!-- ======================= OFFICE CARD ======================= -->
+<section id="office">
+  <div class="banner" style="margin:-20px -20px 16px">Proposed · mockup · fictional data</div>
+  <div class="o-card">
+    <div class="o-head"><div><h2>Guest Feedback</h2><span class="sub">Community Bible Church · Booking Overview</span></div><span class="chip">Received Nov 25 · from Jordan Smith</span></div>
+    <div class="grid">
+      <div class="stat"><small>Overall</small><b>5</b> / 5</div>
+      <div class="stat"><small>Food</small><b>5</b> / 5</div>
+      <div class="stat"><small>Lodging</small><b>4</b> / 5</div>
+      <div class="stat"><small>Meeting spaces</small><b>5</b> / 5</div>
+      <div class="stat"><small>Staff help</small><b>5</b> / 5</div>
+      <div class="stat"><small>Come back?</small><b class="yes">Yes</b></div>
+    </div>
+    <div class="quote">“The Dothan showers ran cold on Saturday morning. Otherwise wonderful!”<small>What could we do better? · <span class="chip warn">May be quoted</span></small></div>
+    <div class="log">Feedback email sent Mon Nov 24, 10:00 AM (2 days after departure) · answered in the portal Nov 25</div>
+  </div>
+</section>
+</body>
+</html>

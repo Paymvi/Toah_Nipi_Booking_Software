@@ -1,0 +1,131 @@
+<!doctype html>
+<!-- Static mockup for HOUSEKEEPING_TURNOVER_PROPOSAL.md. Fictional data. Screenshot #phone at 390 wide and #sheet at 1100 wide. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turnover Mockup</title>
+<style>
+  :root { --page:#f3f4f8; --card:#fff; --line:#e3e5ec; --text:#1f2330; --text2:#5f6675; --violet:#443a9c; --violet-bg:#eeecfb;
+    --amber-bg:#fff6e0; --amber-line:#ecd9a6; --amber-text:#6b5b2e; --red:#a03a3a; --red-bg:#fbeaea; --green:#2f6f4f; --green-bg:#e7f4ec;
+    --bethel:#2f6f5f; --hebron:#4c65a9; --dothan:#b47632; --gh:#a85f72; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--text); font:16px/1.45 "Segoe UI", system-ui, sans-serif; }
+  .banner { background:#262a36; color:#fff; text-align:center; font-size:13px; padding:6px; letter-spacing:.02em; }
+  .pill { display:inline-block; font-size:12px; font-weight:600; padding:2px 8px; border-radius:999px; border:1px solid currentColor; }
+  .bethel{color:var(--bethel)} .hebron{color:var(--hebron)} .dothan{color:var(--dothan)} .gh{color:var(--gh)}
+  .tag { font-size:12px; font-weight:600; padding:2px 8px; border-radius:6px; }
+  .tight { background:var(--red-bg); color:var(--red); } .ok { background:var(--green-bg); color:var(--green); } .est { background:var(--amber-bg); color:var(--amber-text); }
+
+  /* ---------- phone ---------- */
+  #phone { width:390px; background:var(--page); }
+  .p-head { background:var(--card); border-bottom:1px solid var(--line); padding:12px 16px 0; }
+  .p-top { display:flex; justify-content:space-between; align-items:center; }
+  .p-top h1 { font-size:22px; margin:0; }
+  .p-top .who { font-size:13px; color:var(--text2); }
+  .p-nav { display:flex; gap:4px; margin-top:10px; font-size:14px; }
+  .p-nav span { padding:8px 10px; color:var(--text2); border-bottom:3px solid transparent; }
+  .p-nav .on { color:var(--violet); border-color:var(--violet); font-weight:600; }
+  .days { display:flex; gap:6px; padding:12px 16px 0; }
+  .days span { flex:1; text-align:center; padding:6px; border-radius:8px; background:#e8e9f0; font-size:14px; }
+  .days .on { background:var(--card); box-shadow:0 1px 2px #0002; font-weight:600; }
+  .sec { display:flex; justify-content:space-between; padding:16px 16px 6px; font-size:13px; font-weight:700; letter-spacing:.06em; color:var(--text2); text-transform:uppercase; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; margin:0 12px 10px; padding:12px 14px; }
+  .c-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .c-head h3 { margin:0; font-size:18px; }
+  .when { font-size:14px; color:var(--text2); margin-top:2px; }
+  .row { display:flex; justify-content:space-between; gap:8px; padding:7px 0; border-top:1px dashed var(--line); font-size:15px; }
+  .row b { white-space:nowrap; }
+  .lbl { color:var(--text2); font-size:13px; min-width:62px; }
+  .rooms { font-size:13px; color:var(--text2); padding:2px 0 6px; }
+  .warn { background:var(--amber-bg); border:1px solid var(--amber-line); color:var(--amber-text); border-radius:8px; padding:8px 10px; font-size:14px; margin:6px 0; }
+  .tick { display:flex; align-items:center; gap:10px; margin-top:6px; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:#f8f9fb; font-size:15px; }
+  .box { width:20px; height:20px; border:2px solid #9aa0ad; border-radius:5px; }
+  .tick.done { background:var(--green-bg); border-color:#bfe0cc; color:var(--green); }
+  .tick.done .box { background:var(--green); border-color:var(--green); position:relative; }
+  .tick.done .box::after { content:"✓"; color:#fff; font-size:14px; position:absolute; left:3px; top:-2px; }
+  .tick small { margin-left:auto; color:var(--text2); font-size:12px; }
+
+  /* ---------- printable sheet ---------- */
+  #sheet { width:1100px; background:#fff; padding:28px 32px; }
+  .s-head { display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid var(--text); padding-bottom:8px; }
+  .s-head h1 { margin:0; font-size:26px; }
+  .s-head .meta { text-align:right; font-size:13px; color:var(--text2); }
+  table { width:100%; border-collapse:collapse; margin-top:14px; font-size:14px; }
+  th { text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--text2); border-bottom:1px solid #999; padding:6px 8px; }
+  td { vertical-align:top; padding:9px 8px; border-bottom:1px solid var(--line); }
+  td .sub { display:block; font-size:12px; color:var(--text2); }
+  td.done { width:56px; text-align:center; } td.done .box { margin:0 auto; }
+  .s-foot { display:flex; gap:24px; margin-top:16px; font-size:13px; color:var(--text2); }
+  .s-foot div { flex:1; border-top:1px solid #999; padding-top:4px; }
+  .s-sec { margin-top:20px; font-size:14px; font-weight:700; }
+</style>
+</head>
+<body>
+
+<!-- ======================= PHONE: staff app Turnover tab ======================= -->
+<section id="phone">
+  <div class="banner">Proposed · mockup · fictional data</div>
+  <div class="p-head">
+    <div class="p-top"><div><div class="who">Friday, Nov 20 · Housekeeping</div><h1>Turnover</h1></div><span class="who">Updated 10:15 AM</span></div>
+    <div class="p-nav"><span>Today</span><span>Calendar</span><span class="on">Turnover</span><span>Orders</span></div>
+  </div>
+  <div class="days"><span class="on">Fri 20</span><span>Sat 21</span><span>Sun 22</span><span>Mon 23</span></div>
+
+  <div class="sec"><span>Turn over today</span><span>3 buildings</span></div>
+
+  <div class="card">
+    <div class="c-head"><h3>Dothan</h3><span class="tag tight">4½ h window</span></div>
+    <div class="when">Out 1:00 PM → in 5:30 PM</div>
+    <div class="row"><span class="lbl">Leaving</span><span>Maple Grove Quilting Circle</span><b>16</b></div>
+    <div class="row"><span class="lbl">Arriving</span><span>Cedar Hill Church</span><b>?</b></div>
+    <div class="warn"><b>Room split not set.</b> Cedar Hill is in Bethel and Dothan but the booking only gives a total. Ask the office before making beds.</div>
+    <div class="tick"><span class="box"></span>Dothan ready<small>Doesn't change the booking</small></div>
+  </div>
+
+  <div class="card">
+    <div class="c-head"><h3>Bethel</h3><span class="tag ok">Empty since Mon</span></div>
+    <div class="when">In 5:30 PM</div>
+    <div class="row"><span class="lbl">Arriving</span><span>Cedar Hill Church</span><b>26</b></div>
+    <div class="rooms">Upper 1: 4 · Upper 2: 4 · Middle 3: 6 · Middle 4: 6 · Middle 5: 6</div>
+    <div class="row"><span class="lbl">Linens</span><span>Yes – 20 full sets, 6 pieces</span></div>
+    <div class="tick done"><span class="box"></span>Bethel ready<small>Ana · 9:40 AM</small></div>
+  </div>
+
+  <div class="card">
+    <div class="c-head"><h3>Hebron 3rd Floor</h3><span class="tag ok">Nobody until Fri 27</span></div>
+    <div class="when">Out 11:00 AM</div>
+    <div class="row"><span class="lbl">Leaving</span><span>Internal: Board retreat</span><b>8</b></div>
+    <div class="tick"><span class="box"></span>Hebron 3rd cleaned<small>Clean and close</small></div>
+  </div>
+
+  <div class="sec"><span>Coming up</span></div>
+  <div class="card">
+    <div class="row" style="border:0"><span><b>Hebron Bunks</b> · Sat 11:30 AM<br><span class="lbl">Northfield Youth · linens not recorded</span></span><span class="tag est">~28 estimate</span></div>
+  </div>
+</section>
+
+<!-- ======================= PRINTABLE DAILY SHEET ======================= -->
+<section id="sheet">
+  <div class="s-head">
+    <div><div style="font-size:13px;color:var(--text2)">Toah Nipi · Housekeeping</div><h1>Turnover sheet — Friday, November 20</h1></div>
+    <div class="meta">Printed 7:02 AM from the booking software<br>Mockup · fictional data</div>
+  </div>
+  <table>
+    <thead><tr><th>Building</th><th>Leaving</th><th>Arriving</th><th>Window</th><th>Beds to make</th><th>Linens</th><th>Notes</th><th>Done</th></tr></thead>
+    <tbody>
+      <tr><td><b>Dothan</b></td><td>Maple Grove Quilting Circle<span class="sub">16 guests · out 1:00 PM</span></td><td>Cedar Hill Church<span class="sub">part of group · in 5:30 PM</span></td><td><span class="tag tight">4½ h</span></td><td>? <span class="sub">room split not set</span></td><td>Yes – shared with Bethel</td><td>Ask office for split before 1 PM</td><td class="done"><div class="box"></div></td></tr>
+      <tr><td><b>Bethel</b></td><td>—<span class="sub">empty since Mon 16</span></td><td>Cedar Hill Church<span class="sub">26 guests · in 5:30 PM</span></td><td><span class="tag ok">all day</span></td><td>26<span class="sub">Upper 1: 4, Upper 2: 4, Middle 3–5: 6 each</span></td><td>20 full sets, 6 pieces</td><td></td><td class="done"><div class="box"></div></td></tr>
+      <tr><td><b>Hebron 3rd Floor</b></td><td>Internal: Board retreat<span class="sub">8 guests · out 11:00 AM</span></td><td>—<span class="sub">next: Fri 27</span></td><td><span class="tag ok">7 days</span></td><td>— <span class="sub">clean and close</span></td><td>Strip only</td><td></td><td class="done"><div class="box"></div></td></tr>
+    </tbody>
+  </table>
+  <div class="s-sec">Tomorrow (Saturday 21)</div>
+  <table>
+    <tbody>
+      <tr><td style="width:150px"><b>Hebron Bunks</b></td><td>Northfield Youth · in 11:30 AM · <span class="tag est">~28 estimate</span></td><td>Linens not recorded</td><td>Bunks: Men's ? / Women's ?</td></tr>
+    </tbody>
+  </table>
+  <div class="s-foot"><div>Checked by</div><div>Time finished</div><div>Problems found (maintenance, missing items)</div></div>
+</section>
+</body>
+</html>
