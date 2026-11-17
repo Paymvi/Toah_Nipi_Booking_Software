@@ -22,7 +22,6 @@ import {
   FaCalendarAlt,
   FaClipboardList,
   FaChartBar,
-  FaCog,
   FaUserShield,
   FaTable,
   FaExclamationTriangle,
@@ -139,37 +138,6 @@ export const bookingDetailTabs = [
   "Housing",
   "Staff Assignments",
   "Checklists",
-];
-
-// Dated inquiry dashboard display settings.
-// These are used by the Dated Inquiries card on the dashboard.
-export const DATED_INQUIRY_SETTINGS_STORAGE_KEY =
-  "datedInquiryDashboardSettings";
-
-export const DEFAULT_DATED_INQUIRY_SETTINGS = {
-  tintByRetreatType: false,
-  showRetreatTypeLegend: true,
-};
-
-// Dated inquiry date filter settings.
-// These control the date range dropdown on the dashboard Dated Inquiries card.
-export const DATED_INQUIRY_DATE_FILTER_STORAGE_KEY =
-  "toahNipiDatedInquiryDateFilter";
-
-export const DATED_INQUIRY_CUSTOM_START_STORAGE_KEY =
-  "toahNipiDatedInquiryCustomStartDate";
-
-export const DATED_INQUIRY_CUSTOM_END_STORAGE_KEY =
-  "toahNipiDatedInquiryCustomEndDate";
-
-export const datedInquiryDateFilterOptions = [
-  { value: "thisMonth", label: "This Month" },
-  { value: "allTime", label: "All Time" },
-  { value: "pastMonth", label: "Past Month" },
-  { value: "nextMonth", label: "Next Month" },
-  { value: "past90Days", label: "Past 90 Days" },
-  { value: "next90Days", label: "Next 90 Days" },
-  { value: "custom", label: "Custom Date Range" },
 ];
 
 // Booking detail date display settings.

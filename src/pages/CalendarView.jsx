@@ -40,7 +40,7 @@ function getHeatmapOpacity(totalCount) {
   return heatOpacityByCount[Math.min(totalCount, 5)] || "0";
 }
 
-function getHeatmapBucketForInquiry(inquiry) {
+function getHeatmapBucketForInquiry() {
   return "confirmed";
 }
 

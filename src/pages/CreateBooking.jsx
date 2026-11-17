@@ -4,7 +4,6 @@ import {
   FaUsers,
   FaCalendarAlt,
   FaDollarSign,
-  FaClock,
   FaUtensils,
   FaBed,
   FaFileContract,
@@ -36,7 +35,6 @@ import {
   getBookingInquiryDateValue,
 } from "../utils/dateUtils";
 import {
- parseDateInputAsUTC,
  getStayDates,
  formatMealScheduleDate,
  getMealTotals,

@@ -99,6 +99,20 @@ export function getAllBookingJobs(bookings = []) {
   });
 }
 
+export function getAssignedStaffNamesFromBookings(inquiryBookings) {
+  const assignedNames = new Set();
+
+  getAllBookingJobs(inquiryBookings).forEach((job) => {
+    const assignedTo = String(job.assignedTo || "").trim();
+
+    if (assignedTo) {
+      assignedNames.add(assignedTo);
+    }
+  });
+
+  return Array.from(assignedNames).sort((a, b) => a.localeCompare(b));
+}
+
 export function isJobForInactiveGroup(job) {
   return (
     job.bookingException === BOOKING_EXCEPTION.CANCELLED ||

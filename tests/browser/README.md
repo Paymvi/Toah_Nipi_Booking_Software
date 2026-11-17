@@ -20,6 +20,8 @@ node tests/browser/journeyRuns.browser.mjs            # or --only=guest-journey/
 node tests/browser/journeyEdges.browser.mjs           # or a name filter: "Back"
 node tests/browser/libraryRuns.browser.mjs            # or --only=calendar/lodging --sizes=390x800
 node tests/browser/libraryEdges.browser.mjs           # or a name filter: "Housing"
+node tests/browser/storageEvents.browser.mjs
+node tests/browser/lazyLibraries.browser.mjs
 ```
 
 Run the mock and Vite in their own terminals. On a machine without Chrome at the Windows default path, set `CHROME_PATH`.
@@ -38,4 +40,7 @@ Run `portalEdges` and `journeyEdges` on their own, because they change the mock'
 - `libraryEdges` covers Back onto a step whose click already happened (a picked building, an open room breakdown), Restart in a topic, opening a booking from the calendar agenda and returning to the same month, and the person's own click being stopped on the Housing tab.
 - `portalSigning` saves staff PDF choices with guest signing off, a fictional test booking, and a failed settings read; checks missing schema explanations and recovery on Refresh; and explains when there are no eligible PDFs.
 
-`mockSupabase.mjs` records every attempted change. `/__ctl?writes` isn't needed: any call to `/__ctl` returns the list.
+- `storageEvents` opens two tabs and checks that a theme, filter or view change saved in one tab never makes the other reload every booking (or show an alert), and that hiding an Inquiry Spreadsheet row still works, survives a reload and reaches the other tab.
+- `lazyLibraries` checks that opening the office app downloads neither ExcelJS nor JSZip, that Export contact list, a Master 2026 import, the Hosting export and the signed-documents check still work once they load, and that each one shows a clear message when its library cannot download.
+
+`mockSupabase.mjs` records every attempted change. `/__ctl?inquiry=1` adds one fictional website-inquiry import and `/__ctl?hosting=1` one fictional hosting entry; `reset=1` removes both. `/__ctl?writes` isn't needed: any call to `/__ctl` returns the list.

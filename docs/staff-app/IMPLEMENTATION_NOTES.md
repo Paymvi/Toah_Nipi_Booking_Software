@@ -133,6 +133,7 @@ Pre-existing, not changed: `staff_directory` has no table grants in its migratio
 ## Deployment steps (not done)
 
 1. Run `20261110000100_role_helpers_never_null.sql` and `20261111000100_hosting_records.sql` if they are still pending (security audit §8 and the hosting notes), then `20261113000100_staff_app.sql`, in the SQL editor. Run the verify queries at the end of the file signed in as an office account.
+   - Then `20261117000100_booking_change_log_keep_history.sql` (also if `20261113000100` already ran somewhere). It removes the cascade that made a backup Full Replace erase all change history, and adds the admin-only restore for history in version 4 backups. Check: `node supabase/tests/change-history-restore.local.mjs` on the local stack (it runs a real Full Replace there, so never point it at live).
 2. Deploy the frontend as usual. Check that `https://<live>/staff` loads directly after a refresh, the same way `/dashboard` does.
 3. Pilot account:
    - Create or invite the person in Supabase → Authentication → Users.

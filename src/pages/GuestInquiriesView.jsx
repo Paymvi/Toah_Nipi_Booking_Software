@@ -6,7 +6,6 @@ import {
 } from "react";
 
 import {
-  FaArrowLeft,
   FaBed,
   FaCalendarAlt,
   FaCheckCircle,

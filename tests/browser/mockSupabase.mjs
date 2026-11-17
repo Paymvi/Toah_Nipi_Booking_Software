@@ -41,6 +41,12 @@ function seed() {
 
 let bookings = seed(), role = "staff", delay = 0, emailMissing = false, writes = [];
 let signing = null;
+// Rows hidden from the Inquiry Spreadsheet (table inquiry_hidden), shared by every tab.
+let hiddenInquiries = [];
+
+// ?inquiry=1 adds one fictional website-inquiry import, for the Inquiry Spreadsheet.
+const inquiryRow = () => ({ ...base, id: "gi-1", source_type: "Guest Group Inquiry 2026", status: "Inquiry", organization_name: "Fictional Inquiry Group",
+  contact_name: "Riley Park", email: "riley@example.org", phone: "555-010-0009", start_date: day(60), end_date: day(62), attendee_count: "25" });
 
 function send(res, status, body, headers = {}) {
   res.writeHead(status, {
@@ -66,7 +72,12 @@ createServer((req, res) => {
 
     if (path === "/__ctl") {
       const p = url.searchParams;
-      if (p.get("reset")) { bookings = seed(); role = "staff"; delay = 0; emailMissing = false; writes = []; signing = null; }
+      if (p.get("reset")) { bookings = seed(); role = "staff"; delay = 0; emailMissing = false; writes = []; signing = null; hiddenInquiries = []; }
+      if (p.get("inquiry") && !bookings.some((booking) => booking.id === "gi-1")) bookings.push(inquiryRow());
+      if (p.get("hosting") && !bookings.some((booking) => booking.id === "host-1")) {
+        bookings.push({ ...base, id: "host-1", source_type: "Staff Booking", status: "Confirmed", organization_name: "Host: Fictional Board Dinner",
+          retreat_type: "Hosting", start_date: day(10), end_date: day(10), attendee_count: "8" });
+      }
       if (p.has("signing")) {
         signing = p.get("signing");
         bookings[0].portal_documents[0].storage_path = signing === "noPdf" ? null : "fictional/staff-documents/sample.pdf";
@@ -125,6 +136,21 @@ createServer((req, res) => {
     }
     if (req.method === "GET" && path === "/rest/v1/portal_checklist_items") return send(res, 200, forBooking(allItems(), url));
     if (req.method === "GET" && path === "/rest/v1/portal_documents") return send(res, 200, forBooking(allDocuments(), url));
+
+    if (path === "/rest/v1/inquiry_hidden") {
+      if (req.method === "POST") {
+        const rows = [].concat(JSON.parse(body || "[]"));
+        const ids = new Set(rows.map((row) => row.inquiry_id));
+        hiddenInquiries = [...rows.map((row) => ({ ...row, hidden_at: new Date().toISOString() })), ...hiddenInquiries.filter((row) => !ids.has(row.inquiry_id))];
+        return send(res, 201, []);
+      }
+      if (req.method === "DELETE") {
+        const id = url.searchParams.get("inquiry_id")?.replace(/^eq\./, "");
+        hiddenInquiries = hiddenInquiries.filter((row) => row.inquiry_id !== id);
+        return send(res, 204);
+      }
+      return send(res, 200, hiddenInquiries);
+    }
 
     if (path.startsWith("/rest/v1/")) return send(res, 200, req.method === "GET" ? [] : []);
     if (path.startsWith("/auth/v1/user")) return send(res, 200, { id: "u1", email: "staff@example.org", aud: "authenticated" });

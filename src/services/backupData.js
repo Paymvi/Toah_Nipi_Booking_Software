@@ -59,10 +59,12 @@ export async function fetchBackupSections({ client, fetchBookings }) {
   const portalChecklistItems = await readOptional("portalChecklistItems", "portal_checklist_items");
   const portalDocuments = await readOptional("portalDocuments", "portal_documents");
   const portalSignatures = await readOptional("portalSignatures", "portal_signatures", { missingIsEmpty: true });
+  // Empty until the staff app migration runs.
+  const bookingChangeLog = await readOptional("bookingChangeLog", "booking_change_log", { missingIsEmpty: true });
   const storageManifest = buildStorageManifest({ portalChecklistItems, portalDocuments, portalSignatures, bookings });
 
   return {
-    sections: { bookings, guestInquiries, portalChecklistItems, portalDocuments, portalSignatures, storageManifest },
+    sections: { bookings, guestInquiries, portalChecklistItems, portalDocuments, portalSignatures, bookingChangeLog, storageManifest },
     sectionErrors,
   };
 }
@@ -100,6 +102,30 @@ export async function restoreSignatureRows(rows, { client }) {
     inserted += Number(data) || 0;
   }
   return { inserted, alreadyPresent: rows.length - missing.length, skipped: missing.length - inserted };
+}
+
+/*
+  Booking change history (version 4 backups) goes through an admin-only
+  database function that inserts only rows not already present, matched
+  by content, so restoring the same backup twice adds nothing.
+*/
+const CHANGE_LOG_RESTORE_CHUNK = 500;
+
+export async function restoreChangeLogRows(rows, { client }) {
+  let inserted = 0;
+  for (let index = 0; index < rows.length; index += CHANGE_LOG_RESTORE_CHUNK) {
+    const { data, error } = await client.rpc("staff_app_restore_change_log", {
+      p_rows: rows.slice(index, index + CHANGE_LOG_RESTORE_CHUNK),
+    });
+    if (error) {
+      if (["PGRST202", "42883"].includes(error.code)) {
+        throw new Error("This database cannot restore change history yet. Run supabase/migrations/20261117000100_booking_change_log_keep_history.sql.");
+      }
+      throw error;
+    }
+    inserted += Number(data?.inserted) || 0;
+  }
+  return { inserted, alreadyPresent: rows.length - inserted };
 }
 
 // Restored portal rows come back with email options off (and their
@@ -174,17 +200,22 @@ export async function restoreSupportingSections(sections, { client }) {
   const results = {};
 
   // Version 3 backups: signing records, after the tasks and documents.
+  // Version 4 backups: booking change history.
   const finish = async () => {
-    const signatures = Array.isArray(sections.portalSignatures) ? sections.portalSignatures : [];
-    if (signatures.length === 0) {
-      results.portalSignatures = { inserted: 0, alreadyPresent: 0 };
-      return results;
-    }
-    try {
-      results.portalSignatures = await restoreSignatureRows(signatures, { client });
-    } catch (error) {
-      results.portalSignatures = { error: error?.message || String(error) };
-    }
+    const restoreOptional = async (key, restore) => {
+      const rows = Array.isArray(sections[key]) ? sections[key] : [];
+      if (rows.length === 0) {
+        results[key] = { inserted: 0, alreadyPresent: 0 };
+        return;
+      }
+      try {
+        results[key] = await restore(rows, { client });
+      } catch (error) {
+        results[key] = { error: error?.message || String(error) };
+      }
+    };
+    await restoreOptional("portalSignatures", restoreSignatureRows);
+    await restoreOptional("bookingChangeLog", restoreChangeLogRows);
     return results;
   };
 

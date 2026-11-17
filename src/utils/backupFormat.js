@@ -24,15 +24,19 @@
   themselves are saved by the separate "signed documents" export
   (src/services/signingBackup.js).
 
-  All three versions restore. The hash function is a parameter so this module
+  Version 4: version 3 plus bookingChangeLog, the booking change history
+  the staff app shows (booking_change_log). Restoring it only adds rows
+  that are missing, so the same backup can be restored twice.
+
+  All four versions restore. The hash function is a parameter so this module
   works in the browser and in Node tests.
 */
 
 import { sanitizePortalDocumentFileName } from "./portalRules.js";
 
 export const BACKUP_FORMAT = "toah-nipi-booking-backup";
-export const CURRENT_BACKUP_SCHEMA_VERSION = 3;
-export const SUPPORTED_BACKUP_SCHEMA_VERSIONS = Object.freeze([1, 2, 3]);
+export const CURRENT_BACKUP_SCHEMA_VERSION = 4;
+export const SUPPORTED_BACKUP_SCHEMA_VERSIONS = Object.freeze([1, 2, 3, 4]);
 
 export const BACKUP_SECTIONS = Object.freeze([
   { key: "bookings", label: "Bookings", table: "bookings" },
@@ -40,6 +44,7 @@ export const BACKUP_SECTIONS = Object.freeze([
   { key: "portalChecklistItems", label: "Portal tasks", table: "portal_checklist_items" },
   { key: "portalDocuments", label: "Portal documents", table: "portal_documents" },
   { key: "portalSignatures", label: "Online signing records", table: "portal_signatures" },
+  { key: "bookingChangeLog", label: "Booking change history", table: "booking_change_log" },
   { key: "storageManifest", label: "Uploaded-file list (names and locations only)", table: null },
 ]);
 
@@ -77,12 +82,23 @@ export function getChecksumPayload(backup) {
       storageManifest: asArray(payload.storageManifest),
     };
   }
+  if (backup?.schemaVersion === 3) {
+    return {
+      bookings: asArray(payload.bookings),
+      guestInquiries: asArray(payload.guestInquiries),
+      portalChecklistItems: asArray(payload.portalChecklistItems),
+      portalDocuments: asArray(payload.portalDocuments),
+      portalSignatures: asArray(payload.portalSignatures),
+      storageManifest: asArray(payload.storageManifest),
+    };
+  }
   return {
     bookings: asArray(payload.bookings),
     guestInquiries: asArray(payload.guestInquiries),
     portalChecklistItems: asArray(payload.portalChecklistItems),
     portalDocuments: asArray(payload.portalDocuments),
     portalSignatures: asArray(payload.portalSignatures),
+    bookingChangeLog: asArray(payload.bookingChangeLog),
     storageManifest: asArray(payload.storageManifest),
   };
 }
@@ -173,6 +189,7 @@ export async function createBackupEnvelope(
     portalChecklistItems: asArray(sections.portalChecklistItems),
     portalDocuments: asArray(sections.portalDocuments),
     portalSignatures: asArray(sections.portalSignatures),
+    bookingChangeLog: asArray(sections.bookingChangeLog),
     storageManifest: asArray(sections.storageManifest),
   };
   const checksum = await hash(JSON.stringify(payload));
@@ -189,6 +206,7 @@ export async function createBackupEnvelope(
       portalChecklistItemCount: payload.portalChecklistItems.length,
       portalDocumentCount: payload.portalDocuments.length,
       portalSignatureCount: payload.portalSignatures.length,
+      bookingChangeLogCount: payload.bookingChangeLog.length,
       storageManifestCount: payload.storageManifest.length,
     },
     coverage: {
@@ -234,7 +252,7 @@ export function validateBackupShape(backup) {
   if (!SUPPORTED_BACKUP_SCHEMA_VERSIONS.includes(backup.schemaVersion)) {
     errors.push(
       `Unsupported backup schema version: ${String(backup.schemaVersion ?? "missing")}. ` +
-        `This version of the app reads versions ${SUPPORTED_BACKUP_SCHEMA_VERSIONS.join(" and ")}.`
+        `This version of the app reads versions ${SUPPORTED_BACKUP_SCHEMA_VERSIONS.join(", ")}.`
     );
   }
 
@@ -261,6 +279,10 @@ export function validateBackupShape(backup) {
     warnings.push("This backup contains zero booking records.");
   }
 
+  if (backup.schemaVersion === 2 || backup.schemaVersion === 3) {
+    warnings.push(`This is a version ${backup.schemaVersion} backup, made before booking change history was backed up. It contains no change history; history already in the database is kept.`);
+  }
+
   if (backup.schemaVersion === 2) {
     warnings.push("This is a version 2 backup, made before online signing. It contains no online signing records.");
   }
@@ -268,7 +290,7 @@ export function validateBackupShape(backup) {
   if (backup.schemaVersion === 1) {
     warnings.push(
       "This is a version 1 backup (bookings only), the format the Google Apps Script daily backup writes. " +
-        "Website inquiries, portal tasks, portal documents and the uploaded-file list are not in it and will not be restored."
+        "Website inquiries, portal tasks, portal documents, booking change history and the uploaded-file list are not in it and will not be restored."
     );
   }
 

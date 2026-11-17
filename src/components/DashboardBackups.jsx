@@ -347,11 +347,15 @@ export default function DashboardBackups({
       (replaceAvailable &&
         replaceConfirmation.trim() === REPLACE_CONFIRMATION_PHRASE));
 
-  const loadLiveDatabaseSummary = async () => {
-    try {
-      setIsLoadingLiveData(true);
-      setLiveDataError("");
+  const loadLiveDatabaseSummary = () => {
+    setIsLoadingLiveData(true);
+    setLiveDataError("");
+    return fetchLiveDatabaseSummary();
+  };
 
+  // On mount the page already starts loading with no error, so only the fetch runs.
+  const fetchLiveDatabaseSummary = async () => {
+    try {
       const bookings = await fetchBookings();
       setLiveBookings(Array.isArray(bookings) ? bookings : []);
     } catch (error) {
@@ -363,7 +367,7 @@ export default function DashboardBackups({
   };
 
   useEffect(() => {
-    loadLiveDatabaseSummary();
+    fetchLiveDatabaseSummary();
   }, []);
 
   const handleCreateBackup = async () => {
@@ -394,7 +398,8 @@ export default function DashboardBackups({
         title: missingSections.length ? "Backup created with gaps" : "Backup created",
         message:
           `${bookings.length} bookings, ${backup.summary.guestInquiryCount} website inquiries, ` +
-          `${backup.summary.portalChecklistItemCount} portal tasks, ${backup.summary.portalDocumentCount} portal documents ` +
+          `${backup.summary.portalChecklistItemCount} portal tasks, ${backup.summary.portalDocumentCount} portal documents, ` +
+          `${backup.summary.bookingChangeLogCount} booking change history entries ` +
           `and a list of ${backup.summary.storageManifestCount} uploaded files were saved. ` +
           "The uploaded files themselves are not copied into the backup. " +
           (missingSections.length
@@ -725,6 +730,7 @@ export default function DashboardBackups({
         ? " " +
           ["guestInquiries", "portalChecklistItems", "portalDocuments"]
             .concat(selectedBackup.schemaVersion >= 3 ? ["portalSignatures"] : [])
+            .concat(selectedBackup.schemaVersion >= 4 ? ["bookingChangeLog"] : [])
             .map((key) => {
               const label = BACKUP_SECTIONS.find((section) => section.key === key)?.label;
               const result = supportingResults[key];

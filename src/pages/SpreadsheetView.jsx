@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
-  FaCog,
   FaInfoCircle,
   FaRegStar,
   FaStar,
@@ -1385,11 +1384,6 @@ function getSpreadsheetSearchText(booking) {
   ]
     .map((value) => String(value || "").toLowerCase())
     .join(" ");
-}
-
-function getSpreadsheetNumber(value) {
-  const match = String(value || "").match(/\d+(\.\d+)?/);
-  return match ? Number(match[0]) : null;
 }
 
 function isSpreadsheetUsableValue(value) {
@@ -3242,11 +3236,13 @@ function BookingSpreadsheetView({
     getSavedSpreadsheetSettings()
   );
 
-  const selectedSpreadsheetBuildings = Array.isArray(
-    spreadsheetSettings.buildingTypes
-  )
-    ? spreadsheetSettings.buildingTypes
-    : [];
+  const selectedSpreadsheetBuildings = useMemo(
+    () =>
+      Array.isArray(spreadsheetSettings.buildingTypes)
+        ? spreadsheetSettings.buildingTypes
+        : [],
+    [spreadsheetSettings.buildingTypes]
+  );
 
   const [savedSpreadsheetViews, setSavedSpreadsheetViews] = useState(() =>
     getSavedSpreadsheetSavedViews()
@@ -3824,7 +3820,7 @@ function BookingSpreadsheetView({
     ],
     [
       filteredAndSortedBookings.length,
-      inquiryBookings.length,
+      totalBookingCount,
       starredSpreadsheetCount,
       formCount,
       importedCount,
@@ -4378,13 +4374,13 @@ export default function SpreadsheetView({
 }) {
   const [shouldRenderSpreadsheet, setShouldRenderSpreadsheet] = useState(false);
 
-  useEffect(() => {
-    if (isLoading) {
-      setShouldRenderSpreadsheet(false);
-      return;
-    }
+  // A reload shows the loading screen again, then reveals the sheet as on first load.
+  if (isLoading && shouldRenderSpreadsheet) {
+    setShouldRenderSpreadsheet(false);
+  }
 
-    if (shouldRenderSpreadsheet) {
+  useEffect(() => {
+    if (isLoading || shouldRenderSpreadsheet) {
       return;
     }
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import ExcelJS from "exceljs";
+import { loadExcelJS } from "../utils/loadLibraries";
 import { FaConciergeBell, FaDownload, FaPlus } from "react-icons/fa";
 
 import CalendarView from "./CalendarView";
@@ -238,6 +238,13 @@ function HostingSheet({ records, onOpenRecord }) {
     setSort((current) => ({ key, direction: current.key === key ? -current.direction : 1 }));
 
   const exportRows = async () => {
+    let ExcelJS;
+    try {
+      ExcelJS = await loadExcelJS();
+    } catch (error) {
+      alert(error.message);
+      return;
+    }
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Hosting");
     sheet.columns = [

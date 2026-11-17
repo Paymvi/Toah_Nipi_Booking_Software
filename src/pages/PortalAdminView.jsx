@@ -1440,20 +1440,17 @@ function PortalChecklistPreview({
     useState("");
 
 
-  useEffect(
-    () => {
-      if (
-        items.length <= 5
-      ) {
-        setIsExpanded(
-          false
-        );
-      }
-    },
-    [
-      items.length,
-    ]
-  );
+  // A list short enough to show in full is never left "expanded".
+  const [shownItemCount, setShownItemCount] =
+    useState(items.length);
+
+  if (shownItemCount !== items.length) {
+    setShownItemCount(items.length);
+
+    if (items.length <= 5) {
+      setIsExpanded(false);
+    }
+  }
 
 
   // Signed copies whose task was later removed are still listed for staff.
@@ -1917,23 +1914,25 @@ function PortalTaskAssignmentPanel({
   const pendingTaskRequestRef =
     useRef(null);
 
-  useEffect(
-    () => {
-      setTaskDrafts(
-        createTaskAssignmentDraft(
-          record
-        )
-      );
+  // Another booking, or its tasks were reloaded: start again from the saved tasks.
+  const [draftSource, setDraftSource] =
+    useState({ id: record.id, items: record.checklistItems });
 
-      setAssignmentError(
-        ""
-      );
-    },
-    [
-      record.id,
-      record.checklistItems,
-    ]
-  );
+  if (
+    draftSource.id !== record.id ||
+    draftSource.items !== record.checklistItems
+  ) {
+    setDraftSource({ id: record.id, items: record.checklistItems });
+    setTaskDrafts(
+      createTaskAssignmentDraft(
+        record
+      )
+    );
+
+    setAssignmentError(
+      ""
+    );
+  }
 
     const selectedCount =
     Object.values(
@@ -2511,23 +2510,25 @@ function PortalDocumentAssignmentPanel({
     useState(0);
 
 
-  useEffect(
-    () => {
-      setDocumentDrafts(
-        createDocumentAssignmentDraft(
-          record
-        )
-      );
+  // Another booking, or its documents were reloaded: start again from the saved documents.
+  const [draftSource, setDraftSource] =
+    useState({ id: record.id, documents: record.documents });
 
-      setAssignmentError(
-        ""
-      );
-    },
-    [
-      record.id,
-      record.documents,
-    ]
-  );
+  if (
+    draftSource.id !== record.id ||
+    draftSource.documents !== record.documents
+  ) {
+    setDraftSource({ id: record.id, documents: record.documents });
+    setDocumentDrafts(
+      createDocumentAssignmentDraft(
+        record
+      )
+    );
+
+    setAssignmentError(
+      ""
+    );
+  }
 
 
     const selectedCount =
@@ -3924,16 +3925,27 @@ function PortalAdminScreen({
   const [loadedEmailAdmin, setEmailAdmin] = useState(null);
   const emailAdmin = demo?.emailAdmin ?? loadedEmailAdmin;
 
-  async function loadEmailSettings() {
-    try {
-      setEmailAdmin(await loadEmailAdmin());
-    } catch (error) {
+  function loadEmailSettings() {
+    return loadEmailAdmin().then(setEmailAdmin, (error) => {
       setEmailAdmin(isMissingEmailSetup(error) ? { missing: true } : null);
-    }
+    });
   }
 
 
-  async function loadPortalRecords() {
+  function loadPortalRecords() {
+    setIsLoading(
+      true
+    );
+
+    setPortalError(
+      ""
+    );
+
+    return fetchPortalRecords();
+  }
+
+  // The first load (on mount) starts with isLoading already true and no error.
+  async function fetchPortalRecords() {
     // Overlapping reloads can resolve out of order; only the newest
     // request may update state.
     const requestId =
@@ -3943,14 +3955,6 @@ function PortalAdminScreen({
       requestId;
 
     try {
-      setIsLoading(
-        true
-      );
-
-      setPortalError(
-        ""
-      );
-
       const [overview, settings] =
         await Promise.all([
           fetchPortalOverviewRecords(),
@@ -4001,7 +4005,7 @@ function PortalAdminScreen({
   useEffect(
     () => {
             if (demo) return;
-      loadPortalRecords();
+      fetchPortalRecords();
       loadEmailSettings();
     },
     [demo]

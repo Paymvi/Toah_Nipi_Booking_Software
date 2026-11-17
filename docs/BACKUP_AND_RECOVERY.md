@@ -35,16 +35,17 @@ Every backup is a JSON envelope:
 
 ```text
 format: "toah-nipi-booking-backup"
-schemaVersion: 1, 2 or 3
+schemaVersion: 1, 2, 3 or 4
 ```
 
 | Version | Written by | Contents |
 |---|---|---|
 | 1 | The Google Apps Script daily backup (as documented for that external project); older dashboard backups | Bookings only |
 | 2 | Earlier dashboard versions | Bookings, website inquiries, portal tasks, portal documents, and a list of uploaded files (names and locations only) |
-| 3 | The dashboard today | Everything in version 2, plus read-only online signing records |
+| 3 | Earlier dashboard versions | Everything in version 2, plus read-only online signing records |
+| 4 | The dashboard today | Everything in version 3, plus the booking change history the staff app shows (`booking_change_log`) |
 
-The dashboard writes version 3 and can read versions 1, 2 and 3 (`CURRENT_BACKUP_SCHEMA_VERSION` and `SUPPORTED_BACKUP_SCHEMA_VERSIONS` in [src/utils/backupFormat.js](../src/utils/backupFormat.js)).
+The dashboard writes version 4 and can read versions 1, 2, 3 and 4 (`CURRENT_BACKUP_SCHEMA_VERSION` and `SUPPORTED_BACKUP_SCHEMA_VERSIONS` in [src/utils/backupFormat.js](../src/utils/backupFormat.js)).
 
 The envelope metadata includes the creation time, backup reason, application name, record counts, SHA-256 integrity information and the data itself.
 
@@ -108,6 +109,7 @@ Merge upserts the backup's records into the live database.
 - Records that exist only in the live database are left alone.
 - A booking that was deleted after the backup can be re-inserted. A re-inserted booking keeps its original `portal_token` and `created_at` when the backup has them (version 2 and 3 backups always do; version 1 backups have the token only if the backup writer included it). See `bookingToDbRow` in [src/services/bookingMapping.js](../src/services/bookingMapping.js).
 - Version 2 and 3 backups also restore missing website inquiries, portal tasks and portal documents.
+- Version 4 backups also restore missing booking change history. Only administrators can restore it (`staff_app_restore_change_log`); a row already present is skipped, so restoring the same file twice adds nothing.
 
 Merge is not a field-by-field conflict merge. Review the comparison carefully before running it.
 
@@ -134,6 +136,7 @@ What Replace does to portal data:
 - A version 2 or 3 backup brings those rows back, and bookings keep their original portal tokens, so guests' portal links keep working.
 - A **version 1 backup (including the Google Apps Script daily backups) contains bookings only.** Replacing from one permanently loses every portal task and portal document row.
 - Uploaded files are never restored; backups list only where they are. Files in Storage are not deleted by Replace, but rows that pointed at them may be gone.
+- Booking change history is **kept**: it is not linked to the booking row (migration `20261117000100_booking_change_log_keep_history.sql`), and restored bookings keep their ids, so their history lines up again. Deleting and re-inserting the same bookings records no new changes. Before that migration runs, Replace erases all change history.
 - Replace clears `converted_booking_id` on converted website inquiries (that foreign key is set to null on delete) unless the backup restores them.
 
 > **Prefer Merge, which never deletes bookings. Never use Full Replace from a version 1 file on data that has portal activity.**
@@ -275,12 +278,13 @@ Restrict access to the Apps Script project and the Drive backup folders to the a
 
 The custom JSON backups are **not** a complete backup of the Supabase project.
 
-| Data | Dashboard backup (version 3) | Google Drive daily backup (version 1) |
+| Data | Dashboard backup (version 4) | Google Drive daily backup (version 1) |
 |---|---|---|
 | Bookings | Yes | Yes |
 | Website inquiries (`guest_inquiries`) | Yes | No |
 | Portal tasks and portal documents | Yes | No |
 | Online signing records (`portal_signatures`) | Yes | No |
+| Booking change history (`booking_change_log`) | Yes (version 4) | No |
 | Uploaded files in `portal-uploads` and `portal-signed` | File list only, not the files | No |
 | Staff directory, staff profiles, Auth users | No | No |
 | Guest email settings, recipients and history | No | No |

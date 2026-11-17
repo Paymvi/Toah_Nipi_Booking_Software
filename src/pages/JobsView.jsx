@@ -34,20 +34,6 @@ function formatDateForInput(date) {
 }
 
 
-export function getAssignedStaffNamesFromBookings(inquiryBookings) {
-  const assignedNames = new Set();
-
-  getAllBookingJobs(inquiryBookings).forEach((job) => {
-    const assignedTo = String(job.assignedTo || "").trim();
-
-    if (assignedTo) {
-      assignedNames.add(assignedTo);
-    }
-  });
-
-  return Array.from(assignedNames).sort((a, b) => a.localeCompare(b));
-}
-
 function getTodayKey() {
   return formatDateForInput(new Date());
 }

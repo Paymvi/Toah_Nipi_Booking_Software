@@ -19,7 +19,6 @@ import { getBookingDisplayState } from "../utils/bookingClassification";
 import { LODGING_BUILDINGS } from "../constants/lodgingConstants";
 import { getBookingLodgingAssignments } from "../utils/lodgingUtils";
 import {
-  FaBed,
   FaChartBar,
   FaClipboardList,
   FaClock,
@@ -819,17 +818,16 @@ function ReportRetreatTypePieChart({ rows, totalBookings }) {
       ]
     : topRows;
 
-  let runningPercent = 0;
+  const getPiePercent = (row) =>
+    totalBookings ? (row.bookings / totalBookings) * 100 : 0;
 
   const pieRows = chartRows.map((row, index) => {
-    const percent = totalBookings
-      ? (row.bookings / totalBookings) * 100
-      : 0;
-
-    const start = runningPercent;
-    const end = runningPercent + percent;
-
-    runningPercent = end;
+    const percent = getPiePercent(row);
+    // Same order of additions as a running total, so slice edges are unchanged.
+    const start = chartRows
+      .slice(0, index)
+      .reduce((sum, previous) => sum + getPiePercent(previous), 0);
+    const end = start + percent;
 
     return {
       ...row,
@@ -1045,35 +1043,6 @@ function ReportsView({ inquiryBookings }) {
   const averageCamperDaysPerCoveredBooking = camperDaysCoverageCount
     ? totalCamperDays / camperDaysCoverageCount
     : 0;
-
-  const averageCamperDaysPerGuest = totalGuests
-    ? totalCamperDays / totalGuests
-    : 0;
-
-  const camperDaysBreakdownRows = [
-    {
-      label: "Stored camper day values",
-      count: camperDaysStoredCount,
-      helper: "Used an existing camperDays value already saved on the booking.",
-    },
-    {
-      label: "Calculated from overnight guests and day campers",
-      count: camperDaysCalculatedCount,
-      helper:
-        "Formula: overnight guests × ((nights × 0.4) + (meals × 0.2)) + day campers × meals × 0.2.",
-    },
-    {
-      label: "Missing enough data",
-      count: camperDaysMissingCount,
-      helper:
-        "Could not calculate camper days because guest count or usage counts were missing.",
-    },
-  ];
-
-  const maxCamperDaysBreakdownCount = Math.max(
-    0,
-    ...camperDaysBreakdownRows.map((row) => row.count)
-  );
 
   const depositsReceived = filteredReportBookings.reduce(
     (sum, booking) => sum + getReportsDepositReceivedAmount(booking),
@@ -1894,11 +1863,6 @@ function ReportsView({ inquiryBookings }) {
               {camperDayMonthlyRows.length > 0 ? (
                 <div className="reports-bar-list">
                   {camperDayMonthlyRows.map((row) => {
-                    const average =
-                      row.camperDayBookings > 0
-                        ? row.camperDays / row.camperDayBookings
-                        : 0;
-
                     return (
                       <ReportBarRow
                         key={`camper-days-${row.monthKey}`}

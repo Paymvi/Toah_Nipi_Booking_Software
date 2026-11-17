@@ -40,13 +40,55 @@ import "./styles/Mobile.css";
 import "./styles/StaffApp.css";
 import "./styles/theme.css";
 
+import { Component, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
-import Dashboard from "./pages/Dashboard";
 import StaffAuthGate from "./auth/StaffAuthGate";
-import TutorialGnome from "./tutorial/TutorialGnome";
-import StaffApp from "./pages/StaffApp";
 import { useStaffAccess } from "./auth/staffAccess";
+
+// Each part downloads when first opened: the staff app on a phone never loads the office app.
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const StaffApp = lazy(() => import("./pages/StaffApp"));
+const TutorialGnome = lazy(() => import("./tutorial/TutorialGnome"));
+
+function PageLoading() {
+  return (
+    <main className="staff-login-page" aria-busy="true">
+      <section className="staff-login-card">
+        <p className="dashboard-eyebrow">Loading</p>
+        <h1>Opening the page...</h1>
+      </section>
+    </main>
+  );
+}
+
+// A part that cannot download (offline, or a tab left open across a new release) asks for a reload instead of a blank page.
+class PageLoadError extends Component {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error) {
+    console.error("Could not open this page:", error);
+  }
+
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <main className="staff-login-page" role="alert">
+        <section className="staff-login-card">
+          <p className="dashboard-eyebrow">Could not open this page</p>
+          <h1>Check the internet connection, then reload.</h1>
+          <button className="primary-dashboard-button" type="button" onClick={() => window.location.reload()}>
+            Reload
+          </button>
+        </section>
+      </main>
+    );
+  }
+}
 
 
 export default function App() {
@@ -54,7 +96,11 @@ export default function App() {
     <BrowserRouter>
 
       <StaffAuthGate>
-        <AppRoutes />
+        <PageLoadError>
+          <Suspense fallback={<PageLoading />}>
+            <AppRoutes />
+          </Suspense>
+        </PageLoadError>
       </StaffAuthGate>
 
     </BrowserRouter>
@@ -171,7 +217,11 @@ function AppRoutes() {
         </Routes>
 
         {/* Office help; outside Routes so it stays put across views. Not over the staff app's bottom bar. */}
-        {!isStaffApp && <TutorialGnome />}
+        {!isStaffApp && (
+          <Suspense fallback={null}>
+            <TutorialGnome />
+          </Suspense>
+        )}
     </>
   );
 }

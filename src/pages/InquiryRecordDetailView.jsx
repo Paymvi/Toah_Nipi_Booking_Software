@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import {
   FaArrowLeft,
@@ -290,11 +290,15 @@ export default function InquiryRecordDetailView({
     If Dashboard replaces selectedBooking after
     saving, refresh our local edit form too.
   */
-  useEffect(() => {
+  const [formBooking, setFormBooking] =
+    useState(booking);
+
+  if (formBooking !== booking) {
+    setFormBooking(booking);
     setFormData(
       createInquiryEditState(booking)
     );
-  }, [booking]);
+  }
 
 
   if (!booking) {

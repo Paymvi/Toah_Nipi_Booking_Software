@@ -45,18 +45,20 @@ test("existing version 1 backups (Apps Script format) still validate and verify"
   assert.equal((await verifyBackupIntegrity(backup, sha)).ok, false);
 });
 
-test("version 3 backups cover every section and detect tampering in any of them", async () => {
+test("version 4 backups cover every section and detect tampering in any of them", async () => {
   const sections = {
     bookings: [{ id: "b1", portalToken: "tok1", createdAt: "2026-01-01T00:00:00+00:00" }],
     guestInquiries: [{ id: "gi1", status: "converted", converted_booking_id: "b1" }],
     portalChecklistItems: [{ id: 10, booking_id: "b1", item_id: "contract", uploaded_file_path: "tok1/contract.pdf" }],
     portalDocuments: [{ id: 20, booking_id: "b1", file_name: "map.pdf", uploaded_by_guest: false }],
     portalSignatures: [{ id: "s1", booking_id: "b1", signer_name: "Fictional Signer" }],
+    bookingChangeLog: [{ id: 7, booking_id: "b1", field: "meals", changed_at: "2026-10-27T10:00:00+00:00", new_value: "3" }],
     storageManifest: [{ path: "tok1/contract.pdf" }],
   };
   const backup = await createBackupEnvelope(sections, { hash: sha, createdAt: "2026-10-28T00:00:00.000Z" });
-  assert.equal(backup.schemaVersion, 3);
+  assert.equal(backup.schemaVersion, 4);
   assert.equal(backup.summary.portalSignatureCount, 1);
+  assert.equal(backup.summary.bookingChangeLogCount, 1);
   assert.deepEqual(validateBackupShape(backup).errors, []);
   assert.equal((await verifyBackupIntegrity(backup, sha)).ok, true);
 
@@ -66,6 +68,31 @@ test("version 3 backups cover every section and detect tampering in any of them"
   const signed = await createBackupEnvelope(sections, { hash: sha });
   signed.payload.portalSignatures[0].signer_name = "Someone Else";
   assert.equal((await verifyBackupIntegrity(signed, sha)).ok, false);
+
+  const history = await createBackupEnvelope(sections, { hash: sha });
+  history.payload.bookingChangeLog[0].new_value = "9";
+  assert.equal((await verifyBackupIntegrity(history, sha)).ok, false);
+});
+
+test("version 3 backups (made before change history was backed up) still validate and verify", async () => {
+  const payload = {
+    bookings: [{ id: "b1" }],
+    guestInquiries: [],
+    portalChecklistItems: [],
+    portalDocuments: [],
+    portalSignatures: [],
+    storageManifest: [],
+  };
+  const backup = {
+    format: "toah-nipi-booking-backup",
+    schemaVersion: 3,
+    integrity: { algorithm: "SHA-256", checksum: await sha(JSON.stringify(payload)) },
+    payload,
+  };
+  const shape = validateBackupShape(backup);
+  assert.deepEqual(shape.errors, []);
+  assert.ok(shape.warnings.some((warning) => /no change history/.test(warning)));
+  assert.equal((await verifyBackupIntegrity(backup, sha)).ok, true);
 });
 
 test("unreadable sections are named, not silently dropped", async () => {

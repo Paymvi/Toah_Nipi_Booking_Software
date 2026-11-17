@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { LODGING_BUILDINGS } from "../constants/lodgingConstants";
 import { recordStaffEdits } from "../utils/bookingFields";
 import { isStaffBookingRecord } from "../utils/bookingClassification";
@@ -408,7 +408,9 @@ export default function BookingHousingTab({
      RESET WHEN ANOTHER BOOKING IS OPENED / SAVED
   ======================================================= */
 
-  useEffect(() => {
+  const [shownBooking, setShownBooking] = useState(booking);
+  if (shownBooking !== booking) {
+    setShownBooking(booking);
     setHousingValues(
       getInitialHousingState(booking)
     );
@@ -427,7 +429,7 @@ export default function BookingHousingTab({
       getInitialLinenSets(booking)
     );
     setIsEditing(false);
-  }, [booking]);
+  }
 
   /* =======================================================
      TOTALS

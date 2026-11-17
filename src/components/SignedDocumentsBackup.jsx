@@ -1,8 +1,8 @@
 import { useState } from "react";
-import JSZip from "jszip";
 import { FaDownload, FaFileSignature, FaRedoAlt, FaUpload } from "react-icons/fa";
 
 import { supabase } from "../lib/supabaseClient";
+import { loadJSZip } from "../utils/loadLibraries";
 import {
   buildSignedDocumentsArchive,
   readSignedDocumentsArchive,
@@ -51,7 +51,7 @@ export default function SignedDocumentsBackup({ disabled = false }) {
     try {
       const { bytes, manifest } = await buildSignedDocumentsArchive({
         client: supabase,
-        JSZip,
+        JSZip: await loadJSZip(),
         signedSince: signedSince ? `${signedSince}T00:00:00Z` : "",
         onProgress: (done, total) => setProgress(`Saving file ${done} of ${total}…`),
       });
@@ -79,7 +79,7 @@ export default function SignedDocumentsBackup({ disabled = false }) {
     setResult(null);
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const checked = await readSignedDocumentsArchive({ bytes, JSZip });
+      const checked = await readSignedDocumentsArchive({ bytes, JSZip: await loadJSZip() });
       setArchive({ name: file.name, bytes, checked });
       setResult(
         checked.problems.length
@@ -104,7 +104,7 @@ export default function SignedDocumentsBackup({ disabled = false }) {
     try {
       const outcome = await restoreSignedDocumentsArchive({
         bytes: archive.bytes,
-        JSZip,
+        JSZip: await loadJSZip(),
         client: supabase,
         restoreFile: restoreFileThroughFunction,
         onProgress: (done, total) => setProgress(`Checking file ${done} of ${total}…`),

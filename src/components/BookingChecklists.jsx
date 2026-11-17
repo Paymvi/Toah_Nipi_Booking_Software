@@ -79,11 +79,11 @@ function StaffAssignedSelect({ value, staffUsers, onChange }) {
   );
 }
 
-export function getBookingChecklists(booking) {
+function getBookingChecklists(booking) {
   return Array.isArray(booking?.checklists) ? booking.checklists : [];
 }
 
-export function sortChecklistItems(items) {
+function sortChecklistItems(items) {
   return [...(items || [])].sort(
     (a, b) => Number(a.sequence || 0) - Number(b.sequence || 0)
   );

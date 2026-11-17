@@ -101,23 +101,6 @@ function inquiryTouchesMonth(inquiry, year, month) {
 }
 
 
-function inquiryTouchesYear(inquiry, year) {
-  const range = getInquiryDateRange(inquiry);
-
-  if (!range) {
-    return false;
-  }
-
-  const yearStart = new Date(year, 0, 1);
-  const yearEnd = new Date(year, 11, 31);
-
-  return (
-    range.startDate <= yearEnd &&
-    range.endDate >= yearStart
-  );
-}
-
-
 function getHeatmapBuildingBucket(inquiry, selectedBuilding) {
   if (
     selectedBuilding !== "all" &&
@@ -374,12 +357,6 @@ export default function LodgingCalendarView({
     selectedYear,
   ]);
 
-  const selectedYearInquiries = useMemo(() => {
-    return safeDatedInquiries.filter((inquiry) =>
-      inquiryTouchesYear(inquiry, selectedYear)
-    );
-  }, [safeDatedInquiries, selectedYear]);
-
   const selectedWeekDays = useMemo(() => {
 
     return weekDayLabels.map(
@@ -483,8 +460,8 @@ export default function LodgingCalendarView({
         };
       });
     }, [
-      getCalendarEventColor,
       filteredDatedInquiries,
+      selectedBuilding,
       selectedYear
     ]);
 
