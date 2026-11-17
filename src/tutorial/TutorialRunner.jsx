@@ -18,6 +18,10 @@
   locked while paused and ends if the person leaves its page.
 
   Tutorials with writeLock also refuse writes at the network (tutorialSafety.js).
+
+  A step with no target highlights nothing: it explains, usually with a
+  fictional preview (step.preview, JourneyPreview.jsx) of a screen staff
+  can't see, such as the group leader's. step.role labels whose action it is.
 */
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
@@ -32,6 +36,7 @@ import {
 } from "react-icons/fa";
 
 import GnomeMascot from "./GnomeMascot";
+import JourneyPreview from "./JourneyPreview";
 import { TUTORIAL_TARGETS } from "./tutorials";
 import {
     checkStep,
@@ -41,6 +46,7 @@ import {
   getDemoEffects,
   getDemoStepDuration,
   getNextAction,
+  getScenarioPages,
   getSectionAt,
   getStepOpeners,
   getStepPosition,
@@ -51,6 +57,7 @@ import {
   placePointer,
   runDemoAction,
   setTargetScope,
+  STEP_ROLES,
 } from "./tutorialCore";
 import { setTutorialWriteLock } from "./tutorialSafety";
 
@@ -107,6 +114,11 @@ function canDemoClick(element) {
 function getTargetLabel(target) {
   const id = Array.isArray(target) ? target[0] : target;
   return TUTORIAL_TARGETS[id] || "the highlighted item";
+}
+
+// A step with no target can be shown anywhere; otherwise its control must still be on screen, or reopenable.
+function canShowAgain(step) {
+  return !step.target || Boolean(getStepOpeners(step).length || findTarget(step.target));
 }
 
 function getStaffRole() {
@@ -275,9 +287,10 @@ export default function TutorialRunner({ tutorial, startStep = 0, onStepChange, 
 
     // The router commits navigations in a transition, so the URL can change before the app does; a navigation
     // still pending when this step acts would undo it (e.g. close the booking just opened) once it lands.
-        const findReadyTarget = () =>
+    // A step without a target only needs the page to have settled.
+    const findReadyTarget = () =>
       routerPathRef.current === window.location.pathname && (!step.waitFor || checkStep(step.waitFor, ctx))
-        ? findTarget(step.target)
+        ? step.target ? findTarget(step.target) : document.body
         : null;
     const seekStartedAt = Date.now();
     let element = findReadyTarget();
@@ -302,7 +315,7 @@ export default function TutorialRunner({ tutorial, startStep = 0, onStepChange, 
 
     if (skipIfDone()) return;
 
-    scrollTargetIntoView(element);
+    if (step.target) scrollTargetIntoView(element);
     stepEnteredAtRef.current = Date.now();
 
     let start;
@@ -373,7 +386,7 @@ export default function TutorialRunner({ tutorial, startStep = 0, onStepChange, 
   // Leaving the page (sidebar while paused, browser Back) ends a fictional demo: it never follows anyone elsewhere.
   useEffect(() => {
     if (!isFictional) return;
-    if (pathname === tutorial.scenario.home) hasReachedHomeRef.current = true;
+    if (getScenarioPages(tutorial.scenario).includes(pathname)) hasReachedHomeRef.current = true;
     else if (hasReachedHomeRef.current) leaveFictionalPage();
   }, [isFictional, pathname, tutorial]);
 
@@ -398,7 +411,7 @@ export default function TutorialRunner({ tutorial, startStep = 0, onStepChange, 
 
   const measure = useEffectEvent(() => {
     const viewport = { width: window.innerWidth, height: window.innerHeight };
-    const element = phase === "missing" ? null : findTarget(step.target);
+    const element = phase === "missing" || !step.target ? null : findTarget(step.target);
     const rect = element ? clipRect(element.getBoundingClientRect(), viewport) : null;
     const dialogBox = dialogRef.current?.getBoundingClientRect();
     const dialogSize = {
@@ -426,7 +439,7 @@ export default function TutorialRunner({ tutorial, startStep = 0, onStepChange, 
       pointer: pointer && { ...pointer, x: Math.round(pointer.x), y: Math.round(pointer.y) },
       isMoving: Date.now() - stepEnteredAtRef.current < 700,
       // The previous step's control is on an earlier screen (e.g. the spreadsheet behind an open booking), unless it can reopen it.
-      canGoBack: getPreviousIndex() >= 0 && Boolean(getStepOpeners(steps[getPreviousIndex()]).length || findTarget(steps[getPreviousIndex()].target)),
+      canGoBack: getPreviousIndex() >= 0 && canShowAgain(steps[getPreviousIndex()]),
     };
   });
 
@@ -551,8 +564,9 @@ export default function TutorialRunner({ tutorial, startStep = 0, onStepChange, 
     (step.adminOnly && getStaffRole() !== "admin" && ADMIN_NOTE) ||
     "";
   const dialog = layout?.dialog || { dock: window.innerWidth < MOBILE_BREAKPOINT ? "bottom" : null };
-  const isDocked = dialog.dock === "bottom";
+  const isDocked = Boolean(dialog.dock);
   const isLastStep = stepIndex === steps.length - 1;
+  const role = STEP_ROLES[step.role];
 
   const gnomeMood = isLost || phase === "failed" ? "surprised" : isBusy || nudge ? "thinking" : "happy";
   const gnomePose = phase === "active" || phase === "working" ? "point" : phase === "seeking" ? "think" : "idle";
@@ -566,7 +580,7 @@ export default function TutorialRunner({ tutorial, startStep = 0, onStepChange, 
           aria-hidden="true"
         />
       ) : (
-        phase === "seeking" && <div className="tg-dim" aria-hidden="true" />
+        (phase === "seeking" || !step.target) && <div className="tg-dim" aria-hidden="true" />
       )}
 
       {pointer && (
@@ -591,7 +605,7 @@ export default function TutorialRunner({ tutorial, startStep = 0, onStepChange, 
 
       <section
         ref={dialogRef}
-        className={`tg-dialog ${isDocked ? "tg-dialog-docked" : `tg-dialog-${dialog.side || "corner"}`}`}
+        className={`tg-dialog ${isDocked ? `tg-dialog-docked tg-dialog-docked-${dialog.dock}` : `tg-dialog-${dialog.side || "corner"}`}`}
         style={isDocked ? undefined : { top: dialog.top, left: dialog.left }}
         role="dialog"
         aria-modal="false"
@@ -600,7 +614,7 @@ export default function TutorialRunner({ tutorial, startStep = 0, onStepChange, 
         tabIndex={-1}
       >
         <header className="tg-dialog-header">
-          <GnomeMascot pose={gnomePose} mood={gnomeMood} className="tg-dialog-gnome" />
+          <GnomeMascot pose={gnomePose} mood={gnomeMood} role={step.role} className="tg-dialog-gnome" />
 
           <div className="tg-dialog-heading">
             <span className="tg-mode-chip tg-mode-chip-demo">
@@ -654,7 +668,16 @@ export default function TutorialRunner({ tutorial, startStep = 0, onStepChange, 
             </div>
           ) : (
             <>
+              {role && (
+                <p className={`tg-role tg-role-${step.role}`}>
+                  <strong>{role.label}</strong>
+                  {role.note && <span>{role.note}</span>}
+                </p>
+              )}
+
               <p>{step.show}</p>
+
+              {step.preview && <JourneyPreview kind={step.preview} />}
 
               {roleNote && <p className="tg-muted">{roleNote}</p>}
 

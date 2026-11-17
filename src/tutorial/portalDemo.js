@@ -175,7 +175,8 @@ export function buildPortalDemoScene(effects = []) {
     history: [],
   };
 
-  effects.forEach((name) => EFFECTS[name]({ group, email }));
+  // A tutorial that also runs another scene (inquiryDemo.js) passes its effects too; those are ignored here.
+  effects.forEach((name) => EFFECTS[name]?.({ group, email }));
 
   const records = [
     group,

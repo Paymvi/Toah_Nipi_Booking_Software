@@ -2,6 +2,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
 } from "react";
 
 import {
@@ -34,6 +35,7 @@ import {
   getGuestInquiries,
   markGuestInquiryConverted,
 } from "../services/guestInquiryService";
+import { getInquiryDemo, subscribeInquiryDemo } from "../tutorial/inquiryDemo";
 
 /*
   Bookings created from a website inquiry record it in
@@ -65,6 +67,7 @@ function getBookingsByGuestInquiryId(bookings = []) {
 const COLUMNS = [
   {
     key: "pending",
+    tutorialTarget: "inquiry-column-pending",
     label: "New Requests",
     description:
       "Guest submissions waiting for staff review.",
@@ -72,6 +75,7 @@ const COLUMNS = [
   },
   {
     key: "converted",
+    tutorialTarget: "inquiry-column-converted",
     label: "Converted",
     description:
       "Requests that became official bookings.",
@@ -79,6 +83,7 @@ const COLUMNS = [
   },
   {
     key: "declined",
+    tutorialTarget: "inquiry-column-declined",
     label: "Declined",
     description:
       "Requests staff chose not to book.",
@@ -557,7 +562,7 @@ function RequestCard({
     );
 
   return (
-    <article className="guest-request-card">
+    <article className="guest-request-card" data-tutorial-scope={inquiry.id}>
       <div className="guest-request-card-badges">
         <span className="guest-request-source-badge">
           Guest Web Form
@@ -670,6 +675,7 @@ function RequestCard({
         <button
           type="button"
           className="guest-request-secondary-button"
+          data-tutorial-target="inquiry-review"
           onClick={() =>
             onReview(inquiry)
           }
@@ -683,9 +689,30 @@ function RequestCard({
 }
 
 
-export default function GuestInquiriesView({
+/*
+  The tutorial's fictional inquiries (tutorial/inquiryDemo.js) run through a
+  second copy of the same screen. The real one stays mounted but hidden, so
+  an open review is still there when the demo ends.
+*/
+export default function GuestInquiriesView(props) {
+  const demo = useSyncExternalStore(subscribeInquiryDemo, getInquiryDemo);
+
+  return (
+    <>
+      <div style={{ display: demo ? "none" : "contents" }}>
+        <GuestInquiriesScreen {...props} />
+      </div>
+
+      {demo && <GuestInquiriesScreen {...props} existingBookings={[]} demo={demo} />}
+    </>
+  );
+}
+
+
+function GuestInquiriesScreen({
   onCreateBooking,
   existingBookings = [],
+  demo = null,
 }) {
   const bookingsByGuestInquiryId = useMemo(
     () => getBookingsByGuestInquiryId(existingBookings),
@@ -700,7 +727,7 @@ export default function GuestInquiriesView({
   const [
     isLoading,
     setIsLoading,
-  ] = useState(true);
+  ] = useState(!demo);
 
   const [
     loadError,
@@ -738,9 +765,10 @@ export default function GuestInquiriesView({
   ] = useState("");
 
 
+  // The fictional screen never reads real requests.
   useEffect(() => {
-    loadGuestInquiries();
-  }, []);
+    if (!demo) loadGuestInquiries();
+  }, [demo]);
 
 
   async function loadGuestInquiries() {
@@ -778,7 +806,7 @@ export default function GuestInquiriesView({
         declined: [],
       };
 
-      inquiries.forEach(
+      (demo ? demo.inquiries : inquiries).forEach(
         (inquiry) => {
           groups[
             statusKey(
@@ -807,7 +835,7 @@ export default function GuestInquiriesView({
       );
 
       return groups;
-    }, [inquiries]);
+    }, [demo, inquiries]);
 
 
   const openReview = (
@@ -1075,7 +1103,7 @@ export default function GuestInquiriesView({
       )}
 
 
-      <article className="guest-request-header-card">
+      <article className="guest-request-header-card" data-tutorial-target="inquiry-page">
         <div className="guest-request-header">
           <div className="guest-request-heading">
             <span>
@@ -1130,7 +1158,7 @@ export default function GuestInquiriesView({
           </div>
         </div>
 
-        <div className="guest-request-workflow-note">
+        <div className="guest-request-workflow-note" data-tutorial-target="inquiry-workflow-note">
           <div>
             <strong>
               Guest form workflow
@@ -1144,7 +1172,7 @@ export default function GuestInquiriesView({
           <button
             type="button"
             onClick={
-              loadGuestInquiries
+              demo ? undefined : loadGuestInquiries
             }
           >
             <FaSyncAlt />
@@ -1154,7 +1182,7 @@ export default function GuestInquiriesView({
       </article>
 
 
-      <div className="guest-request-board">
+      <div className="guest-request-board" data-tutorial-target="inquiry-board">
         {COLUMNS.map(
           (column) => {
             const Icon =
@@ -1171,6 +1199,7 @@ export default function GuestInquiriesView({
                 key={
                   column.key
                 }
+                data-tutorial-target={column.tutorialTarget}
               >
                 <div className="guest-request-column-header">
                   <div>
@@ -1265,6 +1294,7 @@ export default function GuestInquiriesView({
             className="guest-request-modal"
             role="dialog"
             aria-modal="true"
+            data-tutorial-target="inquiry-modal"
           >
             <header>
               <div>
@@ -1310,7 +1340,7 @@ export default function GuestInquiriesView({
 
 
             <div className="guest-request-modal-body">
-              <section className="guest-request-review-section">
+              <section className="guest-request-review-section" data-tutorial-target="inquiry-contact">
                 <header>
                   <FaUser />
 
@@ -1371,7 +1401,7 @@ export default function GuestInquiriesView({
               </section>
 
 
-              <section className="guest-request-review-section">
+              <section className="guest-request-review-section" data-tutorial-target="inquiry-stay">
                 <header>
                   <FaCalendarAlt />
 
@@ -1644,7 +1674,7 @@ export default function GuestInquiriesView({
               </section>
 
 
-              <section className="guest-request-review-section">
+              <section className="guest-request-review-section" data-tutorial-target="inquiry-reported">
                 <header>
                   <FaFileContract />
 
@@ -1844,6 +1874,7 @@ export default function GuestInquiriesView({
                     <button
                       type="button"
                       className="guest-request-danger-button"
+                      data-tutorial-guard
                       onClick={
                         declineSelectedInquiry
                       }
@@ -1889,6 +1920,7 @@ export default function GuestInquiriesView({
                       type="button"
                       className="guest-request-primary-button"
                       disabled={isUpdating}
+                      data-tutorial-guard
                       onClick={() => markSelectedInquiryConverted(booking)}
                     >
                       <FaCheckCircle />
@@ -1906,6 +1938,7 @@ export default function GuestInquiriesView({
                     <button
                       type="button"
                       className="guest-request-danger-ghost-button"
+                      data-tutorial-target="inquiry-decline"
                       onClick={() =>
                         setShowDecline(
                           true
@@ -1920,6 +1953,7 @@ export default function GuestInquiriesView({
                   <button
                     type="button"
                     className="guest-request-primary-button"
+                    data-tutorial-target="inquiry-open-form"
                     onClick={
                       openBookingForm
                     }

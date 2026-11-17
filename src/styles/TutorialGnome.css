@@ -641,11 +641,21 @@
   position: fixed;
   z-index: 10003;
   width: min(25rem, calc(100vw - 1.5rem));
+  /* A step with a preview can be tall: only the text scrolls, so the controls stay on screen. */
+  max-height: calc(100vh - 1.5rem);
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--tg-line);
   border-radius: 1rem;
   background: var(--n-raised, #ffffff);
   box-shadow: var(--tg-shadow);
   outline: none;
+}
+
+.tg-dialog .tg-dialog-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .tg-is-moving .tg-dialog:not(.tg-dialog-docked) {
@@ -657,16 +667,14 @@
   bottom: 0.75rem;
   left: 0.75rem;
   width: auto;
+  /* Only the text scrolls (see .tg-dialog), so Back, Pause and Next always stay on screen. */
   max-height: 45vh;
-  /* Only the text scrolls, so Back, Pause and Next always stay on screen. */
-  display: flex;
-  flex-direction: column;
 }
 
-.tg-dialog-docked .tg-dialog-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
+/* For a target low on the screen that can't scroll up (placeDialogue). */
+.tg-dialog-docked-top {
+  top: 0.75rem;
+  bottom: auto;
 }
 
 .tg-dialog-header {
@@ -991,4 +999,284 @@
 .tg-topics .tg-tutorial-item strong {
   font-size: 0.95rem;
   font-weight: 500;
+}
+
+/* ---------- Whose action a step shows (step.role) ----------
+   The label is written out; the color and border style only add to it. */
+
+.tg-role {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--tg-line);
+  border-left-width: 4px;
+  border-radius: 0.45rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.tg-role strong {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+}
+
+.tg-role-staff {
+  border-color: var(--n-green-line, #b9d2c0);
+  background: var(--n-green-bg, #eef5f0);
+  color: var(--n-green-text, #2e5b3b);
+}
+
+.tg-role-leader {
+  border-color: var(--n-blue-line, #a9c1ec);
+  border-left-style: double;
+  border-left-width: 6px;
+  background: var(--n-blue-bg, #edf3fd);
+  color: var(--n-blue-text, #1f4b99);
+}
+
+.tg-role-system {
+  border-color: var(--n-line-3, #c9cfd8);
+  border-left-style: dashed;
+  background: var(--n-surface-3, #f1f3f6);
+  color: var(--n-text-2, #3d4757);
+}
+
+.tg-role span {
+  color: var(--tg-ink);
+}
+
+/* ---------- Fictional previews (JourneyPreview.jsx) ---------- */
+
+.tg-preview {
+  margin: 0 0 0.55rem;
+  border: 1px dashed var(--n-line-4, #aab2bf);
+  border-radius: 0.6rem;
+  background: var(--n-surface-2, #fafbfc);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.tg-preview figcaption {
+  padding: 0.35rem 0.6rem;
+  border-bottom: 1px dashed var(--n-line-4, #aab2bf);
+  color: var(--tg-muted);
+  font-size: 0.8rem;
+}
+
+.tg-preview figcaption span {
+  color: var(--n-orange-text, #7a4b00);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tg-preview-screen {
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.55rem 0.6rem;
+}
+
+.tg-preview-screen p,
+.tg-preview-screen small {
+  margin: 0;
+}
+
+.tg-preview-eyebrow {
+  color: var(--tg-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tg-preview-title {
+  font-size: 1rem;
+}
+
+.tg-preview-list {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.tg-preview-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.tg-preview-row small {
+  flex: 1 1 12rem;
+  color: var(--tg-muted);
+}
+
+.tg-preview-button {
+  display: inline-block;
+  justify-self: start;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--tg-line);
+  border-radius: 0.4rem;
+  background: var(--n-surface, #ffffff);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tg-preview-button-primary {
+  border-color: #5b4ea8;
+  background: #5b4ea8;
+  color: #ffffff;
+}
+
+.tg-preview-progress {
+  height: 0.35rem;
+  border-radius: 999px;
+  background: var(--n-surface-4, #e3e6ea);
+  overflow: hidden;
+}
+
+.tg-preview-progress span {
+  display: block;
+  height: 100%;
+  background: var(--tg-green);
+}
+
+.tg-preview-tabs {
+  display: flex;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--tg-line);
+  color: var(--tg-muted);
+  font-weight: 600;
+}
+
+.tg-preview-tab-active {
+  border-bottom: 2px solid var(--tg-ink);
+  color: var(--tg-ink);
+}
+
+.tg-preview-tasks {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tg-preview-tasks li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.2rem 0.4rem;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--tg-line);
+  border-radius: 0.4rem;
+  background: var(--n-surface, #ffffff);
+}
+
+.tg-preview-tasks li > span:first-child {
+  grid-column: 1 / -1;
+  font-weight: 600;
+}
+
+.tg-preview-tasks .tg-preview-arrow {
+  justify-items: center;
+  grid-template-columns: 1fr;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--tg-muted);
+}
+
+.tg-preview-status {
+  justify-self: start;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.tg-preview-status-waiting {
+  background: var(--n-orange-bg-2, #fff1d9);
+  color: var(--n-orange-text, #7a4b00);
+}
+
+.tg-preview-status-review {
+  background: var(--n-blue-bg-2, #e2ebfb);
+  color: var(--n-blue-text, #1f4b99);
+}
+
+.tg-preview-status-complete {
+  background: var(--n-green-bg-2, #e7f0e9);
+  color: var(--n-green-text, #2e5b3b);
+}
+
+.tg-preview-status-not-started {
+  background: var(--n-surface-3, #eef0f3);
+  color: var(--n-text-2, #4a5263);
+}
+
+.tg-preview-subtitle {
+  font-size: 0.9rem;
+}
+
+.tg-preview-roles,
+.tg-preview-journey {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0 0 0.55rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.tg-preview-roles li {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr;
+  align-items: center;
+  gap: 0.15rem 0.5rem;
+}
+
+.tg-preview-role-gnome {
+  grid-row: span 2;
+  width: 2.4rem;
+  height: 3rem;
+}
+
+.tg-preview-roles small {
+  color: var(--tg-muted);
+}
+
+.tg-preview-journey {
+  counter-reset: tg-journey;
+}
+
+.tg-preview-journey li {
+  display: grid;
+  gap: 0.2rem;
+  counter-increment: tg-journey;
+}
+
+.tg-preview-journey .tg-role {
+  justify-self: start;
+  padding: 0.1rem 0.45rem;
+}
+
+.tg-preview-journey .tg-role strong::before {
+  content: counter(tg-journey) ". ";
+}
+
+/* ---------- Related tutorials on the finished screen ---------- */
+
+.tg-related {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0 0 0.75rem;
+  text-align: left;
+}
+
+.tg-related > strong {
+  font-size: 0.9rem;
 }

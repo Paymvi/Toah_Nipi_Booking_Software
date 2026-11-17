@@ -22,6 +22,7 @@ import {
   getResumeStep,
   getSectionAt,
   getStepOpeners,
+  getScenarioPages,
   getStepPosition,
   groupTutorialsByCategory,
   isWayBack,
@@ -31,11 +32,20 @@ import {
   runDemoAction,
   saveTutorialProgress,
   searchTutorials,
+  STEP_ROLES,
   TUTORIAL_PROGRESS_STORAGE_KEY,
   withCompleted,
   withUnfinished,
 } from "../src/tutorial/tutorialCore.js";
 import { PORTAL_TOPICS, PORTAL_WALKTHROUGH } from "../src/tutorial/portalTutorial.js";
+import { GUEST_JOURNEY_TOPICS, GUEST_JOURNEY_TUTORIAL } from "../src/tutorial/inquiryJourneyTutorial.js";
+import {
+  buildInquiryDemoScene,
+  endInquiryDemo,
+  getInquiryDemo,
+  INQUIRY_DEMO_EFFECTS,
+  INQUIRY_DEMO_ID,
+} from "../src/tutorial/inquiryDemo.js";
 import {
   buildPortalDemoScene,
   endPortalDemo,
@@ -86,9 +96,11 @@ test("every tutorial is complete and uses registered targets", () => {
 
     for (const step of tutorial.steps) {
       const where = `${tutorial.id}/${step.id}`;
-      const targets = Array.isArray(step.target) ? step.target : [step.target];
+      const targets = step.target ? [step.target].flat() : [];
 
       assert.ok(step.show, `${where} needs text`);
+      // A step that highlights nothing explains instead, and says whose action it is.
+      if (!step.target) assert.ok(STEP_ROLES[step.role], `${where} has no target, so it needs a role`);
       targets.forEach((id) => assert.ok(TUTORIAL_TARGETS[id], `${where} uses unregistered target ${id}`));
       if (step.done) assert.equal(typeof step.done, "function", where);
       if (step.capture) assert.ok(step.done, `${where} captures without a done check`);
@@ -354,8 +366,14 @@ test("dialogue stays fully on screen and falls back to the corner for huge targe
   assert.equal(huge.top, viewport.height - dialog.height - 12);
 });
 
-test("dialogue docks to the bottom on small screens", () => {
-  assert.deepEqual(placeDialogue(rect(100, 20, 100, 30), dialog, { width: 390, height: 800 }), { dock: "bottom" });
+test("dialogue docks to the bottom on small screens, or the top for a target it would cover", () => {
+  const phone = { width: 390, height: 800 };
+  assert.deepEqual(placeDialogue(rect(100, 20, 100, 30), dialog, phone), { dock: "bottom" });
+  assert.deepEqual(placeDialogue(null, dialog, phone), { dock: "bottom" });
+  // A sticky footer button or the last control on the page stays low, so the dialogue moves up instead.
+  assert.deepEqual(placeDialogue(rect(740, 20, 300, 44), dialog, phone), { dock: "top" });
+  // A tall target that starts high keeps the usual place.
+  assert.deepEqual(placeDialogue(rect(120, 20, 300, 650), dialog, phone), { dock: "bottom" });
 });
 
 test("pointer sits outside the target and points at it", () => {
@@ -690,4 +708,164 @@ test("sidebar steps open the phone menu first, other steps keep their own opener
 
   assert.deepEqual(getStepOpeners({ target: "booking-tabs", opens: [panel] }), [panel]);
   assert.deepEqual(getStepOpeners({ target: "booking-tabs" }), []);
+});
+
+/* ---------- From Guest Inquiry to Guest Portal ---------- */
+
+const journey = GUEST_JOURNEY_TUTORIAL;
+const journeySteps = journey.steps;
+const previewSource = readFileSync("src/tutorial/JourneyPreview.jsx", "utf8");
+const previewKinds = [...previewSource.match(/const PREVIEWS = \{([\s\S]*?)\};/)[1].matchAll(/^\s*"?([\w-]+)"?:/gm)].map((match) => match[1]);
+
+test("the guest journey is easy to find in the library", () => {
+  assert.equal(TUTORIALS[0].id, "guest-journey");
+  assert.equal(journey.title, "From Guest Inquiry to Guest Portal");
+  for (const query of ["inquiry", "group leader", "guest portal"]) {
+    assert.ok(searchTutorials(TUTORIALS, query).some((tutorial) => tutorial.id === "guest-journey"), query);
+  }
+  assert.equal(GUEST_JOURNEY_TOPICS.length, journey.sections.length);
+  assert.deepEqual(journey.related.filter((id) => !ALL_TUTORIALS.some((tutorial) => tutorial.id === id)), []);
+});
+
+test("every guest journey step says whose action it is", () => {
+  for (const tutorial of [journey, ...GUEST_JOURNEY_TOPICS]) {
+    for (const step of tutorial.steps) {
+      assert.ok(STEP_ROLES[step.role], `${tutorial.id}/${step.id} has no known role`);
+      if (step.preview) assert.ok(previewKinds.includes(step.preview), `${step.id} uses unknown preview ${step.preview}`);
+      [step.target ?? []].flat().forEach((id) => assert.ok(TUTORIAL_TARGETS[id], `${step.id}: ${id}`));
+      (step.opens ?? []).forEach((opener) => assert.ok(TUTORIAL_TARGETS[opener.click], opener.click));
+    }
+    assert.equal(new Set(tutorial.steps.map((step) => step.id)).size, tutorial.steps.length, tutorial.id);
+  }
+
+  assert.match(STEP_ROLES.leader.note, /on their own device/);
+  Object.values(STEP_ROLES).forEach((role) => assert.equal(role.label, role.label.toUpperCase()));
+});
+
+test("group leader steps only explain: no staff control is highlighted, clicked or saved", () => {
+  const leaderSteps = journeySteps.filter((step) => step.role === "leader");
+  assert.ok(leaderSteps.length >= 5);
+
+  for (const step of leaderSteps) {
+    assert.equal(step.target, undefined, step.id);
+    assert.ok(step.preview, `${step.id} shows the group leader's screen`);
+    assert.ok(!step.demoClick && !step.writes && !step.demoEffect, step.id);
+  }
+  // Staff are told plainly that the group leader's part is not theirs to do.
+  assert.ok(journeySteps.some((step) => step.role === "staff" && /never fill in their answers/.test(step.show)));
+});
+
+test("the role markers are introduced before the first group leader step", () => {
+  const rolesIntro = journeySteps.findIndex((step) => step.preview === "roles");
+  const firstLeader = journeySteps.findIndex((step) => step.role === "leader");
+  assert.ok(rolesIntro >= 0 && rolesIntro < firstLeader);
+  assert.ok(journeySteps.slice(0, rolesIntro).every((step) => !step.target));
+});
+
+test("sections run in the order of the real workflow, and switch role where the owner changes", () => {
+  assert.deepEqual(journey.sections.map((section) => section.id), ["form", "review", "booking", "access", "portal", "follow-up"]);
+  const rolesIn = (id) => new Set(GUEST_JOURNEY_TOPICS.find((topic) => topic.sectionId === id).steps.map((step) => step.role));
+  assert.ok(rolesIn("form").has("leader") && rolesIn("form").has("system"));
+  assert.ok(rolesIn("portal").has("leader"));
+  assert.deepEqual([...rolesIn("follow-up")], ["staff"]);
+  assert.ok(rolesIn("booking").has("system"), "converting the inquiry is automatic");
+});
+
+test("the booking only exists at Save Guest Group, which is guarded and never clicked", () => {
+  const save = journeySteps.find((step) => step.target === "booking-form-save");
+  assert.ok(save.writes && !save.demoClick);
+  assert.match(save.show, /moment the booking exists/);
+  assert.match(save.show, /Confirmed/);
+  assert.equal(save.demoEffect, "inquiryConverted");
+
+  // Opening the prefilled form is navigation and doesn't create anything.
+  const openForm = journeySteps.find((step) => step.target === "inquiry-open-form" && step.demoClick);
+  assert.match(openForm.show, /doesn't create a booking/);
+
+  // The claim matches the form: a new booking is saved as Confirmed.
+  assert.match(readFileSync("src/pages/CreateBooking.jsx", "utf8"), /isEditMode\s*\?\s*existingBooking\?\.status \|\| "Confirmed"\s*:\s*"Confirmed"/);
+});
+
+test("guest journey steps that save or send are never clicked, and demo clicks are navigation", () => {
+  const navigation = /^(nav-|inquiry-review$|inquiry-open-form$|portal-emails$)/;
+  for (const step of journeySteps) {
+    if (step.writes) assert.ok(!step.demoClick, step.id);
+    if (step.demoClick) {
+      assert.ok(navigation.test(step.target), `${step.id} demo-clicks ${step.target}`);
+      assert.equal(typeof step.done, "function", step.id);
+    }
+  }
+});
+
+test("each guest journey topic that uses a screen gets there first", () => {
+  for (const topic of GUEST_JOURNEY_TOPICS) {
+    const first = topic.steps.find((step) => step.target);
+    if (!first) continue;
+    assert.match([first.target].flat()[0], /^nav-/, topic.id);
+    assert.equal(first.demoClick, true, topic.id);
+
+    const pick = topic.steps.findIndex((step) => step.pickScope);
+    const needsGroup = topic.steps.findIndex((step) => /^portal-(card|status-pill|progress|item|confirm|assign|emails|link|copy)/.test([step.target ?? ""].flat()[0]));
+    if (needsGroup >= 0) assert.ok(pick >= 0 && pick < needsGroup, topic.id);
+  }
+});
+
+test("the guest journey's fictional scene covers every page it visits, and nothing else", () => {
+  assert.deepEqual(getScenarioPages(journey.scenario), ["/guest-inquiries", "/form", "/portal-admin"]);
+  assert.ok(getScenarioPages(journey.scenario).includes(journey.scenario.home));
+  assert.deepEqual(getScenarioPages(PORTAL_WALKTHROUGH.scenario), ["/portal-admin"]);
+  assert.deepEqual(getScenarioPages(undefined), []);
+
+  journey.scenario.show(getDemoEffects(journeySteps, journeySteps.length));
+  try {
+    assert.ok(getInquiryDemo() && getPortalDemo());
+  } finally {
+    journey.scenario.end();
+  }
+  assert.equal(getInquiryDemo(), null);
+  assert.equal(getPortalDemo(), null);
+});
+
+test("the fictional inquiries are clearly made up and show each column", () => {
+  const scene = buildInquiryDemoScene();
+  const text = JSON.stringify(scene);
+
+  (text.match(/[\w.+-]+@[\w-]+\.[\w.]+/g) ?? []).forEach((email) => assert.match(email, /@example\.org$/, email));
+  assert.doesNotMatch(text, /portal_token|portalToken/);
+  assert.deepEqual(scene.inquiries.map((entry) => entry.status).sort(), ["converted", "declined", "pending"]);
+  assert.equal(scene.inquiries.find((entry) => entry.status === "pending").id, INQUIRY_DEMO_ID);
+  assert.equal(INQUIRY_DEMO_ID, PORTAL_DEMO_GROUP_ID, "one fictional group across both screens");
+
+  const converted = buildInquiryDemoScene(["inquiryConverted"]).inquiries.find((entry) => entry.id === INQUIRY_DEMO_ID);
+  assert.equal(converted.status, "converted");
+  assert.ok(converted.converted_booking_id);
+
+  // Each scene ignores the other's effects, so one effect list drives both.
+  assert.doesNotThrow(() => buildInquiryDemoScene(["confirmItem", "enableEmails"]));
+  assert.doesNotThrow(() => buildPortalDemoScene(INQUIRY_DEMO_EFFECTS));
+  journeySteps.flatMap((step) => step.demoEffect ?? []).forEach((name) =>
+    assert.ok(INQUIRY_DEMO_EFFECTS.includes(name) || portalSteps.some((step) => step.demoEffect === name), name)
+  );
+  endInquiryDemo();
+});
+
+test("Guest Inquiries guards its saves and only its own screen reads the fictional inquiries", () => {
+  const view = readFileSync("src/pages/GuestInquiriesView.jsx", "utf8");
+  assert.match(view, /data-tutorial-guard\s+onClick=\{\s*declineSelectedInquiry/);
+  assert.match(view, /data-tutorial-guard\s+onClick=\{\(\) => markSelectedInquiryConverted/);
+  assert.match(view, /useSyncExternalStore\(subscribeInquiryDemo, getInquiryDemo\)/);
+  assert.match(view, /if \(!demo\) loadGuestInquiries\(\)/);
+
+  // Dashboard only uses it to put the booking form back once the demo ends.
+  const dashboard = readFileSync("src/pages/Dashboard.jsx", "utf8");
+  assert.match(dashboard, /if \(!inquiryDemo && bookingFormSeed\?\.id === INQUIRY_DEMO_ID\) \{\s*setBookingFormSeed\(null\);\s*setGuestBookingSource\(null\);/);
+
+  const readers = readSourceFiles("src").filter((source) => source.includes("getInquiryDemo"));
+  assert.equal(readers.length, 2);
+});
+
+test("previews are plain markup: nothing in them can be clicked, typed into or sent", () => {
+  assert.doesNotMatch(previewSource, /<(button|input|textarea|select|form|a|iframe)[\s>]/);
+  assert.doesNotMatch(previewSource, /onClick|fetch\(|supabase|href=/);
+  assert.match(previewSource, /Preview · fictional/);
 });

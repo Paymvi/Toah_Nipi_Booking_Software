@@ -8,6 +8,12 @@ import { useId } from "react";
   TutorialGnome.css (tg-gnome-*) and switch off with reduced motion.
 
   Palette from the character sheet; soft shading comes from the gradients.
+
+  role marks whose action a tutorial step shows, without replacing the
+  character: "staff" (or none) is the usual gnome, "leader" (the group
+  leader) wears a blue hat and a name tag, "system" (something automatic)
+  adds a small cog. The dialogue also says it in words, so color is never
+  the only cue.
 */
 
 const HAT_SHADE = "#B73C29";
@@ -23,6 +29,11 @@ const BEARD_LINE = "#E0D3BE";
 const ACCENT = "#F3B562";
 const INK = "#2A2321";
 const MOUTH = "#8E3B2E";
+
+const HATS = {
+  staff: { stops: ["#F07A5E", "#E4573F", "#BF3F2C"], brim: ["#EE6D53", "#DE523C", "#B93D2A"], shade: HAT_SHADE, edge: "#F59A80" },
+  leader: { stops: ["#6F9BEA", "#3F6FCF", "#2C53A3"], brim: ["#6492E4", "#3A68C6", "#2A4F9C"], shade: "#22437F", edge: "#9DBBF2" },
+};
 
 const VIEW_BOXES = { full: "0 0 120 160", seated: "18 2 84 152", head: "24 2 72 122.5" };
 
@@ -151,31 +162,54 @@ function Boots({ seated, fill }) {
   );
 }
 
-export default function GnomeMascot({ pose = "idle", mood = "happy", crop = "full", className = "" }) {
+function NameTag() {
+  return (
+    <g className="tg-gnome-name-tag">
+      <rect x="65" y="107" width="17" height="11" rx="2" fill="#FFFFFF" stroke="#2C53A3" strokeWidth="1.2" />
+      <rect x="65" y="107" width="17" height="3.8" rx="1.5" fill="#3F6FCF" />
+      <path d="M68 113.4 H79 M68 115.6 H75" stroke="#7D8796" strokeWidth="1" strokeLinecap="round" />
+    </g>
+  );
+}
+
+function SystemCog() {
+  return (
+    <g className="tg-gnome-cog" transform="translate(91 22)">
+      <circle r="8.6" fill="#FFFFFF" opacity="0.92" />
+      <circle r="6.4" fill="none" stroke="#56657A" strokeWidth="3.2" strokeDasharray="2.6 2.42" />
+      <circle r="4.6" fill="#56657A" />
+      <circle r="1.9" fill="#FFFFFF" />
+    </g>
+  );
+}
+
+export default function GnomeMascot({ pose = "idle", mood = "happy", crop = "full", role = "staff", className = "" }) {
   // Gradient ids must be unique per instance; several gnomes can be on screen at once.
   const uid = `tg${useId().replace(/[^\w-]/g, "")}`;
   const url = (name) => `url(#${uid}-${name})`;
   const arms = ARMS[pose] || ARMS.idle;
   const seated = crop === "seated";
   const showSparkles = pose === "celebrate" || mood === "excited";
+  const roleName = role === "leader" || role === "system" ? role : "staff";
+  const hat = HATS[roleName === "leader" ? "leader" : "staff"];
 
   return (
     <svg
-      className={`tg-gnome tg-gnome-pose-${pose} ${className}`}
+      className={`tg-gnome tg-gnome-pose-${pose} tg-gnome-role-${roleName} ${className}`}
       viewBox={VIEW_BOXES[crop] || VIEW_BOXES.full}
       aria-hidden="true"
       focusable="false"
     >
       <defs>
         <linearGradient id={`${uid}-hat`} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#F07A5E" />
-          <stop offset="0.45" stopColor="#E4573F" />
-          <stop offset="1" stopColor="#BF3F2C" />
+          <stop offset="0" stopColor={hat.stops[0]} />
+          <stop offset="0.45" stopColor={hat.stops[1]} />
+          <stop offset="1" stopColor={hat.stops[2]} />
         </linearGradient>
         <linearGradient id={`${uid}-brim`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#EE6D53" />
-          <stop offset="0.55" stopColor="#DE523C" />
-          <stop offset="1" stopColor="#B93D2A" />
+          <stop offset="0" stopColor={hat.brim[0]} />
+          <stop offset="0.55" stopColor={hat.brim[1]} />
+          <stop offset="1" stopColor={hat.brim[2]} />
         </linearGradient>
         <radialGradient id={`${uid}-skin`} cx="0.45" cy="0.4" r="0.65">
           <stop offset="0" stopColor="#FCDCC2" />
@@ -277,17 +311,22 @@ export default function GnomeMascot({ pose = "idle", mood = "happy", crop = "ful
               d="M33.5 60 C33 42 45 24 58.5 9.5 C61 6.8 64.6 5.6 66.6 7.4 C68.2 8.9 68 11.4 67.6 13.6 C69.6 28 78.5 43 86.5 60 Z"
               fill={url("hat")}
             />
-            <path d="M67.6 13.6 C69.6 28 78.5 43 86.5 60 L75.5 60 C72 44 68.6 29 66.8 15 Z" fill={HAT_SHADE} opacity="0.3" />
+            <path d="M67.6 13.6 C69.6 28 78.5 43 86.5 60 L75.5 60 C72 44 68.6 29 66.8 15 Z" fill={hat.shade} opacity="0.3" />
             <path d="M40 52 C41.5 38 48.5 25 57.5 14 C51.5 27 46.5 40 45 53 Z" fill="#ffffff" opacity="0.14" />
             <path
               d="M30.5 61 C42 52.5 78 52.5 89.5 61 C92.5 63 92 69.5 88.5 70.5 C77 63.5 43 63.5 31.5 70.5 C28 69.5 27.5 63 30.5 61 Z"
               fill={url("brim")}
             />
-            <path d="M35 60.5 C46 54.5 74 54.5 85 60.5" stroke="#F59A80" strokeWidth="1.6" strokeLinecap="round" fill="none" opacity="0.55" />
+            <path d="M35 60.5 C46 54.5 74 54.5 85 60.5" stroke={hat.edge} strokeWidth="1.6" strokeLinecap="round" fill="none" opacity="0.55" />
           </g>
+
+          {/* Clipped on over the beard, so it shows at every size. */}
+          {roleName === "leader" && <NameTag />}
 
           {pose === "think" && <Arm arm={arms.right} className="tg-gnome-arm-right" />}
         </g>
+
+        {roleName === "system" && <SystemCog />}
 
         {showSparkles && (
           <g className="tg-gnome-sparkles" stroke={ACCENT} strokeWidth="2.6" strokeLinecap="round">

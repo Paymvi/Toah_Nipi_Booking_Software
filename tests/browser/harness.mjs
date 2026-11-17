@@ -60,12 +60,12 @@ export async function openLibrary(page) {
   await page.waitForSelector(".tg-library");
 }
 
-// Starts a tutorial's demonstration from the library. Topics live under the walkthrough's disclosure.
+// Starts a tutorial's demonstration from the library. Topics live under their walkthrough's disclosure,
+// which a search opens; several walkthroughs have topics, so search rather than open one.
 export async function start(page, title) {
   await openLibrary(page);
-  const summary = page.locator(".tg-topics summary");
-  const item = page.locator(".tg-tutorial-item", { hasText: title }).first();
-  if (!(await item.isVisible()) && (await summary.count())) await summary.click();
+  const item = page.locator(".tg-tutorial-item").filter({ has: page.getByText(title, { exact: true }) }).first();
+  if (!(await item.isVisible())) await page.locator(".tg-search input").fill(title);
   await item.click();
 }
 

@@ -120,6 +120,7 @@ import {
 import CreateBooking from "../pages/CreateBooking";
 
 import GuestInquiriesView from "../pages/GuestInquiriesView";
+import { getInquiryDemo, INQUIRY_DEMO_ID, subscribeInquiryDemo } from "../tutorial/inquiryDemo";
 
 import StaffSignOutButton from "../components/StaffSignOutButton";
 import ThemeToggle from "../components/ThemeToggle";
@@ -7869,6 +7870,13 @@ export default function Dashboard() {
   const [bookingFormNotice, setBookingFormNotice] = useState(null);
   const [isRetryingConversion, setIsRetryingConversion] = useState(false);
 
+  // A tutorial may open the prefilled form from its fictional inquiry; once that demo ends, the form goes back to blank.
+  const inquiryDemo = useSyncExternalStore(subscribeInquiryDemo, getInquiryDemo);
+  if (!inquiryDemo && bookingFormSeed?.id === INQUIRY_DEMO_ID) {
+    setBookingFormSeed(null);
+    setGuestBookingSource(null);
+  }
+
     const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
 
   /*
@@ -10155,6 +10163,7 @@ export default function Dashboard() {
             }`}
             type="button"
             title="Guest Inquiries"
+            data-tutorial-target="nav-guest-inquiries"
             onClick={() => {
               setSelectedBooking(null);
 

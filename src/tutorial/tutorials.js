@@ -29,8 +29,13 @@
 
   A long tutorial made of sections, each also offered as a topic of its own,
   is built by composeWalkthrough: see portalTutorial.js.
+
+  role marks whose action a step shows ("staff", "leader" for the group
+  leader, "system"), and a step with no target shows a fictional preview
+  instead of highlighting: see inquiryJourneyTutorial.js.
 */
 
+import { GUEST_JOURNEY_TOPICS, GUEST_JOURNEY_TUTORIAL } from "./inquiryJourneyTutorial.js";
 import { AUTOMATED_EMAILS_TUTORIAL, PORTAL_TOPICS, PORTAL_WALKTHROUGH } from "./portalTutorial.js";
 
 export const TUTORIAL_TARGETS = {
@@ -40,6 +45,22 @@ export const TUTORIAL_TARGETS = {
   "nav-contacts": "Contacts in the sidebar",
   "nav-reports": "Reports in the sidebar",
   "nav-portals": "Portals in the sidebar",
+  "nav-guest-inquiries": "Guest Inquiries in the sidebar",
+
+  "inquiry-page": "Guest Inquiries page",
+  "inquiry-board": "New Requests, Converted and Declined columns",
+  "inquiry-workflow-note": "Guest form workflow note",
+  "inquiry-column-pending": "New Requests column",
+  "inquiry-column-converted": "Converted column",
+  "inquiry-column-declined": "Declined column",
+  "inquiry-review": "Review button on the request",
+  "inquiry-modal": "request details",
+  "inquiry-contact": "Contact section",
+  "inquiry-stay": "Stay & Guests section",
+  "inquiry-reported": "Guest-Reported Documents section",
+  "inquiry-decline": "Decline Inquiry button",
+  "inquiry-open-form": "Open Prefilled Booking Form button",
+  "booking-form-prefill": "note about the request the form came from",
 
 
   "booking-form-details": "Guest Group section of the form",
@@ -183,6 +204,8 @@ const openBookingStep = {
 const OVERVIEW_MISSING = "This is on the Overview tab. Click Overview in the booking's tabs to bring it back.";
 
 export const TUTORIALS = [
+  GUEST_JOURNEY_TUTORIAL,
+
   {
     id: "create-booking",
     title: "Create a booking",
@@ -478,4 +501,4 @@ export const TUTORIALS = [
 ];
 
 // Everything that can be started, including topics, which the library shows under their walkthrough.
-export const ALL_TUTORIALS = [...TUTORIALS, ...PORTAL_TOPICS];
+export const ALL_TUTORIALS = [...TUTORIALS, ...GUEST_JOURNEY_TOPICS, ...PORTAL_TOPICS];

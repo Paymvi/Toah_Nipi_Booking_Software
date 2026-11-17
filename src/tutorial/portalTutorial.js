@@ -27,7 +27,7 @@ import {
   showPortalDemo,
 } from "./portalDemo.js";
 
-const openPortals = {
+export const openPortals = {
   id: "open-portals",
   prep: true,
   target: "nav-portals",
@@ -36,7 +36,7 @@ const openPortals = {
   demoClick: true,
 };
 
-const chooseGroup = {
+export const chooseGroup = {
   id: "choose-group",
   prep: true,
   pickScope: "portal-card",

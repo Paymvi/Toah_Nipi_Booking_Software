@@ -2694,7 +2694,7 @@ export default function CreateBooking({
         </header>
 
         {initialInquiry && (
-          <div className="rental-inquiry-prefill-notice">
+          <div className="rental-inquiry-prefill-notice" data-tutorial-target="booking-form-prefill">
             <FaInfoCircle />
 
             <div>

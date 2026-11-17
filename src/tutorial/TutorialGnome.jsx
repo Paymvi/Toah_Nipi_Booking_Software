@@ -22,6 +22,7 @@ import {
   FaClipboardList,
   FaEnvelope,
   FaKey,
+  FaRoute,
   FaSearch,
   FaTimes,
   FaUsers,
@@ -50,6 +51,7 @@ const CATEGORY_ICONS = {
   Reports: FaChartBar,
   Portals: FaKey,
   Emails: FaEnvelope,
+  "Guest journey": FaRoute,
 };
 
 const EXIT_MESSAGE_MS = 4500;
@@ -107,6 +109,18 @@ function TutorialItem({ tutorial, icon: Icon, isDone, onOpen }) {
   );
 }
 
+// Shown when a finished tutorial lists related ones (tutorial.related).
+function RelatedTutorials({ tutorials, completed, onOpen }) {
+  return (
+    <div className="tg-related">
+      <strong>Related tutorials</strong>
+      {tutorials.map((tutorial) => (
+        <TutorialItem key={tutorial.id} tutorial={tutorial} isDone={completed[tutorial.id]} onOpen={onOpen} />
+      ))}
+    </div>
+  );
+}
+
 export default function TutorialGnome() {
   const navigate = useNavigate();
   // closed | panel | running | complete
@@ -128,6 +142,7 @@ export default function TutorialGnome() {
   const getShownTopics = (tutorial) => (tutorial.topics ?? []).filter((topic) => matchedIds.has(topic.id));
   const visibleTutorials = TUTORIALS.filter((tutorial) => matchedIds.has(tutorial.id) || getShownTopics(tutorial).length > 0);
   const unfinished = progress.unfinished && tutorialsById[progress.unfinished.id] ? progress.unfinished : null;
+  const relatedTutorials = (run?.tutorial.related ?? []).map((id) => tutorialsById[id]).filter(Boolean);
 
   function updateProgress(next) {
     setProgress(next);
@@ -279,6 +294,10 @@ export default function TutorialGnome() {
             <p className="tg-warning" role="note">
               {FICTIONAL_GONE}
             </p>
+          )}
+
+          {relatedTutorials.length > 0 && (
+            <RelatedTutorials tutorials={relatedTutorials} completed={progress.completed} onOpen={startTutorial} />
           )}
 
           <div className="tg-complete-actions">

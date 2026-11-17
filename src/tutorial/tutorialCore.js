@@ -102,6 +102,27 @@ export function getUnsavedWork() {
 }
 
 /*
+  Whose action a step shows (step.role). The label is written out in the
+  dialogue, so the gnome's outfit is never the only cue.
+*/
+export const STEP_ROLES = {
+  staff: { label: "STAFF ACTION", note: "" },
+  leader: {
+    label: "GROUP LEADER ACTION",
+    note: "The group leader does this on their own device. You're viewing an explanation of their experience.",
+  },
+  system: { label: "AUTOMATIC SYSTEM ACTION", note: "This happens by itself. Nobody clicks anything." },
+};
+
+/*
+  Pages a fictional scenario covers; leaving them all ends the demo.
+  `home` is where it starts, `pages` (optional) every page it moves through.
+*/
+export function getScenarioPages(scenario) {
+  return [scenario?.pages ?? scenario?.home ?? []].flat();
+}
+
+/*
   What a step's done(ctx, start) and capture(ctx) receive. Every check reads
   the live page, so a step completes because the page is in the expected
   state, not because something was clicked.
@@ -177,10 +198,12 @@ export async function runDemoAction(
 /*
   Places the dialogue next to the target without covering it: below, above,
   right, then left; if none fits (very large targets) it sits in the
-  bottom-right corner. Small screens dock it to the bottom instead.
+  bottom-right corner. Small screens dock it to the bottom instead, or to
+  the top when the target starts in the lower half and can't scroll above
+  it (a sticky footer, or the end of the page).
 */
 export function placeDialogue(rect, size, viewport, margin = 12, gap = 16) {
-  if (viewport.width < MOBILE_BREAKPOINT) return { dock: "bottom" };
+  if (viewport.width < MOBILE_BREAKPOINT) return { dock: rect && rect.top > viewport.height / 2 ? "top" : "bottom" };
 
   const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
   const maxLeft = viewport.width - size.width - margin;

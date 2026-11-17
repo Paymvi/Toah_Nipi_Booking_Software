@@ -74,11 +74,12 @@ for (const [width, height] of sizes) {
         const { placement } = await drive(page, tutorial);
         const seen = await page.evaluate(() => [...window.__shown]);
 
-        const leaked = await writes();
+        // staff_app_me is a read-only RPC the app calls as it loads (a POST, so the mock logs it).
+        const leaked = (await writes()).filter((entry) => !entry.includes("/rpc/staff_app_me"));
         const expected = tutorial.steps.filter((step) => !step.prep).length;
         const counted = seen.filter((id) => !tutorial.steps.find((step) => step.id === id).prep).length;
         if (process.env.TRACE && counted !== expected) console.log("    missed:", tutorial.steps.filter((step) => !step.prep && !seen.includes(step.id)).map((step) => step.id).join(" "));
-        const demoCalls = requests.filter((entry) => !entry.startsWith("GET") && !/auth|current_staff_role/.test(entry));
+        const demoCalls = requests.filter((entry) => !entry.startsWith("GET") && !/auth|current_staff_role|staff_app_me/.test(entry));
 
         const problems = [
           leaked.length && `writes reached the mock: ${leaked.join("; ")}`,
