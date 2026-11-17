@@ -78,6 +78,13 @@ createServer((req, res) => {
         bookings.push({ ...base, id: "host-1", source_type: "Staff Booking", status: "Confirmed", organization_name: "Host: Fictional Board Dinner",
           retreat_type: "Hosting", start_date: day(10), end_date: day(10), attendee_count: "8" });
       }
+      // Two groups in Bethel (capacity 70): 45 + 35 on one shared night.
+      if (p.get("capacity") && !bookings.some((booking) => booking.id === "cap-2")) {
+        const bethel = (count) => ({ buildings_rooms: `Bethel: ${count}`, raw_data: { rentalFormDetails: { housingSavedAt: "2026-10-01T00:00:00Z", lodgingBethel: String(count) } } });
+        Object.assign(bookings[0], bethel(45));
+        bookings.push({ ...base, ...bethel(35), id: "cap-2", source_type: "Staff Booking", status: "Confirmed", organization_name: "Cedar Hill Fellowship",
+          contact_name: "Sam Rivera", email: "sam@example.org", start_date: day(4), end_date: day(6), attendee_count: "35", retreat_type: "Church" });
+      }
       if (p.has("signing")) {
         signing = p.get("signing");
         bookings[0].portal_documents[0].storage_path = signing === "noPdf" ? null : "fictional/staff-documents/sample.pdf";

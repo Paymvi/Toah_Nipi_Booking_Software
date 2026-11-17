@@ -3,9 +3,12 @@ import assert from "node:assert/strict";
 
 import {
   buildLodgingSummary,
+  describeCapacityOverflow,
   describeLodgingAvailability,
   describeLodgingConflict,
+  findCapacityOverflows,
   findLodgingConflicts,
+  getLodgingSaveWarnings,
   getBookingCalendarGroups,
   getBookingLodgingAssignments,
   getLodgingNights,
@@ -180,4 +183,40 @@ test("a different room in the same building is fine; missing room detail is a po
   const [possible] = findLodgingConflicts(noRoomDetail, [hostingInRoom1]);
   assert.equal(possible.certain, false);
   assert.match(describeLodgingConflict(possible), /^Possible clash — Hosting:/);
+});
+
+/* ---------------- Capacity overflows ---------------- */
+
+const stay = (id, organizationName, details, extra = {}) => ({
+  id, organizationName, sourceType: "Staff Booking", status: "Confirmed", startDate: "2027-06-01", endDate: "2027-06-03",
+  rentalFormDetails: { housingSavedAt: "x", ...details }, ...extra,
+});
+
+test("two groups that together pass a building's capacity are flagged on the shared nights", () => {
+  const mine = stay("a", "Fictional Church", { lodgingBethel: "50" });
+  const other = stay("b", "Fictional Youth", { lodgingBethel: "30" }, { startDate: "2027-06-02", endDate: "2027-06-04" });
+  const [overflow] = findCapacityOverflows(mine, [other]);
+  assert.deepEqual(overflow.nights, ["2027-06-02"]);
+  assert.equal(overflow.peak, 80);
+  assert.deepEqual(overflow.records.map((r) => r.id), ["b"]);
+  assert.equal(describeCapacityOverflow(overflow), "Over capacity — Bethel: 80 guests, capacity 70 (night of 2027-06-02, shared with Fictional Youth)");
+  assert.deepEqual(getLodgingSaveWarnings(mine, [other]), [describeCapacityOverflow(overflow)]);
+});
+
+test("one group alone over capacity is flagged; a range capacity uses its upper number", () => {
+  const [alone] = findCapacityOverflows(stay("a", "Big Group", { lodgingGuestHouse: "13" }), []);
+  assert.equal(alone.capacity, "9–12");
+  assert.deepEqual(alone.records, []);
+  assert.match(describeCapacityOverflow(alone), /^Over capacity — Guest House: 13 guests, capacity 9–12 \(2 nights from 2027-06-01\)$/);
+  assert.deepEqual(findCapacityOverflows(stay("a", "Fits", { lodgingGuestHouse: "12" }), []), []);
+});
+
+test("at capacity, no capacity, unknown counts, cancelled records and checkout day are not overflows", () => {
+  const mine = stay("a", "Fictional Church", { lodgingBethel: "40" });
+  assert.deepEqual(findCapacityOverflows(mine, [stay("b", "Exact", { lodgingBethel: "30" })]), []);
+  assert.deepEqual(findCapacityOverflows(stay("c", "Campers", { lodgingCamping: "500" }), []), []);
+  assert.deepEqual(findCapacityOverflows(mine, [stay("d", "Unknown", {}, { buildingsRooms: "Bethel", rentalFormDetails: {} })]), []);
+  assert.deepEqual(findCapacityOverflows(mine, [stay("e", "Gone", { lodgingBethel: "40" }, { status: "Cancelled" })]), []);
+  // Checkout day holds no night.
+  assert.deepEqual(findCapacityOverflows(mine, [stay("f", "Next", { lodgingBethel: "40" }, { startDate: "2027-06-03", endDate: "2027-06-05" })]), []);
 });

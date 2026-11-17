@@ -422,6 +422,63 @@ export function describeLodgingConflict({ record, buildingLabel, rooms, nights, 
 }
 
 /*
+  Nights where a building this record uses would hold more guests than its
+  recorded capacity, counting the record plus every other stay there that
+  night (hosting included). Unknown counts add nothing, so each warning is
+  certain; buildings with no recorded capacity (Camping) are never flagged.
+*/
+export function findCapacityOverflows(record, others = []) {
+  const nights = getLodgingNights(record);
+  const mine = getBookingLodgingAssignments(record).filter((entry) => entry.count);
+  if (!nights.length || !mine.length) return [];
+
+  const stays = others
+    .filter((other) => other && String(other.id) !== String(record?.id) && countsForLodgingOccupancy(other))
+    .map((other) => ({ record: other, nights: new Set(getLodgingNights(other)), assignments: getBookingLodgingAssignments(other) }));
+
+  return mine.flatMap((entry) => {
+    const building = LODGING_BUILDINGS.find((item) => item.id === entry.buildingId);
+    const limit = getLodgingCapacityLimit(building);
+    if (!limit) return [];
+
+    const overNights = [];
+    const sharedWith = new Map();
+    let peak = 0;
+    nights.forEach((night) => {
+      const here = stays
+        .filter((stay) => stay.nights.has(night))
+        .map((stay) => ({ record: stay.record, count: stay.assignments.find((item) => item.buildingId === entry.buildingId)?.count || 0 }))
+        .filter((stay) => stay.count);
+      const total = here.reduce((sum, stay) => sum + stay.count, entry.count);
+      if (total <= limit) return;
+      overNights.push(night);
+      peak = Math.max(peak, total);
+      here.forEach((stay) => sharedWith.set(String(stay.record.id), stay.record));
+    });
+
+    return overNights.length
+      ? [{ buildingLabel: entry.label, capacity: building.capacity, peak, nights: overNights, records: [...sharedWith.values()] }]
+      : [];
+  });
+}
+
+// e.g. "Over capacity — Bethel: 84 guests, capacity 70 (2 nights from 2026-11-20, shared with Cedar Hill Church)".
+export function describeCapacityOverflow({ buildingLabel, capacity, peak, nights, records }) {
+  const when = nights.length === 1 ? `night of ${nights[0]}` : `${nights.length} nights from ${nights[0]}`;
+  const names = records.map((other) => `${isHostRecord(other) ? "Hosting: " : ""}${other.organizationName || "Unnamed Organization"}`);
+  const shared = names.length ? `, shared with ${names.join(", ")}` : "";
+  return `Over capacity — ${buildingLabel}: ${peak} guests, capacity ${capacity} (${when}${shared})`;
+}
+
+// Lines for the "Save anyway?" prompt: certain room clashes and capacity overflows.
+export function getLodgingSaveWarnings(record, others = []) {
+  return [
+    ...findLodgingConflicts(record, others).filter((conflict) => conflict.certain).map(describeLodgingConflict),
+    ...findCapacityOverflows(record, others).map(describeCapacityOverflow),
+  ];
+}
+
+/*
   Linen text for the linen_sets column, shared by Create Booking and the
   Housing tab. Requests for individual pieces are included (AUDIT-040).
 */

@@ -22,6 +22,7 @@ node tests/browser/libraryRuns.browser.mjs            # or --only=calendar/lodgi
 node tests/browser/libraryEdges.browser.mjs           # or a name filter: "Housing"
 node tests/browser/storageEvents.browser.mjs
 node tests/browser/lazyLibraries.browser.mjs
+node tests/browser/capacityWarnings.browser.mjs       # SHOTS=docs/proposals/assets/capacity-warnings re-takes the doc screenshots
 ```
 
 Run the mock and Vite in their own terminals. On a machine without Chrome at the Windows default path, set `CHROME_PATH`.
@@ -41,6 +42,7 @@ Run `portalEdges` and `journeyEdges` on their own, because they change the mock'
 - `portalSigning` saves staff PDF choices with guest signing off, a fictional test booking, and a failed settings read; checks missing schema explanations and recovery on Refresh; and explains when there are no eligible PDFs.
 
 - `storageEvents` opens two tabs and checks that a theme, filter or view change saved in one tab never makes the other reload every booking (or show an alert), and that hiding an Inquiry Spreadsheet row still works, survives a reload and reaches the other tab.
+- `capacityWarnings` puts two fictional groups over Bethel's capacity (`/__ctl?capacity=1`) and checks the Housing tab warning on desktop and phone, the "Save anyway?" question, that Cancel saves nothing, and the other group's view.
 - `lazyLibraries` checks that opening the office app downloads neither ExcelJS nor JSZip, that Export contact list, a Master 2026 import, the Hosting export and the signed-documents check still work once they load, and that each one shows a clear message when its library cannot download.
 
 `mockSupabase.mjs` records every attempted change. `/__ctl?inquiry=1` adds one fictional website-inquiry import and `/__ctl?hosting=1` one fictional hosting entry; `reset=1` removes both. `/__ctl?writes` isn't needed: any call to `/__ctl` returns the list.

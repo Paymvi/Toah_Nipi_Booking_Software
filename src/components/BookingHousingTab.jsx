@@ -5,9 +5,12 @@ import { isStaffBookingRecord } from "../utils/bookingClassification";
 import {
   buildLinenSummary,
   buildLodgingSummary,
+  describeCapacityOverflow,
   describeLodgingConflict,
+  findCapacityOverflows,
   findLodgingConflicts,
   getBookingLodgingAssignments,
+  getLodgingSaveWarnings,
   getLegacyLodgingText,
 } from "../utils/lodgingUtils";
 import { isHousingAuthoritative } from "../utils/masterImportMerge";
@@ -881,10 +884,9 @@ export default function BookingHousingTab({
     );
   };
 
-  const lodgingConflicts = findLodgingConflicts(
-    isEditing ? buildHousingRecord() : booking,
-    occupancyRecords
-  );
+  const shownRecord = isEditing ? buildHousingRecord() : booking;
+  const lodgingConflicts = findLodgingConflicts(shownRecord, occupancyRecords);
+  const capacityOverflows = findCapacityOverflows(shownRecord, occupancyRecords);
 
   const handleSave = async () => {
     if (!onSaveBooking) {
@@ -893,15 +895,11 @@ export default function BookingHousingTab({
       return;
     }
     const updatedBooking = buildHousingRecord();
-    const clashes = findLodgingConflicts(updatedBooking, occupancyRecords).filter(
-      (conflict) => conflict.certain
-    );
+    const warnings = getLodgingSaveWarnings(updatedBooking, occupancyRecords);
     if (
-      clashes.length &&
+      warnings.length &&
       !window.confirm(
-        `These rooms are already taken on some of the same nights:\n\n${clashes
-          .map(describeLodgingConflict)
-          .join("\n")}\n\nSave anyway?`
+        `Lodging problems on some of these nights:\n\n${warnings.join("\n")}\n\nSave anyway?`
       )
     ) {
       return;
@@ -936,10 +934,21 @@ export default function BookingHousingTab({
       ).trim();
   return (
     <div className="booking-housing-tab" data-tutorial-target="housing-tab" data-tutorial-unsaved={isEditing ? "Housing edits" : undefined}>
-      {lodgingConflicts.length > 0 && (
+      {lodgingConflicts.length + capacityOverflows.length > 0 && (
         <section className="dashboard-card booking-housing-conflicts" role="status" data-tutorial-target="housing-clashes">
           <strong>Lodging clashes on these dates</strong>
           <ul>
+            {capacityOverflows.map((overflow) => (
+              <li key={`capacity-${overflow.buildingLabel}`} className="is-certain">
+                <span>{describeCapacityOverflow(overflow)}</span>
+                {onOpenRecord &&
+                  overflow.records.map((other) => (
+                    <button key={other.id} className="table-link" type="button" onClick={() => onOpenRecord(other.id)}>
+                      Open {other.organizationName || "record"}
+                    </button>
+                  ))}
+              </li>
+            ))}
             {lodgingConflicts.map((conflict, index) => (
               <li
                 key={`${conflict.record.id}-${conflict.buildingLabel}-${index}`}

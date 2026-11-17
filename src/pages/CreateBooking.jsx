@@ -23,8 +23,7 @@ import {
 } from "../utils/bookingClassification";
 import { LODGING_BUILDINGS } from "../constants/lodgingConstants";
 import {
-  describeLodgingConflict,
-  findLodgingConflicts,
+  getLodgingSaveWarnings,
   buildLinenSummary,
   buildLodgingSummary as buildSharedLodgingSummary,
 } from "../utils/lodgingUtils";
@@ -2555,16 +2554,12 @@ export default function CreateBooking({
       delete bookingToSave.rentalFormDetails.classification;
 
 
-      // Rooms already held on these nights by a booking or (hidden) hosting.
-      const lodgingClashes = findLodgingConflicts(bookingToSave, occupancyRecords).filter(
-        (conflict) => conflict.certain
-      );
+      // Rooms already held, or buildings over capacity, on these nights (hidden hosting included).
+      const lodgingWarnings = getLodgingSaveWarnings(bookingToSave, occupancyRecords);
       if (
-        lodgingClashes.length &&
+        lodgingWarnings.length &&
         !window.confirm(
-          `These rooms are already taken on some of the same nights:\n\n${lodgingClashes
-            .map(describeLodgingConflict)
-            .join("\n")}\n\nSave anyway?`
+          `Lodging problems on some of these nights:\n\n${lodgingWarnings.join("\n")}\n\nSave anyway?`
         )
       ) {
         return;
