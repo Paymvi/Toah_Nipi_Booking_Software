@@ -74,7 +74,7 @@ Every path that can reach the provider (scheduled run, welcome, manual send, tes
 | | `supabase/optional/20261104000110_portal_email_scheduler.sql` | pg_cron job (not applied by `db push`) |
 | | `supabase/functions/portal-email/` | Edge Function: `index.ts` (auth, routing, webhook), `service.js` (planning, worker, staff actions), `provider.js` (config + Resend adapter) |
 | | `src/utils/portalEmail.js` | Shared rules: dates, eligibility, planning, delivery decision, templates |
-| | `src/components/PortalEmailPanel.jsx`, `src/services/portalEmailService.js`, `src/styles/PortalEmail.css` | Portal Admin UI |
+| | `src/components/PortalEmailPanel.jsx`, `src/services/portalEmailService.js`, `src/styles/components/PortalEmail.css` | Portal Admin UI |
 | | `tests/portalEmail.test.js`, `supabase/tests/portal-email.pglite.mjs` | Tests |
 | Guest portal | none | The portal's link format and access are unchanged. |
 

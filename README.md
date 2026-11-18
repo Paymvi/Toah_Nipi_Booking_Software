@@ -292,6 +292,7 @@ Formats, restore behaviour, retention, Apps Script configuration and known limit
 | [docs/portal-email/SETUP.md](docs/portal-email/SETUP.md) | Guest portal emails: architecture, secrets, rollout and current state |
 | [docs/portal-signing/SETUP.md](docs/portal-signing/SETUP.md) | Online signing: local testing, deployment and activation checklist |
 | [docs/THEMING.md](docs/THEMING.md) | Light and Night themes |
+| [docs/CSS_GUIDE.md](docs/CSS_GUIDE.md) | Where styles go, scoping, tokens, breakpoints |
 | [src/docs/SQL_SETUP.md](src/docs/SQL_SETUP.md) | Core database setup SQL |
 | [src/docs/supabase-system-documentation.md](src/docs/supabase-system-documentation.md) | Supabase roles, permissions and launch checks |
 | [supabase/repairs/README.md](supabase/repairs/README.md) | Data repair scripts and undo |

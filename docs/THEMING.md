@@ -6,7 +6,7 @@ Light is the default. Night is an optional preference saved in this browser unde
 
 - `index.html` sets `data-theme` on `<html>` before first paint, so a saved Night choice never flashes Light. `src/utils/theme.js` holds the same rule, and `tests/theme.test.js` checks that they agree.
 - `src/components/ThemeToggle.jsx` changes that attribute. It lives in the sidebar, which every staff screen has, including the booking form.
-- `src/styles/theme.css` defines the `--n-*` tokens, only for `[data-theme="night"]` and only inside `@media screen`.
+- `src/styles/foundation/theme.css` defines the `--n-*` tokens, only for `[data-theme="night"]` and only inside `@media screen`.
 
 Stylesheets write colors with the Light value as the fallback:
 

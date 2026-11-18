@@ -1,0 +1,1672 @@
+/* =========================================================
+   BOOKING DETAIL TABS
+   Date display settings, Checklists and Staff Assignments tabs,
+   delete button, and incident notes. Loads after BookingActivities.css.
+========================================================= */
+
+/* =========================================================
+   Booking Detail Date Display Settings
+========================================================= */
+
+.booking-profile-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+.booking-date-settings-button {
+  min-height: 2.125rem;
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
+  font-size: 0.942rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.booking-date-settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog-date-settings);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: var(--n-scrim, rgba(15, 23, 42, 0.38));
+}
+
+.booking-date-settings-modal {
+  width: min(32.5rem, 100%);
+  max-height: calc(100vh - 2.5rem);
+  overflow: auto;
+  background: var(--n-raised, #ffffff);
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.75rem;
+  box-shadow: 0 1.5rem 4.375rem var(--n-shadow-3, rgba(15, 23, 42, 0.24));
+}
+
+.booking-date-settings-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.125rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+}
+
+.booking-date-settings-header h3 {
+  margin: 0;
+  color: var(--n-text, #252936);
+  font-size: 1.102rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.booking-date-settings-header span {
+  display: block;
+  margin-top: 0.312rem;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.955rem;
+  line-height: 1.45;
+}
+
+.booking-date-settings-close {
+  width: 2.125rem;
+  height: 2.125rem;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.5rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text-3, #687083);
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.booking-date-settings-close:hover {
+  background: var(--n-surface-3, #f7f8fa);
+  color: var(--n-text, #303442);
+}
+
+.booking-date-settings-body {
+  display: grid;
+  gap: 0.875rem;
+  padding: 1.125rem;
+}
+
+.booking-date-format-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.booking-date-format-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  border: 1px solid var(--n-line, #edf0f4);
+  border-radius: 0.562rem;
+  background: var(--n-surface, #ffffff);
+  cursor: pointer;
+  transition: border-color 150ms ease,
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.booking-date-format-option:hover {
+  border-color: var(--n-violet-line, #c9c4e8);
+  background: var(--n-surface-3, #fbfaff);
+}
+
+.booking-date-format-option.active {
+  border-color: var(--n-violet-text, #9f98d4);
+  background: var(--n-violet-bg, #f7f5ff);
+  box-shadow: 0 0 0 0.188rem var(--n-violet-ring, rgba(68, 58, 156, 0.08));
+}
+
+.booking-date-format-option input {
+  margin-top: 0.188rem;
+  accent-color: var(--n-accent-solid, #443a9c);
+}
+
+.booking-date-format-option span {
+  min-width: 0;
+  display: grid;
+  gap: 0.188rem;
+}
+
+.booking-date-format-option strong {
+  color: var(--n-text, #303442);
+  font-size: 0.98rem;
+  font-weight: 650;
+}
+
+.booking-date-format-option small {
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.905rem;
+  line-height: 1.35;
+}
+
+.booking-date-weekday-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  border: 1px solid var(--n-line, #edf0f4);
+  border-radius: 0.562rem;
+  background: var(--n-surface-2, #fbfcfd);
+  cursor: pointer;
+}
+
+.booking-date-weekday-toggle input {
+  margin-top: 0.188rem;
+  accent-color: var(--n-accent-solid, #443a9c);
+}
+
+.booking-date-weekday-toggle input:disabled {
+  cursor: not-allowed;
+}
+
+.booking-date-weekday-toggle span {
+  display: grid;
+  gap: 0.188rem;
+}
+
+.booking-date-weekday-toggle strong {
+  color: var(--n-text, #303442);
+  font-size: 0.967rem;
+  font-weight: 650;
+}
+
+.booking-date-weekday-toggle small {
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.905rem;
+}
+
+.booking-date-preview-card {
+  padding: 0.875rem;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.625rem;
+  background: var(--n-page, #f7f8fa);
+}
+
+.booking-date-preview-card small {
+  display: block;
+  margin-bottom: 0.312rem;
+  color: var(--n-text-3, #7b8290);
+  font-size: 0.85rem;
+  font-weight: 650;
+  letter-spacing: 0.065em;
+  text-transform: uppercase;
+}
+
+.booking-date-preview-card strong {
+  display: block;
+  color: var(--n-text, #252936);
+  font-size: 1.055rem;
+  font-weight: 650;
+}
+
+.booking-date-settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  padding: 0.875rem 1.125rem 1.125rem;
+  border-top: 1px solid var(--n-line, #edf0f4);
+}
+
+@media (max-width: 720px) {
+  .booking-profile-header-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .booking-date-settings-backdrop {
+    align-items: stretch;
+    padding: 0.75rem;
+  }
+
+  .booking-date-settings-modal {
+    max-height: none;
+    height: calc(100vh - 1.5rem);
+  }
+
+  .booking-date-settings-footer {
+    flex-direction: column-reverse;
+  }
+
+  .booking-date-settings-footer .primary-dashboard-button,
+  .booking-date-settings-footer .secondary-dashboard-button {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   Booking Detail - Checklists Tab
+========================================================= */
+
+.booking-checklist-page {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.booking-checklist-card {
+  border-radius: 0.625rem;
+  border-color: var(--n-line-2, #dfe4ec);
+  box-shadow: 0 0.375rem 1.125rem var(--n-shadow-1, rgba(28, 35, 52, 0.04));
+}
+
+.booking-checklist-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.125rem;
+  padding: 1.125rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+  background: var(--n-surface, #ffffff);
+}
+
+.booking-checklist-header h3 {
+  margin: 0;
+  color: var(--n-text, #252936);
+  font-size: 1.13rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.booking-checklist-header span {
+  display: block;
+  margin-top: 0.312rem;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.955rem;
+  font-weight: 400;
+}
+
+.booking-checklist-add-form {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+.booking-checklist-add-form input {
+  min-height: 2.375rem;
+  min-width: 15rem;
+  border: 1px solid var(--n-field-line, #dfe4ec);
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
+  color: var(--n-text, #303442);
+  background: var(--n-surface, #ffffff);
+  font-size: 0.955rem;
+  outline: none;
+}
+
+.booking-checklist-add-form input:focus {
+  border-color: var(--n-violet-text, #443a9c);
+  box-shadow: 0 0 0 0.188rem var(--n-violet-ring, rgba(68, 58, 156, 0.12));
+}
+
+.booking-checklist-saving,
+.booking-checklist-save-error {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--n-text-3, #6b7280);
+}
+
+.booking-checklist-save-error {
+  color: var(--n-red-text, #b42318);
+}
+
+.booking-checklist-page button:disabled,
+.booking-checklist-page input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.booking-checklist-table-wrap,
+.booking-checklist-items-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--n-surface, #ffffff);
+}
+
+.booking-checklist-table,
+.booking-checklist-items-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.booking-checklist-table {
+  min-width: 53.75rem;
+}
+
+.booking-checklist-items-table {
+  min-width: 67.5rem;
+}
+
+.booking-checklist-table th,
+.booking-checklist-items-table th {
+  padding: 0.688rem 0.875rem;
+  background: var(--n-page, #f6f7f9);
+  border-bottom: 1px solid var(--n-line-2, #dfe4ec);
+  color: var(--n-text-2, #565d6b);
+  text-align: left;
+  font-size: 0.867rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+  white-space: nowrap;
+}
+
+.booking-checklist-table td,
+.booking-checklist-items-table td {
+  padding: 0.75rem 0.875rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+  color: var(--n-text, #3f4351);
+  font-size: 0.967rem;
+  vertical-align: middle;
+}
+
+.booking-checklist-table tbody tr:hover,
+.booking-checklist-items-table tbody tr:hover {
+  background: var(--n-surface-3, #fbfcfd);
+}
+
+.booking-checklist-table td strong,
+.booking-checklist-items-table td strong {
+  color: var(--n-text, #303442);
+  font-size: 0.992rem;
+  font-weight: 650;
+}
+
+.booking-checklist-icon-button {
+  width: 2.125rem;
+  height: 2.125rem;
+  border: 1px solid var(--n-violet-line, #c9c4e8);
+  border-radius: 0.438rem;
+  display: inline-grid;
+  place-items: center;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-violet-text, #443a9c);
+  cursor: pointer;
+}
+
+.booking-checklist-icon-button:hover {
+  background: var(--n-violet-bg, #f7f5ff);
+}
+
+.booking-checklist-delete-button {
+  width: 2.125rem;
+  height: 2.125rem;
+  border: 1px solid var(--n-red-line, #efcaca);
+  border-radius: 0.438rem;
+  display: inline-grid;
+  place-items: center;
+  background: var(--n-surface-2, #fffafa);
+  color: var(--n-red-text, #b44444);
+  cursor: pointer;
+}
+
+.booking-checklist-delete-button:hover {
+  background: var(--n-red-bg, #fff1f1);
+  border-color: var(--n-red-line, #e6abab);
+  color: var(--n-red-text, #8d2f2f);
+}
+
+.booking-checklist-progress {
+  display: grid;
+  gap: 0.375rem;
+  min-width: 11.25rem;
+}
+
+.booking-checklist-progress > div {
+  height: 0.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--n-surface-3, #edf0f4);
+}
+
+.booking-checklist-progress > div span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #5c6f46;
+}
+
+.booking-checklist-progress small {
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.905rem;
+  font-weight: 500;
+}
+
+/* Modal */
+
+.booking-checklist-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: var(--n-scrim, rgba(20, 23, 34, 0.52));
+}
+
+.booking-checklist-modal {
+  width: min(88.75rem, 100%);
+  max-height: min(52.5rem, calc(100vh - 3rem));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border-radius: 0.625rem;
+  background: var(--n-raised, #ffffff);
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  box-shadow: 0 1.5rem 4.375rem var(--n-shadow-3, rgba(15, 23, 42, 0.25));
+}
+
+.booking-checklist-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.125rem;
+  padding: 1.125rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+  background: var(--n-raised, #ffffff);
+}
+
+.booking-checklist-modal-header h3 {
+  margin: 0;
+  color: var(--n-text, #252936);
+  font-size: 1.13rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.booking-checklist-modal-header p {
+  margin: 0.312rem 0 0;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.955rem;
+}
+
+.booking-checklist-modal-close {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.5rem;
+  display: inline-grid;
+  place-items: center;
+  background: var(--n-raised, #ffffff);
+  color: var(--n-text-3, #687083);
+  cursor: pointer;
+}
+
+.booking-checklist-modal-close:hover {
+  background: var(--n-surface-3, #f6f7f9);
+  color: var(--n-text, #252936);
+}
+
+.booking-checklist-item-form {
+  display: grid;
+  grid-template-columns: 6.25rem minmax(15rem, 1fr) 10.625rem 11.875rem auto;
+  gap: 0.75rem;
+  align-items: end;
+  padding: 0.875rem 1.125rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+  background: var(--n-surface-2, #fbfcfd);
+}
+
+.booking-checklist-item-form label {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.booking-checklist-item-form label span {
+  color: var(--n-text-3, #687083);
+  font-size: 0.88rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+
+.booking-checklist-item-form input,
+.booking-checklist-item-form select {
+  min-height: 2.375rem;
+  border: 1px solid var(--n-field-line, #dfe4ec);
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #303442);
+  font-size: 0.955rem;
+  outline: none;
+}
+
+.booking-checklist-item-form select {
+  cursor: pointer;
+}
+
+.booking-checklist-item-form input:focus,
+.booking-checklist-item-form select:focus {
+  border-color: var(--n-violet-text, #443a9c);
+  box-shadow: 0 0 0 0.188rem var(--n-violet-ring, rgba(68, 58, 156, 0.12));
+}
+
+.booking-checklist-item-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.booking-checklist-items-table-wrap {
+  overflow: auto;
+}
+
+.booking-checklist-items-table input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--n-accent-solid, #443a9c);
+  cursor: pointer;
+}
+
+.booking-checklist-status-button {
+  min-height: 2.125rem;
+  border: 1px solid var(--n-violet-line, #c9c4e8);
+  border-radius: 0.438rem;
+  padding: 0 0.75rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-violet-text, #443a9c);
+  font: inherit;
+  font-size: 0.93rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.booking-checklist-status-button:hover {
+  background: var(--n-violet-bg, #f7f5ff);
+}
+
+.booking-checklist-status-button.completed {
+  border-color: var(--n-green-line, #bbd9c5);
+  background: var(--n-green-bg, #effaf3);
+  color: var(--n-green-text, #236b3a);
+}
+
+.checklist-item-completed td {
+  background: var(--n-surface-2, #fcfdfb);
+}
+
+.checklist-item-completed td strong {
+  color: var(--n-text-3, #6f7687);
+  text-decoration: line-through;
+}
+
+.booking-checklist-empty-row {
+  padding: 1rem;
+  border: 1px dashed var(--n-line-3, #cfd6e1);
+  border-radius: 0.5rem;
+  background: var(--n-surface-2, #fbfcfd);
+  color: var(--n-text-3, #858c9b);
+  text-align: center;
+  font-size: 0.967rem;
+}
+
+.booking-checklist-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  padding: 0.875rem 1.125rem;
+  border-top: 1px solid var(--n-line, #edf0f4);
+  background: var(--n-raised, #ffffff);
+}
+
+@media (max-width: 1100px) {
+  .booking-checklist-header {
+    flex-direction: column;
+  }
+
+  .booking-checklist-add-form {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .booking-checklist-add-form input {
+    flex: 1 1 15rem;
+  }
+
+  .booking-checklist-item-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .booking-checklist-item-form-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .booking-checklist-modal-backdrop {
+    padding: 0.75rem;
+  }
+
+  .booking-checklist-modal {
+    max-height: calc(100dvh - 1.5rem);
+  }
+
+  .booking-checklist-item-form {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-checklist-add-form input,
+  .booking-checklist-add-form button {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   OVERRIDE: Checklist Icon Placement Only
+   Keep original icon-box size, only center the SVG
+========================================================= */
+
+/* Keep the header aligned nicely without making it huge */
+
+.booking-checklist-page .booking-profile-header,
+.booking-checklist-page .booking-checklist-header,
+.booking-checklist-page .booking-activities-header {
+  align-items: center !important;
+}
+
+/* Keep the left header row aligned */
+
+.booking-checklist-page .booking-profile-header-title,
+.booking-checklist-page .booking-checklist-header > div:first-child,
+.booking-checklist-page .booking-activities-header > div:first-child {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  min-width: 0;
+}
+
+/* IMPORTANT: original-ish size, not the huge 64px version */
+
+.booking-checklist-page .section-icon,
+.booking-checklist-page .booking-work-section-icon {
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  min-width: 2.75rem !important;
+  flex: 0 0 2.75rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0.625rem !important;
+  background: var(--n-surface-3, #eef1ea) !important;
+  color: var(--n-text-3, #7b8290) !important;
+  line-height: 1 !important;
+  text-align: center !important;
+}
+
+/* This fixes the actual clipboard placement */
+
+.booking-checklist-page .section-icon svg,
+.booking-checklist-page .booking-work-section-icon svg {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+  flex: 0 0 auto !important;
+  color: currentColor !important;
+}
+
+/* Keep the text from getting squished/cut weirdly */
+
+.booking-checklist-page .booking-profile-header-title > div,
+.booking-checklist-page .booking-checklist-header > div:first-child > div,
+.booking-checklist-page .booking-activities-header > div:first-child > div {
+  min-width: 0;
+}
+
+/* Keep the description on one clean line */
+
+.booking-checklist-page .booking-profile-header-title p:not(:first-child),
+.booking-checklist-page .booking-checklist-header span,
+.booking-checklist-page .booking-activities-header p:not(.booking-activities-eyebrow) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Mobile: allow the description to wrap */
+
+@media (max-width: 720px) {
+  .booking-checklist-page .booking-profile-header,
+  .booking-checklist-page .booking-checklist-header,
+  .booking-checklist-page .booking-activities-header {
+    align-items: flex-start !important;
+  }
+
+  .booking-checklist-page .booking-profile-header-title p:not(:first-child),
+  .booking-checklist-page .booking-checklist-header span,
+  .booking-checklist-page .booking-activities-header p:not(.booking-activities-eyebrow) {
+    white-space: normal;
+  }
+  .booking-date-settings-modal,
+  .spreadsheet-settings-modal {
+    height: calc(100dvh - 1.5rem);
+  }
+}
+
+/* =========================================================
+   Booking Detail - Staff Assignments Tab
+========================================================= */
+
+.staff-assignments-tab {
+  display: grid;
+  min-width: 0;
+}
+
+.staff-assignments-card {
+  overflow: hidden;
+  background: var(--n-surface, #ffffff);
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.625rem;
+  box-shadow: 0 0.375rem 1.125rem var(--n-shadow-1, rgba(28, 35, 52, 0.04));
+}
+
+/* Area accent colors, shared by groups, chips, and avatars */
+
+.staff-assignments-tab .area-meals {
+  --area-color: var(--n-green-text, #456f5f);
+  --area-soft: var(--n-surface-3, #edf4f0);
+}
+
+.staff-assignments-tab .area-recreation {
+  --area-color: var(--n-blue-text, #4c6a91);
+  --area-soft: var(--n-blue-bg, #edf3f9);
+}
+
+.staff-assignments-tab .area-setup {
+  --area-color: var(--n-amber-text, #8a6a24);
+  --area-soft: var(--n-amber-bg, #f8f2e4);
+}
+
+.staff-assignments-tab .area-cleanup {
+  --area-color: var(--n-violet-text, #6b5a9e);
+  --area-soft: var(--n-violet-bg, #f1effb);
+}
+
+.staff-assignments-tab .area-general,
+.staff-assignments-tab .area-other {
+  --area-color: var(--n-text-2, #5f6877);
+  --area-soft: var(--n-page, #f2f4f7);
+}
+
+/* Header */
+
+.staff-assignments-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.125rem;
+  padding: 1.125rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+}
+
+.staff-assignments-header .dashboard-heading-with-icon {
+  align-items: center;
+  min-width: 0;
+}
+
+.staff-assignments-header .section-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 2.75rem;
+  margin: 0;
+  border-radius: 0.625rem;
+  background: var(--n-violet-bg, #f1effb);
+  color: var(--n-violet-text, #443a9c);
+}
+
+.staff-assignments-header .section-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.staff-assignments-header .dashboard-eyebrow {
+  margin-bottom: 0.25rem;
+}
+
+.staff-assignments-header h3 {
+  margin: 0;
+  color: var(--n-text, #252936);
+  font-size: 1.13rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.staff-assignments-header span:not(.section-icon) {
+  display: block;
+  max-width: 44rem;
+  margin-top: 0.312rem;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.955rem;
+  line-height: 1.45;
+}
+
+.staff-assignments-header > .primary-dashboard-button {
+  flex: 0 0 auto;
+}
+
+.staff-assignments-tab .primary-dashboard-button:disabled,
+.staff-assignments-tab .secondary-dashboard-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.staff-assignments-tab button:focus-visible,
+.staff-assignments-tab select:focus-visible,
+.staff-assignments-tab textarea:focus-visible {
+  outline: 0.125rem solid var(--n-violet-text, #443a9c);
+  outline-offset: 0.125rem;
+}
+
+/* Save feedback */
+
+.staff-assignments-feedback:empty {
+  display: none;
+}
+
+.staff-assignments-feedback {
+  padding: 0.875rem 1.125rem 0;
+}
+
+.staff-assignments-feedback-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.942rem;
+  font-weight: 550;
+}
+
+.staff-assignments-feedback-message.is-success {
+  background: var(--n-green-bg, #edf6f0);
+  border: 1px solid var(--n-green-line, #cfe5d7);
+  color: var(--n-green-text, #2f6b47);
+}
+
+.staff-assignments-feedback-message.is-error {
+  background: var(--n-red-bg, #fff5f5);
+  border: 1px solid var(--n-red-line, #f0cccc);
+  color: var(--n-red-text, #a03a3a);
+}
+
+.staff-assignments-feedback-message svg {
+  flex: 0 0 auto;
+}
+
+/* New assignment editor slot */
+
+.staff-assignments-new {
+  padding: 1.125rem 1.125rem 0;
+}
+
+/* Groups */
+
+.staff-assignments-groups {
+  display: grid;
+  gap: 0.875rem;
+  padding: 1.125rem;
+}
+
+.staff-assignments-unassigned-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--n-orange-text, #8a5d12);
+  font-size: 0.942rem;
+  font-weight: 550;
+}
+
+.staff-assignments-group {
+  overflow: hidden;
+  border: 1px solid var(--n-line-2, #e4e8ef);
+  border-radius: 0.5rem;
+  background: var(--n-surface, #ffffff);
+}
+
+.staff-assignments-group-header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.562rem 0.75rem 0.562rem 0.875rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+  background: var(--n-surface-2, #fbfcfd);
+}
+
+.staff-assignments-group-icon {
+  width: 1.875rem;
+  height: 1.875rem;
+  flex: 0 0 1.875rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 0.438rem;
+  background: var(--area-soft);
+  color: var(--area-color);
+  font-size: 0.875rem;
+}
+
+.staff-assignments-group-header h4 {
+  margin: 0;
+  color: var(--n-text, #252936);
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.staff-assignments-group-count {
+  min-width: 1.5rem;
+  padding: 0.062rem 0.438rem;
+  border-radius: 999px;
+  background: var(--n-surface-3, #eef0f4);
+  color: var(--n-text-2, #5f6877);
+  font-size: 0.83rem;
+  font-weight: 650;
+  text-align: center;
+}
+
+.staff-assignments-group-add {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2rem;
+  padding: 0 0.625rem;
+  border: 1px solid transparent;
+  border-radius: 0.438rem;
+  background: transparent;
+  color: var(--n-violet-text, #443a9c);
+  font: inherit;
+  font-size: 0.905rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.staff-assignments-group-add svg {
+  font-size: 0.75rem;
+}
+
+.staff-assignments-group-add:hover:not(:disabled) {
+  border-color: var(--n-violet-line, #d9d5f0);
+  background: var(--n-violet-bg, #f6f5fd);
+}
+
+.staff-assignments-group-add:disabled {
+  color: var(--n-text-3, #a3a8b4);
+  cursor: not-allowed;
+}
+
+.staff-assignments-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Assignment rows */
+
+.staff-assignment-item {
+  display: grid;
+  grid-template-columns: 2.375rem minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.875rem;
+  padding: 0.812rem 0.875rem;
+}
+
+.staff-assignment-item + .staff-assignment-item {
+  border-top: 1px solid var(--n-line, #edf0f4);
+}
+
+.staff-assignment-item.is-editing {
+  display: block;
+  padding: 0.75rem;
+  background: var(--n-surface-2, #fbfcfd);
+}
+
+.staff-assignment-item.is-confirming {
+  background: var(--n-surface-2, #fffafa);
+}
+
+.staff-assignment-avatar {
+  width: 2.375rem;
+  height: 2.375rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--area-soft);
+  color: var(--area-color);
+  font-size: 0.83rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.staff-assignment-avatar.is-unassigned {
+  border: 1px dashed var(--n-amber-text, #d9a84a);
+  background: var(--n-amber-bg, #fffaf0);
+  color: var(--n-amber-text, #9a6a14);
+}
+
+.staff-assignment-body {
+  min-width: 0;
+  padding-top: 0.125rem;
+}
+
+.staff-assignment-person {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+}
+
+.staff-assignment-person strong {
+  color: var(--n-text, #252936);
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.staff-assignment-person strong.is-unassigned {
+  color: var(--n-orange-text, #8a5d12);
+}
+
+.staff-assignment-tag {
+  padding: 0.062rem 0.5rem;
+  border-radius: 999px;
+  background: var(--n-page, #f2f4f7);
+  color: var(--n-text-3, #6b7280);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.staff-assignment-notes {
+  margin: 0.25rem 0 0;
+  color: var(--n-text-2, #4b5263);
+  font-size: 0.955rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.staff-assignment-notes.is-empty {
+  color: var(--n-text-3, #9aa1ae);
+  font-style: italic;
+}
+
+.staff-assignment-actions {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.staff-assignment-icon-button {
+  width: 2.125rem;
+  height: 2.125rem;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.438rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text-2, #5f6877);
+  font-size: 0.83rem;
+  cursor: pointer;
+}
+
+.staff-assignment-icon-button:hover:not(:disabled) {
+  border-color: var(--n-violet-line, #c9c4e8);
+  background: var(--n-violet-bg, #f6f5fd);
+  color: var(--n-violet-text, #443a9c);
+}
+
+.staff-assignment-icon-button.is-danger:hover:not(:disabled) {
+  border-color: var(--n-red-line, #efcaca);
+  background: var(--n-red-bg, #fff1f1);
+  color: var(--n-red-text, #a64242);
+}
+
+.staff-assignment-icon-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.staff-assignment-confirm {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem 0.75rem;
+  color: var(--n-red-text, #8d2f2f);
+  font-size: 0.905rem;
+  font-weight: 550;
+}
+
+.staff-assignment-confirm > div {
+  display: flex;
+  gap: 0.438rem;
+}
+
+.staff-assignment-confirm .secondary-dashboard-button,
+.staff-assignment-remove-confirm-button {
+  min-height: 2.125rem;
+  padding: 0 0.75rem;
+  border-radius: 0.438rem;
+  font-size: 0.905rem;
+}
+
+.staff-assignment-remove-confirm-button {
+  border: 1px solid #a64242;
+  background: #a64242;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.staff-assignment-remove-confirm-button:hover:not(:disabled) {
+  background: #8d2f2f;
+}
+
+.staff-assignment-remove-confirm-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Editor */
+
+.staff-assignment-editor {
+  display: grid;
+  gap: 0.875rem;
+  padding: 1rem;
+  border: 1px solid var(--n-violet-line, #d9d5f0);
+  border-left: 0.188rem solid var(--n-violet-text, #443a9c);
+  border-radius: 0.5rem;
+  background: var(--n-surface, #ffffff);
+  box-shadow: 0 0.25rem 0.875rem var(--n-violet-ring, rgba(68, 58, 156, 0.06));
+}
+
+.staff-assignment-editor-title strong {
+  display: block;
+  color: var(--n-text, #252936);
+  font-size: 1.02rem;
+  font-weight: 650;
+}
+
+.staff-assignment-editor-title span {
+  display: block;
+  margin-top: 0.188rem;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.905rem;
+}
+
+.staff-assignment-area-picker {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.staff-assignment-area-picker legend,
+.staff-assignment-field > span {
+  margin-bottom: 0.438rem;
+  padding: 0;
+  color: var(--n-text, #374151);
+  font-size: 0.83rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+}
+
+.staff-assignment-area-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.staff-assignment-area-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.438rem;
+  min-height: 2.25rem;
+  padding: 0 0.812rem;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 999px;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text-2, #4b5263);
+  font-size: 0.942rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.staff-assignment-area-option input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.staff-assignment-area-option svg {
+  color: var(--area-color);
+  font-size: 0.83rem;
+}
+
+.staff-assignment-area-option:hover {
+  border-color: var(--n-line-3, #c9ced8);
+}
+
+.staff-assignment-area-option.selected {
+  border-color: var(--area-color);
+  background: var(--area-soft);
+  color: var(--area-color);
+}
+
+.staff-assignment-area-option:has(input:focus-visible) {
+  outline: 0.125rem solid var(--n-violet-text, #443a9c);
+  outline-offset: 0.125rem;
+}
+
+.staff-assignment-editor-fields {
+  display: grid;
+  grid-template-columns: minmax(13rem, 18rem) minmax(0, 1fr);
+  gap: 0.875rem;
+  align-items: start;
+}
+
+.staff-assignment-field {
+  display: grid;
+  min-width: 0;
+}
+
+.staff-assignment-field select,
+.staff-assignment-field textarea {
+  width: 100%;
+  border: 1px solid var(--n-field-line, #d1d5db);
+  border-radius: 0.438rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #111827);
+  font: inherit;
+  font-size: 0.967rem;
+}
+
+.staff-assignment-field select {
+  min-height: 2.5rem;
+  padding: 0 0.688rem;
+}
+
+.staff-assignment-field textarea {
+  min-height: 5.25rem;
+  padding: 0.562rem 0.688rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.staff-assignment-field select:focus,
+.staff-assignment-field textarea:focus {
+  border-color: var(--n-violet-text, #443a9c);
+  box-shadow: 0 0 0 0.188rem var(--n-violet-ring, rgba(68, 58, 156, 0.12));
+  outline: none;
+}
+
+.staff-assignment-field small {
+  margin-top: 0.375rem;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.855rem;
+  line-height: 1.4;
+}
+
+.staff-assignment-editor-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--n-red-text, #a03a3a);
+  font-size: 0.93rem;
+  font-weight: 550;
+}
+
+.staff-assignment-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* Empty state */
+
+.staff-assignments-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 2.75rem 1.125rem 3rem;
+  text-align: center;
+}
+
+.staff-assignments-empty-icon {
+  width: 3rem;
+  height: 3rem;
+  display: inline-grid;
+  place-items: center;
+  margin-bottom: 0.25rem;
+  border-radius: 50%;
+  background: var(--n-violet-bg, #f1effb);
+  color: var(--n-violet-text, #443a9c);
+  font-size: 1.25rem;
+}
+
+.staff-assignments-empty strong {
+  color: var(--n-text, #252936);
+  font-size: 1.08rem;
+  font-weight: 650;
+}
+
+.staff-assignments-empty p {
+  max-width: 32rem;
+  margin: 0;
+  color: var(--n-text-3, #747b8d);
+  font-size: 0.967rem;
+  line-height: 1.5;
+}
+
+.staff-assignments-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.staff-assignments-empty-area {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.438rem;
+  min-height: 2.375rem;
+  padding: 0 0.875rem;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 999px;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #374151);
+  font: inherit;
+  font-size: 0.942rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.staff-assignments-empty-area svg {
+  color: var(--area-color);
+  font-size: 0.83rem;
+}
+
+.staff-assignments-empty-area:hover:not(:disabled) {
+  border-color: var(--area-color);
+  background: var(--area-soft);
+  color: var(--area-color);
+}
+
+/* Responsive */
+
+@media (max-width: 760px) {
+  .staff-assignments-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem;
+  }
+
+  .staff-assignments-header .dashboard-heading-with-icon {
+    align-items: flex-start;
+  }
+
+  .staff-assignments-groups,
+  .staff-assignments-new {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .staff-assignments-feedback {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .staff-assignment-item {
+    grid-template-columns: 2.125rem minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .staff-assignment-avatar {
+    width: 2.125rem;
+    height: 2.125rem;
+  }
+
+  .staff-assignment-actions,
+  .staff-assignment-confirm {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+
+  .staff-assignment-editor-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .staff-assignment-editor-actions > button {
+    flex: 1 1 0;
+  }
+}
+
+/* =========================================================
+   BOOKING DETAIL — DELETE BUTTON
+========================================================= */
+
+.booking-profile-delete-button {
+  min-height: 2.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.438rem;
+  padding: 0 0.812rem;
+  border: 1px solid var(--n-red-line, #e2bcbc);
+  border-radius: 0.5rem;
+  background: var(--n-surface-2, #fffafa);
+  color: var(--n-red-text, #a64242);
+  font: inherit;
+  font-size: 0.942rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+}
+
+.booking-profile-delete-button:hover {
+  border-color: var(--n-red-text, #cb8f8f);
+  background: var(--n-red-bg, #fff0f0);
+  color: var(--n-red-text, #8d3232);
+}
+
+.booking-profile-delete-button:active {
+  background: var(--n-red-bg, #fbe6e6);
+}
+
+/* =========================================================
+   INCIDENT NOTES
+========================================================= */
+
+.booking-details-tab-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.booking-incident-notes-card {
+  padding: 1.5rem;
+  border: 1px solid var(--n-amber-line, #ead7a7);
+  border-radius: 1.125rem;
+  background: var(--n-surface-2, #fffdf8);
+}
+
+.booking-incident-notes-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.booking-incident-notes-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+}
+
+.booking-incident-notes-icon {
+  width: 2.625rem;
+  height: 2.625rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 0.75rem;
+  background: var(--n-amber-bg-2, #fff3cd);
+  color: var(--n-amber-text, #956600);
+  font-size: 1.055rem;
+}
+
+.booking-incident-notes-title h3 {
+  margin: 2px 0 0.25rem;
+  font-size: 1.102rem;
+  font-weight: 800;
+  color: var(--n-text, #1e293b);
+}
+
+.booking-incident-notes-title > div > span {
+  display: block;
+  font-size: 0.98rem;
+  line-height: 1.5;
+  color: var(--n-blue-text, #64748b);
+}
+
+.booking-incident-notes-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   INCIDENT NOTES EDITOR
+========================================================= */
+
+.booking-incident-notes-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.booking-incident-notes-field > span {
+  font-size: 0.93rem;
+  font-weight: 800;
+  color: var(--n-blue-text, #475569);
+}
+
+.booking-incident-notes-field textarea {
+  width: 100%;
+  min-height: 10rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--n-field-line, #d9dfeb);
+  border-radius: 0.75rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #1e293b);
+  font: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.booking-incident-notes-field textarea::placeholder {
+  color: var(--n-text-3, #a7b0bf);
+}
+
+.booking-incident-notes-field textarea:focus {
+  outline: none;
+  border-color: var(--n-amber-text, #b99745);
+  box-shadow: 0 0 0 0.188rem var(--n-amber-ring, rgba(185, 151, 69, 0.12));
+}
+
+/* =========================================================
+   SAVED INCIDENT NOTES
+========================================================= */
+
+.booking-incident-notes-display {
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--n-amber-line, #ece4cf);
+  border-radius: 0.75rem;
+  background: var(--n-surface, #ffffff);
+}
+
+.booking-incident-notes-display p {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--n-blue-text, #334155);
+  font-size: 1.005rem;
+  line-height: 1.65;
+}
+
+/* =========================================================
+   EMPTY INCIDENT STATE
+========================================================= */
+
+.booking-incident-notes-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.125rem;
+  border: 1px dashed var(--n-amber-line, #e1d5b6);
+  border-radius: 0.75rem;
+  background: var(--n-glass, rgba(255, 255, 255, 0.65));
+  color: var(--n-blue-text, #64748b);
+}
+
+.booking-incident-notes-empty > svg {
+  flex-shrink: 0;
+  color: var(--n-amber-text, #b38628);
+}
+
+.booking-incident-notes-empty strong {
+  display: block;
+  margin-bottom: 0.188rem;
+  color: var(--n-blue-text, #475569);
+  font-size: 0.992rem;
+}
+
+.booking-incident-notes-empty p {
+  margin: 0;
+  color: var(--n-text-3, #7c8798);
+  font-size: 0.955rem;
+  line-height: 1.45;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 760px) {
+  .booking-incident-notes-header {
+    flex-direction: column;
+  }
+
+  .booking-incident-notes-actions {
+    width: 100%;
+  }
+}

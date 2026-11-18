@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FaCheck, FaRegCopy } from "react-icons/fa";
 import { copyTextToClipboard } from "../utils/clipboard";
-import "../styles/CopyButton.css";
+import "../styles/components/CopyButton.css";
 
 const MISSING_VALUES = new Set(["", "—", "n/a", "no email", "no email provided", "no phone provided"]);
 

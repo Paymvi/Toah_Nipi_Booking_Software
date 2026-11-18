@@ -26,7 +26,7 @@ Screenshots (fictional data, local stack): [screenshots/](screenshots/). Names e
 - `src/utils/staffAppFormat.js`: camp-time dates, change descriptions and small screen helpers.
 - `src/services/staffAppService.js`: the RPC calls and their error kinds (setup / access / session / network).
 - `src/auth/StaffAuthGate.jsx`, `src/auth/staffAccess.js`, `src/App.jsx`: loads `staff_app_me()` once per account and routes limited accounts. The gate keys the app by user id, so switching accounts remounts everything.
-- `src/pages/StaffApp.jsx` (shell, Today, Calendar, Group), `src/pages/StaffKitchen.jsx`, `src/components/StaffAppParts.jsx`, `src/components/StaffAccessPanel.jsx`, `src/styles/StaffApp.css`.
+- `src/pages/StaffApp.jsx` (shell, Today, Calendar, Group), `src/pages/StaffKitchen.jsx`, `src/components/StaffAppParts.jsx`, `src/components/StaffAccessPanel.jsx`, `src/styles/staff/StaffApp.css`.
 - `public/manifest.webmanifest` and the icons, plus `index.html` links: add to home screen.
 
 ## Data rules (src/utils/mealPlan.js)
@@ -150,7 +150,7 @@ Added 2026-11-14. Staff ask for supplies or equipment; purchasing tracks each it
   - `src/pages/StaffOrders.jsx`
   - `src/utils/staffOrders.js` (labels, progress text, form checks; `tests/staffOrders.test.js`)
   - the `staff_app_order*` calls in `src/services/staffAppService.js`
-  - the "Orders" section of `src/styles/StaffApp.css`
+  - the "Orders" section of `src/styles/staff/StaffApp.css`
 - **Data:**
   - `staff_order_requests`: department (Kitchen, Turnover, Maintenance, Other), optional needed-by date, notes, product link, urgent, requester.
   - `staff_order_items`: name, quantity as typed ("2 cases"), status, last status note, who changed it and when.

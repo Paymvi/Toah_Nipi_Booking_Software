@@ -1,0 +1,56 @@
+/* =========================================================
+   Office app and staff app stylesheets, in cascade order.
+   Every file is global. Later files win ties, so the order below is
+   part of the styling. docs/CSS_GUIDE.md explains where new rules go.
+========================================================= */
+
+/* Foundations: tokens, base elements */
+@import "./foundation/shared.css";
+
+/* Booking form and booking overview */
+@import "./booking/CreateBookingForm.css";
+@import "./booking/CreateBookingFromInquiry.css";
+@import "./booking/BookingOverview.css";
+@import "./booking/BookingOverviewCompact.css";
+@import "./booking/BookingHousingCamping.css";
+@import "./views/LodgingAvailability.css";
+@import "./booking/BookingOverviewSchedule.css";
+
+/* Office shell: sidebar, top bar, shared buttons and cards */
+@import "./layout/Dashboard.css";
+
+/* Office screens */
+@import "./views/ReportsCamperDaysExplainer.css";
+@import "./views/CalendarView.css";
+@import "./views/Hosting.css";
+@import "./views/InquiryPipeline.css";
+@import "./views/SpreadsheetView.css";
+@import "./views/ContactsView.css";
+@import "./booking/BookingDetail.css";
+@import "./booking/BookingActivities.css";
+@import "./booking/BookingDetailTabs.css";
+@import "./views/ReportsView.css";
+@import "./views/ReportsSeason.css";
+@import "./views/AdminJobsView.css";
+@import "./views/Auth.css";
+@import "./views/PortalAdminView.css";
+@import "./views/GuestInquiriesView.css";
+@import "./views/LodgingCalendar.css";
+@import "./booking/BookingHousing.css";
+@import "./views/HomeDashboard.css";
+@import "./views/InquirySpreadsheet.css";
+@import "./views/InquiryRecordDetail.css";
+@import "./booking/StaffBookingDetails.css";
+@import "./views/DashboardBackups.css";
+
+/* Tutorial gnome */
+@import "./tutorial/TutorialGnome.css";
+
+/* Office phones and tablets */
+@import "./layout/Mobile.css";
+
+/* Staff app */
+@import "./staff/StaffApp.css";
+
+/* Night theme tokens: last, so its few direct rules win */
+@import "./foundation/theme.css";

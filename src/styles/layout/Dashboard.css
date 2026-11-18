@@ -1,0 +1,1692 @@
+/* =========================================================
+   Dashboard View / Staff App Shell
+   Sidebar, topbar, dashboard home cards, shared dashboard buttons,
+   import dropdown, collapsed sidebar, and keep-alive wrappers.
+========================================================= */
+
+/* Dashboard */
+
+.dashboard-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 16.875rem 1fr;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: var(--n-page, #f5f6f8);
+  color: var(--n-text, #2f3240);
+  transition: grid-template-columns 180ms ease;
+}
+
+.dashboard-sidebar {
+  padding: 1.375rem 0;
+}
+
+.dashboard-logo {
+  border-bottom: 1px solid var(--n-line, #eef0f5);
+  margin-bottom: 0.875rem;
+  padding: 0 1.375rem 1.375rem;
+  border-bottom-color: var(--n-line, #edf0f4);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.dashboard-logo > span {
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  width: 2.375rem;
+  height: 2.375rem;
+  border-radius: 0.5rem;
+  background: none;
+  font-size: 0.992rem;
+  font-weight: 650;
+}
+
+.dashboard-logo strong {
+  display: block;
+  color: var(--n-text, #2f3240);
+  font-size: 1.017rem;
+  font-weight: 650;
+}
+
+.dashboard-logo small {
+  display: block;
+  margin-top: 2px;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.892rem;
+}
+
+.sidebar-link {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  font: inherit;
+  color: var(--n-text, #353847);
+  cursor: pointer;
+  text-align: left;
+  min-height: 2.625rem;
+  padding: 0 1.375rem;
+  gap: 0.688rem;
+  font-size: 0.992rem;
+  font-weight: 500;
+}
+
+.sidebar-link:hover {
+  color: var(--n-violet-text, #443a9c);
+  background: var(--n-surface-3, #f5f4fb);
+}
+
+.sidebar-section p {
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  padding: 0 1.375rem;
+  margin-bottom: 0.438rem;
+  color: var(--n-text-3, #8e95a3);
+  font-size: 0.85rem;
+  font-weight: 650;
+  letter-spacing: 0.075em;
+}
+
+.sidebar-link svg {
+  flex: 0 0 auto;
+  font-size: 1.042rem;
+}
+
+.sidebar-link span {
+  flex: 1;
+}
+
+.sidebar-badge {
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #8b83c9;
+  color: #ffffff;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.892rem;
+  font-weight: 650;
+}
+
+.dashboard-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 1.375rem;
+  gap: 1.125rem;
+}
+
+.dashboard-eyebrow {
+  margin: 0 0 0.375rem;
+  text-transform: uppercase;
+  font-size: 0.88rem;
+  font-weight: 650;
+  letter-spacing: 0.095em;
+  color: var(--n-text-3, #7b8290);
+}
+
+.dashboard-topbar h1 {
+  margin: 0;
+  color: var(--n-text, #242735);
+  font-size: clamp(1.758rem, 2.08vw, 2.508rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.primary-dashboard-button,
+.secondary-dashboard-button {
+  border: 1px solid transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.primary-dashboard-button {
+  color: #ffffff;
+  background: var(--n-accent-solid, #443a9c);
+}
+
+.secondary-dashboard-button {
+  background: var(--n-surface, #ffffff);
+  color: var(--n-violet-text, #443a9c);
+  border-color: var(--n-violet-line, #c9c4e8);
+}
+
+.dashboard-card {
+  background: var(--n-surface, #ffffff);
+  border: 1px solid var(--n-line, #e8ebf1);
+  overflow: hidden;
+  border-radius: 0.625rem;
+  border-color: var(--n-line-2, #dfe4ec);
+  box-shadow: 0 0.375rem 1.125rem var(--n-shadow-1, rgba(28, 35, 52, 0.04));
+}
+
+.dashboard-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.125rem;
+}
+
+.dashboard-card-header h2 {
+  margin: 0;
+  color: var(--n-text, #2d303c);
+  font-size: 1.13rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.dashboard-card-header p {
+  margin: 0.375rem 0 0;
+  margin-top: 0.312rem;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.955rem;
+}
+
+.table-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--n-violet-text, #443a9c);
+  font-weight: 600;
+}
+
+.table-link:hover {
+  text-decoration: underline;
+}
+
+.calendar-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.calendar-controls button,
+.calendar-controls select {
+  border: 1px solid var(--n-field-line, #dde1ea);
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #454a58);
+  font: inherit;
+  height: 2.125rem;
+  border-radius: 0.438rem;
+  font-size: 0.942rem;
+  font-weight: 600;
+}
+
+.calendar-controls button {
+  cursor: pointer;
+  width: 2.125rem;
+}
+
+.calendar-controls button:hover {
+  background: var(--n-violet-bg, #f6f5ff);
+  color: var(--n-violet-text, #443a9c);
+}
+
+.calendar-controls select {
+  padding: 0 0.75rem;
+}
+
+.calendar-weekday {
+  padding: 0 0.5rem 0.75rem;
+  text-align: center;
+}
+
+.calendar-cell {
+  position: relative;
+  min-height: 6rem;
+  border: 1px solid var(--n-line-2, #e1e5ec);
+  margin-left: -1px;
+  margin-top: -1px;
+  background: var(--n-surface, #ffffff);
+  padding: 1.562rem 0.438rem 0.438rem;
+}
+
+.calendar-cell-empty {
+  background: var(--n-surface-2, #fafbfc);
+}
+
+.calendar-day-number {
+  position: absolute;
+  top: 0.375rem;
+  right: 0.562rem;
+}
+
+.calendar-event-green {
+  background: var(--n-surface-3, #edf4ef);
+  border-left-color: var(--n-teal-text, #2f6f5f);
+}
+
+.status-confirmed {
+  background: var(--n-green-bg, #eaf4ee);
+  color: var(--n-green-text, #2f6f4f);
+}
+
+.status-inquiry {
+  background: var(--n-violet-bg, #f0edfa);
+  color: var(--n-violet-text, #443a9c);
+}
+
+.empty-state {
+  border: 1px dashed var(--n-line-3, #ccd2df);
+  text-align: center;
+  margin: 0 1.125rem 1.125rem;
+  padding: 1.125rem;
+  border-radius: 0.5rem;
+  background: var(--n-surface-2, #fbfcfd);
+  border-color: var(--n-line-3, #cfd6e1);
+}
+
+.empty-state strong {
+  color: var(--n-text, #303442);
+  font-size: 1.017rem;
+  font-weight: 650;
+}
+
+.empty-state p {
+  margin: 0.5rem 0 0;
+  color: var(--n-text-3, #828899);
+  font-size: 0.955rem;
+}
+
+@media (max-width: 940px) {
+  .dashboard-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-sidebar {
+    position: static;
+    height: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+
+  .dashboard-card-header {
+    flex-direction: column;
+  }
+
+  .calendar-cell {
+    min-height: 5.125rem;
+  }
+}
+
+.calendar-legend {
+  display: flex;
+  align-items: center;
+  color: var(--n-text-2, #4b5060);
+}
+
+.calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.438rem;
+}
+
+.legend-dot {
+  border-radius: 999px;
+  display: inline-block;
+  width: 0.562rem;
+  height: 0.562rem;
+}
+
+.legend-confirmed {
+  background: #2f6f5f;
+}
+
+.dashboard-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-file-input {
+  display: none;
+}
+
+.danger-dashboard-button {
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: transform 160ms ease, background-color 160ms ease;
+  border-radius: 0.5rem;
+  background: #9f2f2f;
+  font-weight: 600;
+}
+
+/* Mini dashboard preview spanning calendar */
+
+.calendar-grid-preview-span {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(5rem, 1fr));
+  background: var(--n-surface, #ffffff);
+  padding: 0 1.125rem 1.125rem;
+}
+
+.calendar-grid-preview-span > .calendar-weekday {
+  padding: 0 0.5rem 0.75rem;
+  text-align: center;
+}
+
+.calendar-week-row-preview {
+  grid-column: 1 / -1;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(5rem, 1fr));
+  min-height: calc(5.375rem + ((var(--calendar-event-row-count, 1) - 1) * 1.562rem));
+  min-width: 0;
+}
+
+.calendar-week-row-preview .calendar-cell {
+  position: relative;
+  min-width: 0;
+  min-height: 100%;
+  padding: 1.562rem 0.438rem 0.438rem;
+  border: 1px solid var(--n-line-2, #e1e5ec);
+  margin-left: -1px;
+  margin-top: -1px;
+  background: var(--n-surface, #ffffff);
+}
+
+.calendar-week-row-preview .calendar-cell-empty {
+  background: var(--n-surface-2, #fafbfc);
+}
+
+.calendar-week-row-preview .calendar-day-number {
+  position: absolute;
+  top: 0.375rem;
+  right: 0.562rem;
+}
+
+.calendar-span-event-preview {
+  position: absolute;
+  z-index: 5;
+  left: calc((((var(--event-start-column) - 1) * 100%) / 7) + 0.25rem);
+  width: calc(((var(--event-span-days) * 100%) / 7) - 0.5rem);
+  top: calc(2rem + (var(--event-lane) * 1.562rem));
+  height: 1.375rem;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.375rem;
+  border-left: 5px solid var(--n-violet-text, #8b83c9);
+  padding: 0 0.375rem;
+  color: var(--n-text-2, #4b5060);
+}
+
+.calendar-span-event-preview span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.calendar-span-event-preview i {
+  width: 0.438rem;
+  height: 0.438rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.calendar-span-event-preview.calendar-event-green {
+  background: var(--n-surface-3, #edf4ef);
+  border-left-color: var(--n-teal-text, #2f6f5f);
+}
+
+/* Import dropdown */
+
+.dashboard-main,
+.dashboard-topbar,
+.dashboard-actions {
+  overflow: visible;
+}
+
+.import-dropdown {
+  position: relative;
+  display: inline-flex;
+}
+
+.import-dropdown-button {
+  position: relative;
+}
+
+.import-dropdown-button.is-open {
+  background: var(--n-violet-bg, #f7f5ff);
+  border-color: var(--n-violet-text, #9f98d4);
+}
+
+.import-dropdown-caret {
+  margin-left: 2px;
+  color: var(--n-violet-text, #6f67b8);
+  line-height: 1;
+  font-size: 0.93rem;
+  transition: transform 180ms ease;
+}
+
+.import-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: var(--z-dropdown);
+  background: var(--n-raised, #ffffff);
+  border: 1px solid var(--n-line-2, #e1e5ec);
+}
+
+.import-dropdown-menu button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--n-text, #303442);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+  border-radius: 0.438rem;
+  padding: 0.625rem;
+}
+
+.import-dropdown-menu button:hover {
+  background: var(--n-violet-bg, #f6f5ff);
+}
+
+.import-dropdown-menu strong {
+  color: var(--n-text, #303442);
+  font-size: 0.955rem;
+  font-weight: 600;
+}
+
+.import-dropdown-menu small {
+  color: var(--n-text-3, #858c9b);
+  font-weight: 400;
+  font-size: 0.88rem;
+}
+
+/* Dashboard icons */
+
+.section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: var(--n-olive-ring, rgba(92, 111, 70, 0.12));
+  color: var(--n-olive-text, #5c6f46);
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.992rem;
+  margin-top: 0;
+}
+
+.dashboard-heading-with-icon {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.688rem;
+}
+
+.dashboard-heading-with-icon h2,
+.dashboard-heading-with-icon p {
+  margin-left: 0;
+}
+
+.secondary-dashboard-button,
+.primary-dashboard-button,
+.danger-dashboard-button,
+.import-dropdown-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.import-dropdown-button.is-open .import-dropdown-caret {
+  transform: rotate(180deg);
+}
+
+.import-dropdown-menu button > svg {
+  width: 1.125rem;
+  min-width: 1.125rem;
+  color: var(--n-olive-text, #5c6f46);
+}
+
+.import-dropdown-menu button span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.availability-header-actions .secondary-dashboard-button svg {
+  font-size: 0.93rem;
+}
+
+/* =========================================================
+   Keep dashboard sections from overflowing the screen
+========================================================= */
+
+/* Let grid/flex children actually shrink instead of forcing the page wider */
+
+.dashboard-shell,
+.dashboard-main,
+.dashboard-topbar,
+.dashboard-actions,
+.dashboard-card,
+.calendar-view-card,
+.booking-detail-page,
+.availability-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Calendar and spreadsheet hover popups reach past their cards, so the main area never clips. */
+
+.dashboard-main {
+  padding: 1.75rem;
+  overflow: visible;
+}
+
+/* Important for CSS grid children */
+
+.dashboard-card > * {
+  min-width: 0;
+}
+
+/* Prevent the top buttons from pushing off-screen */
+
+.primary-dashboard-button,
+.secondary-dashboard-button,
+.danger-dashboard-button,
+.import-dropdown-button {
+  max-width: 100%;
+  white-space: nowrap;
+  min-height: 2.375rem;
+  border-radius: 0.5rem;
+  padding: 0 0.875rem;
+  gap: 0.438rem;
+  font-size: 0.955rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+/* Dashboard calendar preview on smaller screens */
+
+@media (max-width: 720px) {
+  .dashboard-card-header,
+  .calendar-controls,
+  .calendar-legend,
+  .calendar-agenda-list,
+  .availability-scroll {
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
+  }
+
+  .calendar-grid-preview-span,
+  .calendar-week-row-preview {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .calendar-cell,
+  .calendar-week-row-preview .calendar-cell {
+    min-width: 0;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+  }
+
+  .calendar-weekday {
+    padding-left: 2px;
+    padding-right: 2px;
+    font-size: 0.88rem;
+  }
+
+  .calendar-span-event-preview {
+    font-size: 0.775rem;
+  }
+
+  .dashboard-actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  .dashboard-actions > * {
+    flex: 1 1 auto;
+  }
+
+  .import-dropdown {
+    width: 100%;
+  }
+
+  .import-dropdown-button {
+    width: 100%;
+  }
+
+  .import-dropdown-menu {
+    left: 0;
+    right: auto;
+    width: min(17.5rem, calc(100vw - 1.5rem));
+  }
+}
+
+/* Big calendar can stay wide, but scroll inside its card instead of
+   making the whole page wider */
+
+@media (max-width: 760px) {
+  .calendar-view-card {
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+}
+
+/* =========================================================
+   Sidebar App Toggle: Dashboard / Form
+========================================================= */
+
+.sidebar-section {
+  padding-top: 1.125rem;
+}
+
+/* Buttons */
+
+.primary-dashboard-button:hover {
+  background: var(--n-accent-solid-hover, #382f86);
+}
+
+.secondary-dashboard-button:hover {
+  background: var(--n-violet-bg, #f7f5ff);
+}
+
+.danger-dashboard-button:hover {
+  background: #822727;
+  transform: none;
+}
+
+/* Import dropdown */
+
+.import-dropdown-menu {
+  width: 16.875rem;
+  padding: 0.375rem;
+  border-radius: 0.625rem;
+  border-color: var(--n-line-2, #dfe4ec);
+  box-shadow: 0 0.75rem 1.75rem var(--n-shadow-2, rgba(28, 35, 52, 0.13));
+}
+
+/* Dev Mode toggle */
+
+.dashboard-actions .dev-mode-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.375rem;
+  padding: 0 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.93rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dashboard-actions .dev-mode-toggle.is-on {
+  color: var(--n-violet-text, #443a9c);
+}
+
+.dev-mode-toggle-track {
+  position: relative;
+  width: 1.875rem;
+  height: 1.062rem;
+  border-radius: 999px;
+  background: var(--n-surface-4, #d6dae3);
+  transition: background 160ms ease;
+}
+
+.dev-mode-toggle.is-on .dev-mode-toggle-track {
+  background: var(--n-accent-solid, #443a9c);
+}
+
+.dev-mode-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 0.812rem;
+  height: 0.812rem;
+  border-radius: 999px;
+  background: var(--n-surface, #ffffff);
+  box-shadow: 0 1px 2px var(--n-shadow-3, rgba(28, 35, 52, 0.2));
+  transition: transform 160ms ease;
+}
+
+.dev-mode-toggle.is-on .dev-mode-toggle-thumb {
+  transform: translateX(0.812rem);
+}
+
+.dev-mode-toggle:focus-visible {
+  outline: 2px solid var(--n-violet-text, #9f98d4);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+/* Dev Mode password dialog (matches the checklist modal) */
+
+.dev-mode-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: var(--n-scrim, rgba(20, 23, 34, 0.52));
+}
+
+.dev-mode-dialog {
+  width: min(25rem, 100%);
+  display: grid;
+  gap: 0.875rem;
+  padding: 1.125rem;
+  border-radius: 0.625rem;
+  background: var(--n-raised, #ffffff);
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  box-shadow: 0 1.5rem 4.375rem var(--n-shadow-3, rgba(15, 23, 42, 0.25));
+}
+
+.dev-mode-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.875rem;
+}
+
+.dev-mode-dialog-header h3 {
+  margin: 0;
+  color: var(--n-text, #252936);
+  font-size: 1.13rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+
+.dev-mode-dialog-header p {
+  margin: 0.312rem 0 0;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.955rem;
+}
+
+.dev-mode-dialog-close {
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.5rem;
+  display: inline-grid;
+  place-items: center;
+  background: var(--n-raised, #ffffff);
+  color: var(--n-text-3, #687083);
+  cursor: pointer;
+}
+
+.dev-mode-dialog-close:hover {
+  background: var(--n-surface-3, #f6f7f9);
+  color: var(--n-text, #252936);
+}
+
+.dev-mode-dialog-field {
+  display: grid;
+  gap: 0.375rem;
+  color: var(--n-text-2, #4b5060);
+  font-size: 0.93rem;
+  font-weight: 600;
+}
+
+.dev-mode-dialog-field input {
+  min-height: 2.375rem;
+  border: 1px solid var(--n-field-line, #dfe4ec);
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
+  color: var(--n-text, #252936);
+  font: inherit;
+  font-weight: 400;
+}
+
+.dev-mode-dialog-field input:focus {
+  outline: none;
+  border-color: var(--n-violet-text, #9f98d4);
+  box-shadow: 0 0 0 0.188rem var(--n-violet-ring, rgba(68, 58, 156, 0.12));
+}
+
+.dev-mode-dialog-error {
+  margin: -0.25rem 0 0;
+  color: var(--n-red-text, #9f2f2f);
+  font-size: 0.93rem;
+}
+
+.dev-mode-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+}
+
+.dev-mode-dialog-footer button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dashboard-card-header {
+  padding: 1.125rem 1.125rem 0.875rem;
+}
+
+/* Calendar card */
+
+.calendar-controls {
+  padding: 0 1.125rem 1.125rem;
+  gap: 0.438rem;
+}
+
+.calendar-grid-preview-span > .calendar-weekday,
+.calendar-weekday {
+  color: var(--n-text-3, #7a8090);
+  font-size: 0.905rem;
+  font-weight: 600;
+}
+
+.calendar-cell,
+.calendar-week-row-preview .calendar-cell {
+  border-color: var(--n-line-2, #e3e7ee);
+}
+
+.calendar-day-number,
+.calendar-week-row-preview .calendar-day-number {
+  color: var(--n-text-3, #6f7687);
+  font-size: 0.917rem;
+  font-weight: 600;
+}
+
+.calendar-span-event-preview {
+  border-left-width: 4px;
+  border-radius: 0.312rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.calendar-legend {
+  padding: 0 1.125rem 1.125rem;
+  gap: 0.875rem;
+  font-size: 0.93rem;
+}
+
+/* Availability board */
+
+.availability-toolbar strong {
+  font-weight: 650;
+}
+
+.availability-row-heading,
+.availability-row-name {
+  font-size: 0.917rem;
+  font-weight: 650;
+}
+
+.availability-row-name,
+.availability-day-cell {
+  min-height: 1.875rem;
+}
+
+/* Mobile */
+
+@media (max-width: 940px) {
+  .dashboard-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--n-line-2, #dfe4ec);
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard-main {
+    padding: 1.125rem 0.75rem;
+    padding-top: 0.75rem;
+  }
+
+  .dashboard-card-header,
+  .availability-header {
+    padding: 1rem;
+  }
+
+  .dev-mode-dialog {
+    max-height: calc(100dvh - 1.5rem);
+    overflow-y: auto;
+  }
+}
+
+/* Collapsible Sidebar
+------------------------------------------------------------------------------- */
+
+.dashboard-sidebar-collapsed {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.sidebar-collapse-button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-left: auto;
+  color: var(--n-text-2, #4b5563);
+  background: var(--n-surface, #ffffff);
+  border: 1px solid var(--n-line-2, #e5e7eb);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.sidebar-collapse-button:hover {
+  color: var(--n-violet-text, #3730a3);
+  background: var(--n-violet-bg, #f5f3ff);
+  border-color: var(--n-blue-line, #c7d2fe);
+}
+
+.dashboard-sidebar-collapsed .dashboard-logo {
+  gap: 0;
+  margin-bottom: 0.75rem;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 0 0.875rem;
+  margin: 0 0 0.625rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+}
+
+.dashboard-sidebar-collapsed .sidebar-collapse-button {
+  margin-left: 0;
+  bottom: -1.125rem;
+  border-color: var(--n-line-2, #dfe4ec);
+  position: absolute;
+  right: -1.25rem;
+  top: 0.5rem;
+  z-index: 20;
+  width: 1.875rem;
+  height: 1.875rem;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 999px;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text-3, #687083);
+  box-shadow: 0 0.5rem 1.125rem var(--n-shadow-2, rgba(15, 23, 42, 0.12));
+}
+
+.dashboard-sidebar-collapsed .sidebar-link {
+  padding-left: 0;
+  padding-right: 0;
+  gap: 0;
+}
+
+.dashboard-sidebar-collapsed .sidebar-badge {
+  width: 0.75rem;
+}
+
+.dashboard-sidebar-collapsed .sidebar-link-active .sidebar-badge {
+  border-color: var(--n-violet-text, #4b3fa3);
+}
+
+@media (max-width: 900px) {
+  .dashboard-shell-sidebar-collapsed {
+    grid-template-columns: 4.75rem minmax(0, 1fr);
+  }
+
+  .dashboard-sidebar-collapsed {
+    width: 4.75rem;
+    min-width: 4.75rem;
+  }
+}
+
+/* =========================================================
+   Sidebar Main Section + Active Link State
+========================================================= */
+
+.sidebar-main-section {
+  padding-top: 0;
+  padding-bottom: 0.875rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+}
+
+.sidebar-link-active {
+  background: var(--n-accent-solid, #443a9c);
+  color: #ffffff;
+}
+
+.sidebar-link-active:hover {
+  background: var(--n-accent-solid-hover, #382f86);
+  color: #ffffff;
+}
+
+.sidebar-link-active svg {
+  color: inherit;
+}
+
+.sidebar-link-active .sidebar-badge {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+/* Collapsed sidebar behavior */
+
+.dashboard-sidebar-collapsed .sidebar-main-section {
+  padding: 0;
+  margin-top: 1.25rem;
+}
+
+.dashboard-sidebar-collapsed .sidebar-main-section > p {
+  display: none;
+}
+
+/* =========================================================
+   Dashboard Keep-Alive Views
+   Keeps heavy views mounted so they do not reload on return
+========================================================= */
+
+.dashboard-keepalive-view {
+  display: none;
+  min-width: 0;
+}
+
+.dashboard-keepalive-view-active {
+  display: block;
+}
+
+/* =========================================================
+   Sidebar background rail: full page height
+   Keeps the left sidebar area white even when the sidebar content ends.
+========================================================= */
+
+@media (min-width: 941px) {
+  .dashboard-shell {
+    background: linear-gradient(
+        to right,
+        var(--n-surface, #ffffff) 0,
+        var(--n-surface, #ffffff) 16.875rem,
+        var(--n-surface-4, #dfe4ec) 16.875rem,
+        var(--n-surface-4, #dfe4ec) 16.938rem,
+        var(--n-page, #f5f6f8) 16.938rem,
+        var(--n-page, #f5f6f8) 100%
+      );
+  }
+
+  .dashboard-shell-sidebar-collapsed {
+    background: linear-gradient(
+        to right,
+        var(--n-surface, #ffffff) 0,
+        var(--n-surface, #ffffff) 5.5rem,
+        var(--n-surface-4, #dfe4ec) 5.5rem,
+        var(--n-surface-4, #dfe4ec) 5.562rem,
+        var(--n-page, #f5f6f8) 5.562rem,
+        var(--n-page, #f5f6f8) 100%
+      );
+  }
+
+  .dashboard-sidebar {
+    border-right: 0;
+  }
+}
+
+/* =========================================================
+   Sidebar visual details
+========================================================= */
+
+/* Keep the sidebar scrollable, but make the scrollbar calmer */
+
+.dashboard-sidebar {
+  scrollbar-color: var(--n-line-alpha, rgba(111, 118, 135, 0.45)) transparent;
+}
+
+.dashboard-sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-sidebar::-webkit-scrollbar-thumb {
+  border: 2px solid var(--n-surface, #ffffff);
+  border-radius: 999px;
+  background: var(--n-scrim, rgba(111, 118, 135, 0.42));
+}
+
+.dashboard-sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--n-scrim, rgba(111, 118, 135, 0.62));
+}
+
+/* Active collapsed item should be a clean rounded square, not a huge strip */
+
+.dashboard-sidebar-collapsed .sidebar-link-active {
+  box-shadow: 0 0.5rem 1.125rem var(--n-violet-ring, rgba(68, 58, 156, 0.18));
+}
+
+/* Section spacing in collapsed mode */
+
+.dashboard-sidebar-collapsed .sidebar-section {
+  padding-top: 0.625rem;
+  margin-top: 0.5rem;
+}
+
+/* =========================================================
+   Sidebar sizing: fit without scrolling
+   Tightens sidebar spacing so all sections fit on normal screens.
+========================================================= */
+
+@media (min-width: 941px) {
+  .dashboard-sidebar {
+    height: 100vh;
+    min-height: 100vh;
+    padding: 0.75rem 0;
+    overflow-y: hidden;
+  }
+
+  .dashboard-logo {
+    padding: 0 1.125rem 0.875rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .dashboard-logo > span {
+    width: 2.125rem;
+    height: 2.125rem;
+    border-radius: 0.5rem;
+    font-size: 0.942rem;
+  }
+
+  .dashboard-logo strong {
+    font-size: 0.98rem;
+  }
+
+  .dashboard-logo small {
+    font-size: 0.85rem;
+  }
+
+  .dashboard-sidebar-signout {
+    padding: 0 0.75rem 0.5rem;
+    margin-bottom: 2px;
+  }
+
+  .dashboard-sidebar-signout .secondary-dashboard-button {
+    min-height: 2rem;
+    font-size: 0.917rem;
+  }
+
+  .sidebar-main-section {
+    padding-bottom: 0.5rem;
+    margin-bottom: 2px;
+  }
+
+  .sidebar-section {
+    padding-top: 0.625rem;
+  }
+
+  .sidebar-section p {
+    margin-bottom: 0.25rem;
+    padding: 0 1.125rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.075em;
+  }
+
+  .sidebar-link {
+    min-height: 2.25rem;
+    padding: 0 1.125rem;
+    gap: 0.625rem;
+    font-size: 0.955rem;
+  }
+
+  .sidebar-link svg {
+    font-size: 0.98rem;
+  }
+
+  .sidebar-badge {
+    min-width: 1.375rem;
+    height: 1.375rem;
+    font-size: 0.88rem;
+  }
+}
+
+/* =========================================================
+   Sidebar separators between section groups
+========================================================= */
+
+/* Adds lines before Reporting and Administration,
+   without duplicating the existing line after Main */
+
+.dashboard-sidebar .sidebar-main-section + .sidebar-section ~ .sidebar-section {
+  margin-top: 0.875rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--n-line, #edf0f4);
+}
+
+/* Keep the section label nicely spaced after the line */
+
+.dashboard-sidebar .sidebar-main-section + .sidebar-section ~ .sidebar-section > p {
+  margin-top: 0;
+}
+
+/* Collapsed sidebar should stay clean and not show random divider lines */
+
+.dashboard-sidebar-collapsed .sidebar-main-section + .sidebar-section ~ .sidebar-section {
+  border-top: 0;
+  margin-top: 0.5rem;
+  padding-top: 0.625rem;
+}
+
+/* =========================================================
+   Collapsed Sidebar: Clean Icon Rail
+========================================================= */
+
+.dashboard-shell-sidebar-collapsed {
+  grid-template-columns: 4.875rem minmax(0, 1fr);
+}
+
+.dashboard-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--n-surface, #ffffff);
+  border-right: 1px solid var(--n-line-2, #dfe4ec);
+  transition: width 180ms ease,
+    min-width 180ms ease,
+    padding 180ms ease;
+}
+
+/* Hide the ugly scrollbar in the sidebar, but keep scrolling if needed */
+
+.dashboard-sidebar {
+  scrollbar-width: none;
+}
+
+.dashboard-sidebar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Collapsed rail container */
+
+.dashboard-sidebar-collapsed {
+  width: 4.875rem;
+  min-width: 4.875rem;
+  max-width: 4.875rem;
+  padding: 0.875rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--n-surface, #ffffff);
+  border-right: 1px solid var(--n-line-2, #dfe4ec);
+}
+
+/* Logo */
+
+.dashboard-sidebar-collapsed .dashboard-logo > div {
+  display: none;
+}
+
+.dashboard-sidebar-collapsed .dashboard-logo > span {
+  width: 2.625rem;
+  height: 2.625rem;
+  min-width: 2.625rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.75rem;
+  background: none;
+  color: #ffffff;
+  font-size: 0.992rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+}
+
+/* Collapse / expand bubble */
+
+.dashboard-sidebar-collapsed .sidebar-collapse-button:hover {
+  background: var(--n-violet-bg, #f7f5ff);
+  border-color: var(--n-violet-line, #c9c4e8);
+  color: var(--n-violet-text, #443a9c);
+}
+
+/* Section groups */
+
+.dashboard-sidebar-collapsed .sidebar-section {
+  display: grid;
+  justify-items: center;
+  gap: 0.438rem;
+  padding: 0.688rem 0;
+  margin: 0;
+  border-top: 1px solid var(--n-line, #f0f2f5);
+}
+
+.dashboard-sidebar-collapsed .sidebar-main-section {
+  border-top: 0;
+  border-bottom: 1px solid var(--n-line, #f0f2f5);
+  padding-top: 0.188rem;
+  padding-bottom: 0.688rem;
+  margin-bottom: 0;
+}
+
+.dashboard-sidebar-collapsed .sidebar-section > p {
+  display: none;
+}
+
+/* Icon buttons */
+
+.dashboard-sidebar-collapsed .sidebar-link {
+  position: relative;
+  width: 2.625rem;
+  height: 2.625rem;
+  min-height: 2.625rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--n-text, #353847);
+  box-shadow: none;
+  transition: background-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.dashboard-sidebar-collapsed .sidebar-link span {
+  display: none;
+}
+
+.dashboard-sidebar-collapsed .sidebar-link svg {
+  margin: 0;
+  font-size: 1.102rem;
+}
+
+.dashboard-sidebar-collapsed .sidebar-link:hover {
+  background: var(--n-violet-bg, #f6f5ff);
+  color: var(--n-violet-text, #443a9c);
+}
+
+/* Active icon */
+
+.dashboard-sidebar-collapsed .sidebar-link-active {
+  background: var(--n-accent-solid, #443a9c);
+  color: #ffffff;
+}
+
+.dashboard-sidebar-collapsed .sidebar-link-active:hover {
+  background: var(--n-accent-solid-hover, #382f86);
+  color: #ffffff;
+}
+
+/* Badge on collapsed Inquiry Pipeline icon */
+
+.dashboard-sidebar-collapsed .sidebar-badge {
+  position: absolute;
+  top: -0.375rem;
+  right: -0.438rem;
+  min-width: 1.312rem;
+  height: 1.312rem;
+  padding: 0 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: #8b83c9;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 750;
+  line-height: 1;
+}
+
+/* Expanded sidebar section separators */
+
+.dashboard-sidebar:not(.dashboard-sidebar-collapsed) .sidebar-main-section + .sidebar-section ~ .sidebar-section {
+  margin-top: 0.75rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--n-line, #edf0f4);
+}
+
+/* =========================================================
+   Phones and tablets: compact header + navigation drawer
+   The page opens on its content; the sidebar slides in from the
+   left. Breakpoint matches COMPACT_NAV_QUERY in Dashboard.jsx.
+========================================================= */
+
+.mobile-app-header,
+.sidebar-close-button,
+.dashboard-nav-backdrop {
+  display: none;
+}
+
+@media (max-width: 940px) {
+  /* clip, not hidden: hidden makes body a scroll container, which stops the sticky header sticking. */
+  html,
+  body,
+  #root {
+    overflow-x: clip;
+  }
+
+  /* Anchored scrolling (tutorial targets, scrollIntoView) lands below the sticky header. */
+  html {
+    scroll-padding-top: 4.25rem;
+  }
+
+  .dashboard-shell,
+  .dashboard-shell-sidebar-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+    /* Short pages: don't stretch the header row to fill the screen. */
+    align-content: start;
+    background: var(--n-page, #f5f6f8);
+  }
+
+  .mobile-app-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-mobile-header);
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 3.5rem;
+    padding: 0.375rem 0.75rem;
+    background: var(--n-surface, #ffffff);
+    border-bottom: 1px solid var(--n-line-2, #dfe4ec);
+  }
+
+  .mobile-app-menu-button,
+  .sidebar-close-button {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--n-line-2, #dfe4ec);
+    border-radius: 0.625rem;
+    background: var(--n-surface, #ffffff);
+    color: var(--n-text, #2f3240);
+    font-size: 1.15rem;
+    cursor: pointer;
+  }
+
+  .sidebar-close-button {
+    margin-left: auto;
+  }
+
+  .mobile-app-menu-button:focus-visible,
+  .sidebar-close-button:focus-visible,
+  .sidebar-link:focus-visible {
+    outline: 2px solid var(--n-violet-text, #443a9c);
+    outline-offset: 2px;
+  }
+
+  .mobile-app-header-mark {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    background: none;
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+  }
+
+  .mobile-app-header-title {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--n-text, #2f3240);
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 650;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .dashboard-sidebar,
+  .dashboard-sidebar-collapsed {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: var(--z-nav-drawer);
+    width: min(19rem, 86vw);
+    min-width: 0;
+    max-width: none;
+    height: auto;
+    min-height: 0;
+    padding: 0.625rem 0 1.5rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-right: 1px solid var(--n-line-2, #dfe4ec);
+    box-shadow: 0 1rem 2.5rem var(--n-shadow-3, rgba(15, 23, 42, 0.22));
+    transform: translateX(-105%);
+    visibility: hidden;
+    transition: transform 200ms ease, visibility 0s linear 200ms;
+  }
+
+  .dashboard-sidebar-open {
+    transform: none;
+    visibility: visible;
+    transition: transform 200ms ease;
+  }
+
+  .dashboard-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-nav-backdrop);
+    padding: 0;
+    border: 0;
+    background: var(--n-scrim, rgba(15, 23, 42, 0.45));
+    cursor: pointer;
+  }
+
+  .dashboard-logo {
+    padding: 0 0.75rem 0.625rem 1.125rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .sidebar-collapse-button {
+    display: none;
+  }
+
+  .dashboard-sidebar-signout,
+  .dashboard-sidebar-theme {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .sidebar-section {
+    padding-top: 0.625rem;
+  }
+
+  .sidebar-link {
+    min-height: 44px;
+    padding: 0 1.125rem;
+    font-size: 1.05rem;
+  }
+  .dashboard-topbar > div:first-child:has(> h1) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .dashboard-topbar {
+    margin-bottom: 0.875rem;
+  }
+  /* Not in tables: "anywhere" lets columns shrink to one letter wide. */
+  .dashboard-main :is(h1, h2, h3, h4, p, dd, li, strong, a):not(table *) {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 940px) and (prefers-reduced-motion: reduce) {
+  .dashboard-sidebar,
+  .dashboard-sidebar-open {
+    transition: none;
+  }
+}
+
+/* Notice above the booking form after a save (AUDIT-008, AUDIT-026). */
+.booking-form-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 auto 1rem;
+  max-width: 72rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--n-green-line, #cfe5d7);
+  background: var(--n-green-bg, #edf6f0);
+  color: var(--n-green-text, #2f6b47);
+}
+
+.booking-form-notice.is-warning {
+  border-color: var(--n-amber-line, #f0d9a8);
+  background: var(--n-amber-bg, #fff8e8);
+  color: var(--n-orange-text, #7a4b00);
+}
+
+.booking-form-notice p {
+  margin: 0;
+  flex: 1 1 20rem;
+}
+
+.booking-form-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dashboard-logo > span img,
+.mobile-app-header-mark img {
+  width: 100%;
+  height: 100%;
+}

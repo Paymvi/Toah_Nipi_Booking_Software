@@ -53,7 +53,7 @@ Key points:
 - **One shell component.** [src/App.jsx](../src/App.jsx) maps every route to `Dashboard`, and [src/pages/Dashboard.jsx](../src/pages/Dashboard.jsx) picks the active view from `location.pathname`. Most feature views live in [src/pages/](../src/pages/). `Dashboard.jsx` is very large (spreadsheet import normalisation, exports, booking detail handling, routing); search it by function name rather than scrolling.
 - **Booking field mapping is centralised.** [src/services/bookingMapping.js](../src/services/bookingMapping.js) converts between the camelCase booking objects used by the UI and snake_case columns (`bookingToDbRow`, `dbRowToBooking`). The full booking object is also stored in the `raw_data` JSON column; some application-only data, such as `rentalFormDetails` and imported spreadsheet source data, lives only there.
 - **Saves are conditional.** Every booking save checks `updated_at`; a save based on an out-of-date copy is refused and the screen keeps the unsaved edits ([src/services/bookingSave.js](../src/services/bookingSave.js)).
-- **Stylesheets are global** and imported in a fixed order in `App.jsx`; later files override earlier ones. Light and Night themes are described in [THEMING.md](THEMING.md).
+- **Stylesheets are global** and imported in a fixed order by `src/styles/index.css`; later files win ties. Where styles belong and how to add them: [CSS_GUIDE.md](CSS_GUIDE.md). Light and Night themes: [THEMING.md](THEMING.md).
 - **Automatic backups are independent of the frontend.** They run without anyone having the app open. See [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md).
 
 ## Routes and views
@@ -189,7 +189,7 @@ Further Supabase documentation:
     ├── utils/                Shared rules (classification, lodging, reports, portal, backups, …)
     ├── constants/            Lodging, meal and dashboard constants
     ├── tutorial/             Tutorial gnome walkthroughs
-    ├── styles/               Global CSS, imported in order by App.jsx
+    ├── styles/               Global CSS in cascade order via styles/index.css (see docs/CSS_GUIDE.md)
     └── docs/                 Supabase system documentation and SQL setup
 ```
 

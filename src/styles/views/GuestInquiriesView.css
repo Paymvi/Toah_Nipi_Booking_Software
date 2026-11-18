@@ -1,0 +1,1146 @@
+/* =========================================================
+   GUEST INQUIRIES
+   Styled to feel like the existing Inquiry Pipeline.
+========================================================= */
+
+.guest-requests-page {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+/* =========================================================
+   TOP HEADER CARD
+========================================================= */
+
+.guest-request-header-card {
+  overflow: hidden;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.625rem;
+  background: var(--n-surface, #ffffff);
+  box-shadow: 0 0.375rem 1.125rem var(--n-shadow-1, rgba(28, 35, 52, 0.04));
+}
+
+.guest-request-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.125rem;
+  padding: 1.125rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+}
+
+.guest-request-heading {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.guest-request-heading > span {
+  width: 2.375rem;
+  height: 2.375rem;
+  flex: 0 0 2.375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.625rem;
+  background: var(--n-violet-bg, #f0edfa);
+  color: var(--n-violet-text, #443a9c);
+  font-size: 1.023rem;
+}
+
+.guest-request-heading p {
+  margin: 0 0 0.188rem;
+  color: var(--n-violet-text, #443a9c);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.guest-request-heading h2 {
+  margin: 0;
+  color: var(--n-text, #252936);
+  font-size: 1.167rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.guest-request-heading small {
+  display: block;
+  max-width: 45rem;
+  margin-top: 0.312rem;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.955rem;
+  line-height: 1.45;
+}
+
+.guest-request-summary {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.625rem;
+}
+
+.guest-request-summary > span {
+  min-width: 6.25rem;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-left: 4px solid var(--n-orange-text, #956410);
+  border-radius: 0.5rem;
+  background: var(--n-surface-2, #fbfcfd);
+  color: var(--n-text-3, #6f7687);
+  font-size: 0.85rem;
+  font-weight: 650;
+  letter-spacing: 0.055em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.guest-request-summary > span:nth-child(2) {
+  border-left-color: var(--n-teal-text, #2f6f5f);
+}
+
+.guest-request-summary > span:nth-child(3) {
+  border-left-color: var(--n-red-text, #9f2f2f);
+}
+
+.guest-request-summary strong {
+  color: var(--n-text, #252936);
+  font-size: 1.195rem;
+  font-weight: 700;
+  letter-spacing: normal;
+  line-height: 1;
+  text-transform: none;
+}
+
+.guest-request-workflow-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.875rem;
+  padding: 0.688rem 1.125rem;
+  background: var(--n-surface-2, #fbfcfd);
+}
+
+.guest-request-workflow-note > div {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+}
+
+.guest-request-workflow-note strong {
+  flex: 0 0 auto;
+  color: var(--n-text, #3b4050);
+  font-size: 0.892rem;
+  font-weight: 700;
+}
+
+.guest-request-workflow-note span {
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.905rem;
+  line-height: 1.4;
+}
+
+.guest-request-workflow-note > button {
+  flex: 0 0 auto;
+  min-height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.438rem;
+  padding: 0 0.625rem;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.438rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text-2, #555d6f);
+  font: inherit;
+  font-size: 0.892rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.guest-request-workflow-note > button:hover {
+  border-color: var(--n-violet-line, #cbc5eb);
+  color: var(--n-violet-text, #443a9c);
+}
+
+/* =========================================================
+   THREE-COLUMN BOARD
+========================================================= */
+
+.guest-request-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(17.5rem, 1fr));
+  gap: 0.875rem;
+  align-items: start;
+}
+
+.guest-request-column {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.625rem;
+  background: var(--n-surface, #ffffff);
+  box-shadow: 0 0.375rem 1.125rem var(--n-shadow-1, rgba(28, 35, 52, 0.035));
+}
+
+.guest-request-column-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+  background: var(--n-surface-2, #fbfcfd);
+}
+
+.guest-request-column-header > div {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+
+.guest-request-column-header > div > span {
+  width: 1.875rem;
+  height: 1.875rem;
+  flex: 0 0 1.875rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: var(--n-amber-bg, #fff4dc);
+  color: var(--n-orange-text, #956410);
+  font-size: 0.917rem;
+}
+
+.guest-request-column-converted .guest-request-column-header > div > span {
+  background: var(--n-green-bg, #eaf4ee);
+  color: var(--n-teal-text, #2f6f5f);
+}
+
+.guest-request-column-declined .guest-request-column-header > div > span {
+  background: var(--n-red-bg, #fbf0f0);
+  color: var(--n-red-text, #9f2f2f);
+}
+
+.guest-request-column-header h3 {
+  margin: 0;
+  color: var(--n-text, #252936);
+  font-size: 1.023rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.guest-request-column-header p {
+  margin: 0.25rem 0 0;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.905rem;
+  line-height: 1.35;
+}
+
+.guest-request-column-header > strong {
+  min-width: 1.625rem;
+  height: 1.625rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.438rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #303442);
+  font-size: 0.905rem;
+  font-weight: 650;
+}
+
+.guest-request-card-list {
+  display: grid;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  background: var(--n-page, #f6f7f9);
+}
+
+/* =========================================================
+   CARDS
+========================================================= */
+
+.guest-request-card {
+  display: grid;
+  gap: 0.688rem;
+  padding: 0.75rem;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.5rem;
+  background: var(--n-surface, #ffffff);
+}
+
+.guest-request-card-badges {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.guest-request-source-badge,
+.guest-request-status-badge {
+  min-height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 0.438rem;
+  padding: 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.guest-request-source-badge {
+  color: var(--n-violet-text, #443a9c);
+  background: var(--n-violet-bg, #f0edfa);
+  border-color: var(--n-violet-line, #d7d1f0);
+}
+
+.guest-request-status-pending {
+  color: var(--n-orange-text, #956410);
+  background: var(--n-amber-bg, #fff4dc);
+  border-color: var(--n-amber-line, #eadcae);
+}
+
+.guest-request-status-converted {
+  color: var(--n-teal-text, #2f6f5f);
+  background: var(--n-green-bg, #eaf4ee);
+  border-color: var(--n-green-line, #c9dfd0);
+}
+
+.guest-request-status-declined {
+  color: var(--n-red-text, #9f2f2f);
+  background: var(--n-red-bg, #fbf0f0);
+  border-color: var(--n-red-line, #e8c7c7);
+}
+
+.guest-request-card-title {
+  min-width: 0;
+}
+
+.guest-request-card-title strong {
+  display: block;
+  overflow: hidden;
+  color: var(--n-text, #252936);
+  font-size: 1.023rem;
+  font-weight: 650;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guest-request-card-title small {
+  display: block;
+  overflow: hidden;
+  margin-top: 0.188rem;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.917rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guest-request-card-meta {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.guest-request-card-meta span {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.438rem;
+  overflow: hidden;
+  color: var(--n-text-2, #4f5564);
+  font-size: 0.917rem;
+  font-weight: 500;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guest-request-card-meta svg {
+  width: 0.812rem;
+  flex: 0 0 0.812rem;
+  color: var(--n-text-3, #9aa1af);
+}
+
+.guest-request-submitted {
+  display: grid;
+  gap: 2px;
+  padding: 0.562rem 0.625rem;
+  border: 1px solid var(--n-line-2, #e6e9ef);
+  border-radius: 0.438rem;
+  background: var(--n-surface-2, #fbfcfd);
+}
+
+.guest-request-submitted small {
+  color: var(--n-text-3, #9aa1af);
+  font-size: 0.812rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.guest-request-submitted strong {
+  color: var(--n-text-2, #4a5060);
+  font-size: 0.911rem;
+  font-weight: 650;
+}
+
+.guest-request-card-note {
+  display: grid;
+  gap: 0.188rem;
+  padding: 0.562rem 0.625rem;
+  border-radius: 0.438rem;
+  font-size: 0.892rem;
+  line-height: 1.4;
+}
+
+.guest-request-card-note-converted {
+  border: 1px solid var(--n-green-line, #c9dfd0);
+  background: var(--n-page, #f2f8f4);
+  color: var(--n-green-text, #3f6b54);
+}
+
+.guest-request-card-note-declined {
+  border: 1px solid var(--n-red-line, #e8c7c7);
+  background: var(--n-red-bg, #fdf5f5);
+  color: var(--n-red-text, #8a4444);
+}
+
+.guest-request-card-note span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guest-request-card-actions {
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--n-line, #edf0f4);
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.guest-request-primary-button,
+.guest-request-secondary-button,
+.guest-request-danger-button,
+.guest-request-danger-ghost-button {
+  min-height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.438rem;
+  padding: 0 0.75rem;
+  border-radius: 0.438rem;
+  font: inherit;
+  font-size: 0.905rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.guest-request-primary-button {
+  border: 1px solid #443a9c;
+  background: var(--n-accent-solid, #443a9c);
+  color: #ffffff;
+}
+
+.guest-request-primary-button:hover {
+  background: var(--n-accent-solid-hover, #393181);
+}
+
+.guest-request-secondary-button {
+  border: 1px solid var(--n-line-2, #d8ddea);
+  background: var(--n-surface, #ffffff);
+  color: var(--n-violet-text, #443a9c);
+}
+
+.guest-request-secondary-button:hover {
+  border-color: var(--n-violet-line, #c4bee8);
+  background: var(--n-violet-bg, #f7f5fd);
+}
+
+.guest-request-danger-button {
+  border: 1px solid #9f2f2f;
+  background: #9f2f2f;
+  color: #ffffff;
+}
+
+.guest-request-danger-ghost-button {
+  border: 1px solid var(--n-red-line, #e1bebe);
+  background: var(--n-surface, #ffffff);
+  color: var(--n-red-text, #9f2f2f);
+}
+
+.guest-request-danger-ghost-button:hover {
+  background: var(--n-red-bg, #fbf0f0);
+}
+
+.guest-request-primary-button:disabled,
+.guest-request-secondary-button:disabled,
+.guest-request-danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+/* =========================================================
+   EMPTY / LOADING / ERROR
+========================================================= */
+
+.guest-request-empty {
+  min-height: 9.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 1.5rem 1.125rem;
+  text-align: center;
+  color: var(--n-text-3, #939aa8);
+}
+
+.guest-request-empty svg {
+  font-size: 1.242rem;
+  opacity: 0.6;
+}
+
+.guest-request-empty strong {
+  color: var(--n-text-2, #656c7a);
+  font-size: 0.93rem;
+  font-weight: 650;
+}
+
+.guest-request-empty span {
+  max-width: 13.75rem;
+  font-size: 0.892rem;
+  line-height: 1.45;
+}
+
+.guest-request-loading,
+.guest-request-load-error {
+  min-height: 11.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 1.75rem;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.625rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text-2, #555d6f);
+}
+
+.guest-request-loading svg {
+  color: var(--n-violet-text, #443a9c);
+  animation: guestRequestSpin 900ms linear infinite;
+}
+
+.guest-request-load-error {
+  align-items: flex-start;
+  justify-content: flex-start;
+  color: var(--n-red-text, #8a3434);
+}
+
+.guest-request-load-error > div {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.guest-request-load-error p {
+  margin: 0;
+}
+
+@keyframes guestRequestSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================================
+   TOP MESSAGES
+========================================================= */
+
+.guest-request-banner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.688rem 0.812rem;
+  border-radius: 0.5rem;
+  font-size: 0.93rem;
+}
+
+.guest-request-banner-success {
+  border: 1px solid var(--n-green-line, #c9dfd0);
+  background: var(--n-green-bg, #eef7f1);
+  color: var(--n-green-text, #35624d);
+}
+
+.guest-request-banner-error {
+  border: 1px solid var(--n-red-line, #e8c7c7);
+  background: var(--n-red-bg, #fbf0f0);
+  color: var(--n-red-text, #8a3434);
+}
+
+.guest-request-banner button {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* =========================================================
+   REVIEW MODAL
+========================================================= */
+
+.guest-request-modal-backdrop {
+  position: fixed;
+  z-index: var(--z-dialog-guest-request);
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: var(--n-scrim, rgba(20, 24, 35, 0.54));
+  backdrop-filter: blur(0.188rem);
+}
+
+.guest-request-modal {
+  max-height: calc(100dvh - 2rem);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  width: min(65.625rem, calc(100vw - 2rem));
+  height: auto;
+  display: block;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  border: 1px solid var(--n-line-2, #d9dee7);
+  border-radius: 0.875rem;
+  background: var(--n-raised, #ffffff);
+  box-shadow: 0 1.5rem 4.375rem
+    var(--n-shadow-3, rgba(19, 24, 37, 0.24));
+}
+
+.guest-request-modal > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.375rem;
+  border-bottom: 1px solid var(--n-line, #e8ebf0);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--n-raised, #ffffff);
+}
+
+.guest-request-modal-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.438rem;
+  margin-bottom: 0.562rem;
+}
+
+.guest-request-modal > header h2 {
+  margin: 0;
+  color: var(--n-text, #252936);
+  font-size: 1.383rem;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.guest-request-modal > header p {
+  margin: 0.312rem 0 0;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.917rem;
+}
+
+.guest-request-modal-close {
+  width: 2.125rem;
+  height: 2.125rem;
+  flex: 0 0 2.125rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.5rem;
+  background: var(--n-raised, #ffffff);
+  color: var(--n-text-2, #697080);
+  cursor: pointer;
+}
+
+.guest-request-modal-body {
+  /*
+    IMPORTANT:
+    This must be a vertical flex stack, not a CSS grid.
+
+    With the modal constrained to the viewport height, CSS Grid was
+    shrinking all of the automatic rows so every review section tried
+    to fit on screen at once. Because each section uses overflow:hidden,
+    the actual field content was getting clipped underneath its header.
+
+    Flexbox lets every section keep its natural height and makes this
+    middle area scroll normally.
+  */
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.875rem;
+  overflow: visible;
+  padding: 1.125rem 1.375rem 1.375rem;
+  background: var(--n-page, #f7f8fa);
+}
+
+.guest-request-review-section {
+  /*
+    Prevent a review card from shrinking inside the scrollable modal.
+  */
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.625rem;
+  background: var(--n-surface, #ffffff);
+}
+
+.guest-request-review-section > header {
+  display: flex;
+  gap: 0.625rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+  background: var(--n-surface-2, #fbfcfd);
+  align-items: center;
+  padding: 0.875rem 0.938rem;
+}
+
+.guest-request-review-section > header > svg {
+  margin-top: 2px;
+  color: var(--n-violet-text, #443a9c);
+}
+
+.guest-request-review-section > header h3 {
+  margin: 0;
+  color: var(--n-text, #303442);
+  font-size: 0.992rem;
+  font-weight: 650;
+}
+
+.guest-request-review-section > header p {
+  margin: 0.188rem 0 0;
+  color: var(--n-text-3, #9096a3);
+  font-size: 0.886rem;
+  line-height: 1.4;
+  display: none;
+}
+
+.guest-request-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0.25rem 0.938rem 0.75rem;
+}
+
+.guest-request-detail-field {
+  min-width: 0;
+  display: grid;
+  gap: 0.312rem;
+  padding: 0.688rem 0.625rem;
+  border-bottom: 1px solid var(--n-field-line, #eef1f4);
+}
+
+.guest-request-detail-field-wide {
+  grid-column: 1 / -1;
+}
+
+.guest-request-detail-field > span {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--n-text-3, #9399a6);
+  font-size: 0.85rem;
+  font-weight: 650;
+  letter-spacing: 0.025em;
+}
+
+.guest-request-detail-field strong {
+  overflow-wrap: anywhere;
+  color: var(--n-text, #3a4050);
+  font-size: 0.942rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.guest-request-list-box {
+  display: grid;
+  gap: 0.438rem;
+  margin: 0 0.938rem 0.875rem;
+  padding: 0.75rem;
+  border: 1px solid var(--n-line-2, #e6e9ef);
+  border-radius: 0.5rem;
+  background: var(--n-surface-2, #fbfcfd);
+}
+
+.guest-request-list-box > strong {
+  color: var(--n-text-2, #555d6f);
+  font-size: 0.892rem;
+  font-weight: 700;
+}
+
+.guest-request-list-box > span {
+  display: grid;
+  grid-template-columns: 2.625rem minmax(0, 1fr);
+  gap: 0.5rem;
+  color: var(--n-text-2, #4f5564);
+  font-size: 0.917rem;
+}
+
+.guest-request-note-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+  padding: 0 0.938rem 0.938rem;
+}
+
+.guest-request-note-grid > div {
+  padding: 0.688rem 0.75rem;
+  border: 1px solid var(--n-line-2, #e6e9ef);
+  border-radius: 0.5rem;
+  background: var(--n-surface-2, #fbfcfd);
+}
+
+.guest-request-note-grid strong {
+  color: var(--n-text-2, #555d6f);
+  font-size: 0.886rem;
+  font-weight: 700;
+}
+
+.guest-request-note-grid p {
+  margin: 0.375rem 0 0;
+  color: var(--n-text-2, #666d7b);
+  font-size: 0.911rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.guest-request-activity-list {
+  display: grid;
+  gap: 0.438rem;
+  padding: 0 0.938rem 0.938rem;
+}
+
+.guest-request-activity-list > div {
+  display: grid;
+  grid-template-columns: 9.375rem 5.625rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.562rem 0.688rem;
+  border: 1px solid var(--n-line-2, #e6e9ef);
+  border-radius: 0.438rem;
+  background: var(--n-surface-2, #fbfcfd);
+  color: var(--n-text-2, #646b79);
+  font-size: 0.905rem;
+}
+
+.guest-request-activity-list strong {
+  color: var(--n-text, #414756);
+  font-size: 0.917rem;
+  font-weight: 650;
+}
+
+.guest-request-long-note {
+  padding: 0.875rem 0.938rem 1rem;
+  color: var(--n-text-2, #555d6f);
+  font-size: 0.93rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.guest-request-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.375rem;
+  border-top: 1px solid var(--n-line-2, #e4e8ee);
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  background: var(--n-raised, #ffffff);
+  box-shadow: 0 -0.5rem 1.125rem
+    var(--n-shadow-1, rgba(28, 35, 52, 0.05));
+  flex-wrap: wrap;
+}
+
+.guest-request-modal-footer > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.562rem;
+}
+
+/* =========================================================
+   DECLINE BOX
+========================================================= */
+
+.guest-request-decline-box {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border: 1px solid var(--n-red-line, #e5c2c2);
+  border-radius: 0.625rem;
+  background: var(--n-surface-2, #fff8f8);
+}
+
+.guest-request-decline-box > div:first-child strong {
+  color: var(--n-red-text, #8d3535);
+  font-size: 0.948rem;
+  font-weight: 700;
+}
+
+.guest-request-decline-box > div:first-child p {
+  margin: 0.25rem 0 0;
+  color: var(--n-red-text, #8e7272);
+  font-size: 0.898rem;
+  line-height: 1.4;
+}
+
+.guest-request-decline-box label {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.guest-request-decline-box label > span {
+  color: var(--n-text-2, #6a6060);
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.guest-request-decline-box textarea {
+  min-height: 4.875rem;
+  resize: vertical;
+  padding: 0.625rem 0.688rem;
+  border: 1px solid var(--n-red-line, #ddc9c9);
+  border-radius: 0.5rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #3f424a);
+  font: inherit;
+  font-size: 0.917rem;
+  line-height: 1.45;
+}
+
+.guest-request-decline-box > div:last-child {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1120px) {
+  .guest-request-board {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .guest-request-header,
+  .guest-request-workflow-note,
+  .guest-request-modal-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .guest-request-summary {
+    justify-content: flex-start;
+  }
+
+  .guest-request-workflow-note > div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .guest-request-modal-footer > div {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .guest-request-modal-footer button {
+    width: 100%;
+  }
+
+  .guest-request-detail-grid,
+  .guest-request-note-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .guest-request-detail-field-wide {
+    grid-column: auto;
+  }
+
+  .guest-request-activity-list > div {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .guest-request-modal-backdrop {
+    padding: 0;
+  }
+
+  .guest-request-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+  }
+
+  .guest-request-summary > span {
+    min-width: 0;
+  }
+
+  .guest-request-card-badges {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* =========================================================
+   REVIEW MODAL — FULL EXPANSION + WHOLE-MODAL SCROLL
+   This override intentionally comes LAST so it wins over
+   earlier modal layout rules.
+========================================================= */
+
+/*
+  Let the modal itself be the scroll container.
+
+  This is more robust than forcing the middle body into a
+  constrained grid/flex row, because every review section can
+  now grow to its natural content height.
+*/
+
+/*
+  Keep the group/title area visible while scrolling.
+*/
+
+/*
+  Every information card gets its full natural height.
+  The !important values are intentional here so a stray
+  generic dashboard/card rule cannot collapse these sections.
+*/
+
+.guest-request-modal .guest-request-review-section {
+  flex: none;
+  width: 100%;
+  height: auto !important;
+  min-height: max-content;
+  max-height: none !important;
+  overflow: visible !important;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.625rem;
+  background: var(--n-raised, #ffffff);
+}
+
+/*
+  Make sure the field grid itself is also never clipped.
+*/
+
+.guest-request-modal .guest-request-detail-grid {
+  width: 100%;
+  height: auto !important;
+  min-height: 0;
+  max-height: none !important;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: auto;
+  overflow: visible !important;
+  padding: 0.25rem 0.938rem 0.75rem;
+}
+
+/*
+  Ensure individual fields always contribute their full
+  height to the section.
+*/
+
+.guest-request-modal .guest-request-detail-field {
+  height: auto !important;
+  min-height: 4rem;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/*
+  Notes, allergy boxes, and activities should expand normally.
+*/
+
+.guest-request-modal .guest-request-list-box,
+.guest-request-modal .guest-request-note-grid,
+.guest-request-modal .guest-request-activity-list,
+.guest-request-modal .guest-request-long-note,
+.guest-request-modal .guest-request-decline-box {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+@media (max-width: 800px) {
+  .guest-request-modal {
+    width: min(
+      100%,
+      calc(100vw - 1.25rem)
+    );
+    max-height: calc(100dvh - 1.25rem);
+  }
+
+  .guest-request-modal .guest-request-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .guest-request-modal {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+/* Pending inquiry that already has a booking (AUDIT-008). */
+
+.guest-request-linked-booking {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--n-amber-line, #f0d9a8);
+  border-radius: 0.5rem;
+  background: var(--n-amber-bg, #fff8e8);
+  color: var(--n-orange-text, #7a4b00);
+}
+
+.guest-request-linked-booking span {
+  flex: 1 1 18rem;
+}

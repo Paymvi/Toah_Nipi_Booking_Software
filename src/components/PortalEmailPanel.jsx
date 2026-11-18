@@ -14,7 +14,7 @@ import {
   isValidEmail,
   normalizeEmail,
 } from "../utils/portalEmail";
-import "../styles/PortalEmail.css";
+import "../styles/components/PortalEmail.css";
 
 const { isMissingEmailSetup, newEmailRequestId } = portalEmailService;
 

@@ -1,0 +1,859 @@
+/* =========================================================
+   Admin + Jobs View
+   Staff user admin, jobs dashboard, job cards,
+   team workload, filters, and summaries.
+========================================================= */
+
+.admin-hero-header h2,
+.jobs-hero-header h2,
+.admin-panel-header h3,
+.jobs-panel-header h3 {
+  margin: 0;
+  color: var(--n-text, #252936);
+  font-size: 1.167rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.admin-hero-header span,
+.jobs-hero-header span,
+.admin-panel-header span,
+.jobs-panel-header span {
+  display: block;
+  margin-top: 0.312rem;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.955rem;
+  line-height: 1.45;
+}
+
+.admin-summary-grid,
+.jobs-summary-grid {
+  grid-template-columns: repeat(4, minmax(7.5rem, 1fr));
+  display: grid;
+  gap: 0.875rem;
+  padding: 1.125rem;
+}
+
+@media (max-width: 720px) {
+  .admin-hero-header,
+  .jobs-hero-header,
+  .admin-panel-header,
+  .jobs-panel-header {
+    flex-direction: column;
+  }
+
+  .admin-current-user-picker,
+  .jobs-filter-field {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   Admin + Jobs: match Reports sizing (overrides earlier rules)
+========================================================= */
+
+/* Page spacing should match Reports */
+
+.admin-page,
+.jobs-page {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+/* Main cards match Reports panels */
+
+.admin-hero-card,
+.jobs-hero-card,
+.admin-panel-card,
+.jobs-panel {
+  overflow: hidden;
+  border-radius: 0.625rem;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  background: var(--n-surface, #ffffff);
+  box-shadow: 0 0.375rem 1.125rem var(--n-shadow-1, rgba(28, 35, 52, 0.04));
+}
+
+/* Header sizing matches Reports header/panel headers */
+
+.admin-hero-header,
+.jobs-hero-header,
+.admin-panel-header,
+.jobs-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.125rem;
+  padding: 1.125rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+  background: var(--n-surface, #ffffff);
+}
+
+/* Icon/text alignment */
+
+.admin-hero-header .dashboard-heading-with-icon,
+.jobs-hero-header .dashboard-heading-with-icon,
+.admin-panel-header .dashboard-heading-with-icon,
+.jobs-panel-header .dashboard-heading-with-icon {
+  align-items: flex-start;
+  gap: 0.688rem;
+  min-width: 0;
+}
+
+/* Match Reports icon sizing */
+
+.admin-hero-header .section-icon,
+.jobs-hero-header .section-icon,
+.admin-panel-header .section-icon,
+.jobs-panel-header .section-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border-radius: 0.5rem;
+  background: var(--n-surface-3, #eef1ea);
+  color: var(--n-olive-text, #5c6f46);
+  font-size: 0.992rem;
+  line-height: 1;
+}
+
+.admin-hero-header .section-icon svg,
+.jobs-hero-header .section-icon svg,
+.admin-panel-header .section-icon svg,
+.jobs-panel-header .section-icon svg {
+  width: 1rem;
+  height: 1rem;
+  display: block;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+/* Headings match Reports */
+
+.admin-hero-header h2,
+.jobs-hero-header h2 {
+  margin: 0;
+  color: var(--n-text, #252936);
+  font-size: 1.167rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.admin-panel-header h3,
+.jobs-panel-header h3 {
+  margin: 0;
+  color: var(--n-text, #252936);
+  font-size: 1.055rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+/* IMPORTANT:
+   Only style the subtitle spans, not every span inside the header.
+   This fixes the weird icon box. */
+
+.admin-hero-header .dashboard-heading-with-icon > div > span,
+.jobs-hero-header .dashboard-heading-with-icon > div > span,
+.admin-panel-header > div > span,
+.jobs-panel-header > div > span {
+  display: block;
+  max-width: 46.25rem;
+  margin-top: 0.312rem;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.955rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+/* Keep eyebrow consistent with Reports */
+
+.admin-hero-header .dashboard-eyebrow,
+.jobs-hero-header .dashboard-eyebrow,
+.admin-panel-header .dashboard-eyebrow,
+.jobs-panel-header .dashboard-eyebrow {
+  margin: 0 0 0.375rem;
+  color: var(--n-text-3, #7b8290);
+  font-size: 0.88rem;
+  font-weight: 650;
+  letter-spacing: 0.095em;
+  text-transform: uppercase;
+}
+
+/* Form controls match Reports filters/settings */
+
+.admin-current-user-picker,
+.jobs-filter-field {
+  min-width: 11.875rem;
+  display: grid;
+  gap: 0.312rem;
+  flex: 0 0 auto;
+}
+
+.admin-current-user-picker span,
+.jobs-filter-field span,
+.admin-user-form label span {
+  color: var(--n-text-3, #7b8290);
+  font-size: 0.85rem;
+  font-weight: 650;
+  letter-spacing: 0.065em;
+  text-transform: uppercase;
+}
+
+.admin-current-user-picker select,
+.jobs-filter-field select,
+.admin-user-form input,
+.admin-user-form select,
+.admin-table input,
+.admin-table select {
+  width: 100%;
+  height: 2.375rem;
+  border: 1px solid var(--n-field-line, #dfe4ec);
+  border-radius: 0.5rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #303442);
+  padding: 0 0.688rem;
+  font: inherit;
+  font-size: 0.955rem;
+  font-weight: 500;
+  outline: none;
+}
+
+.admin-current-user-picker select:focus,
+.jobs-filter-field select:focus,
+.admin-user-form input:focus,
+.admin-user-form select:focus,
+.admin-table input:focus,
+.admin-table select:focus {
+  border-color: var(--n-violet-text, #9f98d4);
+  box-shadow: 0 0 0 0.188rem var(--n-violet-ring, rgba(68, 58, 156, 0.12));
+}
+
+.admin-summary-grid {
+  grid-template-columns: repeat(3, minmax(9.375rem, 1fr));
+}
+
+.jobs-summary-grid {
+  grid-template-columns: repeat(4, minmax(9.375rem, 1fr));
+}
+
+.admin-summary-grid div,
+.jobs-summary-grid div {
+  min-width: 0;
+  padding: 0.875rem;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-left: 4px solid var(--n-violet-text, #443a9c);
+  border-radius: 0.5rem;
+  background: var(--n-surface-2, #fbfcfd);
+}
+
+.admin-summary-grid div:nth-child(2),
+.jobs-summary-grid div:nth-child(2) {
+  border-left-color: var(--n-amber-text, #9a6f08);
+}
+
+.admin-summary-grid div:nth-child(3),
+.jobs-summary-grid div:nth-child(3) {
+  border-left-color: var(--n-teal-text, #2f6f5f);
+}
+
+.jobs-summary-grid div:nth-child(4) {
+  border-left-color: var(--n-red-text, #9f2f2f);
+}
+
+.admin-summary-grid small,
+.jobs-summary-grid small {
+  display: block;
+  color: var(--n-text-3, #6f7687);
+  font-size: 0.85rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+}
+
+.admin-summary-grid strong,
+.jobs-summary-grid strong {
+  display: block;
+  margin-top: 0.438rem;
+  color: var(--n-text, #252936);
+  font-size: 1.383rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Admin form sizing */
+
+.admin-user-form {
+  display: grid;
+  grid-template-columns: minmax(11.25rem, 1fr)
+    minmax(13.75rem, 1.2fr)
+    minmax(8.75rem, 0.75fr)
+    auto;
+  gap: 0.75rem;
+  align-items: end;
+  padding: 1.125rem;
+}
+
+.admin-user-form label {
+  display: grid;
+  gap: 0.312rem;
+}
+
+/* Admin table matches Reports table sizing */
+
+.admin-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  background: var(--n-surface, #ffffff);
+}
+
+.admin-table {
+  width: 100%;
+  min-width: 53.125rem;
+  border-collapse: collapse;
+}
+
+.admin-table th {
+  padding: 0.688rem 0.875rem;
+  background: var(--n-page, #f6f7f9);
+  color: var(--n-text-2, #565d6b);
+  border-bottom: 1px solid var(--n-line-2, #dfe4ec);
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.045em;
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 0.812rem 0.875rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+  color: var(--n-text, #3f4351);
+  font-size: 0.955rem;
+  vertical-align: middle;
+}
+
+.admin-user-inactive {
+  opacity: 0.62;
+}
+
+/* Pills match report/status style */
+
+.admin-status-pill,
+.admin-current-pill,
+.job-status-pill {
+  min-height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 0.438rem;
+  padding: 0 0.562rem;
+  font: inherit;
+  font-size: 0.867rem;
+  font-weight: 650;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.admin-status-pill {
+  cursor: pointer;
+}
+
+.admin-status-pill.active,
+.admin-current-pill,
+.job-status-pill.completed {
+  background: var(--n-green-bg, #eaf4ee);
+  border-color: var(--n-green-line, #c9dfd0);
+  color: var(--n-green-text, #2f6f4f);
+}
+
+.admin-status-pill.inactive {
+  background: var(--n-page, #f4f5f8);
+  border-color: var(--n-line-2, #dfe4ec);
+  color: var(--n-text-3, #687083);
+}
+
+.job-status-pill.open {
+  background: var(--n-violet-bg, #f0edfa);
+  border-color: var(--n-violet-line, #d7d1f0);
+  color: var(--n-violet-text, #443a9c);
+}
+
+.job-status-pill.overdue {
+  background: var(--n-red-bg, #fbf0f0);
+  border-color: var(--n-red-line, #e8c7c7);
+  color: var(--n-red-text, #9f2f2f);
+}
+
+/* Jobs layout */
+
+.jobs-two-column-layout {
+  display: grid;
+  grid-template-columns: minmax(22.5rem, 0.85fr) minmax(0, 1.15fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.jobs-task-list,
+.jobs-member-list {
+  display: grid;
+  gap: 0.625rem;
+  padding: 1.125rem;
+}
+
+/* Individual job cards match report quality rows */
+
+.job-task-card {
+  display: grid;
+  gap: 0.688rem;
+  padding: 0.75rem;
+  border: 1px solid var(--n-line, #edf0f4);
+  border-left: 4px solid var(--n-violet-text, #443a9c);
+  border-radius: 0.5rem;
+  background: var(--n-surface-2, #fbfcfd);
+  box-shadow: none;
+}
+
+.job-task-card-overdue {
+  border-left-color: var(--n-red-text, #9f2f2f);
+}
+
+.job-task-card-completed {
+  border-left-color: var(--n-teal-text, #2f6f5f);
+}
+
+.job-task-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.job-task-main h4 {
+  margin: 0.5rem 0 0;
+  color: var(--n-text, #303442);
+  font-size: 0.992rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.job-task-main p {
+  margin: 0.25rem 0 0;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.917rem;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.job-task-notes {
+  margin: 0;
+  color: var(--n-text-2, #4f5564);
+  font-size: 0.93rem;
+  line-height: 1.45;
+}
+
+.job-open-icon,
+.job-complete-icon {
+  flex: 0 0 auto;
+  margin-top: 0.188rem;
+  font-size: 1.023rem;
+}
+
+.job-open-icon {
+  color: var(--n-violet-text, #443a9c);
+}
+
+.job-complete-icon {
+  color: var(--n-green-text, #2f6f4f);
+}
+
+.job-task-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--n-line, #edf0f4);
+  border-radius: 0.5rem;
+  background: var(--n-surface, #ffffff);
+}
+
+.job-task-meta span {
+  min-width: 0;
+  padding: 0.625rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #303442);
+  font-size: 0.93rem;
+  overflow-wrap: anywhere;
+}
+
+.job-task-meta span + span {
+  border-left: 1px solid var(--n-line, #edf0f4);
+}
+
+.job-task-meta strong {
+  display: block;
+  margin-bottom: 0.188rem;
+  color: var(--n-text-3, #818998);
+  font-size: 0.85rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+}
+
+/* Team workload cards */
+
+.jobs-member-card {
+  overflow: hidden;
+  border: 1px solid var(--n-line-2, #dfe4ec);
+  border-radius: 0.625rem;
+  background: var(--n-surface, #ffffff);
+  box-shadow: none;
+}
+
+.jobs-member-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.812rem 0.875rem;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+  background: var(--n-surface-2, #fbfcfd);
+}
+
+.jobs-member-header strong {
+  display: block;
+  color: var(--n-text, #252936);
+  font-size: 0.992rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.jobs-member-header span {
+  display: block;
+  margin-top: 0.188rem;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.905rem;
+  font-weight: 400;
+}
+
+.jobs-member-header em {
+  flex: 0 0 auto;
+  color: var(--n-violet-text, #443a9c);
+  font-size: 0.905rem;
+  font-style: normal;
+  font-weight: 650;
+}
+
+.jobs-member-tasks {
+  display: grid;
+}
+
+.jobs-member-task-row {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--n-line, #edf0f4);
+  background: transparent;
+  padding: 0.688rem 0.875rem;
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr)
+    minmax(8.125rem, 0.8fr)
+    minmax(6.875rem, 0.65fr)
+    auto;
+  gap: 0.625rem;
+  align-items: center;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.jobs-member-task-row:hover {
+  background: var(--n-surface-3, #f4f6f8);
+}
+
+.jobs-member-task-row span {
+  color: var(--n-text, #303442);
+  font-size: 0.955rem;
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jobs-member-task-row small {
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.917rem;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jobs-member-task-row em {
+  color: var(--n-text-3, #687083);
+  font-size: 0.905rem;
+  font-style: normal;
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.jobs-member-task-overdue {
+  box-shadow: inset 0.188rem 0 0 var(--n-red-text, #9f2f2f);
+}
+
+.jobs-member-task-completed {
+  box-shadow: inset 0.188rem 0 0 var(--n-teal-text, #2f6f5f);
+}
+
+.jobs-member-empty {
+  margin: 0;
+  padding: 0.875rem;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.942rem;
+}
+
+.jobs-unassigned-card {
+  border-color: var(--n-amber-line, #eadcae);
+}
+
+/* Empty states inside Jobs/Admin should match Reports */
+
+.jobs-page .empty-state,
+.admin-page .empty-state {
+  margin: 0;
+  padding: 1.125rem;
+  border-radius: 0.5rem;
+  background: var(--n-surface-2, #fbfcfd);
+  border: 1px dashed var(--n-line-3, #cfd6e1);
+}
+
+.jobs-page .empty-state strong,
+.admin-page .empty-state strong {
+  color: var(--n-text, #303442);
+  font-size: 1.017rem;
+  font-weight: 650;
+}
+
+.jobs-page .empty-state p,
+.admin-page .empty-state p {
+  margin: 0.375rem 0 0;
+  color: var(--n-text-3, #858c9b);
+  font-size: 0.955rem;
+}
+
+/* Responsive behavior matches Reports-style pages */
+
+@media (max-width: 1050px) {
+  .jobs-two-column-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-user-form {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-user-form .primary-dashboard-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-hero-header,
+  .jobs-hero-header,
+  .admin-panel-header,
+  .jobs-panel-header {
+    flex-direction: column;
+    gap: 0.875rem;
+    padding: 1rem;
+  }
+
+  .admin-current-user-picker,
+  .jobs-filter-field {
+    width: 100%;
+  }
+
+  .admin-summary-grid,
+  .jobs-summary-grid {
+    grid-template-columns: repeat(2, minmax(8.75rem, 1fr));
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-summary-grid,
+  .jobs-summary-grid,
+  .job-task-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .job-task-meta span + span {
+    border-left: 0;
+    border-top: 1px solid var(--n-line, #edf0f4);
+  }
+
+  .jobs-member-task-row {
+    grid-template-columns: 1fr;
+  }
+
+  .jobs-member-task-row em {
+    text-align: left;
+  }
+
+  .admin-table {
+    min-width: 51.25rem;
+  }
+}
+
+/* Shared staff directory status and unlisted names (AUDIT-017). */
+.admin-directory-status,
+.admin-unlisted-names {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--n-green-line, #cfe5d7);
+  background: var(--n-green-bg, #edf6f0);
+  color: var(--n-green-text, #2f6b47);
+  font-size: 0.9rem;
+}
+
+.admin-directory-status.is-local,
+.admin-unlisted-names {
+  border-color: var(--n-amber-line, #f0d9a8);
+  background: var(--n-amber-bg, #fff8e8);
+  color: var(--n-orange-text, #7a4b00);
+}
+
+.admin-directory-status button {
+  justify-self: start;
+}
+
+.admin-unlisted-names ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-unlisted-names li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.25rem 0.25rem 0.6rem;
+  border: 1px solid var(--n-amber-line, #e8d6ad);
+  border-radius: 999px;
+  background: var(--n-surface, #ffffff);
+}
+
+/* Jobs: inactive-group toggle, facility completion, assigned pill. */
+.jobs-inactive-toggle,
+.job-task-complete-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.job-task-complete-toggle {
+  margin-top: 0.5rem;
+  font-weight: 600;
+}
+
+.job-status-pill.assigned {
+  background: var(--n-blue-bg, #e8edf8);
+  color: var(--n-blue-text, #344b87);
+}
+
+.jobs-member-task-assigned {
+  border-left-color: var(--n-blue-text, #4c65a9);
+}
+
+/* ---------- User Admin: sign-in access panel (StaffAccessPanel.jsx) ---------- */
+
+.staff-access-card {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+}
+
+.staff-access-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.staff-access-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 600;
+}
+
+.staff-access-form input:not([type="checkbox"]),
+.staff-access-form select {
+  min-height: 2.6rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--n-field-line, #c9cedb);
+  border-radius: 0.5rem;
+  background: var(--n-surface, #ffffff);
+  color: var(--n-text, #1f2330);
+}
+
+.staff-access-form .staff-access-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.6rem;
+}
+
+.staff-access-message {
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.5rem;
+  background: var(--n-surface-3, #f1f2f7);
+}
+
+.staff-access-message-ok {
+  background: var(--n-green-bg, #e7f6ec);
+  color: var(--n-green-text, #17663a);
+}
+
+.staff-access-message-error {
+  background: var(--n-red-bg, #fdecec);
+  color: var(--n-red-text, #a3201b);
+}
+
+.staff-access-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.staff-access-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.staff-access-table th,
+.staff-access-table td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--n-line, #eceef3);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.staff-access-note {
+  color: var(--text-muted);
+}

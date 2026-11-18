@@ -46,8 +46,8 @@ Production verification during this investigation was unavailable: the documente
 | --- | --- |
 | Database | `supabase/migrations/20261107000100_portal_signing.sql` |
 | Server | `supabase/functions/portal-sign/index.ts`, `signing.js`; `[functions.portal-sign]` in `supabase/config.toml` |
-| Staff app | `src/pages/PortalAdminView.jsx`, `src/services/portalCorrections.js`, `src/utils/portalRules.js`, `src/services/bookingService.js` (delete message), `src/styles/PortalAdminView.css` |
-| Backups | `src/utils/backupFormat.js` (version 3), `src/services/backupData.js`, `src/services/signingBackup.js`, `src/components/SignedDocumentsBackup.jsx`, `src/components/DashboardBackups.jsx`, `src/styles/DashboardBackups.css` |
+| Staff app | `src/pages/PortalAdminView.jsx`, `src/services/portalCorrections.js`, `src/utils/portalRules.js`, `src/services/bookingService.js` (delete message), `src/styles/views/PortalAdminView.css` |
+| Backups | `src/utils/backupFormat.js` (version 3), `src/services/backupData.js`, `src/services/signingBackup.js`, `src/components/SignedDocumentsBackup.jsx`, `src/components/DashboardBackups.jsx`, `src/styles/views/DashboardBackups.css` |
 | Guest portal (other repo) | `src/signing.jsx`, `src/signingFormat.js`, `src/App.jsx`, `src/App.css`, `src/services/portalService.js` |
 | Tests | `tests/portalSigning.test.js`, `tests/signingBackup.test.js`, `tests/fixtures/signingFixtures.js` (fictional PDFs), `supabase/tests/*.local.mjs`, `supabase/tests/make-local-signing-stack.mjs` |
 

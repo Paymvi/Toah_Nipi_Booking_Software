@@ -49,12 +49,13 @@ test("the first-paint script agrees with readSavedTheme", () => {
 // A mistyped token fails silently: the color just stays Light in Night mode.
 test("every night token in use is defined in theme.css", () => {
   const stylesUrl = new URL("../src/styles/", import.meta.url);
-  const css = readdirSync(stylesUrl)
-    .map((file) => readFileSync(new URL(file, stylesUrl), "utf8"))
+  const css = readdirSync(stylesUrl, { recursive: true })
+    .filter((file) => file.endsWith(".css"))
+    .map((file) => readFileSync(new URL(file.replaceAll("\\", "/"), stylesUrl), "utf8"))
     .join("\n");
   const reports = readFileSync(new URL("../src/pages/ReportsView.jsx", import.meta.url), "utf8");
   const defined = new Set(
-    [...readFileSync(new URL("theme.css", stylesUrl), "utf8").matchAll(/^\s*(--n-[a-z0-9-]+):/gm)].map((match) => match[1])
+    [...readFileSync(new URL("foundation/theme.css", stylesUrl), "utf8").matchAll(/^\s*(--n-[a-z0-9-]+):/gm)].map((match) => match[1])
   );
   const used = new Set([...(css + reports).matchAll(/var\((--n-[a-z0-9-]+)/g)].map((match) => match[1]));
 
