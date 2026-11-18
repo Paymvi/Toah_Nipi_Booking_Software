@@ -1,26 +1,12 @@
 import { supabase } from "../lib/supabaseClient";
-import { bookingToDbRow, dbRowToBooking } from "./bookingMapping.js";
-
-export {
-  BookingSaveConflictError,
-  BookingSaveNotFoundError,
-  BookingSaveNotPermittedError,
-  getBookingSaveErrorMessage,
-  isBookingSaveConflict,
-} from "./bookingSave.js";
+import { dbRowToBooking } from "./bookingMapping.js";
 import {
   BookingSaveNotPermittedError,
   saveBookingWithClient,
   saveBookingsWithClient,
 } from "./bookingSave.js";
 
-export {
-  bookingToDbRow,
-  buildActivitiesSummary,
-  cleanContactPlaceholder,
-  dbRowToBooking,
-  getConsistentWaitlistState,
-} from "./bookingMapping.js";
+export { getBookingSaveErrorMessage } from "./bookingSave.js";
 
 /*
   Supabase caps each response (max_rows, 1,000 by default), so bookings are
@@ -117,25 +103,6 @@ export async function createGuestPortalLink(bookingId) {
     throw new BookingSaveNotPermittedError("Hosting entries cannot have a guest portal link.");
   }
   return dbRowToBooking(row);
-}
-
-/*
-  Unconditional write, used only by backup restore, where replacing the
-  live values with the backup's values is the intended result.
-*/
-export async function upsertBookings(bookings) {
-  const rows = bookings.map(bookingToDbRow);
-
-  const { data, error } = await supabase
-    .from("bookings")
-    .upsert(rows, { onConflict: "id" })
-    .select();
-
-  if (error) {
-    throw error;
-  }
-
-  return data.map(dbRowToBooking);
 }
 
 /*

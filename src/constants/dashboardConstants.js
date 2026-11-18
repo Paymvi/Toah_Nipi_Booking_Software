@@ -24,11 +24,6 @@ import {
   FaChartBar,
   FaUserShield,
   FaTable,
-  FaExclamationTriangle,
-  FaFileContract,
-  FaRegCalendarCheck,
-  FaClock,
-  FaTimes,
   FaTasks,
   FaBed,
 } from "react-icons/fa";
@@ -204,46 +199,6 @@ export const CONTACTS_VIEW_STARRED_STORAGE_KEY = "toahNipiStarredContacts";
 export const CONTACTS_VIEW_STARRED_FIRST_STORAGE_KEY =
   "toahNipiContactsStarredFirst";
 
-// Inquiry pipeline column configuration.
-export const INQUIRY_PIPELINE_COLUMNS = [
-  {
-    key: "newInquiry",
-    label: "New Inquiry",
-    description: "Ready for initial staff review.",
-    icon: FaClipboardList,
-  },
-  {
-    key: "needsReview",
-    label: "Needs Review",
-    description: "Missing dates, contact info, guest count, room, or type.",
-    icon: FaExclamationTriangle,
-  },
-  {
-    key: "contractSent",
-    label: "Contract Sent",
-    description: "Waiting on contract response or confirmation.",
-    icon: FaFileContract,
-  },
-  {
-    key: "confirmed",
-    label: "Confirmed",
-    description: "Confirmed bookings with enough planning information.",
-    icon: FaRegCalendarCheck,
-  },
-  {
-    key: "waitlist",
-    label: "Waitlist",
-    description: "Waitlisted groups or waitlist imports.",
-    icon: FaClock,
-  },
-  {
-    key: "cancelled",
-    label: "Cancelled",
-    description: "Cancelled bookings kept for records.",
-    icon: FaTimes,
-  },
-];
-
 // Reports view settings.
 export const REPORTS_VIEW_SETTINGS_STORAGE_KEY = "toahNipiReportsViewSettings";
 
@@ -268,21 +223,6 @@ export const reportsDateRangeOptions = [
 // Spreadsheet view settings.
 export const SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY =
   "toahNipiSpreadsheetViewSettings";
-
-export const SPREADSHEET_ESSENTIAL_COLUMN_LABELS = new Set([
-  "Organization",
-  "Input Method",
-  "Status",
-  "Contact Name",
-  "Email",
-  "Phone",
-  "Date Range",
-  "Guest Count",
-  "Retreat Type",
-  "Waitlist",
-  "Assigned Room / Area",
-  "Notes",
-]);
 
 export const SPREADSHEET_2026_STANDARD_LABELS = new Set([
   "Stage of Group",

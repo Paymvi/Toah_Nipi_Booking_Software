@@ -15,7 +15,7 @@ import BookingCalendar from "../components/BookingCalendar";
 import { monthNames } from "../constants/dashboardConstants";
 
 import { getBookingOpenProps } from "../utils/bookingOpenProps";
-import { formatDateRange } from "../utils/dateUtils";
+import { formatDateRange, addDays, getStartOfWeek } from "../utils/dateUtils";
 import { toDateKey, usePropertyToday } from "../utils/propertyToday";
 
 
@@ -140,22 +140,6 @@ function getHeatmapOpacity(count) {
 }
 
 
-function addDays(date, amount) {
-  const nextDate = new Date(date);
-  nextDate.setDate(nextDate.getDate() + amount);
-  return nextDate;
-}
-
-
-function getStartOfWeek(date) {
-  const startDate = new Date(date);
-  startDate.setDate(
-    startDate.getDate() - startDate.getDay()
-  );
-  startDate.setHours(0,0,0,0);
-
-  return startDate;
-}
 
 
 function formatWeekRange(weekStart) {

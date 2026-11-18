@@ -147,12 +147,12 @@ What Replace does to portal data:
 
 ### Guest Inquiries still loads in one request
 
-`fetchBookings()` in [src/services/bookingService.js](../src/services/bookingService.js) reads the whole `bookings` table in pages of 1,000, ordered by `start_date` with `id` as a tiebreaker, and throws rather than return a partial list. Every workflow that uses it (dashboard load, import checks, manual backups, safety snapshots, restore verification and rollback) works with the complete booking set. **Portals** also pages through its list (`PORTAL_OVERVIEW_PAGE_SIZE` in [src/pages/PortalAdminView.jsx](../src/pages/PortalAdminView.jsx)).
+`fetchBookings()` in [src/services/bookingService.js](../src/services/bookingService.js) reads the whole `bookings` table in pages of 1,000, ordered by `start_date` with `id` as a tiebreaker, and throws rather than return a partial list. Every workflow that uses it (dashboard load, import checks, manual backups, safety snapshots, restore verification and rollback) works with the complete booking set. **Portals** also pages through its list (`PORTAL_OVERVIEW_PAGE_SIZE` in [src/services/portalAdminData.js](../src/services/portalAdminData.js)).
 
 Remaining considerations:
 
 - **Guest Inquiries** (`getGuestInquiries()` in [src/services/guestInquiryService.js](../src/services/guestInquiryService.js)) loads submissions in a single request, so above the server row limit (1,000 by default) the oldest may not appear.
-- **Large imports** send every row to `upsertBookings()` in one request and refresh the screen from the returned rows. Whether Supabase caps the rows returned from a write has not been verified. If it does, the import still saves but the screen may be incomplete until a refresh. Restores write in batches of 150 and are not affected.
+- **Large imports** save each row with its own request, six at a time (`saveBookings()` in [src/services/bookingService.js](../src/services/bookingService.js)), so a cap on rows returned from one write does not apply. Restores write in batches of 150.
 - Pagination uses offsets, so bookings added or deleted by someone else during a read could be skipped or repeated. This is unlikely in normal use.
 
 ### Empty manual backups are allowed

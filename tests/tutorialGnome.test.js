@@ -553,7 +553,7 @@ test("a step on a control that saves never clicks it and never claims it happene
 });
 
 test("every control that saves or sends carries the tutorial guard", () => {
-  const portal = readFileSync("src/pages/PortalAdminView.jsx", "utf8");
+  const portal = readSourceFiles("src/components/portalAdmin").join("\n");
   const guarded = ["portal-save-due", "portal-send-back", "portal-reopen", "portal-remove-task", "portal-confirm", "portal-task-assign", "portal-doc-assign", "portal-doc-remove", "portal-copy-link", "portal-open-portal"];
 
   for (const id of guarded) {

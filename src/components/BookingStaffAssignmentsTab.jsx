@@ -12,6 +12,7 @@ import {
   FaUserFriends,
   FaUtensils,
 } from "react-icons/fa";
+import { normalizeStaffName } from "../utils/staffUsers";
 
 /*
   Staff assignments are stored on the booking as
@@ -29,10 +30,6 @@ const ASSIGNMENT_AREAS = [
 ];
 
 const DEFAULT_AREA = "General";
-
-function normalizeStaffName(value) {
-  return String(value || "").trim().toLowerCase();
-}
 
 function getAreaLabel(role) {
   return String(role || "").trim() || DEFAULT_AREA;

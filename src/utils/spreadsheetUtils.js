@@ -250,17 +250,3 @@ export function getRowsFromWorksheetFlexible(worksheet) {
   return rows;
 }
 
-// Turns all non-empty raw spreadsheet values into a readable notes string.
-// Useful for generic imports where the spreadsheet format is unknown.
-export function getRawRowNotes(row) {
-  return Object.entries(row)
-    .filter(([key, value]) => {
-      if (key === "sourceSheet" || key === "sourceRowNumber") {
-        return false;
-      }
-
-      return value !== undefined && value !== null && String(value).trim() !== "";
-    })
-    .map(([key, value]) => `${key}: ${String(value).trim()}`)
-    .join("\n");
-}

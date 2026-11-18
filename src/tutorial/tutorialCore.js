@@ -35,10 +35,6 @@ export function setTargetScope(key) {
   targetScope = key;
 }
 
-export function getTargetScope() {
-  return targetScope;
-}
-
 function isInScope(element) {
   const card = targetScope && element.closest("[data-tutorial-scope]");
   return !card || card.dataset.tutorialScope === targetScope;

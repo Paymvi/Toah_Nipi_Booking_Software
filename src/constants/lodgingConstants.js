@@ -159,22 +159,8 @@ export const LODGING_CALENDAR_GROUPS = Object.freeze([
 // Generic "Hebron" text (no floor named) belongs to the Hebron group only.
 export const HEBRON_GENERIC_PATTERN = /\bhebron\b|\bmain lodge\b/i;
 
-export function getLodgingBuilding(id) {
-  return LODGING_BUILDINGS.find((building) => building.id === id) || null;
-}
-
 export function getLodgingBuildingRooms(building) {
   return (building?.floors || []).flatMap((floor) => floor.rooms || []);
-}
-
-// Every rentalFormDetails key that holds lodging for one building.
-export function getLodgingBuildingFieldKeys(building) {
-  return [
-    building.field,
-    ...(building.floors || []).map((floor) => `${building.field}${floor.key}`),
-    ...getLodgingBuildingRooms(building).map((room) => room.key),
-    ...(building.areas || []).map((area) => area.key),
-  ];
 }
 
 // Upper number of a capacity like "9–12"; null when none is recorded.

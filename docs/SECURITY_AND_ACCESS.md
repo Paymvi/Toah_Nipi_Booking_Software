@@ -127,7 +127,7 @@ Staff document paths follow:
 <portal_token>/staff-documents/<document_id>/<sanitized-file-name>
 ```
 
-The staff upload picker in [src/pages/PortalAdminView.jsx](../src/pages/PortalAdminView.jsx) also offers HEIC and TXT, but the bucket rejects those types, so those uploads fail. Either add `image/heic` and `text/plain` to the bucket or remove them from `PORTAL_STAFF_DOCUMENT_MIME_BY_EXTENSION`.
+The staff upload picker ([src/services/portalAdminData.js](../src/services/portalAdminData.js)) also offers HEIC and TXT, but the bucket rejects those types, so those uploads fail. Either add `image/heic` and `text/plain` to the bucket or remove them from `PORTAL_STAFF_DOCUMENT_MIME_BY_EXTENSION`.
 
 Guest uploads can still be harmful documents (for example, Office files with macros). Open guest Office files in Protected View and never enable macros.
 

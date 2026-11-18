@@ -15,7 +15,7 @@
   no single filter for every screen.
 */
 
-import { mirrorTopLevelIntoDetails, recordStaffEdits } from "./bookingFields.js";
+import { mirrorTopLevelIntoDetails, recordStaffEdits, getBookingDetails } from "./bookingFields.js";
 
 export const RECORD_KIND = Object.freeze({
   BOOKING: "booking",
@@ -32,13 +32,6 @@ export const BOOKING_EXCEPTION = Object.freeze({
 
 function lowerText(value) {
   return String(value ?? "").trim().toLowerCase();
-}
-
-function getDetails(booking) {
-  const details = booking?.rentalFormDetails;
-  return details && typeof details === "object" && !Array.isArray(details)
-    ? details
-    : {};
 }
 
 // Same "no real value" set the Master importer uses.
@@ -122,7 +115,7 @@ export function isPossibleHostRecord(booking) {
 function isLegacyFormInquiry(booking) {
   const sourceType = lowerText(booking?.sourceType);
   if (sourceType && sourceType !== "form") return false;
-  if (getDetails(booking).sourceInquiryId) return false;
+  if (getBookingDetails(booking).sourceInquiryId) return false;
   const status = lowerText(booking?.status);
   return status === "" || status === "inquiry";
 }
@@ -147,7 +140,7 @@ export function isClearlyCancelled(booking) {
   if (lowerText(booking?.status).includes("cancel")) return true;
   return (
     hasKnownBookingValue(booking?.dateOfCancellation) &&
-    !getDetails(booking).reinstatedAt
+    !getBookingDetails(booking).reinstatedAt
   );
 }
 
@@ -173,7 +166,7 @@ export function getConvertedInquiryIds(bookings = []) {
   const ids = new Set();
   bookings.forEach((booking) => {
     if (getRecordKind(booking) === RECORD_KIND.INQUIRY) return;
-    const sourceInquiryId = String(getDetails(booking).sourceInquiryId ?? "").trim();
+    const sourceInquiryId = String(getBookingDetails(booking).sourceInquiryId ?? "").trim();
     if (sourceInquiryId) ids.add(sourceInquiryId);
   });
   return ids;
@@ -306,7 +299,7 @@ export function applyBookingClassification(booking, nextValue) {
     return booking;
   }
   if (nextValue === "cancelled") {
-    const details = { ...getDetails(booking) };
+    const details = { ...getBookingDetails(booking) };
     delete details.reinstatedAt;
     return {
       ...booking,
@@ -328,7 +321,7 @@ export function applyBookingClassification(booking, nextValue) {
     status: getRecordKind(booking) === RECORD_KIND.INQUIRY ? "Inquiry" : "Confirmed",
     waitlist: "No",
     rentalFormDetails: reinstating
-      ? { ...getDetails(booking), reinstatedAt: new Date().toISOString() }
+      ? { ...getBookingDetails(booking), reinstatedAt: new Date().toISOString() }
       : booking.rentalFormDetails,
   };
 }
@@ -347,7 +340,7 @@ const CLASSIFYING_FIELDS = ["organizationName", "retreatType"];
 export function convertRecordKind(booking, toHosting, { now = new Date().toISOString() } = {}) {
   if (isHostRecord(booking) === Boolean(toHosting)) return booking;
 
-  const details = getDetails(booking);
+  const details = getBookingDetails(booking);
   const history = Array.isArray(details.hostingConversions) ? details.hostingConversions : [];
   let next;
 

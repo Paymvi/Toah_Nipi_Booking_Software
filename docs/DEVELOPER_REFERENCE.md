@@ -50,7 +50,7 @@ Automatic backups (Google Apps Script, not in this repository)
 
 Key points:
 
-- **One shell component.** [src/App.jsx](../src/App.jsx) maps every route to `Dashboard`, and [src/pages/Dashboard.jsx](../src/pages/Dashboard.jsx) picks the active view from `location.pathname`. Most feature views live in [src/pages/](../src/pages/). `Dashboard.jsx` is very large (spreadsheet import normalisation, exports, booking detail handling, routing); search it by function name rather than scrolling.
+- **One shell component.** [src/App.jsx](../src/App.jsx) maps every route to `Dashboard`, and [src/pages/Dashboard.jsx](../src/pages/Dashboard.jsx) picks the active view from `location.pathname`. Most feature views live in [src/pages/](../src/pages/). `Dashboard.jsx` is still large (routing, data loading, spreadsheet import, exports); the booking detail screen lives in [src/components/bookingDetail/](../src/components/bookingDetail/) and the workbook import parsers in [src/utils/workbookImport.js](../src/utils/workbookImport.js).
 - **Booking field mapping is centralised.** [src/services/bookingMapping.js](../src/services/bookingMapping.js) converts between the camelCase booking objects used by the UI and snake_case columns (`bookingToDbRow`, `dbRowToBooking`). The full booking object is also stored in the `raw_data` JSON column; some application-only data, such as `rentalFormDetails` and imported spreadsheet source data, lives only there.
 - **Saves are conditional.** Every booking save checks `updated_at`; a save based on an out-of-date copy is refused and the screen keeps the unsaved edits ([src/services/bookingSave.js](../src/services/bookingSave.js)).
 - **Stylesheets are global** and imported in a fixed order by `src/styles/index.css`; later files win ties. Where styles belong and how to add them: [CSS_GUIDE.md](CSS_GUIDE.md). Light and Night themes: [THEMING.md](THEMING.md).
@@ -66,7 +66,7 @@ Key points:
 | `/guest-inquiries` | Guest Inquiries | Public website inquiries. Staff convert one into a booking or decline it with a reason. |
 | `/calendar` | Main Calendar | Month, week and year views of dated bookings. Clicking a booking opens it. |
 | `/lodging-calendar` | Lodging Calendar | Which buildings are in use on which dates. |
-| `/master-spreadsheet` | Master Spreadsheet | Spreadsheet-style grid of all booking records with filters, sorting and configurable columns. |
+| `/master-spreadsheet` | Master Spreadsheet | Spreadsheet-style grid of all booking records with year tabs, filters, search and sorting. |
 | `/inquiry-spreadsheet` | Inquiry Spreadsheet | Spreadsheet-style view of inquiry records ("Guest Group Inquiries & No's"). |
 | `/contacts` | Contacts | Contact directory built from booking records. |
 | `/reports` | Reports | Season Brief, Season Map and Data Check, where every number opens its records, with CSV export and a printable meeting brief. A New / Original toggle returns to the earlier single-page report. |
@@ -125,7 +125,7 @@ Staff can:
 - Copy or open the group's portal link.
 - Manage guest portal emails (see below).
 
-Task options are defined in `PORTAL_TASK_OPTIONS` in [src/pages/PortalAdminView.jsx](../src/pages/PortalAdminView.jsx); shared progress rules are in [src/utils/portalRules.js](../src/utils/portalRules.js). The rental contract is not in the standard catalog; staff upload it per booking as a custom document. Custom files are limited to 10 MB. Storage and security details are in [SECURITY_AND_ACCESS.md](SECURITY_AND_ACCESS.md#storage-buckets).
+Task options are defined in `PORTAL_TASK_OPTIONS` in [src/components/portalAdmin/PortalTaskAssignmentPanel.jsx](../src/components/portalAdmin/PortalTaskAssignmentPanel.jsx); shared progress rules are in [src/utils/portalRules.js](../src/utils/portalRules.js). The rental contract is not in the standard catalog; staff upload it per booking as a custom document. Custom files are limited to 10 MB. Storage and security details are in [SECURITY_AND_ACCESS.md](SECURITY_AND_ACCESS.md#storage-buckets).
 
 The local `documents/` folder is git-ignored and can hold working copies of policy or portal documents.
 
@@ -185,7 +185,10 @@ Further Supabase documentation:
     ├── lib/                  supabaseClient
     ├── pages/                One file per main view (Dashboard, CreateBooking, PortalAdminView, …)
     ├── components/           Shared pieces (housing tab, checklists, backups, email panel, …)
-    ├── services/             Supabase reads and writes, mapping, backup data
+    │   ├── bookingDetail/    Booking detail screen: overview (Compact and Large), edit form, date settings
+    │   ├── portalAdmin/      Portals screen panels: record card, checklist preview, task and document panels
+    │   └── reports/          Season Reports views
+    ├── services/             Supabase reads and writes, mapping, backup data, Portals data (portalAdminData)
     ├── utils/                Shared rules (classification, lodging, reports, portal, backups, …)
     ├── constants/            Lodging, meal and dashboard constants
     ├── tutorial/             Tutorial gnome walkthroughs
@@ -219,12 +222,12 @@ Edit [src/constants/lodgingConstants.js](../src/constants/lodgingConstants.js) (
 
 ### Add a portal task or standard document
 
-Update the catalog in [src/pages/PortalAdminView.jsx](../src/pages/PortalAdminView.jsx), then confirm the separate guest portal can display or process the new item. If the item should send emails, check [src/utils/portalEmail.js](../src/utils/portalEmail.js).
+Update the catalog (`PORTAL_TASK_OPTIONS` in [PortalTaskAssignmentPanel.jsx](../src/components/portalAdmin/PortalTaskAssignmentPanel.jsx) or `PORTAL_DOCUMENT_OPTIONS` in [PortalDocumentAssignmentPanel.jsx](../src/components/portalAdmin/PortalDocumentAssignmentPanel.jsx)), then confirm the separate guest portal can display or process the new item. If the item should send emails, check [src/utils/portalEmail.js](../src/utils/portalEmail.js).
 
 ### Support a new spreadsheet year
 
 1. Review sheet-name and column detection.
-2. Update the normalisers in `Dashboard.jsx` and helpers in [src/utils/spreadsheetUtils.js](../src/utils/spreadsheetUtils.js) if needed.
+2. Update the normalisers in [src/utils/masterImport.js](../src/utils/masterImport.js) (Master sheets) or [src/utils/workbookImport.js](../src/utils/workbookImport.js) (sheet detection, Guest Group Inquiry sheets), and helpers in [src/utils/spreadsheetUtils.js](../src/utils/spreadsheetUtils.js) if needed.
 3. Test duplicate detection.
 4. Test the import against a copy of live data before production use, with a fresh backup taken first.
 

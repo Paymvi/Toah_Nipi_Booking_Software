@@ -148,6 +148,38 @@ export function addDays(date, amount) {
   return nextDate;
 }
 
+// Sunday 00:00 (device time) of the week containing date.
+export function getStartOfWeek(date) {
+  const startDate = new Date(date);
+  startDate.setDate(startDate.getDate() - startDate.getDay());
+  startDate.setHours(0, 0, 0, 0);
+  return startDate;
+}
+
+// A Date as a YYYY-MM-DD date input value (device time); "" when there is no date.
+export function formatDateForInput(date) {
+  if (!date) {
+    return "";
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+// Today (device time) as a YYYY-MM-DD date input value.
+export function getTodayInputValue() {
+  const date = new Date();
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 // Returns the number of days between two Date objects.
 // Example: June 1 to June 4 returns 3.
 export function daysBetween(startDate, endDate) {

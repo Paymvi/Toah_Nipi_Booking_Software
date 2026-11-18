@@ -410,7 +410,7 @@ Dashboard normalizes spreadsheet rows
   ↓
 bookingService converts frontend fields to database fields
   ↓
-upsertBookings() saves rows into Supabase
+saveBookings() saves each row into Supabase (conditional on updated_at)
   ↓
 Supabase RLS checks insert permission
   ↓

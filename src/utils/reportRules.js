@@ -101,15 +101,6 @@ export function shouldUseStoredCamperDays(booking) {
    Where a record came from (Q-031 A)
 --------------------------------------------------------- */
 
-export const REPORT_SOURCES = Object.freeze([
-  "Staff entered",
-  "Website inquiry",
-  "Master sheet",
-  "Guest Group sheet",
-  "Archive",
-  "Older public form",
-]);
-
 export function getReportSourceLabel(booking) {
   const details = getBookingDetails(booking);
   if (isArchiveRecord(booking)) return "Archive";

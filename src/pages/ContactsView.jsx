@@ -30,6 +30,7 @@ import {
   CONTACTS_VIEW_STARRED_STORAGE_KEY,
   CONTACTS_VIEW_NAME_SORT_STORAGE_KEY,
 } from "../constants/dashboardConstants";
+import { getBookingDetails } from "../utils/bookingFields";
 
 
 const CONTACTS_RENDER_LOADING_MS = 140;
@@ -153,20 +154,6 @@ function getFirstContactValue(...values) {
 }
 
 
-function getRentalFormDetails(booking) {
-  const details = booking?.rentalFormDetails;
-
-  if (
-    details &&
-    typeof details === "object" &&
-    !Array.isArray(details)
-  ) {
-    return details;
-  }
-
-  return {};
-}
-
 
 function getArchiveAddress(booking) {
   const addressParts = [
@@ -206,7 +193,7 @@ function normalizeNameIdentity(value) {
 
 
 function getBookingContactSnapshot(booking) {
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
 
     // Column values first: every edit path writes them (AUDIT-003).
   const contactName = getFirstContactValue(
@@ -291,7 +278,7 @@ function getContactIdentityCandidates(snapshot) {
 
 
 function getBookingChronologyValue(booking) {
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
 
     // The real inquiry date, never a Master/Archive import time (AUDIT-012).
   const dateCandidates = [
@@ -361,7 +348,7 @@ function isContactStarredIn(contact, starredKeys) {
 }
 
 function getSecondaryContactSnapshot(booking) {
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
   const contactName = cleanContactText(
     details.secondaryContactName || booking?.secondaryContactName
   );
@@ -684,7 +671,7 @@ function formatBookingDate(dateValue) {
 
 
 function getBookingStartDate(booking) {
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
 
   return getFirstContactValue(
     details.startDate,
@@ -694,7 +681,7 @@ function getBookingStartDate(booking) {
 
 
 function getBookingEndDate(booking) {
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
 
   return getFirstContactValue(
     details.endDate,
@@ -757,7 +744,7 @@ function getNumericGuestBreakdownTotal(...values) {
 
 
 function getBookingGuestCount(booking) {
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
 
   const topLevelGuestCount = getFirstContactValue(
     booking?.attendeeCount,
@@ -797,7 +784,7 @@ function getBookingGuestCount(booking) {
 
 
 function getBookingStatus(booking) {
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
 
   return getFirstContactValue(
     booking?.status,

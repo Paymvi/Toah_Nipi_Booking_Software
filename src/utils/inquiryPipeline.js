@@ -4,17 +4,8 @@
   Dashboard.jsx also uses getInquiryPipelineColumnKey() for its sidebar badge.
 */
 
-export function getRentalFormDetails(booking) {
-  if (
-    booking?.rentalFormDetails &&
-    typeof booking.rentalFormDetails === "object" &&
-    !Array.isArray(booking.rentalFormDetails)
-  ) {
-    return booking.rentalFormDetails;
-  }
-
-  return {};
-}
+import { isStaffBookingRecord } from "./bookingClassification.js";
+import { getBookingDetails } from "./bookingFields.js";
 
 export function isBlankBookingValue(value) {
   const text = String(value ?? "")
@@ -46,21 +37,6 @@ export function getSourceSearchText(booking) {
     .join(" ");
 }
 
-export function isStaffBookingRecord(booking) {
-  const sourceType = String(booking?.sourceType || "")
-    .trim()
-    .toLowerCase();
-
-  const detectedImportType = String(booking?.detectedImportType || "")
-    .trim()
-    .toLowerCase();
-
-  return (
-    sourceType === "staff booking" ||
-    detectedImportType === "staff booking"
-  );
-}
-
 function isMasterOrArchiveRecord(booking) {
   const sourceText = getSourceSearchText(booking);
 
@@ -78,7 +54,7 @@ function isPipelineEligibleRecord(booking) {
   const sourceText = getSourceSearchText(booking);
   const statusText = String(booking.status || "").toLowerCase();
   const waitlistText = String(booking.waitlist || "").toLowerCase();
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
 
   if (isStaffBookingRecord(booking)) {
     return true;
@@ -112,7 +88,7 @@ function isPipelineEligibleRecord(booking) {
 }
 
 export function getEstimatedGuestCount(booking) {
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
 
   const directValues = [
     booking.attendeeCount,
@@ -156,7 +132,7 @@ export function getEstimatedGuestCount(booking) {
 
 export function getBookingQualityIssues(booking) {
   const issues = [];
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
 
   const hasRequestedDates =
     !isBlankBookingValue(booking.startDate) ||
@@ -210,7 +186,7 @@ export function getInquiryPipelineColumnKey(booking) {
     return "excluded";
   }
 
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
   const status = String(booking.status || "").toLowerCase();
   const waitlist = String(booking.waitlist || "").toLowerCase();
   const disposition = String(
@@ -273,7 +249,7 @@ export function getInquiryPipelineRecords(inquiryBookings = []) {
       .filter(isStaffBookingRecord)
       .map((booking) =>
         String(
-          getRentalFormDetails(booking).sourceInquiryId ||
+          getBookingDetails(booking).sourceInquiryId ||
             ""
         ).trim()
       )

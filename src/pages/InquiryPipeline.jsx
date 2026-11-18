@@ -16,17 +16,17 @@ import {
   FaUsers,
 } from "react-icons/fa";
 
-import { formatDateRange } from "../utils/dateUtils";
+import { formatDateRange, getTodayInputValue } from "../utils/dateUtils";
 import {
   getBookingQualityIssues,
   getEstimatedGuestCount,
   getInquiryPipelineColumnKey,
   getInquiryPipelineRecords,
-  getRentalFormDetails,
   getSourceSearchText,
   isBlankBookingValue,
-  isStaffBookingRecord,
 } from "../utils/inquiryPipeline";
+import { getBookingDetails } from "../utils/bookingFields";
+import { isStaffBookingRecord } from "../utils/bookingClassification";
 
 
 /* =========================================================
@@ -77,21 +77,6 @@ const PIPELINE_COLUMNS = [
 ];
 
 
-/* =========================================================
-   GENERAL HELPERS
-========================================================= */
-
-
-function getTodayInputValue() {
-  const date = new Date();
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
 
 function getPipelineRecordKind(booking) {
   const sourceText = getSourceSearchText(booking);
@@ -137,7 +122,7 @@ function getPipelineRecordKind(booking) {
 
 
 function getRequestedDateText(booking) {
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
 
   if (!isBlankBookingValue(booking.startDate)) {
     const formattedRange = formatDateRange(
@@ -195,7 +180,7 @@ function formatPipelineDate(value) {
 }
 
 function getPipelineSortTimestamp(booking) {
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
   const stage = getInquiryPipelineColumnKey(booking);
 
   let preferredDate = "";
@@ -222,7 +207,7 @@ function getPipelineSortTimestamp(booking) {
 }
 
 function getPipelineSearchText(booking) {
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
 
   return [
     booking.organizationName,
@@ -267,7 +252,7 @@ function getStageStatusClass(stageKey) {
 }
 
 function getWorkflowDates(booking) {
-  const details = getRentalFormDetails(booking);
+  const details = getBookingDetails(booking);
 
   return [
     {
@@ -429,7 +414,7 @@ export default function InquiryPipelineView({
     }
 
     const currentDetails =
-      getRentalFormDetails(booking);
+      getBookingDetails(booking);
 
     const updatedBooking = {
       ...booking,
@@ -447,7 +432,7 @@ export default function InquiryPipelineView({
   };
 
   const markContractSent = (booking) => {
-    const details = getRentalFormDetails(booking);
+    const details = getBookingDetails(booking);
 
     updatePipelineBooking(
       booking,
@@ -464,7 +449,7 @@ export default function InquiryPipelineView({
   };
 
   const markConfirmed = (booking) => {
-    const details = getRentalFormDetails(booking);
+    const details = getBookingDetails(booking);
 
     updatePipelineBooking(
       booking,
@@ -735,7 +720,7 @@ export default function InquiryPipelineView({
                       getEstimatedGuestCount(booking);
 
                     const details =
-                      getRentalFormDetails(booking);
+                      getBookingDetails(booking);
 
                     const isBooking =
                       isStaffBookingRecord(booking);
