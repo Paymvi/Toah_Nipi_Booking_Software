@@ -29,3 +29,21 @@ documents/
 # Security audit: lists weaknesses and deploy gaps; the repo is public
 docs/audit/SECURITY_AUDIT_*.md
 /QUESTIONNAIRE_GUIDE.md
+
+# Any environment file, not just .env.local (the docs mention .env.PROD and .env.DEV)
+.env
+.env.*
+
+# Data exports from the app: they hold guest names, contacts and signed documents
+# (docs/BACKUP_AND_RECOVERY.md, docs/DEVELOPER_REFERENCE.md). Keep them in Drive, never here.
+toah-nipi-backup-*.json
+toah-nipi-signed-documents-*.zip
+toah-nipi-contact-list*.xlsx
+toah-nipi-hosting*.xlsx
+toah-nipi-booking-inquiries*.xlsx
+
+# Live schema dumps for the local test stack (docs/portal-signing/SETUP.md)
+public_schema*.sql
+
+# Integration audit: like the security audit, it lists weaknesses and hosted checks; the repo is public
+/INTEGRATION_DATA_INTEGRITY_AUDIT.md
