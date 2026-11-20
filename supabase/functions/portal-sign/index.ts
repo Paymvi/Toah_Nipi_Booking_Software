@@ -47,7 +47,7 @@ const db = {
   async findBookingByToken(token: string) {
     const { data, error } = await admin
       .from("bookings")
-      .select("id, organization_name, retreat_type")
+      .select("id, organization_name, retreat_type, status, date_of_cancellation, rental_form_details:raw_data->rentalFormDetails")
       .eq("portal_token", token)
       .maybeSingle();
     if (error) throw new Error("lookup failed");

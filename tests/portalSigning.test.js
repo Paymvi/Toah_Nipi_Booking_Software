@@ -393,3 +393,17 @@ test("a hosting record's portal link cannot open, sign or download, even if it s
   await assert.rejects(world.service.open({ token: TOKEN_A, itemKey: "contract" }), { code: "NOT_FOUND" });
   assert.equal(signedFiles(world).length, 0);
 });
+
+test("a cancelled booking's portal link cannot open or sign; a reinstated one can", async () => {
+  const world = await makeWorld();
+  const input = await validSign(world);
+  world.bookings[0].status = "Cancelled";
+  await assert.rejects(world.service.open({ token: TOKEN_A, itemKey: "contract" }), { code: "NOT_FOUND" });
+  await assert.rejects(world.service.sign({ token: TOKEN_A, input }), { code: "NOT_FOUND" });
+  world.bookings[0].status = "Confirmed";
+  world.bookings[0].date_of_cancellation = "2027-05-01";
+  await assert.rejects(world.service.open({ token: TOKEN_A, itemKey: "contract" }), { code: "NOT_FOUND" });
+  world.bookings[0].rental_form_details = { reinstatedAt: "2027-05-02T12:00:00.000Z" };
+  await world.service.open({ token: TOKEN_A, itemKey: "contract" });
+  assert.equal(signedFiles(world).length, 0);
+});

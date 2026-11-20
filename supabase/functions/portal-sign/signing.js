@@ -16,7 +16,7 @@
   Never log or return portal tokens, file contents or signer entries.
 */
 
-import { isHostRecord } from "../../../src/utils/bookingClassification.js";
+import { isClearlyCancelled, isHostRecord } from "../../../src/utils/bookingClassification.js";
 
 export const ORIGINALS_BUCKET = "portal-uploads";
 export const SIGNED_BUCKET = "portal-signed";
@@ -374,6 +374,10 @@ export function createSigningService({ db, storage, PDFLib, now = () => new Date
     const booking = await db.findBookingByToken(cleaned);
     // Hosting is never a guest record, even if an old link still resolved.
     if (!booking || isHostRecord({ organizationName: booking.organization_name, retreatType: booking.retreat_type })) {
+      fail("NOT_FOUND", 404);
+    }
+    // A cancelled booking's portal shows only a cancelled page and accepts nothing.
+    if (isClearlyCancelled({ status: booking.status, dateOfCancellation: booking.date_of_cancellation, rentalFormDetails: booking.rental_form_details })) {
       fail("NOT_FOUND", 404);
     }
     return booking;

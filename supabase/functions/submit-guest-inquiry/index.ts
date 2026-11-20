@@ -496,9 +496,11 @@ export default {
 
 
       if (error) {
+        // Code and message only: the error's details can repeat the guest's row (INT-18).
         console.error(
           "Guest inquiry insert failed:",
-          error
+          error.code,
+          error.message
         );
 
         return respond({
