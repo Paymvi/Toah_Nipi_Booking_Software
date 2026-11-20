@@ -35,3 +35,8 @@ drop policy if exists "Staff can restore hidden inquiries" on public.inquiry_hid
 create policy "Staff can restore hidden inquiries"
 on public.inquiry_hidden for delete to authenticated
 using (public.can_manage_bookings());
+
+-- Table grants (INT-05). New tables get no privileges by default on the live
+-- project, so without these the policies above can never apply. RLS still
+-- decides which rows each role may touch.
+grant select, insert, update, delete on public.inquiry_hidden to authenticated;

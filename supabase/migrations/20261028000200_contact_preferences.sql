@@ -56,3 +56,8 @@ create policy "Staff manage their own stars"
 on public.contact_stars for all to authenticated
 using (user_id = auth.uid() and public.is_active_staff())
 with check (user_id = auth.uid() and public.is_active_staff());
+
+-- Table grants (INT-05). New tables get no privileges by default on the live
+-- project, so without these the policies above can never apply. RLS still
+-- decides which rows each role may touch.
+grant select, insert, update, delete on public.contact_hidden, public.contact_stars to authenticated;

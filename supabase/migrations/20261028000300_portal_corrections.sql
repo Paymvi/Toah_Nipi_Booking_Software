@@ -75,3 +75,8 @@ begin
   end if;
 end
 $$;
+
+-- Table grants (INT-05). New tables get no privileges by default on the live
+-- project, so without these the policies above can never apply. RLS still
+-- decides which rows each role may touch.
+grant select, insert on public.portal_removed_uploads to authenticated;

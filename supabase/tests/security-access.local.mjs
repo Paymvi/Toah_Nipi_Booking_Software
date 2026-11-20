@@ -165,7 +165,7 @@ if (!(await seed.from("portal_email_settings").select("id")).data?.length) {
 }
 
 // Expected from the live policies AND live grants (2026-11-10 catalog read).
-// inquiry_hidden has policies but no table grants live, so nobody can use it (a functional gap, not exposure).
+// inquiry_hidden: the live table had policies but no grants; its migration now grants them (INT-05).
 const EXPECTED = {
   bookings: { anon: "----", stranger: "----", viewer: "R---", staff: "RIU-", admin: "RIUD" },
   guest_inquiries: { anon: "----", stranger: "----", viewer: "R---", staff: "R-U-", admin: "R-U-" },
@@ -175,7 +175,7 @@ const EXPECTED = {
   portal_email_templates: { anon: "----", stranger: "----", viewer: "R---", staff: "R---", admin: "R-U-" },
   portal_email_messages: { anon: "----", stranger: "----", viewer: "R---", staff: "R---", admin: "R---" },
   portal_signing_settings: { anon: "----", stranger: "----", viewer: "R---", staff: "R---", admin: "R---" },
-  inquiry_hidden: { anon: "----", stranger: "----", viewer: "----", staff: "----", admin: "----" },
+  inquiry_hidden: { anon: "----", stranger: "----", viewer: "R---", staff: "RIUD", admin: "RIUD" },
   audit_repair_log: { anon: "----", stranger: "----", viewer: "----", staff: "----", admin: "----" },
   "staff_profiles (another user's row)": { anon: "----", stranger: "----", viewer: "R---", staff: "----", admin: "R-U-" },
 };

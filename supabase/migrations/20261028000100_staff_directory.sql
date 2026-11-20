@@ -53,3 +53,8 @@ drop policy if exists "Staff can remove from the staff directory" on public.staf
 create policy "Staff can remove from the staff directory"
 on public.staff_directory for delete to authenticated
 using (public.can_manage_bookings());
+
+-- Table grants (INT-05). New tables get no privileges by default on the live
+-- project, so without these the policies above can never apply. RLS still
+-- decides which rows each role may touch.
+grant select, insert, update, delete on public.staff_directory to authenticated;
