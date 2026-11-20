@@ -202,124 +202,6 @@
   cursor: grabbing;
 }
 
-.gm-world {
-  position: absolute;
-  top: 0;
-  left: 0;
-  transform-origin: 0 0;
-}
-
-.gm-world--animate,
-.gm-node-wrap {
-  transition: transform 280ms ease;
-}
-
-.gm-edges {
-  position: absolute;
-  top: 0;
-  left: 0;
-  overflow: visible;
-}
-
-.gm-edge {
-  fill: none;
-  stroke: var(--n-line-4, #b8bfcc);
-  stroke-width: 1.5;
-}
-
-.gm-edges marker path {
-  fill: var(--n-line-4, #b8bfcc);
-}
-
-.gm-edge--lit {
-  stroke: var(--focus);
-  stroke-width: 2.5;
-}
-
-.gm-section-label {
-  position: absolute;
-  top: 0;
-  left: 0;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 650;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.gm-node-wrap {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: flex;
-  width: 230px;
-  height: 60px;
-}
-
-.gm-root .gm-node {
-  display: grid;
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 100%;
-  padding: 0.3rem 0.6rem;
-  align-content: center;
-  gap: 0.1rem;
-  border: 1px solid var(--n-line-3, #d1d5db);
-  border-left: 4px solid var(--n-blue-line, #bcd0f0);
-  border-radius: 0.5rem;
-  background: var(--n-surface, #ffffff);
-  box-shadow: 0 1px 2px var(--n-shadow-1, rgba(28, 35, 52, 0.06));
-  text-align: left;
-}
-
-.gm-root .gm-node--single {
-  border-left-color: var(--n-line-3, #d1d5db);
-}
-
-.gm-root .gm-node--related {
-  border-color: var(--n-violet-line, #c9c4f2);
-  border-left-color: var(--focus);
-}
-
-.gm-root .gm-node--selected,
-.gm-root .gm-node--selected:hover:not(:disabled) {
-  border-color: var(--focus);
-  background: var(--n-violet-bg, #eeedfb);
-  box-shadow: 0 0 0 3px var(--focus-soft);
-}
-
-.gm-node-name {
-  display: -webkit-box;
-  overflow: hidden;
-  color: var(--text-main);
-  font-size: 0.88rem;
-  font-weight: 650;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.gm-node-meta {
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.gm-root .gm-node-toggle {
-  display: inline-flex;
-  flex: 0 0 auto;
-  gap: 0.2rem;
-  align-items: center;
-  align-self: center;
-  min-height: 1.6rem;
-  margin-left: 0.25rem;
-  padding: 0 0.35rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-}
-
 /* Top right: the tutorial gnome sits bottom right. */
 .gm-zoom {
   position: absolute;
@@ -353,6 +235,78 @@
 .gm-empty svg {
   color: var(--text-muted);
   font-size: 1.75rem;
+}
+
+/* Graph view. Widths use --gm-px (one screen pixel), so they hold at any zoom. */
+
+.gm-graph {
+  cursor: grab;
+}
+
+.gm-graph svg {
+  display: block;
+}
+
+.gm-graph-edge {
+  stroke: var(--n-text-3, #8a92a3);
+  stroke-width: calc(var(--gm-px) * 1.4);
+}
+
+.gm-graph-edge--lit {
+  stroke: var(--focus);
+  stroke-width: calc(var(--gm-px) * 2.6);
+}
+
+.gm-graph-node {
+  cursor: pointer;
+}
+
+.gm-graph-node circle {
+  fill: var(--n-blue-text, #3d64b0);
+  fill-opacity: 0.75;
+  stroke: var(--n-surface, #ffffff);
+  stroke-width: calc(var(--gm-px) * 1.5);
+}
+
+.gm-graph-node--parent circle {
+  fill: var(--focus);
+  fill-opacity: 1;
+}
+
+.gm-graph-node--related circle {
+  stroke: var(--focus);
+  stroke-width: calc(var(--gm-px) * 3);
+}
+
+.gm-graph-node--selected circle {
+  fill: var(--n-amber-text, #b7791f);
+  fill-opacity: 1;
+  stroke: var(--focus);
+  stroke-width: calc(var(--gm-px) * 4);
+}
+
+.gm-graph-node text {
+  fill: var(--text-main);
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: var(--n-page, #f6f7f9);
+  stroke-width: calc(var(--gm-px) * 4);
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.gm-graph-node:focus {
+  outline: none;
+}
+
+.gm-graph-node:focus-visible circle {
+  stroke: var(--focus);
+  stroke-width: calc(var(--gm-px) * 5);
+  stroke-dasharray: calc(var(--gm-px) * 3) calc(var(--gm-px) * 2);
+}
+
+.gm-graph-dim {
+  opacity: 0.25;
 }
 
 /* List view */
@@ -577,6 +531,72 @@
   color: var(--n-red-text, #7f1d1d);
 }
 
+/* Automatic build review */
+
+.gm-draft {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.gm-draft-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.gm-draft-head h3 {
+  margin: 0 0 0.25rem;
+  color: var(--text-main);
+  font-size: 1.15rem;
+}
+
+.gm-draft-head p {
+  max-width: 48rem;
+  margin: 0 0 0.35rem;
+}
+
+.gm-draft-summary {
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.gm-draft .gm-rows {
+  max-height: 32rem;
+  overflow-y: auto;
+}
+
+.gm-draft-check {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 0.6rem;
+  align-items: flex-start;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.gm-draft-check input {
+  margin-top: 0.2rem;
+}
+
+.gm-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--n-amber-bg, #fdf3d8);
+  color: var(--n-amber-text, #765515);
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: 0.1em;
+}
+
+.gm-root .gm-status-action {
+  min-height: 1.6rem;
+  margin-left: 0.6rem;
+}
+
 /* Full screen: the map fills the window, details take the right (or bottom) */
 
 .gm-root--fullscreen {
@@ -628,9 +648,3 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .gm-world--animate,
-  .gm-node-wrap {
-    transition: none;
-  }
-}

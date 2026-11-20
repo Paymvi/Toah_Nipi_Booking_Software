@@ -78,24 +78,20 @@ test("search matches group names and linked names, prefix first", () => {
   assert.deepEqual(searchGroups(index, "  "), []);
 });
 
-test("layout: families left to right, singles in a grid, collapse and focus", () => {
+test("graph groups: families first, collapse hides subgroups, focus shows one organization", () => {
   const full = layoutGroupMap(index);
-  const at = (layout, id) => layout.nodes.find((node) => node.id === id);
   assert.equal(full.nodes.length, groups.length);
-  assert.ok(at(full, "reg").x > at(full, "nat").x && at(full, "chap").x > at(full, "reg").x);
-  assert.ok(at(full, "solo").single && at(full, "solo").y > at(full, "small").y);
+  assert.deepEqual(full.order, ["nat", "reg", "chap", "small", "south", "solo", "orphan"]);
   assert.equal(full.edges.length, 4);
+  assert.equal(full.nodes.find((node) => node.id === "nat").childCount, 2);
 
   const collapsed = layoutGroupMap(index, { collapsed: new Set(["reg"]) });
   assert.equal(collapsed.nodes.length, groups.length - 2);
-  assert.equal(at(collapsed, "reg").hiddenCount, 2);
+  assert.equal(collapsed.nodes.find((node) => node.id === "reg").hiddenCount, 2);
+  assert.ok(!collapsed.edges.some((edge) => edge.from === "reg"));
 
   const focused = layoutGroupMap(index, { focusId: "reg" });
   assert.deepEqual(focused.order, ["reg", "chap", "small"]);
-  assert.equal(at(focused, "reg").x, 0);
-
-  // Same input, same positions: exploring doesn't reshuffle.
-  assert.deepEqual(layoutGroupMap(index).nodes.map(({ x, y }) => [x, y]), full.nodes.map(({ x, y }) => [x, y]));
 });
 
 test("keyboard: arrows move through visible order, left/right collapse, expand and go to parent", () => {

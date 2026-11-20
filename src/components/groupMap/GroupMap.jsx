@@ -15,8 +15,10 @@ import {
   layoutGroupMap,
   searchGroups,
 } from "../../utils/groupMap";
-import GroupMapCanvas from "./GroupMapCanvas";
+import { buildGroupMapDraft } from "../../utils/groupMapDraft";
 import GroupMapDetails from "./GroupMapDetails";
+import GroupMapDraft from "./GroupMapDraft";
+import GroupMapGraph from "./GroupMapGraph";
 import GroupMapList from "./GroupMapList";
 
 const MODE_STORAGE_KEY = "toahNipiGroupMapMode";
@@ -24,9 +26,11 @@ const NAV_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Ho
 
 function getSavedMode() {
   try {
-    return localStorage.getItem(MODE_STORAGE_KEY) === "list" ? "list" : "map";
+    const saved = localStorage.getItem(MODE_STORAGE_KEY);
+    // List is the default; the old box map ("map") now opens the List.
+    return saved === "graph" ? "graph" : "list";
   } catch {
-    return "map";
+    return "list";
   }
 }
 
@@ -38,7 +42,11 @@ const api = {
   deleteGroup: (group) => groupMapService.deleteGroup(supabase, group),
   linkGroupName: (name, groupId) => groupMapService.linkGroupName(supabase, name, groupId),
   unlinkGroupName: (name, groupId) => groupMapService.unlinkGroupName(supabase, name, groupId),
+  applyBuild: (build) => groupMapService.applyGroupMapBuild(supabase, build),
+  undoBuild: (buildId) => groupMapService.undoGroupMapBuild(supabase, buildId),
 };
+
+const plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
 /*
   Group Map (docs/GROUP_MAP.md): organizations and their subgroups, inside
@@ -57,6 +65,8 @@ export default function GroupMap({ bookings, contacts, canEdit, onOpenBooking, o
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState(null);
   const [camera, setCamera] = useState(null);
+  // The automatic build under review, or null.
+  const [draft, setDraft] = useState(null);
   const canvasRef = useRef(null);
   const newGroupInputRef = useRef(null);
 
@@ -195,20 +205,21 @@ export default function GroupMap({ bookings, contacts, canEdit, onOpenBooking, o
     } catch {
       // Still switches for this visit.
     }
-    if (nextMode === "map") setCamera(selectedId ? { kind: "show", id: selectedId, n: Date.now() } : { kind: "fit", animate: false, readable: true, n: Date.now() });
+    if (nextMode === "graph") setCamera(selectedId ? { kind: "show", id: selectedId, n: Date.now() } : { kind: "fit", animate: false, readable: true, n: Date.now() });
   };
 
   const collapseAll = () =>
     setCollapsed(new Set([...index.byId.keys()].filter((id) => getChildren(index, id).length)));
 
   // Every change: one at a time, then reload so the screen matches the database.
-  const act = async (run, message, onDone) => {
+  // message may depend on the result; action adds a button to the message (Undo).
+  const act = async (run, message, onDone, action) => {
     setBusy(true);
     setStatus(null);
     try {
       const result = await run();
       await reload();
-      setStatus({ kind: "ok", text: message });
+      setStatus({ kind: "ok", text: typeof message === "function" ? message(result) : message, action: action?.(result) });
       onDone?.(result);
     } catch (error) {
       setStatus({ kind: "error", text: error.message });
@@ -217,6 +228,38 @@ export default function GroupMap({ bookings, contacts, canEdit, onOpenBooking, o
       setBusy(false);
     }
   };
+
+  const startBuild = () => {
+    setStatus(null);
+    setDraft(buildGroupMapDraft(unlinkedNames, data.groups, { makeId: () => crypto.randomUUID() }));
+  };
+
+  const undoBuild = (buildId) => {
+    const ok = window.confirm(
+      "Undo the automatic build?\n\nThe groups it created are removed and the booking names it linked are unlinked. " +
+        "Groups you've since given your own subgroups or names are kept. Bookings are never changed."
+    );
+    if (!ok) return;
+    act(() => api.undoBuild(buildId), (result) =>
+      `Undid the automatic build: removed ${plural(result.groupsDeleted, "group")} and unlinked ${plural(result.namesUnlinked, "booking name")}.` +
+        (result.groupsKept?.length
+          ? ` Kept ${plural(result.groupsKept.length, "group")} that now hold your own subgroups or names: ${result.groupsKept.join(", ")}.`
+          : ""), () => setCamera({ kind: "fit", animate: false, readable: true, n: Date.now() }));
+  };
+
+  const createBuild = (build) =>
+    act(
+      () => api.applyBuild(build),
+      (result) => `Created ${plural(result.groupsCreated, "group")} and linked ${plural(result.namesLinked, "booking name")}. Edit anything on the map, or undo the whole build.`,
+      () => {
+        setDraft(null);
+        setSelectedId(null);
+        setCamera({ kind: "fit", animate: false, readable: true, n: Date.now() });
+      },
+      (result) => ({ label: "Undo this build", run: () => undoBuild(result.buildId) })
+    );
+
+  const latestBuild = data?.latestBuild && !data.latestBuild.undone_at ? data.latestBuild : null;
 
   const startNewGroup = () => {
     setSelectedId(null);
@@ -289,16 +332,21 @@ export default function GroupMap({ bookings, contacts, canEdit, onOpenBooking, o
         </div>
 
         <div className="season-segment" role="group" aria-label="Show groups as" data-tutorial-ui>
-          <button type="button" aria-pressed={mode === "map"} onClick={() => chooseMode("map")}>Map</button>
           <button type="button" aria-pressed={mode === "list"} onClick={() => chooseMode("list")}>List</button>
+          <button type="button" aria-pressed={mode === "graph"} onClick={() => chooseMode("graph")}>Graph</button>
         </div>
 
-        {mode === "map" && (
+        {mode === "graph" && (
           <button type="button" onClick={() => setCamera({ kind: "fit", animate: true, n: Date.now() })}>Fit to screen</button>
         )}
         <button type="button" onClick={() => setCollapsed(new Set())}>Expand all</button>
         <button type="button" onClick={collapseAll}>Collapse all</button>
-        {canEdit && <button type="button" onClick={startNewGroup}>New group</button>}
+        {canEdit && <button type="button" onClick={startNewGroup} disabled={Boolean(draft)}>New group</button>}
+        {canEdit && (
+          <button type="button" onClick={startBuild} disabled={busy || Boolean(draft) || unlinkedNames.length === 0}>
+            Build automatically
+          </button>
+        )}
         <button type="button" onClick={() => reload()} disabled={busy}>Refresh</button>
         <button type="button" onClick={() => setFullScreen((value) => !value)} aria-pressed={fullScreen}>
           {fullScreen ? <FaCompress aria-hidden="true" /> : <FaExpand aria-hidden="true" />}
@@ -316,6 +364,15 @@ export default function GroupMap({ bookings, contacts, canEdit, onOpenBooking, o
         </div>
       )}
 
+      {draft ? (
+        <GroupMapDraft
+          draft={draft}
+          busy={busy}
+          status={status?.kind === "error" ? status : null}
+          onCreate={createBuild}
+          onCancel={() => { setDraft(null); setStatus(null); }}
+        />
+      ) : (
       <div className="gm-body">
         <div className="gm-main">
           {groupCount === 0 ? (
@@ -324,25 +381,25 @@ export default function GroupMap({ bookings, contacts, canEdit, onOpenBooking, o
               <strong>No groups yet</strong>
               <p>
                 Groups are made from the organization names on bookings. {canEdit
-                  ? "Use \"Create group\" next to a name in the panel, or New group to start one."
+                  ? "Click Build automatically for a draft of every group to review, or use \"Create group\" next to a name in the panel."
                   : "Admin and staff accounts can create them."}
               </p>
             </div>
-          ) : mode === "map" ? (
+          ) : mode === "graph" ? (
             <>
-              <GroupMapCanvas
+              <GroupMapGraph
                 ref={canvasRef}
                 layout={layout}
                 selectedId={selectedId}
                 highlight={highlight}
                 directCount={directCount}
                 onSelect={select}
-                onToggle={toggle}
                 onNodeKey={keyHandler(layout.order)}
               />
               <p className="gm-legend">
-                Lines point from a parent organization to its subgroups. Numbers count each group's own bookings.
-                Drag to move, scroll or pinch to zoom, arrow keys to move between groups.
+                Each circle is a group; bigger circles have more bookings. Lines join a parent organization to its
+                subgroups. Drag a circle to move it on screen (this never changes who belongs to whom). Scroll or pinch
+                to zoom in and see every name.
               </p>
             </>
           ) : (
@@ -368,6 +425,11 @@ export default function GroupMap({ bookings, contacts, canEdit, onOpenBooking, o
           {status && (
             <p className={`gm-status gm-status--${status.kind}`} role={status.kind === "error" ? "alert" : "status"}>
               {status.text}
+              {status.action && canEdit && (
+                <button type="button" className="gm-status-action" disabled={busy} onClick={status.action.run}>
+                  {status.action.label}
+                </button>
+              )}
             </p>
           )}
           {!canEdit && <p className="gm-muted">View only: your account can't change groups.</p>}
@@ -386,9 +448,12 @@ export default function GroupMap({ bookings, contacts, canEdit, onOpenBooking, o
             onOpenBooking={onOpenBooking}
             onShowContact={onShowContact}
             newGroupInputRef={newGroupInputRef}
+            latestBuild={latestBuild}
+            onUndoBuild={undoBuild}
           />
         </aside>
       </div>
+      )}
     </section>
   );
 }

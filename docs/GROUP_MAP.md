@@ -4,13 +4,14 @@ The Group Map shows how organizations relate to each other: a national organizat
 
 ## Using it
 
-- **Map or List.** The map draws each group as a box, with a line pointing from a parent organization to each of its subgroups (parents on the left). Groups with no parent and no subgroups are listed together underneath. **List** shows the same groups as an indented outline, which works better with a screen reader or on a small phone. Both views share the selection.
-- **Moving around.** Drag the background to pan. Use the mouse wheel, a pinch, or the + and − buttons to zoom. **Fit to screen** shows everything. The map remembers where you are while you explore and doesn't rearrange itself.
-- **Finding a group.** Type in **Find a group** and press Enter or pick a match. The map opens any collapsed branches and brings the group into view.
-- **Branches.** The arrow button beside a box hides or shows its subgroups. **Expand all** and **Collapse all** do every branch at once.
+- **List or Graph.** Both show the same groups and share the selection, the details panel, search, focus and collapsed branches. **List** opens first; if you pick Graph, that's remembered in this browser.
+  - **List** is an indented outline: every top-level group A–Z, with its subgroups indented under it. The arrow beside a group hides or shows its subgroups. It works well with a screen reader and on a phone.
+  - **Graph** is a mind-map picture: each group is a circle, and lines join a parent organization to its subgroups. Bigger circles have more bookings, and parent organizations are the darker circles. The circles drift into place, then stop. With "reduce motion" switched on in the computer's settings, they appear already in place. Zoomed far out, circles stay visible and only names you need are shown: the selected group and its family, plus parent organizations once you zoom in a little. Zoom in further to see every name. Selecting a circle lights up its family and fades the rest. Dragging a circle only moves it on screen; it never changes who belongs to whom. Positions are kept while you edit, so the picture doesn't reshuffle. They're laid out afresh the next time you open the Group Map. In the Graph, drag the background to pan, and use the mouse wheel, a pinch, or the + and − buttons to zoom. **Fit to screen** shows everything.
+- **Finding a group.** Type in **Find a group** and press Enter or pick a match. It opens any collapsed branches and brings the group into view.
+- **Branches.** **Expand all** and **Collapse all** open or close every branch at once.
 - **One organization.** **Show only this organization** shows just that group and its subgroups. **Show all groups** goes back.
-- **Keyboard.** Up and Down move through the groups. Right opens a branch or moves into it, and Left closes it or moves to the parent. Escape leaves full screen.
-- **Phones.** Use **Full screen** for more room, or switch to **List**.
+- **Keyboard.** Up and Down move through the groups. Right opens a branch or moves into it. Left closes an open branch, or moves to the parent. Escape leaves full screen.
+- **Phones.** Use **Full screen** for more room.
 
 Selecting a group opens its details:
 
@@ -39,6 +40,22 @@ Bookings only store an organization name as typed. A group therefore lists the *
 - Names that share every word of the group's name are listed as suggestions for staff to check. Nothing is ever linked or merged automatically.
 - A name belongs to one group at most. To move it, unlink it from the first group, then link it to the other.
 - Hosting records and the placeholder "Unnamed Organization" are left out.
+
+## Build automatically
+
+**Build automatically** (admin and staff) drafts groups for every booking name that isn't linked yet. **Nothing is saved until you click Create.**
+
+The draft:
+
+1. Makes one group per booking name.
+2. Combines spellings that differ only in capitals, spaces, punctuation or a leading "The" ("Grace Church", "grace church.") into one group with all of them linked. The most-used spelling, then the tidiest, names the group. A name that matches a group you already have joins that group instead.
+3. **Guesses** parent organizations from shared leading words: "InterVarsity Rutgers" and "InterVarsity Penn State" go under "InterVarsity". If "InterVarsity" is itself a booking name, that group becomes the parent. If you already have an "InterVarsity" group, the draft uses it. Very common first words ("First", "Grace", "Church", "Camp" and so on) are never used for a guess, so "First Baptist Albany" and "First Baptist Troy" stay separate. Every guess is labelled **Guess**.
+
+Before saving, you can untick any group (its names stay unlinked) or any guess (its groups stay top-level). Names the draft can't place safely are listed under **Left out**, such as a name matching two existing groups. It can't work out things the names don't say: it won't know that "IV" means InterVarsity, or which region a chapter belongs to.
+
+**Create** saves everything in one step. If someone linked one of the names or made a group with the same name since the draft was built, nothing is saved, and you build the draft again.
+
+**Undo this build** appears in the success message, and stays in the panel (nothing selected) until used. Undo unlinks every name the build linked and removes the groups it created. A group you've since given your own subgroup or linked name is kept, along with the groups above it, and the message lists them. Groups you already had are never changed or removed, and bookings are never touched. Only the most recent build is offered for undo.
 
 ## Changing groups
 
@@ -76,7 +93,7 @@ Dashboard backups (format version 5) include every group, its parent, and its li
 
 Full Replace deletes bookings, not groups. Older backups (versions 1 to 4) have no groups, and restoring one leaves every current group, parent and linked name exactly as it is. The Backups page previews all of this before you restore. Details: [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md#the-group-map-in-backups).
 
-Code: `src/services/groupMap.js` (data access), `src/utils/groupMap.js` (tree, counts, layout, search, keyboard; no React), `src/components/groupMap/` (map, list, details), `src/styles/views/GroupMap.css`. No new dependencies: the layout is a simple left-to-right tree drawn with HTML and SVG.
+Code: `src/services/groupMap.js` (data access), `src/utils/groupMap.js` (tree, counts, layout, search, keyboard), `src/utils/groupGraphLayout.js` (the Graph view's force layout), `src/utils/groupMapDraft.js` (Build automatically), `src/components/groupMap/` (list, graph, details, draft), `src/styles/views/GroupMap.css`. No new dependencies: the Graph is a small force layout drawn with SVG.
 
 ## Setup and deployment
 
@@ -120,7 +137,7 @@ Run each file by hand in the SQL editor, one at a time, reading it first. Never 
 2. `20261110000200_revoke_unused_table_privileges.sql` and `20261110000300_lock_repair_functions.sql` (SEC-09, SEC-10). These are independent.
 3. `20261111000100_hosting_records.sql`, then `20261113000100_staff_app.sql`, then `20261114000100_staff_orders.sql`. Only needed for the staff app, and in this order (each checks the one before).
 4. `20261117000100_booking_change_log_keep_history.sql`, after the staff app migration. Run it before anyone uses Full Replace, or Full Replace erases the change history.
-5. `20261119000100_group_map.sql`. If the Group Map ships on its own, this is the only one it needs. It also works before steps 1-4: when the staff app migration runs later, its new `is_active_staff()` applies to the Group Map's read policies automatically.
+5. `20261119000100_group_map.sql`, then `20261119000200_group_map_build.sql` (Build automatically and its Undo; it stops with a message if the first hasn't run). If the Group Map ships on its own, these two are the only ones it needs. It also works before steps 1-4: when the staff app migration runs later, its new `is_active_staff()` applies to the Group Map's read policies automatically.
 
 `20261028000100/200/300` are separate features with their own notes, and the Group Map doesn't need them.
 
@@ -130,12 +147,20 @@ Tests (fictional data only):
 
 - `node --test tests/groupMap.test.js` (part of `npm test`).
 - `node supabase/tests/group-map.local.mjs` against a local Docker stack: permissions for every role, direct-table writes, self-parenting, two- to four-level loops, concurrent opposite moves, stale versions, links, blocked deletes, and bookings and portal links unchanged.
+- `node --test tests/groupMapDraft.test.js` (part of `npm test`): the draft's grouping, spelling choice, parent guesses, matching existing groups, and unticking.
+- `node supabase/tests/group-map-build.local.mjs` against the local stack: permissions, saving a draft all at once, stale drafts saving nothing, joining existing groups, and undo keeping groups changed by hand.
 - `node supabase/tests/group-map-backup.local.mjs` against the same stack: a backup round trip of a nested tree, restoring twice, conflicts, invalid files sent straight to the database, permissions, a restore racing a new group, Merge, a real Full Replace (it deletes and restores every local booking), and an older version 4 file.
+- `node --test tests/groupGraphLayout.test.js` (part of `npm test`): the Graph layout settles and stops, keeps families together and circles apart, gives the same picture for the same groups, and keeps circles in place after an edit.
+- `node tests/browser/groupMapGraph.browser.mjs` in Chrome: the Graph view's circles, lines, labels, settling, selection, dragging (no relationship change), keyboard, search, zoom, an edit without reshuffling, reduced motion, Night and a phone.
+- `node tests/browser/groupMapDraft.browser.mjs` in Chrome: draft, untick, create, undo, a viewer and a phone. It needs a local stack with no groups yet.
 - `node tests/browser/groupMap.browser.mjs` and `node tests/browser/groupMapBackup.browser.mjs` in Chrome against the same stack (see `tests/browser/README.md`). The second covers restore conflicts too: a skipped group, its skipped subgroup and link, a booking name already linked elsewhere, and a renamed group kept as it is.
 - `node --test tests/backupGroupMap.test.js` (part of `npm test`): the backup format, validation, restore preview and error handling, and the file contract for a scheduled job.
 - `node supabase/tests/group-map-base-schema.pglite.mjs` (in-process Postgres): the migration on a database with only the base setup, where `can_manage_bookings()` returns NULL for non-staff, still refuses them.
 
 ## Known limitations
+
+- Build automatically guesses only from the words in names. Review the guesses before you click Create.
+- The undo record for automatic builds is not in backups. After a database is rebuilt from a backup, the groups come back but their build can't be undone in one step.
 
 - Linking is by exact name. Two different real groups that typed exactly the same name can't be told apart. A per-booking override could be added later.
 - The Google Drive daily backup (version 1, an external Apps Script) does not include the Group Map, and that integration is **not done**: the script's source isn't in this repository, and its key can't read the Group Map yet. Only dashboard backups protect groups. What to provide, the access decision and the file contract are in [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md#the-group-map-in-the-daily-backup-not-done).

@@ -42,6 +42,8 @@ export default function GroupMapDetails({
   onOpenBooking,
   onShowContact,
   newGroupInputRef,
+  latestBuild,
+  onUndoBuild,
 }) {
   if (!group) {
     return (
@@ -54,6 +56,8 @@ export default function GroupMapDetails({
         api={api}
         onSelect={onSelect}
         newGroupInputRef={newGroupInputRef}
+        latestBuild={latestBuild}
+        onUndoBuild={onUndoBuild}
       />
     );
   }
@@ -75,7 +79,7 @@ export default function GroupMapDetails({
   );
 }
 
-function Overview({ index, canEdit, busy, unlinkedNames, act, api, onSelect, newGroupInputRef }) {
+function Overview({ index, canEdit, busy, unlinkedNames, act, api, onSelect, newGroupInputRef, latestBuild, onUndoBuild }) {
   const [name, setName] = useState("");
   const [parentId, setParentId] = useState("");
   const [filter, setFilter] = useState("");
@@ -103,15 +107,27 @@ function Overview({ index, canEdit, busy, unlinkedNames, act, api, onSelect, new
       <section className="gm-section">
         <h3>What this map shows</h3>
         <p>
-          Each box is a group. A line points from a parent organization to one of its subgroups, for example a
-          national organization → a region → a campus chapter. Subgroups keep their own bookings and contacts;
-          linking groups never combines or changes them.
+          Groups and the organizations they belong to, for example a national organization → a region → a
+          campus chapter. The List indents each subgroup under its parent; the Graph joins them with lines.
+          Subgroups keep their own bookings and contacts; linking groups never combines or changes them.
         </p>
         <p>
-          The number on a box counts that group's own bookings, not its subgroups'. A booking belongs to a group
-          when its organization name is one of the group's linked names. Select a group to see its details.
+          A group's booking count is its own bookings, not its subgroups'. A booking belongs to a group when its
+          organization name is one of the group's linked names. Select a group to see its details.
         </p>
       </section>
+
+      {canEdit && latestBuild && (
+        <section className="gm-section">
+          <h3>Automatic build</h3>
+          <p className="gm-muted">
+            {new Date(latestBuild.created_at).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}:{" "}
+            {plural(latestBuild.group_ids.length, "group")} created, {plural(latestBuild.links.length, "booking name")} linked.
+            Undo removes them again and keeps any group you've since given your own subgroups or names.
+          </p>
+          <button type="button" disabled={busy} onClick={() => onUndoBuild(latestBuild.id)}>Undo this build</button>
+        </section>
+      )}
 
       {canEdit && (
         <section className="gm-section">

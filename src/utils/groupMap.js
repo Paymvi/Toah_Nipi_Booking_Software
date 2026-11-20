@@ -9,12 +9,6 @@ import { isHostRecord } from "./bookingClassification.js";
   records are left out, like the rest of Contacts.
 */
 
-export const GROUP_NODE_WIDTH = 230;
-export const GROUP_NODE_HEIGHT = 60;
-const COLUMN_STEP = GROUP_NODE_WIDTH + 64;
-const ROW_STEP = GROUP_NODE_HEIGHT + 14;
-const FAMILY_GAP = 22;
-const SECTION_GAP = 70;
 
 // The bookings default when a form had no name; never a real group name.
 const PLACEHOLDER_NAMES = new Set(["", "unnamed organization"]);
@@ -151,84 +145,39 @@ export function searchGroups(index, query, limit = 12) {
 }
 
 /*
-  Left-to-right tree: parents on the left, subgroups to their right. Families
-  (groups with subgroups) are stacked first; groups with no parent and no
-  subgroups follow in a grid so hundreds of them stay compact. Positions only
-  depend on the data, the collapsed set and the focus, so exploring never
-  reshuffles the map.
+  The groups the Graph view draws, respecting collapsed branches and focus:
+  nodes (with how many subgroups each has), the parent → subgroup edges, and
+  an order with families first (parents before their subgroups), then groups
+  with no parent and no subgroups. The Graph's keyboard moves follow this order.
 */
 export function layoutGroupMap(index, { collapsed = new Set(), focusId = null } = {}) {
   const nodes = [];
   const edges = [];
   const order = [];
-  const labels = [];
-  let row = 0;
-  let extraY = 0;
 
-  const place = (group, depth) => {
+  const add = (group) => {
     const children = getChildren(index, group.id);
     const isCollapsed = children.length > 0 && collapsed.has(group.id);
-    const node = {
+    nodes.push({
       id: group.id,
       group,
-      depth,
-      x: depth * COLUMN_STEP,
-      y: 0,
       childCount: children.length,
       collapsed: isCollapsed,
       hiddenCount: isCollapsed ? getDescendantIds(index, group.id).length : 0,
-    };
-    nodes.push(node);
-    order.push(group.id);
-    if (!children.length || isCollapsed) {
-      node.y = row * ROW_STEP + extraY;
-      row += 1;
-      return node;
-    }
-    const placed = children.map((child) => {
-      const childNode = place(child, depth + 1);
-      edges.push({ from: group.id, to: child.id });
-      return childNode;
     });
-    node.y = (placed[0].y + placed[placed.length - 1].y) / 2;
-    return node;
+    order.push(group.id);
+    if (isCollapsed) return;
+    children.forEach((child) => {
+      edges.push({ from: group.id, to: child.id });
+      add(child);
+    });
   };
 
   const focused = focusId && index.byId.get(focusId);
-  const families = focused ? [focused] : index.roots.filter((group) => getChildren(index, group.id).length);
-  const singles = focused ? [] : index.roots.filter((group) => !getChildren(index, group.id).length);
-
-  if (families.length && singles.length) {
-    labels.push({ text: "Organizations and their subgroups", x: 0, y: -34 });
-  }
-  families.forEach((group) => {
-    place(group, 0);
-    extraY += FAMILY_GAP;
-  });
-
-  if (singles.length) {
-    const startY = families.length ? row * ROW_STEP + extraY + SECTION_GAP : 0;
-    const columns = Math.min(10, Math.max(3, Math.round(Math.sqrt((singles.length * ROW_STEP * 1.6) / COLUMN_STEP))));
-    labels.push({ text: "Groups with no parent or subgroups", x: 0, y: startY - 34 });
-    singles.forEach((group, i) => {
-      nodes.push({
-        id: group.id,
-        group,
-        depth: 0,
-        x: (i % columns) * COLUMN_STEP,
-        y: startY + Math.floor(i / columns) * ROW_STEP,
-        childCount: 0,
-        collapsed: false,
-        hiddenCount: 0,
-        single: true,
-      });
-      order.push(group.id);
-    });
-  }
-
-  const width = Math.max(0, ...nodes.map((node) => node.x + GROUP_NODE_WIDTH));
-  const height = Math.max(0, ...nodes.map((node) => node.y + GROUP_NODE_HEIGHT));
-  return { nodes, edges, order, labels, width, height };
+  const roots = focused ? [focused] : index.roots;
+  roots.filter((group) => getChildren(index, group.id).length).forEach(add);
+  roots.filter((group) => !getChildren(index, group.id).length).forEach(add);
+  return { nodes, edges, order };
 }
 
 // Visible rows of the outline: every top-level group A–Z, subgroups under it.

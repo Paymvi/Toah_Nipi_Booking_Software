@@ -43,11 +43,13 @@ async function readAll(client, table, columns) {
 }
 
 export async function loadGroupMap(client) {
-  const [groups, links] = await Promise.all([
+  const [groups, links, latestBuild] = await Promise.all([
     readAll(client, "organizations", "id, name, parent_id, version, updated_at"),
     readAll(client, "organization_name_links", "name, organization_id"),
+    // Only for its Undo button: the map works without it.
+    loadLatestGroupMapBuild(client).catch(() => null),
   ]);
-  return { groups, links };
+  return { groups, links, latestBuild };
 }
 
 async function call(client, name, args) {
@@ -74,3 +76,38 @@ export const linkGroupName = (client, name, groupId) =>
 
 export const unlinkGroupName = (client, name, groupId) =>
   call(client, "group_map_unlink_name", { p_name: name, p_organization_id: groupId });
+
+// "Build automatically" (supabase/migrations/20261119000200_group_map_build.sql).
+const BUILD_SETUP_MESSAGE =
+  "Building automatically needs one more database update: supabase/migrations/20261119000200_group_map_build.sql (docs/GROUP_MAP.md).";
+
+async function callBuild(client, name, args) {
+  try {
+    return await call(client, name, args);
+  } catch (error) {
+    if (error.setupNeeded) throw new GroupMapError(BUILD_SETUP_MESSAGE, { code: error.code, setupNeeded: true });
+    throw error;
+  }
+}
+
+// All or nothing; returns { buildId, groupsCreated, namesLinked }.
+export const applyGroupMapBuild = (client, { groups, links }) =>
+  callBuild(client, "group_map_apply_build", { p_groups: groups, p_links: links });
+
+// Returns { namesUnlinked, groupsDeleted, groupsKept: [names] }.
+export const undoGroupMapBuild = (client, buildId) =>
+  callBuild(client, "group_map_undo_build", { p_build_id: buildId });
+
+// The most recent automatic build, or null (also when that update isn't installed yet).
+export async function loadLatestGroupMapBuild(client) {
+  const { data, error } = await client
+    .from("group_map_builds")
+    .select("id, created_at, group_ids, links, undone_at")
+    .order("created_at", { ascending: false })
+    .limit(1);
+  if (error) {
+    if (isMissingTable(error)) return null;
+    throw toGroupMapError(error);
+  }
+  return data?.[0] ?? null;
+}
