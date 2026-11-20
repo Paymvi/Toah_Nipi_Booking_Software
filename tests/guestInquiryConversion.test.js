@@ -48,9 +48,11 @@ function fakeInquiryClient(rows, { failUpdatesRemaining = 0 } = {}) {
         select() { return builder; },
         update(values) { operation = "update"; payload = values; return builder; },
         eq(column, value) { filters.push([column, value]); return builder; },
+        is(column) { filters.push([column, null]); return builder; },
         maybeSingle() { builder.single = true; return builder; },
         then(resolve) {
-          const matching = [...table.values()].filter((row) => filters.every(([c, v]) => String(row[c]) === String(v)));
+          const matching = [...table.values()].filter((row) =>
+            filters.every(([c, v]) => (v === null ? row[c] == null : String(row[c]) === String(v))));
           if (operation === "update") {
             if (failures > 0) { failures -= 1; resolve({ data: null, error: new Error("network") }); return; }
             matching.forEach((row) => table.set(row.id, { ...row, ...payload }));
@@ -84,4 +86,11 @@ test("an inquiry converted to another booking is never relinked", async () => {
   const client = fakeInquiryClient([{ id: "gi-1", status: "converted", converted_booking_id: "b-9" }]);
   await assert.rejects(markGuestInquiryConvertedWithClient(client, "gi-1", "b-1"), /different booking/);
   assert.equal(client.table.get("gi-1").converted_booking_id, "b-9");
+});
+
+test("an inquiry whose booking was deleted can be linked to a new booking", async () => {
+  // Deleting the booking sets converted_booking_id to null (ON DELETE SET NULL).
+  const client = fakeInquiryClient([{ id: "gi-1", status: "converted", converted_booking_id: null }]);
+  await markGuestInquiryConvertedWithClient(client, "gi-1", "b-2");
+  assert.equal(client.table.get("gi-1").converted_booking_id, "b-2");
 });

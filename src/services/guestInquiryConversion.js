@@ -51,7 +51,10 @@ export async function markGuestInquiryConvertedWithClient(client, inquiryId, boo
     throw new Error("The website inquiry could not be found, or your account cannot see it.");
   }
 
-  if (current.status === "converted") {
+  // A converted inquiry with no link lost its booking to a delete; it may be linked again (INT-03).
+  const lostItsBooking = current.status === "converted" && !current.converted_booking_id;
+
+  if (current.status === "converted" && !lostItsBooking) {
     if (String(current.converted_booking_id || "") === String(bookingId)) {
       return current;
     }
@@ -61,7 +64,7 @@ export async function markGuestInquiryConvertedWithClient(client, inquiryId, boo
     );
   }
 
-  const { data, error } = await client
+  let update = client
     .from("guest_inquiries")
     .update({
       status: "converted",
@@ -70,8 +73,13 @@ export async function markGuestInquiryConvertedWithClient(client, inquiryId, boo
       reviewed_by: reviewedBy,
     })
     .eq("id", inquiryId)
-    .eq("status", current.status)
-    .select();
+    .eq("status", current.status);
+
+  if (lostItsBooking) {
+    update = update.is("converted_booking_id", null);
+  }
+
+  const { data, error } = await update.select();
 
   if (error) {
     throw error;

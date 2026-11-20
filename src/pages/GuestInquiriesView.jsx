@@ -108,11 +108,16 @@ function statusKey(inquiry) {
 }
 
 
+// Converted, but its booking was deleted (the link is cleared by the database).
+function lostItsBooking(inquiry) {
+  return statusKey(inquiry) === "converted" && !inquiry?.converted_booking_id;
+}
+
 function statusLabel(inquiry) {
   const key = statusKey(inquiry);
 
   if (key === "converted") {
-    return "Converted";
+    return lostItsBooking(inquiry) ? "Converted (booking deleted)" : "Converted";
   }
 
   if (key === "declined") {
@@ -1959,6 +1964,20 @@ function GuestInquiriesScreen({
                   >
                     <FaClipboardList />
                     Open Prefilled Booking Form
+                  </button>
+                </div>
+              )}
+
+              {lostItsBooking(selectedInquiry) && (
+                <div>
+                  <span>The booking made from this inquiry was deleted.</span>
+                  <button
+                    type="button"
+                    className="guest-request-primary-button"
+                    onClick={openBookingForm}
+                  >
+                    <FaClipboardList />
+                    Create a New Booking From It
                   </button>
                 </div>
               )}

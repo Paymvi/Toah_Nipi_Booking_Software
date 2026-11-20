@@ -60,14 +60,21 @@ export async function declineGuestInquiry(
         "id",
         inquiryId
       )
-      .select()
-      .single();
+      // Only while still pending, so a stale screen cannot decline a converted inquiry (INT-02).
+      .eq("status", "pending")
+      .select();
 
   if (error) {
     throw error;
   }
 
-  return data;
+  if (!Array.isArray(data) || data.length !== 1) {
+    throw new Error(
+      "This inquiry was not declined: it is no longer a new request (someone may have converted or declined it). Reload to see its current status."
+    );
+  }
+
+  return data[0];
 }
 
 

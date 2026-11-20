@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import {
   FaUsers,
@@ -1698,11 +1698,13 @@ function getGuestTotal(
     return "";
   }
 
-  return String(
+  const total =
     Number(adults || 0) +
     Number(childrenUnder3 || 0) +
-    Number(children3to17 || 0)
-  );
+    Number(children3to17 || 0);
+
+  // A breakdown adding up to 0 is "not given", so the estimated total is kept (INT-06).
+  return total > 0 ? String(total) : "";
 }
 
 
@@ -1898,6 +1900,23 @@ export default function CreateBooking({
   });
 
   const [startingFormState] = useState(() => JSON.stringify(formData));
+
+  /*
+    A new booking keeps one id until it saves (INT-01), so pressing Save
+    again after a lost response hits the existing row instead of adding a
+    copy. A website inquiry always gives the same id, so two tabs
+    converting it cannot both create a booking.
+  */
+  const newBookingIdRef = useRef("");
+  const getNewBookingId = () => {
+    if (!newBookingIdRef.current) {
+      newBookingIdRef.current =
+        initialInquiry?.sourceSheet === "Guest Web Form" && initialInquiry?.id
+          ? `web-inquiry-${initialInquiry.id}`
+          : window.crypto?.randomUUID?.() || String(Date.now());
+    }
+    return newBookingIdRef.current;
+  };
 
   const [wasSubmitted, setWasSubmitted] =
     useState(false);
@@ -2312,8 +2331,7 @@ export default function CreateBooking({
 
         id:
           existingBooking?.id ||
-          window.crypto?.randomUUID?.() ||
-          String(Date.now()),
+          getNewBookingId(),
 
         sourceType:
           existingBooking?.sourceType ||
@@ -2569,11 +2587,12 @@ export default function CreateBooking({
           );
       }
 
+      // Id only: the full record includes the guest portal token (INT-18).
       console.log(
         isEditMode
           ? "Updated guest group:"
           : "Saved guest group:",
-        savedBooking
+        savedBooking?.id
       );
 
 
@@ -2607,6 +2626,8 @@ export default function CreateBooking({
         savedBooking
       );
 
+      // The form resets for another booking, which needs its own id.
+      newBookingIdRef.current = "";
       setWasSubmitted(true);
 
       setFormData(
