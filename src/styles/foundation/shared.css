@@ -37,6 +37,7 @@
   --z-side-drawer-scrim: 1200; /* Season Reports drawer scrim */
   --z-side-drawer: 1201; /* Season Reports drawer */
   --z-full-overlay: 1300; /* Season Reports printable brief */
+  --z-group-map-full: 1300; /* Group Map full screen */
   --z-dialog-guest-request: 2500; /* Guest inquiry review dialog */
   --z-dropdown: 3000; /* Import dropdown menu */
   --z-dialog: 5000; /* Checklist and Dev Mode dialogs */

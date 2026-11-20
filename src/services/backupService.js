@@ -3,6 +3,7 @@ import {
   countLiveSignatures as countLiveSignaturesWithClient,
   fetchBackupSections as fetchSectionsWithClient,
   restoreBookingRows as restoreBookingRowsWithClient,
+  restoreGroupMapSection as restoreGroupMapSectionWithClient,
   restorePortalSnapshot as restorePortalSnapshotWithClient,
   restoreSupportingSections as restoreSupportingSectionsWithClient,
 } from "./backupData.js";
@@ -20,6 +21,10 @@ export function restoreBookingRows(bookings, liveIds, options = {}) {
 
 export function restoreSupportingSections(sections) {
   return restoreSupportingSectionsWithClient(sections, { client: supabase });
+}
+
+export function restoreGroupMapSection(sections) {
+  return restoreGroupMapSectionWithClient(sections, { client: supabase });
 }
 
 export function countLiveSignatures() {

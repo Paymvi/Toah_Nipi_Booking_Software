@@ -3061,6 +3061,7 @@ export default function Dashboard() {
           <ContactsView
             inquiryBookings={allBookingRecords}
             openBookingDetail={openBookingDetail}
+            canEditGroups={!isViewOnlyAccount}
           />
         ) : activeView === "Inquiry Pipeline" && !isDevMode ? (
           /*

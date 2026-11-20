@@ -24,14 +24,20 @@ import {
   countLiveSignatures,
   fetchBackupSections,
   restoreBookingRows,
+  restoreGroupMapSection,
   restorePortalSnapshot,
   restoreSupportingSections,
   SUPPORTING_SECTION_KEYS,
 } from "../services/backupService";
+import { loadGroupMap } from "../services/groupMap";
+import { supabase } from "../lib/supabaseClient";
 import {
   BACKUP_SECTIONS,
   createBackupEnvelope as createBackupFile,
+  describeGroupMapNote,
   getBackupSection,
+  hasGroupMapSection,
+  planGroupMapRestore,
   validateBackupShape,
   verifyBackupIntegrity,
 } from "../utils/backupFormat";
@@ -212,7 +218,7 @@ function BackupMetric({ label, value, helper, icon: Icon }) {
   );
 }
 
-function BackupNotice({ tone = "info", icon: Icon, title, children }) {
+function BackupNotice({ tone = "info", icon: Icon, title, children, details }) {
   return (
     <div className={`backup-notice backup-notice-${tone}`}>
       <span className="backup-notice-icon">
@@ -222,15 +228,66 @@ function BackupNotice({ tone = "info", icon: Icon, title, children }) {
       <div>
         <strong>{title}</strong>
         <p>{children}</p>
+        {details?.length > 0 && (
+          <ul className="backup-notice-details">
+            {details.map((detail, index) => (
+              <li key={`${detail}-${index}`}>{detail}</li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
 }
 
-function BackupDisclosure({ label, open, onToggle, children }) {
+// The current Group Map for the restore preview; never throws.
+async function readLiveGroupMap() {
+  try {
+    return await loadGroupMap(supabase);
+  } catch (error) {
+    return { error: error?.message || String(error), setupNeeded: Boolean(error?.setupNeeded) };
+  }
+}
+
+const groupCount = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
+
+// One sentence for the restore result.
+function describeGroupMapResult(result) {
+  if (!result) return "";
+  if (result.error) return ` Group Map: not restored (${result.error}). Current groups were not changed.`;
   return (
-    <details className="backup-disclosure" open={open} onToggle={onToggle}>
-      <summary>{label}</summary>
+    ` Group Map: ${groupCount(result.groupsInserted, "group")} and ${groupCount(result.linksInserted, "linked name")} added, ` +
+    `${result.groupsAlreadyPresent + result.linksAlreadyPresent} already here and left as they are` +
+    (result.groupsSkipped + result.linksSkipped + result.groupsKeptCurrent + result.linksKeptCurrent > 0
+      ? `, ${result.groupsSkipped + result.linksSkipped} not added and ${result.groupsKeptCurrent + result.linksKeptCurrent} kept in their current form (listed below).`
+      : ".") +
+    " No current group or link was changed or deleted."
+  );
+}
+
+/*
+  The open state is set on the click itself. The browser's toggle event
+  arrives later, and if the view switches first (Minimal to Detailed) it lands
+  on a removed element, so relying on it alone lost the open state. onToggle
+  still follows openings the browser makes itself, such as find in page.
+*/
+function BackupDisclosure({ label, open, onOpenChange, children }) {
+  return (
+    <details
+      className="backup-disclosure"
+      open={open}
+      onToggle={(event) => {
+        if (event.currentTarget.open !== open) onOpenChange(event.currentTarget.open);
+      }}
+    >
+      <summary
+        onClick={(event) => {
+          event.preventDefault();
+          onOpenChange(!open);
+        }}
+      >
+        {label}
+      </summary>
       <div className="backup-disclosure-body">{children}</div>
     </details>
   );
@@ -252,6 +309,8 @@ export default function DashboardBackups({
   const [openDisclosures, setOpenDisclosures] = useState({});
 
   const [liveBookings, setLiveBookings] = useState([]);
+  // { groups, links } once read; { error, setupNeeded } if it can't be.
+  const [liveGroupMap, setLiveGroupMap] = useState(null);
   const [isLoadingLiveData, setIsLoadingLiveData] = useState(true);
   const [liveDataError, setLiveDataError] = useState("");
 
@@ -338,6 +397,17 @@ export default function DashboardBackups({
     };
   }, [backupBookings, backupValidation?.valid, liveBookings, selectedBackup]);
 
+  // What the backup's Group Map would add, compared with the current one.
+  const groupMapPlan = useMemo(() => {
+    if (!selectedBackup || !backupValidation?.valid || !hasGroupMapSection(selectedBackup)) return null;
+    if (!liveGroupMap || liveGroupMap.error) return null;
+    return planGroupMapRestore(
+      getBackupSection(selectedBackup, "organizations"),
+      getBackupSection(selectedBackup, "organizationNameLinks"),
+      liveGroupMap
+    );
+  }, [selectedBackup, backupValidation?.valid, liveGroupMap]);
+
     const canRestore =
     accountCanRestore &&
     Boolean(selectedBackup) &&
@@ -355,6 +425,7 @@ export default function DashboardBackups({
 
   // On mount the page already starts loading with no error, so only the fetch runs.
   const fetchLiveDatabaseSummary = async () => {
+    readLiveGroupMap().then(setLiveGroupMap);
     try {
       const bookings = await fetchBookings();
       setLiveBookings(Array.isArray(bookings) ? bookings : []);
@@ -399,7 +470,8 @@ export default function DashboardBackups({
         message:
           `${bookings.length} bookings, ${backup.summary.guestInquiryCount} website inquiries, ` +
           `${backup.summary.portalChecklistItemCount} portal tasks, ${backup.summary.portalDocumentCount} portal documents, ` +
-          `${backup.summary.bookingChangeLogCount} booking change history entries ` +
+          `${backup.summary.bookingChangeLogCount} booking change history entries, ` +
+          `${backup.summary.organizationCount} Group Map groups with ${backup.summary.organizationNameLinkCount} linked names ` +
           `and a list of ${backup.summary.storageManifestCount} uploaded files were saved. ` +
           "The uploaded files themselves are not copied into the backup. " +
           (missingSections.length
@@ -720,6 +792,27 @@ export default function DashboardBackups({
         setLiveBookings(liveAfterRestore);
       }
 
+      /*
+        Group Map last, once bookings are verified: it never depends on them
+        (groups find bookings by name), so a failure here can't need a booking
+        rollback, and a rollback never has groups to undo. It runs in one
+        database transaction and only adds; it is the same in both modes.
+      */
+      let groupMapResult = null;
+      if (hasGroupMapSection(selectedBackup)) {
+        setRestoreProgress({
+          current: bookingsToRestore.length,
+          total: bookingsToRestore.length,
+          label: "Restoring the Group Map…",
+        });
+        try {
+          groupMapResult = await restoreGroupMapSection(selectedBackup.payload);
+        } catch (error) {
+          groupMapResult = { error: error?.message || String(error) };
+        }
+        readLiveGroupMap().then(setLiveGroupMap);
+      }
+
       setRestoreProgress({
         current: bookingsToRestore.length,
         total: bookingsToRestore.length,
@@ -752,9 +845,16 @@ export default function DashboardBackups({
       const supportingFailed = supportingResults
         ? Object.values(supportingResults).some((result) => result.error)
         : false;
+      const groupMapNeedsAttention = Boolean(
+        groupMapResult && (groupMapResult.error || groupMapResult.groupsSkipped + groupMapResult.linksSkipped > 0)
+      );
+      const groupMapSummary = hasGroupMapSection(selectedBackup)
+        ? describeGroupMapResult(groupMapResult)
+        : " This backup was made before the Group Map was backed up, so the current groups and links were left exactly as they are.";
 
       setRestoreResult({
-        tone: supportingFailed ? "warning" : "success",
+        tone: supportingFailed || groupMapNeedsAttention ? "warning" : "success",
+        details: (groupMapResult?.notes || []).map(describeGroupMapNote),
         title: restoreMode === "replace" ? "Backup restored" : "Backup merged",
         message:
           (restoreMode === "replace"
@@ -766,6 +866,7 @@ export default function DashboardBackups({
               } merged into the live database and verified. Records that existed only in the current database were left untouched.`) +
           portalSummary +
           supportingSummary +
+          groupMapSummary +
           " Uploaded files are never restored by this page.",
       });
 
@@ -832,10 +933,7 @@ export default function DashboardBackups({
 
   const disclosureProps = (key) => ({
     open: Boolean(openDisclosures[key]),
-    onToggle: (event) => {
-      const { open } = event.currentTarget;
-      setOpenDisclosures((current) => ({ ...current, [key]: open }));
-    },
+    onOpenChange: (open) => setOpenDisclosures((current) => ({ ...current, [key]: open })),
   });
 
   const progressPercent = restoreProgress.total
@@ -870,6 +968,7 @@ export default function DashboardBackups({
           <span><FaCheckCircle /> Booking IDs, portal link tokens and creation dates</span>
           <span><FaCheckCircle /> Website inquiries</span>
           <span><FaCheckCircle /> Portal tasks and portal documents</span>
+          <span><FaCheckCircle /> Group Map groups, their parent organizations and linked booking names</span>
           <span><FaCheckCircle /> A list of uploaded files (names and locations only, not the files)</span>
         </div>
       </div>
@@ -1112,6 +1211,7 @@ export default function DashboardBackups({
           tone={restoreResult.tone}
           icon={restoreResult.tone === "success" ? FaCheckCircle : FaExclamationTriangle}
           title={restoreResult.title}
+          details={restoreResult.details}
         >
           {restoreResult.message}
         </BackupNotice>
@@ -1408,6 +1508,86 @@ export default function DashboardBackups({
                   </div>
                 )}
 
+                {backupValidation?.valid && !hasGroupMapSection(selectedBackup) && (
+                  <div className="backup-comparison-card" data-backup-group-map="older">
+                    <div className="backup-subheading-row">
+                      <div>
+                        <strong>Group Map</strong>
+                        <span>Not in this backup (version {selectedBackup.schemaVersion})</span>
+                      </div>
+                    </div>
+                    <p>
+                      This backup was made before the Group Map was backed up. Restoring it, in Merge or Full Replace,
+                      leaves every current group, parent and linked name exactly as it is.
+                    </p>
+                  </div>
+                )}
+
+                {backupValidation?.valid && hasGroupMapSection(selectedBackup) && (
+                  <div className="backup-comparison-card" data-backup-group-map="compare">
+                    <div className="backup-subheading-row">
+                      <div>
+                        <strong>Group Map</strong>
+                        <span>
+                          {groupCount(getBackupSection(selectedBackup, "organizations").length, "group")} and{" "}
+                          {groupCount(getBackupSection(selectedBackup, "organizationNameLinks").length, "linked name")} in this backup
+                        </span>
+                      </div>
+                    </div>
+                    {liveGroupMap?.setupNeeded ? (
+                      <p>
+                        This database doesn't have the Group Map yet, so its groups won't be restored. Bookings and the
+                        rest of the backup restore as usual.
+                      </p>
+                    ) : liveGroupMap?.error ? (
+                      <p>
+                        The current Group Map couldn't be read to compare ({liveGroupMap.error}). The restore still
+                        checks every group and only adds what is missing.
+                      </p>
+                    ) : !groupMapPlan ? (
+                      <p>Comparing with the current Group Map…</p>
+                    ) : (
+                      <>
+                        <div className="backup-comparison-grid">
+                          <div className="backup-comparison-new">
+                            <small>Groups to add</small>
+                            <strong>{groupMapPlan.groupsInserted}</strong>
+                          </div>
+                          <div className="backup-comparison-new">
+                            <small>Linked names to add</small>
+                            <strong>{groupMapPlan.linksInserted}</strong>
+                          </div>
+                          <div className="backup-comparison-match">
+                            <small>Already here, left as they are</small>
+                            <strong>{groupMapPlan.groupsAlreadyPresent + groupMapPlan.linksAlreadyPresent}</strong>
+                          </div>
+                        </div>
+                        <p>
+                          The Group Map is only added to, in Merge and in Full Replace alike: groups and linked names
+                          that are missing come back, and every current group, parent and link stays as it is now.
+                          Nothing current is changed or deleted, and groups are never merged by name.
+                        </p>
+                        <p>
+                          <strong>Edits made since this backup are not undone.</strong> A group renamed, moved or given
+                          another booking name since then keeps its current form. (Bookings are different: Merge
+                          overwrites a matching booking with the backup's copy.)
+                        </p>
+                        {groupMapPlan.notes.length > 0 && (
+                          <div className="backup-validation-list backup-validation-list-warning">
+                            <strong>Will not be added or will stay as they are now</strong>
+                            <ul>
+                              {groupMapPlan.notes.slice(0, 20).map((note, index) => (
+                                <li key={`${note.kind}-${note.name}-${index}`}>{describeGroupMapNote(note)}</li>
+                              ))}
+                              {groupMapPlan.notes.length > 20 && <li>…and {groupMapPlan.notes.length - 20} more.</li>}
+                            </ul>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
                 {backupValidation?.valid && (
                   <div className="backup-restore-options">
                     <div className="backup-subheading-row">
@@ -1507,7 +1687,9 @@ export default function DashboardBackups({
                               token. A safety backup of everything is downloaded before
                               deletion, and an automatic rollback is attempted if the restore
                               fails. Only administrator accounts can delete bookings; Dev Mode
-                              does not change that.
+                              does not change that. The Group Map is not replaced: no group or
+                              linked name is deleted or reverted, and only missing ones are
+                              added, the same as in Merge.
                             </p>
                           </div>
                         </div>

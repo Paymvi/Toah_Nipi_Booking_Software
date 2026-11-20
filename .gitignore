@@ -28,3 +28,4 @@ dist-ssr
 documents/
 # Security audit: lists weaknesses and deploy gaps; the repo is public
 docs/audit/SECURITY_AUDIT_*.md
+/QUESTIONNAIRE_GUIDE.md

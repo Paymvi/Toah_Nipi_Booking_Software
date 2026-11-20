@@ -45,6 +45,23 @@ test("existing version 1 backups (Apps Script format) still validate and verify"
   assert.equal((await verifyBackupIntegrity(backup, sha)).ok, false);
 });
 
+// A version 4 file exactly as the app wrote it before the Group Map was backed up.
+async function versionFourFile(sections) {
+  const payload = {
+    bookings: sections.bookings, guestInquiries: sections.guestInquiries,
+    portalChecklistItems: sections.portalChecklistItems, portalDocuments: sections.portalDocuments,
+    portalSignatures: sections.portalSignatures, bookingChangeLog: sections.bookingChangeLog,
+    storageManifest: sections.storageManifest,
+  };
+  return {
+    format: "toah-nipi-booking-backup",
+    schemaVersion: 4,
+    summary: { portalSignatureCount: payload.portalSignatures.length, bookingChangeLogCount: payload.bookingChangeLog.length },
+    integrity: { algorithm: "SHA-256", checksum: await sha(JSON.stringify(payload)) },
+    payload,
+  };
+}
+
 test("version 4 backups cover every section and detect tampering in any of them", async () => {
   const sections = {
     bookings: [{ id: "b1", portalToken: "tok1", createdAt: "2026-01-01T00:00:00+00:00" }],
@@ -55,7 +72,7 @@ test("version 4 backups cover every section and detect tampering in any of them"
     bookingChangeLog: [{ id: 7, booking_id: "b1", field: "meals", changed_at: "2026-10-27T10:00:00+00:00", new_value: "3" }],
     storageManifest: [{ path: "tok1/contract.pdf" }],
   };
-  const backup = await createBackupEnvelope(sections, { hash: sha, createdAt: "2026-10-28T00:00:00.000Z" });
+  const backup = await versionFourFile(sections);
   assert.equal(backup.schemaVersion, 4);
   assert.equal(backup.summary.portalSignatureCount, 1);
   assert.equal(backup.summary.bookingChangeLogCount, 1);
@@ -65,11 +82,11 @@ test("version 4 backups cover every section and detect tampering in any of them"
   backup.payload.portalChecklistItems[0].status = "completed";
   assert.equal((await verifyBackupIntegrity(backup, sha)).ok, false);
 
-  const signed = await createBackupEnvelope(sections, { hash: sha });
+  const signed = await versionFourFile(structuredClone(sections));
   signed.payload.portalSignatures[0].signer_name = "Someone Else";
   assert.equal((await verifyBackupIntegrity(signed, sha)).ok, false);
 
-  const history = await createBackupEnvelope(sections, { hash: sha });
+  const history = await versionFourFile(structuredClone(sections));
   history.payload.bookingChangeLog[0].new_value = "9";
   assert.equal((await verifyBackupIntegrity(history, sha)).ok, false);
 });
@@ -128,11 +145,16 @@ test("the file manifest lists locations only and keeps relationships", () => {
   refuseUpdates lists tables whose updates match zero rows without an
   error, as row-level security does for a write it does not allow.
 */
-function fakeClient(tables, { refuseUpdates = [] } = {}) {
+function fakeClient(tables, { refuseUpdates = [], rpc } = {}) {
   const calls = [];
   return {
     tables,
     calls,
+    // Database functions: none exist unless the test provides them (like a database without the Group Map).
+    async rpc(name, args) {
+      calls.push({ rpc: name, args });
+      return rpc ? rpc(name, args) : { data: null, error: { code: "PGRST202", message: `no function ${name}` } };
+    },
     from(table) {
       const rows = tables[table] || (tables[table] = []);
       let op = "select";

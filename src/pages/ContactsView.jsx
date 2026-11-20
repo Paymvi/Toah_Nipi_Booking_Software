@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { isHostRecord } from "../utils/bookingClassification";
 import {
@@ -16,6 +16,18 @@ import { getBookingInquiryDateValue } from "../utils/dateUtils";
 import { copyTextToClipboard } from "../utils/clipboard";
 
 const CONTACTS_PREFERENCES_UPLOADED_KEY = "toahNipiContactPreferencesUploaded";
+const CONTACTS_MODE_STORAGE_KEY = "toahNipiContactsMode";
+
+// Loaded only when someone opens the Group Map.
+const GroupMap = lazy(() => import("../components/groupMap/GroupMap"));
+
+function getSavedContactsMode() {
+  try {
+    return localStorage.getItem(CONTACTS_MODE_STORAGE_KEY) === "groups" ? "groups" : "contacts";
+  } catch {
+    return "contacts";
+  }
+}
 
 import {
   FaRegStar,
@@ -873,7 +885,7 @@ function getContactSearchText(contact) {
 }
 
 
-function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
+function ContactsViewContent({ inquiryBookings, openBookingDetail, canEditGroups }) {
   const contacts = useMemo(
     () => getContactsFromBookings(inquiryBookings),
     [inquiryBookings]
@@ -978,6 +990,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
   const [copiedContactCell, setCopiedContactCell] = useState("");
   const [contactSearch, setContactSearch] = useState("");
   const [expandedContactId, setExpandedContactId] = useState(null);
+  const [contactsMode, setContactsMode] = useState(getSavedContactsMode);
 
 
     useEffect(() => {
@@ -1280,8 +1293,58 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
   }
 
 
+  const chooseContactsMode = (nextMode) => {
+    setContactsMode(nextMode);
+    try {
+      localStorage.setItem(CONTACTS_MODE_STORAGE_KEY, nextMode);
+    } catch {
+      // Still switches for this visit.
+    }
+  };
+
+  // data-tutorial-ui: during a tutorial the click guard must let this through.
+  const modeSwitch = (
+    <div className="season-layout-bar contacts-mode-bar" role="group" aria-label="Contacts or Group Map" data-tutorial-ui>
+      <div className="season-segment">
+        <button
+          type="button"
+          aria-pressed={contactsMode === "contacts"}
+          onClick={() => chooseContactsMode("contacts")}
+          data-tutorial-target="contacts-mode-list"
+        >
+          Contacts
+        </button>
+        <button type="button" aria-pressed={contactsMode === "groups"} onClick={() => chooseContactsMode("groups")}>
+          Group Map
+        </button>
+      </div>
+    </div>
+  );
+
+  if (contactsMode === "groups") {
+    return (
+      <section className="contacts-view-page">
+        {modeSwitch}
+        <Suspense fallback={<p className="gm-muted" role="status">Loading the Group Map…</p>}>
+          <GroupMap
+            bookings={inquiryBookings}
+            contacts={visibleContacts}
+            canEdit={canEditGroups}
+            onOpenBooking={(booking) => openBookingDetail?.(booking, "Contacts View")}
+            onShowContact={(contact) => {
+              setContactSearch(contact.email || contact.phone || contact.contactName);
+              setExpandedContactId(contact.id);
+              chooseContactsMode("contacts");
+            }}
+          />
+        </Suspense>
+      </section>
+    );
+  }
+
   return (
     <section className="contacts-view-page">
+      {modeSwitch}
       <article className="dashboard-card contacts-view-card">
         <div className="contacts-view-header">
           <div className="dashboard-heading-with-icon">
@@ -1744,6 +1807,7 @@ function ContactsViewContent({ inquiryBookings, openBookingDetail }) {
 export default function ContactsView({
   inquiryBookings = [],
   openBookingDetail,
+  canEditGroups = true,
 }) {
   const [shouldRenderContacts, setShouldRenderContacts] = useState(false);
 
@@ -1786,6 +1850,7 @@ export default function ContactsView({
     <ContactsViewContent
       inquiryBookings={inquiryBookings}
       openBookingDetail={openBookingDetail}
+      canEditGroups={canEditGroups}
     />
   );
 }

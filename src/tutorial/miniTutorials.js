@@ -129,12 +129,14 @@ export const MINI_TUTORIALS = [
         id: "open-contacts",
         target: "nav-contacts",
         show: "Contacts are built automatically from every booking.",
-        done: (ctx) => ctx.visible("contacts-search"),
+        done: (ctx) => ctx.visible("contacts-search") || ctx.visible("contacts-mode-list"),
         demoClick: true,
       },
       {
         id: "search",
         target: "contacts-search",
+        // Contacts may have been left on the Group Map.
+        opens: [{ click: "contacts-mode-list", until: (ctx) => ctx.visible("contacts-search") }],
         show: "Search by a person's name to find them. Groups, addresses, emails, phone numbers and status work too.",
         example: "Jordan Smith",
       },

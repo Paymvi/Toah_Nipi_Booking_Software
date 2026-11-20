@@ -149,6 +149,7 @@ export const TUTORIAL_TARGETS = {
   "lodging-agenda-title": "building name above the list",
 
   "contacts-search": "contact search box",
+  "contacts-mode-list": "Contacts side of the Contacts / Group Map switch",
   "contacts-sort": "First Name / Last Name sort",
   "contacts-view-bookings": "View Bookings button",
   "contacts-history": "booking history",

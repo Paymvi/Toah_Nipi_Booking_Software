@@ -35,7 +35,7 @@ Every backup is a JSON envelope:
 
 ```text
 format: "toah-nipi-booking-backup"
-schemaVersion: 1, 2, 3 or 4
+schemaVersion: 1, 2, 3, 4 or 5
 ```
 
 | Version | Written by | Contents |
@@ -43,9 +43,10 @@ schemaVersion: 1, 2, 3 or 4
 | 1 | The Google Apps Script daily backup (as documented for that external project); older dashboard backups | Bookings only |
 | 2 | Earlier dashboard versions | Bookings, website inquiries, portal tasks, portal documents, and a list of uploaded files (names and locations only) |
 | 3 | Earlier dashboard versions | Everything in version 2, plus read-only online signing records |
-| 4 | The dashboard today | Everything in version 3, plus the booking change history the staff app shows (`booking_change_log`) |
+| 4 | Earlier dashboard versions | Everything in version 3, plus the booking change history the staff app shows (`booking_change_log`) |
+| 5 | The dashboard today | Everything in version 4, plus the Group Map: groups with their parent (`organizations`) and linked booking names (`organization_name_links`) |
 
-The dashboard writes version 4 and can read versions 1, 2, 3 and 4 (`CURRENT_BACKUP_SCHEMA_VERSION` and `SUPPORTED_BACKUP_SCHEMA_VERSIONS` in [src/utils/backupFormat.js](../src/utils/backupFormat.js)).
+The dashboard writes version 5 and can read versions 1 to 5 (`CURRENT_BACKUP_SCHEMA_VERSION` and `SUPPORTED_BACKUP_SCHEMA_VERSIONS` in [src/utils/backupFormat.js](../src/utils/backupFormat.js)).
 
 The envelope metadata includes the creation time, backup reason, application name, record counts, SHA-256 integrity information and the data itself.
 
@@ -86,6 +87,8 @@ Before a backup can be restored, the screen checks:
 - Booking array structure
 - Missing booking IDs
 - Duplicate booking IDs
+- Version 5: the Group Map section holds together. Every parent and every linked group must be in the file, with no loops, no duplicate groups or linked names, no two groups with the same name under one parent, and valid ids and names. A file that fails is refused before anything changes; the database checks the same rules again when restoring.
+- Version 5: the list of sections the file says it contains (`coverage.sections`). Any section it leaves out, or a missing list, is named as a warning, so a partial file is never taken for a complete backup.
 
 Backup files larger than 25 MB are refused.
 
@@ -110,6 +113,8 @@ Merge upserts the backup's records into the live database.
 - A booking that was deleted after the backup can be re-inserted. A re-inserted booking keeps its original `portal_token` and `created_at` when the backup has them (version 2 and 3 backups always do; version 1 backups have the token only if the backup writer included it). See `bookingToDbRow` in [src/services/bookingMapping.js](../src/services/bookingMapping.js).
 - Version 2 and 3 backups also restore missing website inquiries, portal tasks and portal documents.
 - Version 4 backups also restore missing booking change history. Only administrators can restore it (`staff_app_restore_change_log`); a row already present is skipped, so restoring the same file twice adds nothing.
+
+- Version 5 backups also restore the Group Map; see [The Group Map in backups](#the-group-map-in-backups).
 
 Merge is not a field-by-field conflict merge. Review the comparison carefully before running it.
 
@@ -138,6 +143,27 @@ What Replace does to portal data:
 - Uploaded files are never restored; backups list only where they are. Files in Storage are not deleted by Replace, but rows that pointed at them may be gone.
 - Booking change history is **kept**: it is not linked to the booking row (migration `20261117000100_booking_change_log_keep_history.sql`), and restored bookings keep their ids, so their history lines up again. Deleting and re-inserting the same bookings records no new changes. Before that migration runs, Replace erases all change history.
 - Replace clears `converted_booking_id` on converted website inquiries (that foreign key is set to null on delete) unless the backup restores them.
+- The Group Map is **not** deleted. Groups find their bookings by name, not through a link to the booking row, so deleting bookings leaves every group and linked name in place. A version 5 backup then adds back any groups and links that are missing, exactly as Merge does. The pre-restore safety snapshot includes the current Group Map.
+
+### The Group Map in backups
+
+Version 5 backups contain every group (id, name, parent, version and timestamps) and every linked booking name. Both are read in one database statement (`group_map_export`), so a group edited during the backup can't leave a link pointing at a group the file lacks.
+
+**Restoring the Group Map is additive, in Merge and in Full Replace alike.** It only adds what is missing. It keeps every current group, parent and linked name, and it does **not** undo edits made since the backup: a group renamed, moved or given another booking name after the backup keeps its current form. This is the opposite of bookings, where Merge overwrites a matching booking with the backup's copy. To go back to an older group structure, change the groups on the Group Map by hand, using the backup's preview as the list of differences.
+
+It runs last, after the bookings have been restored and verified, in one database transaction (`group_map_restore`, admin and staff accounts):
+
+- **Only missing groups and links are added**, with their original ids, parents and timestamps. Parents are added before their subgroups.
+- **Current groups and links always win.** A group that still exists keeps its current name and parent, and a booking name already linked stays with its current group. Nothing current is ever changed or deleted, so groups made or edited after the backup are never lost.
+- **Clashes are skipped and listed, never merged.** If a current group under the same parent already has a backed-up group's name (ignoring case), the backed-up group isn't added, so there are no duplicates and nothing is combined by name. Its subgroups and linked names are then skipped too, because their group wasn't restored.
+- **Nothing half-restored.** If the file's Group Map doesn't hold together, or someone creates a clashing group at the same moment, the whole Group Map section is refused and nothing in it changes. Bookings and the other sections are reported separately as before.
+- **Restoring the same file twice adds nothing.**
+
+Before restoring, the preview's **Group Map** card shows how many groups and linked names will be added, how many are already here, and lists every one that will be skipped or kept as it is now. Afterwards the result lists the same.
+
+**Older backups (versions 1 to 4) contain no Group Map.** Restoring one, in either mode, leaves the current groups, parents and linked names exactly as they are: nothing is added, changed or removed. The preview's Group Map card says so for these files, and the result repeats it.
+
+The database's Group Map can only be restored once its migration (`20261119000100_group_map.sql`) has run. Without it, the backup files contain no groups, and restoring a version 5 file reports that the Group Map couldn't be restored while the rest restores as usual.
 
 > **Prefer Merge, which never deletes bookings. Never use Full Replace from a version 1 file on data that has portal activity.**
 
@@ -212,6 +238,30 @@ The job refuses to save a backup if:
 
 The zero-record check is deliberate: if database access breaks, the job should fail rather than save an empty snapshot that looks successful.
 
+### The Group Map in the daily backup (not done)
+
+The daily backup **does not include the Group Map yet**, and it can't be added from this repository: the script's source isn't here. Only dashboard backups (version 5) protect groups today.
+
+**What to provide.** Export the Apps Script project (script.google.com → the project → Download project, or `clasp pull`). That gives every `.gs` file, including the ones defining `createDailyBookingBackup()`, `runRetentionMaintenance()` and the script's copy of `dbRowToBooking()`, plus `appsscript.json`. Script Properties (the Supabase URL and secret key) aren't part of the export; don't send them.
+
+**One decision first.** The script's secret key acts as the `service_role` database role. On the local stack, which copies live grants, that role can read `bookings` but is refused for both `group_map_export()` and the `organizations` table (checked 2026-11-19). Choose one:
+
+- **Allow `service_role` to call `group_map_export()` (recommended).** One consistent read, and the function returns only group names, parents and linked names.
+- **Grant `service_role` read access to `organizations` and `organization_name_links`.** That takes two reads, and the script would have to check that every link's group is present.
+
+Either way it's a deliberate widening of live's restricted `service_role` access, so it's your call.
+
+**The contract an updated script must meet** (fixture: `tests/backupGroupMap.test.js`, "a scheduled bookings + Group Map file"):
+
+- Write a version 5 envelope. `payload` has every version 5 key in this order: `bookings, guestInquiries, portalChecklistItems, portalDocuments, portalSignatures, bookingChangeLog, organizations, organizationNameLinks, storageManifest`. Sections the job doesn't read are empty arrays.
+- The checksum is SHA-256 of `JSON.stringify(payload)` with keys in exactly that order.
+- `coverage.sections` lists only what the job really read: `["bookings", "organizations", "organizationNameLinks"]`. The restore screen then says plainly which sections the file leaves out, instead of treating it as complete.
+- `organizations` rows are `{ id, name, parent_id, version, created_at, updated_at }` and links are `{ name, organization_id, linked_at }`, as `group_map_export()` returns them.
+- **Never fall back to bookings-only.** If the Group Map read fails, returns something that isn't two arrays, or has a link whose group isn't in the file, the job must fail the run and save nothing. The one exception is when the Group Map migration hasn't been installed yet: the function or table is missing, so there are no groups to lose, and the job may keep writing version 1 then.
+- Keep every existing check: no empty booking set, no missing or duplicate booking ids, a non-empty file, and the same file name pattern for retention. Zero groups is valid.
+- Test against fixtures before turning it on: the app must validate and verify the file (Restore screen, Detailed view).
+
+
 ---
 
 ## Automatic backup retention
@@ -278,13 +328,14 @@ Restrict access to the Apps Script project and the Drive backup folders to the a
 
 The custom JSON backups are **not** a complete backup of the Supabase project.
 
-| Data | Dashboard backup (version 4) | Google Drive daily backup (version 1) |
+| Data | Dashboard backup (version 5) | Google Drive daily backup (version 1) |
 |---|---|---|
 | Bookings | Yes | Yes |
 | Website inquiries (`guest_inquiries`) | Yes | No |
 | Portal tasks and portal documents | Yes | No |
 | Online signing records (`portal_signatures`) | Yes | No |
-| Booking change history (`booking_change_log`) | Yes (version 4) | No |
+| Booking change history (`booking_change_log`) | Yes (version 4 and later) | No |
+| Group Map groups and linked names (`organizations`, `organization_name_links`) | Yes (version 5) | No |
 | Uploaded files in `portal-uploads` and `portal-signed` | File list only, not the files | No |
 | Staff directory, staff profiles, Auth users | No | No |
 | Guest email settings, recipients and history | No | No |

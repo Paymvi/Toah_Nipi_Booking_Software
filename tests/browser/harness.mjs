@@ -49,9 +49,19 @@ export async function launch({ width = 1440, height = 900, reducedMotion = "no-p
   return { browser, context, page, errors, requests };
 }
 
+/*
+  A freshly started Vite dev server compiles the whole app on its first
+  request: about 25 s measured on 2026-11-19, against 1.5 s once warm, which
+  overran the 20 s default and failed the first suite after every server
+  start. Only the first page load of a run gets the longer wait.
+*/
+const COLD_DEV_SERVER_MS = 90000;
+let firstLoad = true;
+
 export async function open(session, path) {
   await session.page.goto(APP + path);
-  await session.page.waitForSelector(".tg-launcher");
+  await session.page.waitForSelector(".tg-launcher", firstLoad ? { timeout: COLD_DEV_SERVER_MS } : undefined);
+  firstLoad = false;
   await sleep(700);
 }
 

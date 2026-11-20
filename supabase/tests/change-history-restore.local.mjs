@@ -164,8 +164,8 @@ await check("an office save records history for the test bookings", async () => 
 
 const backup = await backupWith(admin.client);
 
-await check("a backup holds the booking change history (version 4)", async () => {
-  assert.equal(backup.schemaVersion, 4);
+await check("a backup holds the booking change history (version 4 and later)", async () => {
+  assert.ok(backup.schemaVersion >= 4, `version ${backup.schemaVersion}`);
   assert.deepEqual(backup.coverage.sectionErrors, {});
   const mine = backup.payload.bookingChangeLog.filter((row) => row.booking_id === ids.kept);
   assert.deepEqual(mine.map((row) => row.id), original.map((row) => row.id));

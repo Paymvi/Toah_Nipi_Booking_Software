@@ -6,6 +6,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createBackupEnvelope } from "../../src/utils/backupFormat.js";
 import { APP, ctl, launch, open, writes } from "./harness.mjs";
+// The booking comparison; a version 5 backup also shows a Group Map card with the same layout.
+const BOOKING_COMPARISON = ".backup-comparison-card:not([data-backup-group-map]) .backup-comparison-grid";
 
 const PHRASE = "REPLACE AND RISK PORTAL DATA";
 const VIEW_KEY = "toahNipiBackupsView";
@@ -39,7 +41,7 @@ async function readPreview(page) {
     file: await page.locator(".backup-selected-file-bar strong").innerText(),
     created: await fieldOf(page, "Created"),
     records: await fieldOf(page, "Records"),
-    comparison: await page.locator(".backup-comparison-grid").innerText(),
+    comparison: await page.locator(BOOKING_COMPARISON).innerText(),
     mode: await page.locator('input[name="backupRestoreMode"]:checked').inputValue(),
   };
 }
@@ -89,9 +91,25 @@ await page.keyboard.press("Enter");
 await page.waitForSelector(".backup-disclosure[open] .backup-coverage-card");
 await included.locator("summary").click();
 
+// Switching views before the browser's toggle event arrives still keeps it open.
+// (That order used to lose the open state; it happened under load.)
+assert.equal(await page.evaluate(async () => {
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const viewButton = (name) => [...document.querySelectorAll('[aria-label="Page view"] button')].find((button) => button.textContent.trim() === name);
+  const section = () => [...document.querySelectorAll(".backup-disclosure")].find((element) => element.textContent.includes("What's included"));
+  section().querySelector("summary").click();
+  viewButton("Detailed").click();
+  await wait(200);
+  viewButton("Minimal").click();
+  await wait(200);
+  return section().open;
+}), true);
+await included.locator("summary").click();
+await page.waitForFunction(() => ![...document.querySelectorAll(".backup-disclosure[open]")].some((element) => element.textContent.includes("What's included")));
+
 // A valid file keeps everything needed in Minimal, and toggling keeps the preview.
 await choose(page, validFile);
-await page.waitForSelector(".backup-comparison-grid");
+await page.waitForSelector(BOOKING_COMPARISON);
 text = await pageText(page);
 assert.match(text, /fictional-valid\.json/);
 assert.match(text, /Backup file passed validation/);
@@ -99,7 +117,7 @@ assert.match(text, /Safe Merge/);
 assert.match(text, /Full Replace/);
 assert.match(text, /Administrators only/);
 assert.equal(await page.locator('input[value="replace"]').isDisabled(), true);
-assert.match(await page.locator(".backup-comparison-grid").innerText(), /NEW FROM BACKUP\s+1/i);
+assert.match(await page.locator(BOOKING_COMPARISON).innerText(), /NEW FROM BACKUP\s+1/i);
 assert.doesNotMatch(text, /Backup contents by status/);
 const preview = await readPreview(page);
 await toggle(page, "Detailed").click();
@@ -148,7 +166,7 @@ await ctl("role=admin");
 await page.reload();
 await waitForLive(page);
 await choose(page, validFile);
-await page.waitForSelector(".backup-comparison-grid");
+await page.waitForSelector(BOOKING_COMPARISON);
 assert.match(await pageText(page), /Available only in Dev Mode/);
 assert.equal(await page.locator('input[value="replace"]').isDisabled(), true);
 await page.locator('[aria-label="Remove selected backup"]').click();
@@ -160,7 +178,7 @@ await waitForLive(page);
 
 // Full Replace keeps its whole warning and phrase gate; toggling keeps what was typed.
 await choose(page, validFile);
-await page.waitForSelector(".backup-comparison-grid");
+await page.waitForSelector(BOOKING_COMPARISON);
 await page.locator('input[name="backupRestoreMode"][value="merge"]').focus();
 await page.keyboard.press("ArrowDown");
 await page.waitForSelector(".backup-danger-confirmation");
@@ -220,14 +238,14 @@ await page.getByRole("button", { name: "Enable Dev Mode" }).click();
 await page.getByRole("switch", { name: "Dev Mode", checked: true }).waitFor();
 await waitForLive(page);
 await choose(page, validFile);
-await page.waitForSelector(".backup-comparison-grid");
+await page.waitForSelector(BOOKING_COMPARISON);
 assert.match(await pageText(page), /Administrators only/);
 assert.equal(await page.locator('input[value="replace"]').isDisabled(), true);
 await ctl("role=viewer");
 await page.reload();
 await waitForLive(page);
 await choose(page, validFile);
-await page.waitForSelector(".backup-comparison-grid");
+await page.waitForSelector(BOOKING_COMPARISON);
 assert.equal(await restoreButton(page).isDisabled(), true);
 
 assert.deepEqual((await writes()).filter((write) => write.includes("/bookings")), []);

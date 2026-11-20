@@ -26,6 +26,7 @@
 @import "./views/InquiryPipeline.css";
 @import "./views/SpreadsheetView.css";
 @import "./views/ContactsView.css";
+@import "./views/GroupMap.css";
 @import "./booking/BookingDetail.css";
 @import "./booking/BookingActivities.css";
 @import "./booking/BookingDetailTabs.css";

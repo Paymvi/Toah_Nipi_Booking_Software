@@ -61,12 +61,62 @@ export async function fetchBackupSections({ client, fetchBookings }) {
   const portalSignatures = await readOptional("portalSignatures", "portal_signatures", { missingIsEmpty: true });
   // Empty until the staff app migration runs.
   const bookingChangeLog = await readOptional("bookingChangeLog", "booking_change_log", { missingIsEmpty: true });
+  const { organizations, organizationNameLinks } = await readGroupMap(client, sectionErrors);
   const storageManifest = buildStorageManifest({ portalChecklistItems, portalDocuments, portalSignatures, bookings });
 
   return {
-    sections: { bookings, guestInquiries, portalChecklistItems, portalDocuments, portalSignatures, bookingChangeLog, storageManifest },
+    sections: {
+      bookings, guestInquiries, portalChecklistItems, portalDocuments, portalSignatures, bookingChangeLog,
+      organizations, organizationNameLinks, storageManifest,
+    },
     sectionErrors,
   };
+}
+
+// Group Map not set up in this database (its migration has not run).
+const isMissingGroupMap = (error) => isMissingTable(error) || ["PGRST202", "42883"].includes(error?.code);
+
+/*
+  Groups and links in one database statement (group_map_export), so a group
+  edited mid-backup can't leave a link pointing at a group the file lacks.
+  Empty, with no warning, until the Group Map migration runs.
+*/
+async function readGroupMap(client, sectionErrors) {
+  const { data, error } = await client.rpc("group_map_export");
+  if (error) {
+    if (!isMissingGroupMap(error)) sectionErrors.organizations = error.message || String(error);
+    return { organizations: [], organizationNameLinks: [] };
+  }
+  return {
+    organizations: Array.isArray(data?.organizations) ? data.organizations : [],
+    organizationNameLinks: Array.isArray(data?.links) ? data.links : [],
+  };
+}
+
+/*
+  Version 5 backups: the Group Map, in one database transaction
+  (group_map_restore). Adds missing groups and links only; current ones are
+  never changed or deleted, whichever restore mode is used. Throws when
+  nothing was restored, so the caller can say so.
+*/
+export async function restoreGroupMapSection(sections, { client }) {
+  const organizations = Array.isArray(sections?.organizations) ? sections.organizations : [];
+  const organizationNameLinks = Array.isArray(sections?.organizationNameLinks) ? sections.organizationNameLinks : [];
+  if (organizations.length === 0 && organizationNameLinks.length === 0) {
+    return { groupsInBackup: 0, groupsInserted: 0, groupsAlreadyPresent: 0, groupsKeptCurrent: 0, groupsSkipped: 0,
+      linksInBackup: 0, linksInserted: 0, linksAlreadyPresent: 0, linksKeptCurrent: 0, linksSkipped: 0, notes: [] };
+  }
+  const { data, error } = await client.rpc("group_map_restore", {
+    p_organizations: organizations,
+    p_links: organizationNameLinks,
+  });
+  if (error) {
+    if (isMissingGroupMap(error)) {
+      throw new Error("This database doesn't have the Group Map yet. Run supabase/migrations/20261119000100_group_map.sql, then restore this file again with Merge.");
+    }
+    throw new Error(error.message || String(error));
+  }
+  return { ...data, notes: Array.isArray(data?.notes) ? data.notes : [] };
 }
 
 /*

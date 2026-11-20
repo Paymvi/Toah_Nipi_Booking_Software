@@ -1020,6 +1020,26 @@
   background: var(--n-surface-2, #fafcfb);
 }
 
+/* Group Map card: explanation under the counts. */
+.backup-comparison-card > p {
+  margin: 0.625rem 0 0;
+  color: var(--backup-slate-700);
+  font-size: 0.923rem;
+  line-height: 1.55;
+}
+
+.backup-comparison-card .backup-validation-list {
+  margin-top: 0.625rem;
+}
+
+.backup-notice-details {
+  margin: 0.438rem 0 0;
+  padding-left: 1.125rem;
+  color: var(--backup-slate-700);
+  font-size: 0.898rem;
+  line-height: 1.45;
+}
+
 .backup-comparison-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
