@@ -225,15 +225,9 @@ export const MINI_TUTORIALS = [
         demoClick: true,
       },
       {
-        id: "layout",
-        target: "reports-layout",
-        show: "New and Original switch between the two layouts. Your choice is remembered in this browser.",
-      },
-      {
         id: "views",
         target: "reports-tabs",
         show: "Three views: Season Brief for the summary, Season Map for buildings and open weekends, Data Check for records to fix.",
-        missing: "Choose New in the Layout switch at the top of the page to see these tabs.",
       },
       {
         id: "figures",

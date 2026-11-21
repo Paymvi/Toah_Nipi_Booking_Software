@@ -5,7 +5,6 @@ import {
   getPortalBaseUrl,
   PORTAL_BASE_URL_MISSING_MESSAGE,
 } from "../../utils/portalRules";
-import { bookingOverviewDensityOptions } from "../../constants/dashboardConstants";
 import { formatMealTime as formatBookingOverviewTime } from "../../utils/mealPlan";
 import { getSecondaryContact } from "../../utils/secondaryContact";
 import {
@@ -200,29 +199,5 @@ export function BookingOverviewPortalLink({ booking, onCreatePortalLink }) {
       <FaExternalLinkAlt aria-hidden="true" />
       Open Guest Portal
     </a>
-  );
-}
-
-export function BookingOverviewDensityControl({ density, onChange }) {
-  return (
-    <div
-      className="booking-overview-density"
-      role="group"
-      aria-label="Overview density"
-      data-tutorial-target="booking-overview-density"
-    >
-      <span>Density</span>
-
-      {bookingOverviewDensityOptions.map((option) => (
-        <button
-          type="button"
-          key={option.value}
-          aria-pressed={density === option.value}
-          onClick={() => onChange(option.value)}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
   );
 }

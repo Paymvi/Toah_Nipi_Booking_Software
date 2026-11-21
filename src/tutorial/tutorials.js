@@ -106,7 +106,6 @@ export const TUTORIAL_TARGETS = {
   "booking-overview-summary": "booking summary",
   "booking-overview-stats": "guest and stay counts",
   "booking-overview-edit": "Edit Booking button",
-  "booking-overview-density": "Density buttons",
   "booking-overview-main": "booking sections",
   "booking-edit-panel": "booking editor",
   "booking-edit-entry": "Edit Entry button",
@@ -155,7 +154,6 @@ export const TUTORIAL_TARGETS = {
   "contacts-history": "booking history",
   "contacts-deleted": "Deleted contacts button",
 
-  "reports-layout": "New and Original layout switch",
   "reports-tabs": "Season Brief, Season Map and Data Check tabs",
   "reports-figures": "key figures",
 

@@ -1,14 +1,7 @@
 /* =========================================================
-   Season Reports (new Reports layout) and the layout toggle.
-   The Original layout keeps ReportsView.css.
+   Season Reports. The .season-layout-bar toggle styles are also used by Contacts.
    Colors follow docs/THEMING.md.
 ========================================================= */
-
-.season-reports-page {
-  display: grid;
-  gap: 0.75rem;
-  min-width: 0;
-}
 
 .season-layout-bar {
   display: flex;

@@ -16,7 +16,6 @@ import {
 } from "../../utils/mealPlan";
 import { getOverviewDisplayValue, hasOverviewDisplayValue } from "./bookingOverviewValues";
 import {
-  BookingOverviewLargeSection,
   BookingOverviewEmptyRow,
   BookingOverviewEditButton,
   BookingOverviewSection,
@@ -26,7 +25,6 @@ export default function BookingMealsProgramOverview({
   booking,
   details,
   setActiveTab,
-  isLarge = false,
 }) {
   const mealPlanText = getOverviewDisplayValue(
     booking.meals
@@ -118,18 +116,7 @@ export default function BookingMealsProgramOverview({
     hasMealSummary;
 
   if (!hasAnyContent) {
-    return isLarge ? (
-      <BookingOverviewLargeSection
-        icon={FaUtensils}
-        eyebrow="Food Service"
-        title="Meals"
-        wide
-      >
-        <div className="booking-overview-program-empty">
-          No meal information has been added yet.
-        </div>
-      </BookingOverviewLargeSection>
-    ) : (
+    return (
       <BookingOverviewEmptyRow
         icon={FaUtensils}
         title="Meals"
@@ -139,13 +126,13 @@ export default function BookingMealsProgramOverview({
     );
   }
 
-  const emptyPanelAction = !isLarge && (
+  const emptyPanelAction = (
     <BookingOverviewEditButton setActiveTab={setActiveTab} />
   );
 
   const mealContent = (
     <>
-      {(isLarge || hasMealSummary) && (
+      {hasMealSummary && (
         <div className="booking-overview-program-summary">
           <div className="booking-overview-program-summary-block">
             <span className="booking-overview-program-summary-icon">
@@ -389,34 +376,9 @@ export default function BookingMealsProgramOverview({
     </>
   );
 
-  if (!isLarge) {
-    return (
-      <BookingOverviewSection icon={FaUtensils} title="Meals">
-        <div className="booking-compact-meals">{mealContent}</div>
-      </BookingOverviewSection>
-    );
-  }
-
   return (
-    <section className="booking-overview-card booking-overview-card-wide booking-overview-program-showcase">
-      <div className="booking-overview-program-header">
-        <div className="booking-overview-program-title">
-          <span className="booking-overview-program-title-icon">
-            <FaUtensils />
-          </span>
-
-          <div>
-            <p>Food Service</p>
-            <h3>Meals</h3>
-            <span>
-              Meal schedule, service times, dietary requirements,
-              and food-service notes.
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {mealContent}
-    </section>
+    <BookingOverviewSection icon={FaUtensils} title="Meals">
+      <div className="booking-compact-meals">{mealContent}</div>
+    </BookingOverviewSection>
   );
 }

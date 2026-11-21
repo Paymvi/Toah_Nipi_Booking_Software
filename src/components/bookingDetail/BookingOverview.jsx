@@ -2,51 +2,29 @@ import {
   FaCalendarAlt,
   FaClock,
   FaBed,
-  FaUser,
   FaUsers,
   FaDollarSign,
   FaInfoCircle,
   FaUtensils,
   FaChevronRight,
   FaExternalLinkAlt,
-  FaChild,
-  FaUserMinus,
-  FaUserPlus,
-  FaGlobeAmericas,
-  FaMoon,
 } from "react-icons/fa";
 import { LODGING_BUILDINGS } from "../../constants/lodgingConstants";
 import { getBookingLodgingAssignments } from "../../utils/lodgingUtils";
 import { isHousingAuthoritative } from "../../utils/masterImportMerge";
 import { getBookingDisplayState } from "../../utils/bookingClassification";
 import { getLegacyBookingNotes } from "../../utils/legacyBookingNotes";
-import CopyButton from "../CopyButton";
-import { formatMealTime as formatBookingOverviewTime } from "../../utils/mealPlan";
-import { getSecondaryContact } from "../../utils/secondaryContact";
 import {
   getBookingOverviewSourceType,
   firstBookingOverviewValue,
   getBookingRawValue,
   parseBookingOverviewNumber,
-  getBookingOverviewNights,
-  getBookingOverviewMailingAddress,
   hasBookingOverviewValue,
   formatBookingOverviewMoney,
   hasVisibleOverviewFields,
-  getBookingInitials,
-  formatBookingOverviewValue,
 } from "./bookingOverviewValues";
-import { formatBookingDetailDate, formatBookingDetailDateRange } from "./bookingDetailSettings";
-import { BookingOverviewPortalLink } from "./BookingOverviewHeader";
+import { formatBookingDetailDate } from "./bookingDetailSettings";
 import {
-  BookingOverviewGuestShowcase,
-  BookingActivitiesLargeOverview,
-  BookingFacilitiesLargeOverview,
-  BookingOverviewLargeSourceData,
-} from "./BookingOverviewLarge";
-import {
-  BookingOverviewLargeSection,
-  BookingOverviewFieldGrid,
   BookingOverviewSection,
   BookingOverviewFields,
   BookingOverviewEmptyRow,
@@ -67,15 +45,9 @@ export default function BookingOverview({
   dateSettings,
   setActiveTab,
   onSaveBooking,
-  onCreatePortalLink,
-  isLarge,
 }) {
   const details =
     booking.rentalFormDetails || {};
-
-  const secondaryContact = getSecondaryContact(booking);
-  const hasSecondaryContact =
-    Object.values(secondaryContact).some(Boolean);
 
   const sourceType =
     getBookingOverviewSourceType(booking);
@@ -226,18 +198,6 @@ export default function BookingOverview({
       booking.maxPayingGuests
     );
 
-  const numberOfNights =
-    getBookingOverviewNights(booking, details);
-
-  const numberOfMeals =
-    firstBookingOverviewValue(
-      details.numberOfMeals,
-      booking.mealCount
-    );
-
-  const mailingAddress =
-    getBookingOverviewMailingAddress(booking, details);
-
   const adultRate =
     firstBookingOverviewValue(
       details.adultRateQuoted,
@@ -265,13 +225,6 @@ export default function BookingOverview({
   /* =====================================================
      SUMMARY
   ===================================================== */
-
-  const summaryDateRange =
-    formatBookingDetailDateRange(
-      booking.startDate,
-      booking.endDate,
-      dateSettings
-    );
 
   const summaryGuests =
     firstBookingOverviewValue(
@@ -363,89 +316,6 @@ export default function BookingOverview({
     GUEST INFORMATION
   ===================================================== */
 
-  const approximateGuestFields = [
-    {
-      label: "Estimated Total Guests",
-      value: estimatedGuests,
-      icon: FaUsers,
-    },
-
-    {
-      label: "Adults",
-      value: details.approxAdultGuests,
-      icon: FaUser,
-    },
-
-    {
-      label: "Under 3",
-      value: approxChildrenUnder3,
-      icon: FaChild,
-      showEmpty: true,
-    },
-
-    {
-      label: "Ages 3–17",
-      value: approxChildren3to17,
-      icon: FaChild,
-      showEmpty: true,
-    },
-
-    {
-      label: "Minimum Guarantee",
-      value: minimumGuarantee,
-      icon: FaUserMinus,
-    },
-
-    {
-      label: "Maximum Guarantee",
-      value: maximumGuarantee,
-      icon: FaUserPlus,
-    },
-  ];
-
-
-  const actualGuestFields = [
-    {
-      label: "Total / Recorded Guests",
-      value: actualGuests,
-      showEmpty: true,
-      icon: FaUsers,
-    },
-
-    {
-      label: "Adults",
-      value: actualAdults,
-      icon: FaUser,
-    },
-
-    {
-      label: "Under 3",
-      value: actualChildrenUnder3,
-      icon: FaChild,
-      showEmpty: true,
-    },
-
-    {
-      label: "Ages 3–17",
-      value: actualChildren3to17,
-      icon: FaChild,
-      showEmpty: true,
-    },
-
-    {
-      label: "# Persons",
-      value: booking.persons,
-      icon: FaUsers,
-    },
-
-    {
-      label: "Ethnic Breakdown",
-      value: details.ethnicBreakdown,
-      icon: FaGlobeAmericas,
-      multiline: true,
-    },
-  ];
-
 
   const dayCamperFields = [
     {
@@ -461,13 +331,13 @@ export default function BookingOverview({
     },
 
     {
-      label: isLarge ? "Day Camper Meal Servings" : "Meal Servings",
+      label: "Meal Servings",
       value: dayCamperMealServings,
       icon: FaUtensils,
     },
 
     {
-      label: isLarge ? "Camper Days from Day Campers" : "Camper Days",
+      label: "Camper Days",
       value: hasBookingOverviewValue(
         dayCamperCamperDays
       )
@@ -506,34 +376,12 @@ export default function BookingOverview({
 
   ];
 
-  const ratesAndStayFields = [
-    ...rateFields,
-
-    {
-      label: "# Nights",
-      value: numberOfNights,
-      icon: FaMoon,
-    },
-
-    {
-      label: "# Meals",
-      value: numberOfMeals,
-      icon: FaUtensils,
-    },
-
-    {
-      label: "Camper Days",
-      value: booking.camperDays,
-      icon: FaCalendarAlt,
-    },
-  ];
-
 
   /* =====================================================
-    BOOKING TIMELINE
+    INQUIRY
   ===================================================== */
 
-  const timelineFields = [
+  const inquiryFields = [
     {
       label: "Inquiry Date",
       value: details.inquiryDate
@@ -543,7 +391,16 @@ export default function BookingOverview({
           )
         : "",
     },
+  ];
 
+
+  /* =====================================================
+    RECORDED BEFORE THE PORTAL (READ ONLY)
+    Progress is tracked only in the guest portal now. Dates typed on the
+    old form or imported from the sheet are kept and shown here.
+  ===================================================== */
+
+  const earlierProgressFields = [
     {
       label: "Contract Sent",
       value: details.contractSentDate
@@ -573,24 +430,10 @@ export default function BookingOverview({
           )
         : details.importedContractReturnedStatus || "",
     },
-  ];
 
-
-  /* =====================================================
-    PAYMENTS & DOCUMENTS
-  ===================================================== */
-
-  const paymentDocumentFields = [
     {
       label: "Deposit Received",
       value: depositReceived,
-    },
-
-    {
-      label: "Deposit Amount",
-      value: formatBookingOverviewMoney(
-        depositAmount
-      ),
     },
 
     {
@@ -615,15 +458,7 @@ export default function BookingOverview({
     },
 
     {
-      label: "Payment Method",
-      value: details.paymentMethod,
-    },
-  ];
-
-
-  const guestReportedDocumentFields = [
-    {
-      label: isLarge ? "Guest Reported Contract Returned" : "Contract Returned",
+      label: "Guest Reported Contract Returned",
       value:
         details.guestReportedContractReturnedDate
           ? formatBookingDetailDate(
@@ -634,7 +469,7 @@ export default function BookingOverview({
     },
 
     {
-      label: isLarge ? "Guest Reported Deposit Sent" : "Deposit Sent",
+      label: "Guest Reported Deposit Sent",
       value:
         details.guestReportedDepositSentDate
           ? formatBookingDetailDate(
@@ -645,7 +480,7 @@ export default function BookingOverview({
     },
 
     {
-      label: isLarge ? "Guest Reported Insurance Sent" : "Insurance Sent",
+      label: "Guest Reported Insurance Sent",
       value:
         details.guestReportedInsuranceCertificateSentDate
           ? formatBookingDetailDate(
@@ -653,6 +488,21 @@ export default function BookingOverview({
               dateSettings
             )
           : "",
+    },
+  ];
+
+
+  const depositFields = [
+    {
+      label: "Deposit Amount",
+      value: formatBookingOverviewMoney(
+        depositAmount
+      ),
+    },
+
+    {
+      label: "Payment Method",
+      value: details.paymentMethod,
     },
   ];
 
@@ -830,11 +680,6 @@ const overviewLinenPieces =
       multiline: true,
     },
     {
-      label: "Spreadsheet Guest Description",
-      value: isLarge && isMasterRecord ? details.importedGuestCountText : "",
-      multiline: true,
-    },
-    {
       label: "Import Review",
       value: Array.isArray(details.importWarnings)
         ? details.importWarnings.join("\n")
@@ -873,600 +718,12 @@ const overviewLinenPieces =
       : [];
 
   const hasTimelineCard = hasVisibleOverviewFields([
-    ...timelineFields,
+    ...inquiryFields,
+    ...earlierProgressFields,
     ...statusFields,
     ...cancellationFields,
   ]);
 
-
-  if (isLarge) {
-    return (
-      <div className="booking-overview-layout">
-
-        {/* =====================================================
-            LEFT PROFILE COLUMN
-        ===================================================== */}
-
-        <aside className="booking-overview-sidebar" data-tutorial-target="booking-overview-summary">
-
-          <div className="booking-overview-identity">
-
-            <div className="booking-overview-avatar">
-              {getBookingInitials(
-                booking.organizationName
-              )}
-            </div>
-
-            <p>
-              {sourceType}
-            </p>
-
-            <h3>
-              {booking.organizationName}
-            </h3>
-
-            <span>
-              {booking.retreatType ||
-                "Retreat Booking"}
-            </span>
-
-          </div>
-
-
-          <div className="booking-overview-sidebar-section">
-
-            <div className="booking-overview-sidebar-heading">
-              <FaCalendarAlt />
-
-              <span>
-                Stay Dates
-              </span>
-            </div>
-
-            <strong>
-              {summaryDateRange}
-            </strong>
-
-            {(details.arrivalTime ||
-              details.departureTime) && (
-              <div className="booking-overview-sidebar-times">
-
-                {details.arrivalTime && (
-                  <span>
-                    <small>Arrival</small>
-                    <strong>
-                      {formatBookingOverviewTime(details.arrivalTime)}
-                    </strong>
-                  </span>
-                )}
-
-                {details.departureTime && (
-                  <span>
-                    <small>Departure</small>
-                    <strong>
-                      {formatBookingOverviewTime(details.departureTime)}
-                    </strong>
-                  </span>
-                )}
-
-              </div>
-            )}
-
-          </div>
-
-
-          <div className="booking-overview-sidebar-section">
-
-            <div className="booking-overview-sidebar-heading">
-              <FaUser />
-
-              <span>
-                Primary Contact
-              </span>
-            </div>
-
-            <strong>
-              {formatBookingOverviewValue(
-                booking.contactName
-              )}
-            </strong>
-
-            {hasBookingOverviewValue(
-              booking.email
-            ) && (
-              <span className="booking-overview-sidebar-contact-line">
-                <a
-                  href={`mailto:${booking.email}`}
-                >
-                  {booking.email}
-                </a>
-                <CopyButton value={booking.email} label="email address" />
-              </span>
-            )}
-
-            {hasBookingOverviewValue(
-              booking.phone
-            ) && (
-              <span className="booking-overview-sidebar-contact-line">
-                {booking.phone}
-                <CopyButton value={booking.phone} label="phone number" />
-              </span>
-            )}
-
-            {hasBookingOverviewValue(
-              mailingAddress
-            ) && (
-              <span className="booking-overview-sidebar-contact-line">
-                {mailingAddress}
-              </span>
-            )}
-
-          </div>
-
-
-          {hasSecondaryContact && (
-            <div className="booking-overview-sidebar-section">
-              <div className="booking-overview-sidebar-heading">
-                <FaUserPlus />
-                <span>Secondary Contact</span>
-              </div>
-
-              {secondaryContact.secondaryContactName && (
-                <strong>{secondaryContact.secondaryContactName}</strong>
-              )}
-
-              {secondaryContact.secondaryContactEmail && (
-                <span className="booking-overview-sidebar-contact-line">
-                  <a href={`mailto:${secondaryContact.secondaryContactEmail}`}>
-                    {secondaryContact.secondaryContactEmail}
-                  </a>
-                  <CopyButton value={secondaryContact.secondaryContactEmail} label="secondary contact email address" />
-                </span>
-              )}
-
-              {secondaryContact.secondaryContactPhone && (
-                <span className="booking-overview-sidebar-contact-line">
-                  <a href={`tel:${secondaryContact.secondaryContactPhone.replace(/[^\d+]/g, "")}`}>
-                    {secondaryContact.secondaryContactPhone}
-                  </a>
-                  <CopyButton value={secondaryContact.secondaryContactPhone} label="secondary contact phone number" />
-                </span>
-              )}
-            </div>
-          )}
-
-
-          <div className="booking-overview-sidebar-stats" data-tutorial-target="booking-overview-stats">
-
-            <div>
-              <small>Guests</small>
-
-              <strong>
-                {formatBookingOverviewValue(
-                  actualGuests
-                )}
-              </strong>
-            </div>
-
-
-            <div>
-              <small>Nights</small>
-
-              <strong>
-                {formatBookingOverviewValue(
-                  numberOfNights
-                )}
-              </strong>
-            </div>
-
-
-            <div>
-              <small>Meals</small>
-
-              <strong>
-                {formatBookingOverviewValue(
-                  numberOfMeals
-                )}
-              </strong>
-            </div>
-
-          </div>
-
-
-          <div className="booking-overview-sidebar-actions">
-
-            <button
-              className="primary-dashboard-button"
-              type="button"
-              onClick={() =>
-                setActiveTab("Details")
-              }
-              data-tutorial-target="booking-overview-edit"
-            >
-              Edit Booking
-            </button>
-
-            <BookingOverviewPortalLink booking={booking} onCreatePortalLink={onCreatePortalLink} />
-
-          </div>
-
-
-          {(booking.sourceSheet ||
-            booking.sourceRowNumber) && (
-            <div className="booking-overview-source-meta">
-
-              {booking.sourceSheet && (
-                <span>
-                  <small>Source</small>
-                  {booking.sourceSheet}
-                </span>
-              )}
-
-              {booking.sourceRowNumber && (
-                <span>
-                  <small>Row</small>
-                  {booking.sourceRowNumber}
-                </span>
-              )}
-
-            </div>
-          )}
-
-        </aside>
-
-
-        {/* =====================================================
-            MAIN CONTENT
-        ===================================================== */}
-
-        <main className="booking-overview-main" data-tutorial-target="booking-overview-main">
-
-          <div className="booking-overview-grid">
-
-            {/* =====================================================
-                GUEST INFORMATION
-            ===================================================== */}
-
-            <BookingOverviewGuestShowcase
-              estimatedGuests={estimatedGuests}
-              actualGuests={actualGuests}
-              minimumGuarantee={minimumGuarantee}
-              maximumGuarantee={maximumGuarantee}
-              numberOfNights={numberOfNights}
-              numberOfMeals={numberOfMeals}
-              approximateGuestFields={approximateGuestFields}
-              actualGuestFields={actualGuestFields}
-              dayCamperFields={dayCamperFields}
-              ratesAndStayFields={ratesAndStayFields}
-              setActiveTab={setActiveTab}
-            />
-
-
-            {/* =====================================================
-                PAYMENTS + DOCUMENTS
-            ===================================================== */}
-
-            <BookingOverviewLargeSection
-              icon={FaDollarSign}
-              eyebrow="Administration"
-              title="Payments & Documents"
-              wide
-              className="booking-overview-payments-card"
-              groups={[
-                {
-                  title: "Deposit & Documents",
-                  fields: paymentDocumentFields,
-                  columns: 2,
-                },
-                {
-                  title: "Guest-Reported Portal Dates",
-                  fields: guestReportedDocumentFields,
-                  columns: 2,
-                },
-                {
-                  title: "Billing & Revenue",
-                  fields: billingFields,
-                  columns: 2,
-                },
-              ]}
-            />
-
-
-            {/* =====================================================
-                MEALS
-            ===================================================== */}
-
-            <BookingMealsProgramOverview
-              booking={booking}
-              details={details}
-              isLarge
-            />
-
-
-            {/* =====================================================
-                ACTIVITIES
-            ===================================================== */}
-
-            <BookingActivitiesLargeOverview
-              booking={booking}
-              details={details}
-              dateSettings={dateSettings}
-            />
-
-
-            {/* =====================================================
-                FACILITIES
-            ===================================================== */}
-
-            <BookingFacilitiesLargeOverview
-              booking={booking}
-              details={details}
-              dateSettings={dateSettings}
-            />
-
-
-            {/* =====================================================
-                LODGING
-            ===================================================== */}
-
-            <section className="rental-form-section booking-overview-lodging-section">
-
-              <div className="rental-section-header">
-                <span className="rental-section-icon">
-                  <FaBed />
-                </span>
-
-                <div>
-                  <h2>Lodging & Linens</h2>
-
-                  <p>
-                    Guest assignments and linen requirements.
-                  </p>
-                </div>
-
-                <button
-                  className="secondary-dashboard-button booking-overview-housing-link"
-                  type="button"
-                  onClick={() => setActiveTab("Housing")}
-                >
-                  Go to Housing
-                  <FaChevronRight aria-hidden="true" />
-                </button>
-              </div>
-
-
-              <div className="rental-section-body">
-
-                {isMasterRecord && (
-                  <BookingOverviewFieldGrid
-                    columns={1}
-                    fields={[
-                      {
-                        label: isHousingAuthoritative(booking)
-                          ? "Imported lodging note (reference only; the Housing tab is the lodging record)"
-                          : "Spreadsheet Lodging",
-                        value: details.importedLodgingText,
-                        multiline: true,
-                      },
-                      {
-                        label: "Spreadsheet Linen Instructions",
-                        value: details.importedLinenText,
-                        multiline: true,
-                      },
-                    ]}
-                  />
-                )}
-
-                {/* ===============================
-                    LODGING
-                =============================== */}
-
-                <div className="rental-lodging-grid">
-                  {lodgingOverviewRows.map((lodging) => (
-                    <div
-                      className="rental-lodging-field booking-overview-lodging-card"
-                      key={lodging.id}
-                    >
-                      <div className="rental-lodging-info">
-
-                        {lodging.image && (
-                          <img
-                            className="rental-lodging-image"
-                            src={lodging.image}
-                            alt=""
-                          />
-                        )}
-
-                        <span className="rental-lodging-text">
-                          <strong>{lodging.name}</strong>
-
-                          {lodging.capacity && (
-                            <small>
-                              Capacity {lodging.capacity}
-                            </small>
-                          )}
-                        </span>
-
-                      </div>
-
-
-                      <div className="booking-overview-lodging-count">
-                        {getLodgingOverviewValue(
-                          lodging.value
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-
-                {/* ===============================
-                    LINENS
-                =============================== */}
-
-                <div className="booking-overview-linens">
-
-                  <h3>Linens</h3>
-
-                  <div className="booking-overview-linen-grid">
-
-                    <div className="booking-overview-linen-item">
-                      <span>Linen Option</span>
-
-                      <strong>
-                        {overviewLinenOption}
-                      </strong>
-                    </div>
-
-
-                    <div className="booking-overview-linen-item">
-                      <span>Linen Sets</span>
-
-                      <strong>
-                        {overviewLinenSets}
-                      </strong>
-                    </div>
-
-                    <div className="booking-overview-linen-item">
-                      <span>Linen Pieces</span>
-
-                      <strong>
-                        {overviewLinenPieces}
-                      </strong>
-                    </div>
-
-                  </div>
-
-
-
-                </div>
-
-              </div>
-
-            </section>
-
-
-            {/* =====================================================
-                ARCHIVE
-            ===================================================== */}
-
-            {isArchiveRecord && (
-              <BookingOverviewLargeSection
-                icon={FaClock}
-                eyebrow="Historical Record"
-                title="Archive Information"
-                fields={archiveFields}
-                columns={2}
-                wide
-              >
-                {(booking.archiveSourcePdfLink ||
-                  archiveLinks.length > 0) && (
-                  <div className="booking-overview-archive-links">
-
-                    {booking.archiveSourcePdfLink && (
-                      <a
-                        href={
-                          booking.archiveSourcePdfLink
-                        }
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <FaExternalLinkAlt />
-                        Source PDF
-                      </a>
-                    )}
-
-                    {archiveLinks.map(
-                      (link, index) => (
-                        <a
-                          href={link}
-                          target="_blank"
-                          rel="noreferrer"
-                          key={`${link}-${index}`}
-                        >
-                          <FaExternalLinkAlt />
-                          Prior Visit{" "}
-                          {index + 1}
-                        </a>
-                      )
-                    )}
-
-                  </div>
-                )}
-              </BookingOverviewLargeSection>
-            )}
-
-
-            {/* =====================================================
-                TIMELINE
-            ===================================================== */}
-
-            <BookingOverviewLargeSection
-              icon={FaCalendarAlt}
-              eyebrow="Administration"
-              title="Booking Timeline"
-              groups={[
-                {
-                  title: "Contract Dates",
-                  fields: timelineFields,
-                  columns: 2,
-                },
-                {
-                  title: "Group Status",
-                  fields: statusFields,
-                  columns: 2,
-                },
-                {
-                  title: "Cancellation",
-                  fields: cancellationFields,
-                  columns: 1,
-                },
-              ]}
-            />
-
-
-            {/* =====================================================
-                NOTES
-            ===================================================== */}
-
-            <div
-              className={
-                hasTimelineCard
-                  ? "booking-overview-notes-stack"
-                  : "booking-overview-notes-stack booking-overview-card-wide"
-              }
-            >
-              <BookingOverviewLargeSection
-                icon={FaInfoCircle}
-                eyebrow="Internal"
-                title="Additional Notes"
-                fields={notesFields}
-                columns={1}
-              />
-
-              <BookingIncidentNotesCard
-                booking={booking}
-                onSaveBooking={onSaveBooking}
-                isLarge
-              />
-            </div>
-
-          </div>
-
-
-          {/* ===================================================
-              RAW SPREADSHEET DATA
-          =================================================== */}
-
-          <BookingOverviewLargeSourceData
-            booking={booking}
-          />
-
-        </main>
-
-      </div>
-    );
-  }
 
   const hasAssignedLodging =
     overviewLodgingAssignments.length > 0;
@@ -1500,8 +757,7 @@ const overviewLinenPieces =
 
   const paymentGroups = [
     { title: "Rates", fields: rateFields },
-    { title: "Deposit & Documents", fields: paymentDocumentFields },
-    { title: "Guest-Reported Portal Dates", fields: guestReportedDocumentFields },
+    { title: "Deposit", fields: depositFields },
     { title: "Billing & Revenue", fields: billingFields },
   ];
 
@@ -1611,7 +867,7 @@ const overviewLinenPieces =
           </BookingOverviewSection>
 
           {paymentGroups.some((group) => hasVisibleOverviewFields(group.fields)) ? (
-            <BookingOverviewSection icon={FaDollarSign} title="Payments & Documents">
+            <BookingOverviewSection icon={FaDollarSign} title="Payments">
               {paymentGroups.map((group) => (
                 <BookingOverviewFieldGroup key={group.title} {...group} />
               ))}
@@ -1619,15 +875,15 @@ const overviewLinenPieces =
           ) : (
             <BookingOverviewEmptyRow
               icon={FaDollarSign}
-              title="Payments & Documents"
-              explanation="Rates, deposits, documents and billing amounts will appear here once they are recorded."
+              title="Payments"
+              explanation="Rates, the deposit amount and billing amounts will appear here once they are recorded."
               action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
             />
           )}
 
           {hasTimelineCard ? (
-            <BookingOverviewSection icon={FaCalendarAlt} title="Booking Timeline">
-              <BookingOverviewFields fields={timelineFields} />
+            <BookingOverviewSection icon={FaCalendarAlt} title="Status">
+              <BookingOverviewFields fields={inquiryFields} />
 
               <BookingOverviewFieldGroup
                 title="Group Status"
@@ -1639,12 +895,17 @@ const overviewLinenPieces =
                 fields={cancellationFields}
                 className="booking-compact-cancellation"
               />
+
+              <BookingOverviewFieldGroup
+                title="Recorded before the portal (read only)"
+                fields={earlierProgressFields}
+              />
             </BookingOverviewSection>
           ) : (
             <BookingOverviewEmptyRow
               icon={FaCalendarAlt}
-              title="Booking Timeline"
-              explanation="Inquiry and contract dates will appear here once they are recorded."
+              title="Status"
+              explanation="The inquiry date, status and any cancellation appear here. Contract, deposit and insurance progress is in the guest portal."
               action={<BookingOverviewEditButton setActiveTab={setActiveTab} />}
             />
           )}

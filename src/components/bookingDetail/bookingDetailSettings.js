@@ -1,11 +1,8 @@
-// Booking detail date display settings and overview density: saved preferences and date formatting.
+// Booking detail date display settings: saved preferences and date formatting.
 import {
   BOOKING_DETAIL_DATE_SETTINGS_STORAGE_KEY,
   DEFAULT_BOOKING_DETAIL_DATE_SETTINGS,
   bookingDetailDateFormatOptions,
-  BOOKING_OVERVIEW_DENSITY_STORAGE_KEY,
-  DEFAULT_BOOKING_OVERVIEW_DENSITY,
-  resolveBookingOverviewDensity,
 } from "../../constants/dashboardConstants";
 import { getLocalDate } from "../../utils/dateUtils";
 
@@ -49,32 +46,6 @@ export function saveBookingDetailDateSettings(settings) {
     );
   } catch (error) {
     console.error("Could not save booking detail date settings:", error);
-  }
-}
-
-export function getSavedBookingOverviewDensity() {
-  try {
-    const savedDensity = localStorage.getItem(
-      BOOKING_OVERVIEW_DENSITY_STORAGE_KEY
-    );
-    const density = resolveBookingOverviewDensity(savedDensity);
-
-    if (savedDensity !== null && savedDensity !== density) {
-      localStorage.setItem(BOOKING_OVERVIEW_DENSITY_STORAGE_KEY, density);
-    }
-
-    return density;
-  } catch (error) {
-    console.error("Could not read booking overview density:", error);
-    return DEFAULT_BOOKING_OVERVIEW_DENSITY;
-  }
-}
-
-export function saveBookingOverviewDensity(density) {
-  try {
-    localStorage.setItem(BOOKING_OVERVIEW_DENSITY_STORAGE_KEY, density);
-  } catch (error) {
-    console.error("Could not save booking overview density:", error);
   }
 }
 

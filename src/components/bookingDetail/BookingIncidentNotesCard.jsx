@@ -7,7 +7,7 @@ import { BookingOverviewEmptyRow, BookingOverviewSection } from "./BookingOvervi
    Stored inside rentalFormDetails.incidentNotes
 ========================================================= */
 
-export default function BookingIncidentNotesCard({ booking, onSaveBooking, isLarge = false }) {
+export default function BookingIncidentNotesCard({ booking, onSaveBooking }) {
   const getSavedIncidentNotes = () =>
     String(
       booking?.rentalFormDetails?.incidentNotes || ""
@@ -62,107 +62,6 @@ export default function BookingIncidentNotesCard({ booking, onSaveBooking, isLar
         booking?.rentalFormDetails?.incidentNotes || ""
       ).trim()
     );
-
-  if (isLarge) {
-    return (
-      <section className="dashboard-card booking-incident-notes-card">
-        <div className="booking-incident-notes-header">
-          <div className="booking-incident-notes-title">
-            <span className="booking-incident-notes-icon">
-              <FaExclamationTriangle />
-            </span>
-
-            <div>
-              <p className="dashboard-eyebrow">
-                Internal Record
-              </p>
-
-              <h3>Incident Notes</h3>
-
-              <span>
-                Document incidents, concerns, actions taken,
-                and any staff follow-up.
-              </span>
-            </div>
-          </div>
-
-          <div className="booking-incident-notes-actions">
-            {isEditingIncidentNotes ? (
-              <>
-                <button
-                  className="secondary-dashboard-button"
-                  type="button"
-                  onClick={
-                    handleCancelIncidentNotes
-                  }
-                >
-                  Cancel
-                </button>
-
-                <button
-                  className="primary-dashboard-button"
-                  type="button"
-                  onClick={
-                    handleSaveIncidentNotes
-                  }
-                >
-                  Save Incident Notes
-                </button>
-              </>
-            ) : (
-              <button
-                className="secondary-dashboard-button"
-                type="button"
-                onClick={() =>
-                  setIsEditingIncidentNotes(true)
-                }
-              >
-                {hasIncidentNotes
-                  ? "Edit Incident Notes"
-                  : "Add Incident Notes"}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {isEditingIncidentNotes ? (
-          <label className="booking-incident-notes-field">
-            <span>Incident Record</span>
-
-            <textarea
-              rows="7"
-              value={incidentNotes}
-              onChange={(event) =>
-                setIncidentNotes(
-                  event.target.value
-                )
-              }
-              placeholder="Example: 9/8/2026 - Guest reported an injury near the dining hall. First aid was provided. Staff followed up with the group leader."
-            />
-          </label>
-        ) : hasIncidentNotes ? (
-          <div className="booking-incident-notes-display">
-            <p>
-              {
-                booking.rentalFormDetails
-                  .incidentNotes
-              }
-            </p>
-          </div>
-        ) : (
-          <div className="booking-incident-notes-empty">
-            <FaExclamationTriangle />
-
-            <div>
-              <strong>
-                No incidents recorded
-              </strong>
-            </div>
-          </div>
-        )}
-      </section>
-    );
-  }
 
   if (!isEditingIncidentNotes && !hasIncidentNotes) {
     return (

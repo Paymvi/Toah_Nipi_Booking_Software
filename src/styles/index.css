@@ -14,13 +14,11 @@
 @import "./booking/BookingOverviewCompact.css";
 @import "./booking/BookingHousingCamping.css";
 @import "./views/LodgingAvailability.css";
-@import "./booking/BookingOverviewSchedule.css";
 
 /* Office shell: sidebar, top bar, shared buttons and cards */
 @import "./layout/Dashboard.css";
 
 /* Office screens */
-@import "./views/ReportsCamperDaysExplainer.css";
 @import "./views/CalendarView.css";
 @import "./views/Hosting.css";
 @import "./views/InquiryPipeline.css";
@@ -30,7 +28,6 @@
 @import "./booking/BookingDetail.css";
 @import "./booking/BookingActivities.css";
 @import "./booking/BookingDetailTabs.css";
-@import "./views/ReportsView.css";
 @import "./views/ReportsSeason.css";
 @import "./views/AdminJobsView.css";
 @import "./views/Auth.css";

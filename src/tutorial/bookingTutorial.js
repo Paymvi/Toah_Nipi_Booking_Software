@@ -76,13 +76,7 @@ const SECTIONS = [
       {
         id: "sections",
         target: "booking-overview-main",
-        show: "This page has guests, meals, activities, facilities, housing and linens, payments, timeline and notes.",
-        missing: OVERVIEW_MISSING,
-      },
-      {
-        id: "density",
-        target: "booking-overview-density",
-        show: "Compact fits more on screen and Large spreads it out. It's the same booking either way, and this browser remembers the choice.",
+        show: "This page has guests, meals, activities, facilities, housing and linens, payments, status and notes. Contract and deposit progress lives in the guest portal, not here.",
         missing: OVERVIEW_MISSING,
       },
       {

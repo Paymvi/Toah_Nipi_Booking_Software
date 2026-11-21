@@ -8,9 +8,6 @@ import { getArrivalMonthKey, getOfficialRetreatType, getReportBookings, shouldUs
   Calculations behind the Season Reports views. Pure, so they can be tested.
   See docs/proposals/REPORTS_PAGE_IMPROVEMENT_PROPOSAL.md for the definitions.
 
-  ReportsView.jsx (the Original layout) keeps its own older calculations on
-  purpose: it stays exactly as it was, so these are not shared with it.
-
   Dates are YYYY-MM-DD text throughout, so they compare as plain strings.
   An unknown number is null and never adds zero to a total.
 */

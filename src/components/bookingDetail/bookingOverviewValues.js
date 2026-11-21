@@ -1,4 +1,4 @@
-// Value checks and formatting shared by the booking overview (Compact and Large) and the detail header.
+// Value checks and formatting shared by the booking overview and the detail header.
 import { readSpreadsheetCell } from "../../utils/spreadsheetUtils";
 
 export function hasOverviewDisplayValue(value) {
@@ -35,16 +35,6 @@ export function getBookingOverviewScheduleRows(value) {
       hasBookingOverviewValue(fieldValue)
     )
   );
-}
-
-export function getBookingInitials(name) {
-  return String(name || "TN")
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join("")
-    .toUpperCase();
 }
 
 const OVERVIEW_EMPTY_TEXT_VALUES = new Set([

@@ -1,6 +1,5 @@
 import {
   countsInReports,
-  getBookingDisplayState,
   getConvertedInquiryIds,
   isArchiveRecord,
   isConvertedInquiry,
@@ -19,11 +18,6 @@ import { getBookingDetails, getStaffEditedFields } from "./bookingFields.js";
   Q-008: every record counts except host records. An inquiry that became
   a booking is counted once, as the booking.
 */
-export const REPORT_INCLUSION_TEXT =
-  "Counts every record except hosting, including inquiries, waitlisted, cancelled and archived groups. " +
-  "An inquiry that became a booking is counted once, as the booking. " +
-  "Each stay is counted in the month it arrives.";
-
 export function getReportBookings(bookings = []) {
   const convertedInquiryIds = getConvertedInquiryIds(bookings);
   const included = [];
@@ -73,8 +67,6 @@ export function bookingArrivesInRange(booking, range = {}) {
   if (endDate && arrival > endDate) return false;
   return true;
 }
-
-export const UNDATED_MONTH_KEY = "undated";
 
 /* ---------------------------------------------------------
    Camper Days (Q-028 A)
@@ -167,14 +159,6 @@ export function getOfficialRetreatType(value) {
   return official
     ? { type: official, original, mapped: true }
     : { type: `${original} (not mapped)`, original, mapped: false };
-}
-
-/* ---------------------------------------------------------
-   Status summary labels (no booking-progress statuses)
---------------------------------------------------------- */
-
-export function getReportStateLabel(booking) {
-  return getBookingDisplayState(booking).label;
 }
 
 /* ---------------------------------------------------------

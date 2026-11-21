@@ -115,8 +115,7 @@
   .dashboard-shell .portal-checklist-preview-toggle,
   .dashboard-shell .portal-item-remove-button,
   .dashboard-shell .portal-item-corrections summary,
-  .dashboard-shell .booking-profile-page .booking-profile-header :is(button, a),
-  .dashboard-shell .booking-overview-density button {
+  .dashboard-shell .booking-profile-page .booking-profile-header :is(button, a) {
     min-height: 44px;
   }
 
@@ -182,7 +181,6 @@
       .booking-checklist-table-wrap,
       .booking-checklist-items-table-wrap,
       .booking-overview-program-table-wrap,
-      .booking-overview-schedule-table-wrap,
       .activity-table-wrap,
       .rental-meal-table-wrap,
       .availability-scroll,

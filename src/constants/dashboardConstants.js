@@ -145,26 +145,6 @@ export const DEFAULT_BOOKING_DETAIL_DATE_SETTINGS = {
   includeWeekday: false,
 };
 
-// Booking Overview spacing, remembered per browser.
-export const BOOKING_OVERVIEW_DENSITY_STORAGE_KEY =
-  "toahNipiBookingOverviewDensity";
-
-export const DEFAULT_BOOKING_OVERVIEW_DENSITY = "compact";
-
-export const bookingOverviewDensityOptions = [
-  { value: "compact", label: "Compact" },
-  { value: "large", label: "Large" },
-];
-
-// Anything else saved, including the retired "very-compact", becomes the default.
-export function resolveBookingOverviewDensity(savedDensity) {
-  return bookingOverviewDensityOptions.some(
-    (option) => option.value === savedDensity
-  )
-    ? savedDensity
-    : DEFAULT_BOOKING_OVERVIEW_DENSITY;
-}
-
 export const bookingDetailDateFormatOptions = [
   {
     value: "numeric",
@@ -198,27 +178,6 @@ export const CONTACTS_VIEW_STARRED_STORAGE_KEY = "toahNipiStarredContacts";
 
 export const CONTACTS_VIEW_STARRED_FIRST_STORAGE_KEY =
   "toahNipiContactsStarredFirst";
-
-// Reports view settings.
-export const REPORTS_VIEW_SETTINGS_STORAGE_KEY = "toahNipiReportsViewSettings";
-
-export const DEFAULT_REPORTS_VIEW_SETTINGS = {
-  dateRange: "thisYear",
-  customStartDate: "",
-  customEndDate: "",
-  status: "all",
-  retreatType: "all",
-  sourceMode: "all",
-};
-
-export const reportsDateRangeOptions = [
-  { value: "thisMonth", label: "This Month" },
-  { value: "nextMonth", label: "Next Month" },
-  { value: "thisYear", label: "This Year" },
-  { value: "nextYear", label: "Next Year" },
-  { value: "allTime", label: "All Time" },
-  { value: "custom", label: "Custom Date Range" },
-];
 
 // Spreadsheet view settings.
 export const SPREADSHEET_VIEW_SETTINGS_STORAGE_KEY =

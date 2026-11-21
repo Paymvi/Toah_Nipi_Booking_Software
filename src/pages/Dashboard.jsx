@@ -134,7 +134,7 @@ import InquirySpreadsheetView from "./InquirySpreadsheetView";
 import JobsView from "./JobsView";
 import LodgingCalendarView from "./LodgingCalendarView";
 import PortalAdminView from "./PortalAdminView";
-import ReportsPage from "./ReportsPage";
+import SeasonReportsView from "./SeasonReportsView";
 import SpreadsheetView, { SpreadsheetViewLoadingScreen } from "./SpreadsheetView";
 import UserAdminView from "./UserAdminView";
 
@@ -2935,7 +2935,7 @@ export default function Dashboard() {
             }`}
             aria-hidden={activeView !== "Reports"}
           >
-            <ReportsPage
+            <SeasonReportsView
               // Report builders leave hosting out themselves and say how many (countsInReports).
               inquiryBookings={allBookingRecords}
               isLoading={isBookingsLoading}

@@ -32,18 +32,13 @@ await page.waitForSelector(".season-cell");
 await page.getByRole("tab", { name: /Data Check/ }).click();
 await page.waitForSelector(".season-check-summary");
 
-// The toggle reaches the original page and remembers it.
-await page.getByRole("button", { name: "Original", exact: true }).click();
-await page.waitForSelector(".reports-summary-card");
-await page.reload();
-await page.waitForSelector(".reports-summary-card");
-await page.getByRole("button", { name: "New", exact: true }).click();
-await page.waitForSelector(".season-tabs");
+// The retired Original layout has no switch left.
+assert.equal(await page.getByRole("button", { name: "Original", exact: true }).count(), 0);
 
 // The tutorial reaches every step, starting elsewhere so it has to open Reports.
 await open(session, "/dashboard");
-await start(page, "Read your reports");
-for (const id of ["open-reports", "layout", "views", "figures"]) {
+await start(page, "Reports");
+for (const id of ["open-reports", "views", "figures"]) {
   await waitForStep(page, id);
   while (!(await isReady(page))) await sleep(100);
   await sleep(1000);

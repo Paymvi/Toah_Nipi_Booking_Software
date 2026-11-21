@@ -8,15 +8,12 @@ import { bookingDetailTabs } from "../../constants/dashboardConstants";
 import BookingChecklists from "../BookingChecklists";
 import {
   getSavedBookingDetailDateSettings,
-  getSavedBookingOverviewDensity,
-  saveBookingOverviewDensity,
   saveBookingDetailDateSettings,
 } from "./bookingDetailSettings";
 import { getBookingOverviewStatusClass } from "./bookingOverviewValues";
 import {
   BookingOverviewPortalLink,
   BookingOverviewSummary,
-  BookingOverviewDensityControl,
 } from "./BookingOverviewHeader";
 import BookingDateSettingsModal from "./BookingDateSettingsModal";
 import BookingOverview from "./BookingOverview";
@@ -41,15 +38,6 @@ export default function BookingDetailView({
   const [dateSettings, setDateSettings] = useState(() =>
     getSavedBookingDetailDateSettings()
   );
-  const [overviewDensity, setOverviewDensity] = useState(
-    getSavedBookingOverviewDensity
-  );
-
-  const updateOverviewDensity = (density) => {
-    setOverviewDensity(density);
-    saveBookingOverviewDensity(density);
-  };
-
   const updateDateSettings = (nextSettings) => {
     const updatedSettings = {
       ...dateSettings,
@@ -83,8 +71,7 @@ export default function BookingDetailView({
     );
 
   const isOverviewTab = activeTab === "Overview";
-  const isLargeOverview = overviewDensity === "large";
-  const isCompactOverview = isOverviewTab && !isLargeOverview;
+  const isCompactOverview = isOverviewTab;
 
   return (
     <section
@@ -203,21 +190,12 @@ export default function BookingDetailView({
         ))}
       </nav>
 
-      {isOverviewTab && (
-        <BookingOverviewDensityControl
-          density={overviewDensity}
-          onChange={updateOverviewDensity}
-        />
-      )}
-
       {activeTab === "Overview" && (
         <BookingOverview
           booking={booking}
           dateSettings={dateSettings}
           setActiveTab={setActiveTab}
           onSaveBooking={onSaveBooking}
-          onCreatePortalLink={onCreatePortalLink}
-          isLarge={isLargeOverview}
         />
       )}
 

@@ -53,11 +53,10 @@ test("every night token in use is defined in theme.css", () => {
     .filter((file) => file.endsWith(".css"))
     .map((file) => readFileSync(new URL(file.replaceAll("\\", "/"), stylesUrl), "utf8"))
     .join("\n");
-  const reports = readFileSync(new URL("../src/pages/ReportsView.jsx", import.meta.url), "utf8");
   const defined = new Set(
     [...readFileSync(new URL("foundation/theme.css", stylesUrl), "utf8").matchAll(/^\s*(--n-[a-z0-9-]+):/gm)].map((match) => match[1])
   );
-  const used = new Set([...(css + reports).matchAll(/var\((--n-[a-z0-9-]+)/g)].map((match) => match[1]));
+  const used = new Set([...css.matchAll(/var\((--n-[a-z0-9-]+)/g)].map((match) => match[1]));
 
   assert.ok(used.size > 40);
   assert.deepEqual([...used].filter((token) => !defined.has(token)), []);
