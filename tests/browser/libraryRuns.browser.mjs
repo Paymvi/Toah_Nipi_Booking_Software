@@ -122,7 +122,7 @@ for (const [width, height] of sizes) {
       const { placement, skipped } = await drive(page, tutorial);
       const seen = await page.evaluate(() => [...window.__shown]);
 
-      const leaked = (await writes()).filter((entry) => !entry.includes("/rpc/staff_app_me"));
+      const leaked = await writes();
       // Steps that only apply to some screens (when) and setup steps aren't required. A click that was
       // already done (e.g. Month view when the calendar is on Month) is passed by, and listed.
       const required = tutorial.steps.filter((step) => !step.prep && !step.when && !skipped.includes(step.id));

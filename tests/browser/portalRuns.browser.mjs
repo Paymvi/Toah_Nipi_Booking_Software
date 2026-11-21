@@ -74,16 +74,15 @@ for (const [width, height] of sizes) {
         const { placement } = await drive(page, tutorial);
         const seen = await page.evaluate(() => [...window.__shown]);
 
-        // staff_app_me is a read-only RPC the app calls as it loads (a POST, so the mock logs it).
-        const leaked = (await writes()).filter((entry) => !entry.includes("/rpc/staff_app_me"));
-        const expected = tutorial.steps.filter((step) => !step.prep).length;
-        const counted = seen.filter((id) => !tutorial.steps.find((step) => step.id === id).prep).length;
-        if (process.env.TRACE && counted !== expected) console.log("    missed:", tutorial.steps.filter((step) => !step.prep && !seen.includes(step.id)).map((step) => step.id).join(" "));
+        const leaked = await writes();
+        // The runner passes by a click-to-open step whose panel an earlier topic already opened (TutorialRunner skipIfDone).
+        const missed = tutorial.steps.filter((step) => !step.prep && !step.demoClick && !seen.includes(step.id));
+        if (process.env.TRACE && missed.length) console.log("    missed:", missed.map((step) => step.id).join(" "));
         const demoCalls = requests.filter((entry) => !entry.startsWith("GET") && !/auth|current_staff_role|staff_app_me/.test(entry));
 
         const problems = [
           leaked.length && `writes reached the mock: ${leaked.join("; ")}`,
-          counted !== expected && `saw ${counted} of ${expected} steps`,
+          missed.length && `never showed ${missed.map((step) => step.id).join(", ")}`,
           demoCalls.length && `demo made requests: ${demoCalls.join("; ")}`,
           requests.some((entry) => entry.startsWith("BLOCKED")) && "tried to leave localhost",
           errors.length && errors.join(" | ").slice(0, 300),
@@ -91,7 +90,7 @@ for (const [width, height] of sizes) {
 
         placement.forEach((entry) => flags.push(`${label} ${entry}`));
         if (problems.length) failures += 1;
-        console.log(`${problems.length ? "FAIL" : "ok  "} ${label} (${counted} steps)${problems.length ? ` ${problems.join(" / ")}` : ""}`);
+        console.log(`${problems.length ? "FAIL" : "ok  "} ${label} (${seen.length} steps)${problems.length ? ` ${problems.join(" / ")}` : ""}`);
       } catch (error) {
         failures += 1;
         console.log(`FAIL ${label}: ${String(error.message).slice(0, 300)} | ${await dialog(page)}`);

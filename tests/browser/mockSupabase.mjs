@@ -101,7 +101,8 @@ createServer((req, res) => {
     if (path === "/rest/v1/rpc/current_staff_role") return send(res, 200, role);
 
     const action = path === "/functions/v1/portal-email" ? JSON.parse(body || "{}").action : "";
-    const isRead = req.method === "GET" || path.startsWith("/auth/") || ["status", "overview"].includes(action) || path.startsWith("/storage/v1/object/sign/");
+    // staff_app_me is a read-only RPC the app calls as it loads; it is a POST, so name it here.
+    const isRead = req.method === "GET" || path.startsWith("/auth/") || path === "/rest/v1/rpc/staff_app_me" || ["status", "overview"].includes(action) || path.startsWith("/storage/v1/object/sign/");
     if (!isRead) writes.push(`${req.method} ${path}${url.search} ${action || body.slice(0, 120)}`);
 
     if (path === "/functions/v1/portal-email") {

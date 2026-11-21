@@ -88,7 +88,7 @@ for (const [name, run] of Object.entries(cases)) {
   const session = await launch({ width: 1440, height: 900 });
   try {
     await run.call(session, session.page);
-    const leaked = (await writes()).filter((entry) => !entry.includes("/rpc/staff_app_me"));
+    const leaked = await writes();
     if (leaked.length) throw new Error(`writes reached the mock: ${leaked.join("; ")}`);
     if (session.errors.length) throw new Error(session.errors.join(" | ").slice(0, 300));
     console.log(`ok   ${name}`);

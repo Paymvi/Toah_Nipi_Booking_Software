@@ -12,8 +12,6 @@ const filter = process.argv[2] || "";
 const results = [];
 // The step's own label; the overview preview also contains role labels.
 const role = (page) => page.locator(".tg-dialog-body > .tg-role strong").innerText().catch(() => "");
-// staff_app_me is a read-only RPC the app calls as it loads (a POST, so the mock logs it).
-const realWrites = async () => (await writes()).filter((entry) => !entry.includes("/rpc/staff_app_me"));
 const gnome = (page) => page.locator(".tg-dialog-gnome").getAttribute("class").catch(() => "");
 const ready = (page) => page.waitForFunction((next) => document.querySelector(next)?.getAttribute("aria-disabled") !== "true", NEXT);
 
@@ -22,6 +20,8 @@ async function nextUntil(page, id, limit = 60) {
   for (let count = 0; count < limit; count += 1) {
     if ((await stepId(page)) === id) return waitForStep(page, id);
     await ready(page);
+    // The step can change while Next becomes ready (a demo click moves on by itself): check again before clicking past it.
+    if ((await stepId(page)) === id) return waitForStep(page, id);
     await page.locator(NEXT).click({ force: true });
     await sleep(350);
   }
@@ -36,7 +36,7 @@ async function check(name, fn, size = {}) {
     await open(session, "/dashboard");
     await ctl("clearWrites=1");
     await fn(session);
-    const leaked = await realWrites();
+    const leaked = await writes();
     if (leaked.length) throw new Error(`writes reached the mock: ${leaked.join("; ")}`);
     if (session.errors.length) throw new Error(session.errors.join(" | ").slice(0, 300));
     results.push(`ok   ${name}`);

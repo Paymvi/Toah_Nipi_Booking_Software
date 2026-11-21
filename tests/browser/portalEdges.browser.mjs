@@ -172,7 +172,7 @@ await test("the fictional demo refuses writes, even paused, and only reads", asy
   assert((await page.locator(".tg-paused").innerText()).includes("nothing here can be saved"), "no explanation on a blocked click");
   assert((await page.locator(DEMO_BANNER).count()) === 1, "left the demo");
 
-  const leaked = requests.filter((entry) => !entry.startsWith("GET") && !/auth|current_staff_role/.test(entry));
+  const leaked = requests.filter((entry) => !entry.startsWith("GET") && !/auth|current_staff_role|staff_app_me/.test(entry));
   assert(leaked.length === 0, `requests: ${leaked.join("; ")}`);
 }, { path: "/portal-admin" });
 
@@ -298,16 +298,17 @@ await test("Checklist edits are detected", async ({ page }) => {
 }, { path: "/master-spreadsheet" });
 
 await test("the Form is only flagged once something is typed, in every tutorial", async ({ page }) => {
-  await start(page, "Use the calendar");
-  await waitForStep(page, "open-calendar");
+  await start(page, "Use the calendars");
+  await page.waitForFunction(() => /calendar|month/.test(document.querySelector(".tg-dialog")?.dataset.tutorialStep || ""));
   await page.locator(END).click();
   await sleep(300);
   await page.locator(`${target("nav-form")}`).first().click();
   await page.waitForSelector(`${target("booking-form-group-name")}`);
   await page.locator(`${target("booking-form-group-name")} input, input${target("booking-form-group-name")}`).first().fill("My own group");
-  await expectWarning(page, "Use the calendar", "the booking form");
+  await expectWarning(page, "Use the calendars", "the booking form");
   await page.getByRole("button", { name: "Start anyway" }).click();
-  await waitForStep(page, "open-calendar");
+  // The demo clicks on by itself, so any calendar step shows it started.
+  await page.waitForFunction(() => /calendar|month/.test(document.querySelector(".tg-dialog")?.dataset.tutorialStep || ""));
 });
 
 await test("Portal choices stay safe under a demo on the same page", async ({ page }) => {
@@ -320,8 +321,8 @@ await test("Portal choices stay safe under a demo on the same page", async ({ pa
 }, { path: "/portal-admin" });
 
 await test("work begun during a pause stops Resume until it's dealt with", async ({ page }) => {
-  await start(page, "Use the calendar");
-  await waitForStep(page, "month-view", 30000);
+  await start(page, "Use the calendars");
+  await waitForStep(page, "move.month-view", 30000);
   await page.locator(PAUSE).click();
   await page.locator(target("nav-form")).first().click();
   await page.locator(`${target("booking-form-group-name")} input, input${target("booking-form-group-name")}`).first().fill("Real work");
@@ -407,11 +408,13 @@ await test("the library shows the walkthrough with its topics tucked away, and s
   await openLibrary(page);
   await page.locator(".tg-tutorial-item", { hasText: "Manage a group's portal" }).waitFor();
   assert(!(await page.locator(".tg-tutorial-item", { hasText: "Assign tasks" }).isVisible()), "topics aren't tucked away");
-  await page.locator(".tg-topics summary").click();
-  await page.locator(".tg-topics .tg-tutorial-item", { hasText: "Assign tasks" }).waitFor();
+  // Other walkthroughs have topics too, so look only inside this one.
+  const portalTopics = page.locator("li", { has: page.locator(".tg-tutorial-item", { hasText: "Manage a group's portal" }) }).locator(".tg-topics");
+  await portalTopics.locator("summary").click();
+  await portalTopics.locator(".tg-tutorial-item", { hasText: "Assign tasks" }).waitFor();
   await page.locator(".tg-search input").fill("send back");
   await page.locator(".tg-tutorial-item", { hasText: "Send a submission back" }).waitFor();
-  assert((await page.locator(".tg-topics .tg-tutorial-item").count()) === 1, "search didn't narrow the topics");
+  assert((await portalTopics.locator(".tg-tutorial-item").count()) === 1, "search didn't narrow the topics");
 });
 
 await test("keyboard alone can move on and pause", async ({ page }) => {

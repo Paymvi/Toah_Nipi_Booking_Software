@@ -143,8 +143,7 @@ for (const [width, height] of sizes) {
       if (await page.locator(".tg-runner").count()) problems.push("runner still mounted");
       if (arg("theme") && (await page.evaluate(() => document.documentElement.dataset.theme)) !== arg("theme")) problems.push("theme not applied");
 
-      // staff_app_me is a read-only RPC the app calls as it loads (a POST, so the mock logs it).
-      const leaked = (await writes()).filter((entry) => !entry.includes("/rpc/staff_app_me"));
+      const leaked = await writes();
       const demoCalls = requests.filter((entry) => !entry.startsWith("GET") && !/auth|current_staff_role|staff_app_me/.test(entry));
       if (leaked.length) problems.push(`writes reached the mock: ${leaked.join("; ")}`);
       if (demoCalls.length) problems.push(`requests: ${demoCalls.join("; ")}`);
