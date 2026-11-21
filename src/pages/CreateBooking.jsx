@@ -371,17 +371,9 @@ const TEST_BOOKING_DATA = {
   numberOfNights: "2",
   numberOfMeals: "6",
 
-  /* Booking Timeline */
+  /* Inquiry & Payment (progress is tracked in the guest portal) */
   inquiryDate: "2026-09-03",
-  contractSentDate: "2026-09-05",
-  returnContractByDate: "2026-09-19",
-  contractReturnedDate: "2026-09-15",
-
-  /* Payments / Documents */
-  depositReceivedDate: "2026-09-16",
   depositAmount: "250",
-  insuranceCertificateDate: "2027-06-01",
-  notificationDate: "2027-06-05",
   paymentMethod: "Check",
 
   /* Arrival / Departure */
@@ -3419,108 +3411,38 @@ export default function CreateBooking({
 
 
           {/* ===================================================
-              TIMELINE + PAYMENT
+              INQUIRY + PAYMENT
+              Contract, deposit and insurance progress lives only in the
+              guest portal. Dates recorded here earlier are kept in the
+              booking and shown read-only on the Overview.
           =================================================== */}
 
-          <div className="rental-form-two-column">
+          <section className="rental-form-section">
+            <header className="rental-section-header">
+              <div className="rental-section-icon">
+                <FaDollarSign />
+              </div>
 
-            <section className="rental-form-section">
-              <header className="rental-section-header">
-                <div className="rental-section-icon">
-                  <FaCalendarAlt />
-                </div>
+              <div>
+                <h2>Inquiry & Payment</h2>
 
-                <div>
-                  <h2>Booking Timeline</h2>
-
-                  {/* <p>
-                    Inquiry and contract dates.
-                  </p> */}
-                </div>
-              </header>
+                <p>
+                  Contract, deposit and insurance progress is tracked in the guest portal.
+                </p>
+              </div>
+            </header>
 
 
-              <div className="rental-section-body">
-                <div className="rental-field-grid">
+            <div className="rental-section-body">
+              <div className="rental-field-grid">
 
-                  <label className="rental-field rental-field-full">
+                  <label className="rental-field">
                     <span>Inquiry Date</span>
 
                     <input
                       type="date"
                       name="inquiryDate"
                       value={formData.inquiryDate}
-                      onChange={handleChange}
-                    />
-                  </label>
-
-
-                  <label className="rental-field">
-                    <span>Contract Sent</span>
-
-                    <input
-                      type="date"
-                      name="contractSentDate"
-                      value={formData.contractSentDate}
-                      onChange={handleChange}
-                    />
-                  </label>
-
-
-                  <label className="rental-field">
-                    <span>Return Contract By</span>
-
-                    <input
-                      type="date"
-                      name="returnContractByDate"
-                      value={formData.returnContractByDate}
-                      onChange={handleChange}
-                    />
-                  </label>
-
-
-                  <label className="rental-field rental-field-full">
-                    <span>Contract Returned</span>
-
-                    <input
-                      type="date"
-                      name="contractReturnedDate"
-                      value={formData.contractReturnedDate}
-                      onChange={handleChange}
-                    />
-                  </label>
-
-                </div>
-              </div>
-            </section>
-
-
-            <section className="rental-form-section">
-              <header className="rental-section-header">
-                <div className="rental-section-icon">
-                  <FaDollarSign />
-                </div>
-
-                <div>
-                  <h2>Payments & Documents</h2>
-
-                  {/* <p>
-                    Deposit, insurance, and payment details.
-                  </p> */}
-                </div>
-              </header>
-
-
-              <div className="rental-section-body">
-                <div className="rental-field-grid">
-
-                  <label className="rental-field">
-                    <span>Deposit Received</span>
-
-                    <input
-                      type="date"
-                      name="depositReceivedDate"
-                      value={formData.depositReceivedDate}
                       onChange={handleChange}
                     />
                   </label>
@@ -3537,30 +3459,6 @@ export default function CreateBooking({
                       value={formData.depositAmount}
                       onChange={handleChange}
                       placeholder="$"
-                    />
-                  </label>
-
-
-                  <label className="rental-field">
-                    <span>Insurance Certificate Received</span>
-
-                    <input
-                      type="date"
-                      name="insuranceCertificateDate"
-                      value={formData.insuranceCertificateDate}
-                      onChange={handleChange}
-                    />
-                  </label>
-
-
-                  <label className="rental-field">
-                    <span>Notification Date</span>
-
-                    <input
-                      type="date"
-                      name="notificationDate"
-                      value={formData.notificationDate}
-                      onChange={handleChange}
                     />
                   </label>
 
@@ -3590,11 +3488,9 @@ export default function CreateBooking({
                     </select>
                   </label>
 
-                </div>
               </div>
-            </section>
-
-          </div>
+            </div>
+          </section>
 
 
           {/* ===================================================

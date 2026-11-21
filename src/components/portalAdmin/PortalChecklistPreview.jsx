@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FaExternalLinkAlt, FaChevronDown, FaChevronUp } from "react-icons/fa";
-import { portalItemHasGuestSubmission } from "../../utils/portalRules";
+import { canStaffMarkPortalItemComplete, portalItemHasGuestSubmission } from "../../utils/portalRules";
 import {
   openPortalSignedCopy,
   formatPortalUploadSize,
@@ -324,7 +324,9 @@ export default function PortalChecklistPreview({
             ? signing?.allDocuments?.find((document) => document.id === item.signDocumentId)
             : null;
 
-          const canConfirm =
+          const isStaffCompletion = canStaffMarkPortalItemComplete(item);
+
+          const canConfirm = isStaffCompletion || (
             item.status ===
               "needsReview" &&
             (
@@ -335,7 +337,8 @@ export default function PortalChecklistPreview({
               !requiresUpload ||
               hasUpload ||
               Boolean(latestSignature)
-            );
+            )
+          );
 
           return (
             <div
@@ -477,8 +480,10 @@ export default function PortalChecklistPreview({
                     >
                       {confirmingItemId ===
                       item.id
-                        ? "Confirming..."
-                        : "Confirm"}
+                        ? "Saving..."
+                        : isStaffCompletion
+                          ? "Mark complete"
+                          : "Confirm"}
                     </button>
                   )}
 

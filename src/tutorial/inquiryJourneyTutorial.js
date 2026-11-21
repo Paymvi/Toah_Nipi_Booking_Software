@@ -150,7 +150,7 @@ const SECTIONS = [
           id: "prefill",
           target: "booking-form-prefill",
           show: "This note means the form came from a request. Contact details, dates and times, guest counts, meals, allergies, activities, linens and notes are copied in.",
-          learnMore: "The group's reported contract, deposit and insurance dates go into the notes, not into the official received fields.",
+          learnMore: "Contract, deposit and insurance dates the group reports are kept as read-only notes on the Overview. Progress itself is tracked on the group's portal tasks.",
         },
         {
           id: "check",

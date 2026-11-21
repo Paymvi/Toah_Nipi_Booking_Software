@@ -111,6 +111,20 @@ export function getReopenedPortalItemStatus(item) {
   return item?.guestAction && item.guestAction !== "none" ? "waitingOnGuest" : "notStarted";
 }
 
+/*
+  Tasks the guest can't act on (Pay deposit, Pay balance) never reach
+  Needs Review, so staff mark them complete directly. The portal is the
+  only record of booking progress. A task holding a guest submission still
+  goes through Confirm.
+*/
+export function canStaffMarkPortalItemComplete(item) {
+  return (
+    (!item?.guestAction || item.guestAction === "none") &&
+    item.status !== "completed" &&
+    !portalItemHasGuestSubmission(item)
+  );
+}
+
 // Q-018: a due date after arrival is allowed, with a warning.
 export function getDueDateWarning(dueDate, arrivalDate) {
   if (!dueDate || !arrivalDate) return "";

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  canStaffMarkPortalItemComplete,
   getAlreadyAssignedDocumentIds,
   getAlreadyAssignedTaskIds,
   getDueDateWarning,
@@ -31,6 +32,15 @@ test("needs review counts half; confirmation completes the item", () => {
   assert.equal(getPortalProgress([{ status: "needsReview" }]).percent, 50);
   assert.equal(getPortalProgress([{ status: "completed" }]).percent, 100);
   assert.equal(getPortalProgress([]).percent, 0);
+});
+
+test("staff mark Pay deposit and Pay balance complete; guest tasks still need Confirm", () => {
+  assert.equal(canStaffMarkPortalItemComplete({ guestAction: "none", status: "notStarted" }), true);
+  assert.equal(canStaffMarkPortalItemComplete({ guestAction: "none", status: "completed" }), false);
+  assert.equal(canStaffMarkPortalItemComplete({ guestAction: "upload_file", status: "waitingOnGuest" }), false);
+  assert.equal(canStaffMarkPortalItemComplete({ guestAction: "mark_ready", status: "notStarted" }), false);
+  // An older row with no guest action but a guest submission goes through review.
+  assert.equal(canStaffMarkPortalItemComplete({ status: "needsReview", responseText: "42 guests" }), false);
 });
 
 test("reopening goes back to review when the guest had submitted something", () => {

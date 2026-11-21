@@ -603,7 +603,9 @@ function PortalAdminScreen({
         item.id
       );
 
+      // Guarded by the status staff saw: Needs Review, or Not started for a staff-only task.
       const {
+        data,
         error,
       } =
         await supabase
@@ -630,13 +632,18 @@ function PortalAdminScreen({
           )
           .eq(
             "status",
-            "needsReview"
-          );
+            item.status
+          )
+          .select("id");
 
       if (
         error
       ) {
         throw error;
+      }
+
+      if (!data?.length) {
+        alert("This task changed since the page loaded. The list will refresh.");
       }
 
       await loadPortalRecords();
