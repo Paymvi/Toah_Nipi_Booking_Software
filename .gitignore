@@ -47,3 +47,8 @@ public_schema*.sql
 
 # Integration audit: like the security audit, it lists weaknesses and hosted checks; the repo is public
 /INTEGRATION_DATA_INTEGRITY_AUDIT.md
+
+# Feature value audits: like the audits above, they describe operational weak spots
+# (shared login, pending grants, admin tools); the repo is public
+/FEATURE_VALUE_AUDIT.md
+/UPDATED_FEATURE_VALUE_AUDIT.md
