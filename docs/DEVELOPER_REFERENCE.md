@@ -69,13 +69,13 @@ Key points:
 | `/master-spreadsheet` | Master Spreadsheet | Spreadsheet-style grid of all booking records with year tabs, filters, search and sorting. |
 | `/inquiry-spreadsheet` | Inquiry Spreadsheet | Spreadsheet-style view of inquiry records ("Guest Group Inquiries & No's"). |
 | `/contacts` | Contacts | Contact directory built from booking records. |
-| `/reports` | Reports | Season Brief, Season Map and Data Check, where every number opens its records, with CSV export and a printable meeting brief. A New / Original toggle returns to the earlier single-page report. |
+| `/reports` | Reports | Season Brief, Season Map and Data Check, where every number opens its records, with CSV export and a printable meeting brief. |
 | `/user-admin` | User Admin | Shared staff directory used for task assignment, and the per-computer **Working as** choice. |
 | `/jobs` | Jobs | Checklist and program tasks assigned to staff across bookings. |
 | `/backup` | Backup | Create, validate, compare and restore JSON backups. |
 | `/inquiry-pipeline` | (none) | Retired. Kept in the code for reference; without Dev Mode it shows a "retired" notice. Booking progress is tracked in Portals. |
 
-Opening a booking shows the **Booking Overview** with tabs for Overview, Edit, Housing, Staff Assignments and Checklists, and a Compact / Large density toggle. The **tutorial gnome** in the bottom-right corner offers guided walkthroughs ([src/tutorial/](../src/tutorial/)). **Dev Mode** (top bar) reveals advanced tools after a password check by the `verify-dev-mode` Edge Function.
+Opening a booking shows the **Booking Overview** with tabs for Overview, Edit, Housing, Staff Assignments and Checklists. Contract, deposit and insurance progress is recorded only on the group's portal tasks; dates entered before that are shown read-only on the Overview. The **tutorial gnome** in the bottom-right corner offers guided walkthroughs ([src/tutorial/](../src/tutorial/)). **Dev Mode** (top bar) reveals advanced tools after a password check by the `verify-dev-mode` Edge Function.
 
 ## Feature notes
 
@@ -185,7 +185,7 @@ Further Supabase documentation:
     ├── lib/                  supabaseClient
     ├── pages/                One file per main view (Dashboard, CreateBooking, PortalAdminView, …)
     ├── components/           Shared pieces (housing tab, checklists, backups, email panel, …)
-    │   ├── bookingDetail/    Booking detail screen: overview (Compact and Large), edit form, date settings
+    │   ├── bookingDetail/    Booking detail screen: overview, edit form, date settings
     │   ├── portalAdmin/      Portals screen panels: record card, checklist preview, task and document panels
     │   └── reports/          Season Reports views
     ├── services/             Supabase reads and writes, mapping, backup data, Portals data (portalAdminData)
@@ -260,7 +260,7 @@ Known state:
 - The project's migration history table is empty because scripts were applied by hand. **Never run `supabase db push`** against the live project.
 - Guest portal emails and online signing are built; their rollout state is recorded in their SETUP files.
 - Live deployment steps from the 2026-11-10 security audit are listed in [audit/SECURITY_AUDIT_2026-11-10.md](audit/SECURITY_AUDIT_2026-11-10.md) section 8.
-- Some state stays per-browser: UI preferences (theme, view toggles, density), starred rows, the **Working as** choice and the last-manual-backup display details.
+- Some state stays per-browser: UI preferences (theme, view toggles), starred rows, the **Working as** choice and the last-manual-backup display details.
 - Backups cover booking and portal records, not the whole Supabase project. See [BACKUP_AND_RECOVERY.md](BACKUP_AND_RECOVERY.md#what-backups-cover).
 
 ## Maintenance principle

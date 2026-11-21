@@ -58,11 +58,9 @@ It replaces the yearly booking spreadsheets with one shared, sign-in-protected s
 
 *Checkboxes at the top can also show cancelled, waitlisted, archived and host records.*
 
-**Booking Overview.** Opening a group shows everything about that booking on one page: guest counts, meals and dietary alerts, housing by building, linens, payments and notes. Tabs along the top lead to editing, room-by-room housing, staff assignments and checklists. **Open Guest Portal** opens the group's own portal page.
+**Booking Overview.** Opening a group shows everything about that booking on one page: guest counts, meals and dietary alerts, housing by building, linens, rates and notes. Contract, deposit and insurance progress is tracked on the group's portal tasks. Tabs along the top lead to editing, room-by-room housing, staff assignments and checklists. **Open Guest Portal** opens the group's own portal page.
 
 ![The Booking Overview for a fictional group, with guest counts, meals, dietary alerts and housing assigned by building](docs/images/booking-overview.png)
-
-*Use **Compact** or **Large** in the top-right corner to choose how much fits on screen.*
 
 **Master Spreadsheet.** All bookings in one searchable table. Filter by year, dates or building, sort by any column, and star the rows you care about.
 
@@ -70,7 +68,7 @@ It replaces the yearly booking spreadsheets with one shared, sign-in-protected s
 
 *The spreadsheet views replace the old yearly workbooks. Existing workbooks can be imported.*
 
-**Portals.** For each group, staff pick checklist tasks (contract, certificate of insurance, final guest counts, schedule, deposit and so on) and attach documents. When the group leader uploads something, it shows here as **Needs Review**. Staff open it and click **Confirm**, or ask for changes.
+**Portals.** For each group, staff pick checklist tasks (contract, certificate of insurance, final guest counts, schedule, deposit and so on) and attach documents. The portal is the only place booking progress is recorded. When the group leader uploads something, it shows here as **Needs Review**. Staff open it and click **Confirm**, or ask for changes. Tasks only staff can finish, such as **Pay deposit** and **Pay balance**, have a **Mark complete** button.
 
 ![The Portals page showing a fictional group's progress, its checklist tasks with Confirm buttons, and the portal link controls](docs/images/portals.png)
 
@@ -94,7 +92,7 @@ It replaces the yearly booking spreadsheets with one shared, sign-in-protected s
 
 Helpful extras:
 
-- **Tutorial gnome.** The gnome button in the bottom-right corner offers step-by-step walkthroughs of each screen. It can show you how (a demo) or walk you through doing it yourself.
+- **Tutorial gnome.** The gnome button in the bottom-right corner offers step-by-step walkthroughs of each screen. It highlights each part of the screen and shows you what to click, doing the clicks itself where a step needs them.
 - **Light and Night.** The switch at the top of the sidebar changes the colour scheme on this computer.
 - **Dev Mode** in the top bar reveals advanced and risky tools, and needs a separate password. Most staff never need it.
 
